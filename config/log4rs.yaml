@@ -1,0 +1,11 @@
+refresh_rate: 30 seconds
+appenders:
+  log:
+    kind: file
+    path: "log/log.log"
+    encoder:
+      pattern: "{d(%Y-%m-%d %H:%M:%S %Z)(utc)} [{f}:{L}] {M}:{m}{n}"
+root:
+  level: info
+  appenders:
+    - log

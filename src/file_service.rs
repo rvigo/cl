@@ -14,7 +14,7 @@ fn open_file() -> String {
     }
 }
 
-pub fn load_commands_file() -> Vec<CommandItem> {
+pub fn load_commands_file<'a>() -> Vec<CommandItem> {
     match toml::from_str::<HashMap<String, Vec<CommandItem>>>(&open_file()) {
         Ok(toml) => toml.into_iter().flat_map(|(_, c)| c).collect(),
         Err(error) => panic!("{error}"),

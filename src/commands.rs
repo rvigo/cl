@@ -6,16 +6,21 @@ use anyhow::{anyhow, Result};
 
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct Commands {
-    pub items: Vec<CommandItem>,
+    items: Vec<CommandItem>,
 }
 
 impl Commands {
-    pub fn init() -> Self {
+    pub fn init() -> Commands {
         return Self {
             items: file_service::load_commands_file(),
         };
+    }
+
+    pub fn get_ref(&self) -> &Commands {
+        self
     }
 
     pub fn namespaces(&mut self) -> Vec<String> {
@@ -226,5 +231,25 @@ impl Commands {
 
     fn save_items(&self) -> Result<()> {
         Ok(())
+    }
+
+    pub fn push_command_item(&mut self, command_item: CommandItem) {
+        self.items.push(command_item);
+    }
+
+    pub fn get_command_item(&self, idx: usize) -> Option<&CommandItem> {
+        self.items.get(idx)
+    }
+
+    pub fn get_items_mut_ref(&mut self) -> &mut Vec<CommandItem> {
+        &mut self.items
+    }
+}
+
+impl Iterator for Commands {
+    type Item = CommandItem;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.get_items_mut_ref().clone().into_iter().next()
     }
 }
