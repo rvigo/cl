@@ -99,21 +99,13 @@ impl Commands {
         Ok(String::from("Alias removed"))
     }
 
-    fn all_commands(&self) -> Vec<CommandItem> {
-        self.items.clone().into_iter().map(|c| c).collect()
-    }
-
-    pub fn commands(&self) -> Result<Vec<CommandItem>> {
-        if self.items.is_empty() {
-            Err(anyhow!("There are no commands to show."))
-        } else {
-            Ok(self.all_commands())
-        }
+    pub fn all_commands(&self) -> Vec<CommandItem> {
+        self.clone().into_iter().map(|c| c).collect()
     }
 
     pub fn commands_from_namespace(&self, namespace: String) -> Result<Vec<CommandItem>> {
         let commands: Vec<CommandItem> = self
-            .all_commands()
+            .clone()
             .into_iter()
             .filter(|command| command.namespace == namespace)
             .collect();
@@ -125,71 +117,37 @@ impl Commands {
         Ok(commands)
     }
 
-    fn command_from_alias(&mut self, alias: &str, namespace: Option<String>) -> Result<String> {
-        let commands: Vec<CommandItem> = self
-            .items
-            .clone()
-            .into_iter()
-            .filter(|command| {
-                if namespace.is_some() {
-                    command.alias.is_some()
-                        && command.alias.as_ref().unwrap().eq(alias)
-                        && command.namespace.eq(namespace.as_ref().unwrap())
-                } else {
-                    command.alias.is_some() && command.alias.as_ref().unwrap().eq(alias)
-                }
-            })
-            .collect();
-
-        if commands.is_empty() {
-            Err(anyhow!("No command found for alias \"{alias}\""))
-        } else if commands.len() > 1 {
-            Err(anyhow!(
-                "There are commands with alias \"{}\" \
-                 in differents namespaces:\n{}\n \
-                 Please try again with the [namespace] flag",
-                alias,
-                commands
-                    .into_iter()
-                    .map(|c| format!(" - alias '{}' in namespace {}", alias, c.namespace))
-                    .collect::<Vec<String>>()
-                    .join("\n")
-            ))
-        } else {
-            Ok(commands.get(0).unwrap().command.clone())
-        }
-    }
-
     pub fn exec_alias(
         &mut self,
         alias: String,
         mut args: Vec<String>,
         namespace: Option<String>,
     ) -> Result<String> {
-        match self.command_from_alias(&alias, namespace) {
-            Ok(command) => {
-                args.insert(0, command);
+        Ok(String::from("ok"))
+        // match self.command_from_alias(&alias, namespace) {
+        //     Ok(command) => {
+        //         args.insert(0, command);
 
-                let shell = env::var("SHELL").unwrap_or(String::from("sh"));
-                println!(" - running {} {}", shell, &args.clone().join(" "));
-                let output = std::process::Command::new(shell)
-                    .arg("-c")
-                    .arg(args.join(" "))
-                    .output();
+        //         let shell = env::var("SHELL").unwrap_or(String::from("sh"));
+        //         println!(" - running {} {}", shell, &args.clone().join(" "));
+        //         let output = std::process::Command::new(shell)
+        //             .arg("-c")
+        //             .arg(args.join(" "))
+        //             .output();
 
-                match output {
-                    Ok(value) => {
-                        if value.status.success() {
-                            Ok(String::from_utf8_lossy(&value.stdout).to_string())
-                        } else {
-                            Err(anyhow!(String::from_utf8_lossy(&value.stderr).to_string()))
-                        }
-                    }
-                    Err(error) => Err(anyhow!(error.to_string())),
-                }
-            }
-            Err(error) => Err(anyhow!(error.to_string())),
-        }
+        //         match output {
+        //             Ok(value) => {
+        //                 if value.status.success() {
+        //                     Ok(String::from_utf8_lossy(&value.stdout).to_string())
+        //                 } else {
+        //                     Err(anyhow!(String::from_utf8_lossy(&value.stderr).to_string()))
+        //                 }
+        //             }
+        //             Err(error) => Err(anyhow!(error.to_string())),
+        //         }
+        //     }
+        //     Err(error) => Err(anyhow!(error.to_string())),
+        // }
     }
 
     pub fn commands_by_tag(&self, tag: String) -> Result<Vec<CommandItem>> {
@@ -237,7 +195,7 @@ impl Commands {
         self.items.push(command_item);
     }
 
-    pub fn get_command_item(&self, idx: usize) -> Option<&CommandItem> {
+    pub fn get_command_item_ref(&self, idx: usize) -> Option<&CommandItem> {
         self.items.get(idx)
     }
 

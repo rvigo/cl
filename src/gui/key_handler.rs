@@ -1,9 +1,30 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use log::info;
 
-use crate::gui::structs::state::State;
+use crate::gui::structs::{state::State, view_mode::ViewMode};
 
 pub fn handle(key_event: KeyEvent, state: &mut State) -> bool {
+    match state.view_mode {
+        ViewMode::List => handle_list(key_event, state),
+        ViewMode::New => handle_insert(key_event, state),
+    }
+}
+
+pub fn handle_insert(key_event: KeyEvent, state: &mut State) -> bool {
+    match key_event {
+        KeyEvent {
+            code: KeyCode::Esc,
+            modifiers: KeyModifiers::NONE,
+        } => {
+            info!("changing ViewMode to LIST");
+            state.view_mode = ViewMode::List;
+            false
+        }
+        _ => false,
+    }
+}
+
+pub fn handle_list(key_event: KeyEvent, state: &mut State) -> bool {
     match key_event {
         KeyEvent {
             code: KeyCode::Char('q'),
@@ -15,7 +36,7 @@ pub fn handle(key_event: KeyEvent, state: &mut State) -> bool {
         }
         | KeyEvent {
             code: KeyCode::BackTab,
-            modifiers: KeyModifiers::NONE,
+            modifiers: KeyModifiers::SHIFT,
         } => {
             state.previous_namespace();
             false
@@ -35,22 +56,22 @@ pub fn handle(key_event: KeyEvent, state: &mut State) -> bool {
             code: KeyCode::Down,
             modifiers: KeyModifiers::NONE,
         } => {
-            state.next();
+            state.next_command_item();
             false
         }
         KeyEvent {
             code: KeyCode::Up,
             modifiers: KeyModifiers::NONE,
         } => {
-            state.previous();
+            state.previous_command_item();
             false
         }
-
         KeyEvent {
-            code: KeyCode::Char('r'),
-            modifiers: KeyModifiers::CONTROL,
+            code: KeyCode::Insert,
+            modifiers: KeyModifiers::NONE,
         } => {
-            info!("executing");
+            info!("changing ViewMode to NEW");
+            state.view_mode = ViewMode::New;
             false
         }
         _ => false,

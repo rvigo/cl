@@ -2,6 +2,8 @@ use tui::widgets::ListState;
 
 use crate::{command_item::CommandItem, commands::Commands};
 
+use super::view_mode::ViewMode;
+
 #[derive(Debug, Clone)]
 pub struct State {
     pub commands_state: ListState,
@@ -10,6 +12,7 @@ pub struct State {
     pub namespaces: Vec<String>,
     pub current_namespace: String,
     pub current_command: Option<CommandItem>,
+    pub view_mode: ViewMode,
 }
 
 impl State {
@@ -20,10 +23,11 @@ impl State {
             commands: commands.clone(),
             namespaces,
             current_namespace: String::from("All"),
-            current_command: match commands.clone().get_ref().get_command_item(0) {
+            current_command: match commands.clone().get_ref().get_command_item_ref(0) {
                 Some(value) => Some(value.to_owned()),
                 None => None,
             },
+            view_mode: ViewMode::List,
         };
         state.commands_state.select(Some(0));
         state.namespace_state.select(Some(0));
@@ -43,7 +47,7 @@ impl State {
         self
     }
 
-    pub fn next(&mut self) {
+    pub fn next_command_item(&mut self) {
         let i = match self.commands_state.selected() {
             Some(i) => {
                 if i >= self.filtered_commands().len() - 1 {
@@ -57,7 +61,7 @@ impl State {
         self.commands_state.select(Some(i));
     }
 
-    pub fn previous(&mut self) {
+    pub fn previous_command_item(&mut self) {
         let i = match self.commands_state.selected() {
             Some(i) => {
                 if i == 0 {
@@ -104,17 +108,12 @@ impl State {
     }
 
     pub fn filtered_commands(&mut self) -> Vec<CommandItem> {
-        self.commands
-            .get_items_mut_ref()
-            .clone()
-            .into_iter()
-            .filter(|c| {
-                if self.current_namespace == "All" {
-                    true
-                } else {
-                    c.namespace == self.current_namespace
-                }
-            })
-            .collect::<Vec<CommandItem>>()
+        if self.current_namespace == "All" {
+            self.commands.all_commands()
+        } else {
+            self.commands
+                .commands_from_namespace(self.current_namespace.clone())
+                .expect("cannot save a command without an namespace")
+        }
     }
 }

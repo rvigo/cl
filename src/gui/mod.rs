@@ -1,3 +1,3 @@
 pub mod key_handler;
-mod render;
+pub mod layouts;
 pub mod structs;

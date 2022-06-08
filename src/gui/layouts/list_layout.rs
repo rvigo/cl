@@ -10,7 +10,7 @@ use tui::{
     Frame,
 };
 
-pub fn ui<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
+pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -30,13 +30,10 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .selected()
         .expect("a command should always be selected");
 
-    let selected_command: CommandItem = state.filtered_commands().get(idx).unwrap().clone();
+    let mut selected_command: CommandItem = state.filtered_commands().get(idx).unwrap().clone();
     state.current_command = Some(selected_command.clone());
 
-    let tags_str = selected_command
-        .tags
-        .unwrap_or(vec![String::from(" ")])
-        .join(", ");
+    let tags_str = selected_command.tags_str();
 
     //renewing state
     let state = state.get_mut_ref();

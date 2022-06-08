@@ -1,6 +1,6 @@
 use crate::{
     commands::Commands,
-    gui::{key_handler::handle, render::ui, structs::state::State},
+    gui::{key_handler::handle, layouts::selector::select_ui, structs::state::State},
 };
 use anyhow::Result;
 use crossterm::{
@@ -36,7 +36,8 @@ impl AppContext {
     pub fn render(&mut self) -> Result<()> {
         info!("starting the render process");
         loop {
-            self.terminal.draw(|frame| ui(frame, &mut self.state))?;
+            self.terminal
+                .draw(|frame| select_ui(frame, &mut self.state))?;
             if let Event::Key(key) = event::read()? {
                 let should_end: bool = handle(key, self.state.get_mut_ref());
                 if should_end {
