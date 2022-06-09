@@ -1,6 +1,3 @@
-use std::collections::HashMap;
-
-use log::info;
 use tui::widgets::ListState;
 
 use crate::{command_item::CommandItem, commands::Commands, gui::layouts::focus::Focus};
@@ -23,9 +20,11 @@ pub struct State {
 impl State {
     pub fn with_items(commands: Commands, namespaces: Vec<String>) -> State {
         let focus_items = vec![
-            (String::from("namespace"), true),
+            (String::from("alias"), true),
+            (String::from("namespace"), false),
+            (String::from("command"), false),
+            (String::from("description"), false),
             (String::from("tags"), false),
-            // (String::from("command"), false),
         ];
 
         let mut state = State {

@@ -2,7 +2,7 @@ use crate::gui::structs::state::State;
 use log::info;
 use tui::{
     backend::Backend,
-    layout::{Alignment, Constraint, Direction, Layout},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     widgets::{Block, BorderType, Borders, Paragraph, Wrap},
     Frame,
@@ -14,7 +14,14 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
-        .constraints([Constraint::Percentage(33), Constraint::Percentage(33)].as_ref())
+        .constraints(
+            [
+                Constraint::Percentage(33),
+                Constraint::Percentage(33),
+                Constraint::Percentage(33),
+            ]
+            .as_ref(),
+        )
         .split(frame.size());
 
     let first_row = Layout::default()
@@ -23,18 +30,24 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .split(chunks[0]);
     let second_row = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+        .constraints([Constraint::Percentage(100)].as_ref())
         .split(chunks[1]);
+    let thidr_row = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+        .split(chunks[2]);
 
-    let tags = create_tags(state);
-    let namespace = create_namespace(state);
-    frame.render_widget(tags, first_row[1]);
-    frame.render_widget(namespace, second_row[0]);
+    render_tags_input_widget(frame, state, thidr_row[1]);
+    render_namespace_input_widget(frame, state, first_row[1]);
+    render_alias_input_widget(frame, state, first_row[0]);
+    render_commannd_input_widget(frame, state, second_row[0]);
+    render_description_input_widget(frame, state, thidr_row[0]);
 }
 
-fn create_tags<'a>(state: &mut State) -> Paragraph<'a> {
+//TODO factory????
+fn render_tags_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State, area: Rect) {
     let component_name = "tags";
-    Paragraph::new(
+    let widget = Paragraph::new(
         state
             .get_mut_ref()
             .focus
@@ -49,13 +62,22 @@ fn create_tags<'a>(state: &mut State) -> Paragraph<'a> {
             .style(Style::default())
             .title(" Tags ")
             .border_type(BorderType::Plain),
-    )
+    );
+
+    frame.render_widget(widget, area);
+    if state.focus.is_in_focus(component_name) {
+        set_cursor_positition(frame, state, area)
+    }
 }
 
-fn create_namespace<'a>(state: &mut State) -> Paragraph<'a> {
+fn render_namespace_input_widget<'a, B: Backend>(
+    frame: &mut Frame<B>,
+    state: &mut State,
+    area: Rect,
+) {
     let component_name = "namespace";
 
-    Paragraph::new(
+    let widget = Paragraph::new(
         state
             .get_mut_ref()
             .focus
@@ -70,7 +92,91 @@ fn create_namespace<'a>(state: &mut State) -> Paragraph<'a> {
             .style(Style::default())
             .title(" Namespace ")
             .border_type(BorderType::Plain),
+    );
+    frame.render_widget(widget, area);
+    if state.focus.is_in_focus(component_name) {
+        set_cursor_positition(frame, state, area)
+    }
+}
+fn render_commannd_input_widget<'a, B: Backend>(
+    frame: &mut Frame<B>,
+    state: &mut State,
+    area: Rect,
+) {
+    let component_name = "command";
+
+    let widget = Paragraph::new(
+        state
+            .get_mut_ref()
+            .focus
+            .get_component_input(component_name),
     )
+    .style(get_style(state.get_mut_ref(), component_name))
+    .alignment(Alignment::Left)
+    .wrap(Wrap { trim: true })
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .style(Style::default())
+            .title(" Command ")
+            .border_type(BorderType::Plain),
+    );
+    frame.render_widget(widget, area);
+    if state.focus.is_in_focus(component_name) {
+        set_cursor_positition(frame, state, area)
+    }
+}
+fn render_alias_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State, area: Rect) {
+    let component_name = "alias";
+
+    let widget = Paragraph::new(
+        state
+            .get_mut_ref()
+            .focus
+            .get_component_input(component_name),
+    )
+    .style(get_style(state.get_mut_ref(), component_name))
+    .alignment(Alignment::Left)
+    .wrap(Wrap { trim: true })
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .style(Style::default())
+            .title(" Alias ")
+            .border_type(BorderType::Plain),
+    );
+    frame.render_widget(widget, area);
+    if state.focus.is_in_focus(component_name) {
+        set_cursor_positition(frame, state, area)
+    }
+}
+fn render_description_input_widget<'a, B: Backend>(
+    frame: &mut Frame<B>,
+    state: &mut State,
+    area: Rect,
+) {
+    let component_name = "description";
+
+    let widget = Paragraph::new(
+        state
+            .get_mut_ref()
+            .focus
+            .get_component_input(component_name),
+    )
+    .style(get_style(state.get_mut_ref(), component_name))
+    .alignment(Alignment::Left)
+    .wrap(Wrap { trim: true })
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .style(Style::default())
+            .title(" Descritpion ")
+            .border_type(BorderType::Plain),
+    );
+    frame.render_widget(widget, area);
+    if state.focus.is_in_focus(component_name) {
+        set_cursor_positition(frame, state, area)
+    }
 }
 
 fn get_style(state: &mut State, component_name: &str) -> Style {
