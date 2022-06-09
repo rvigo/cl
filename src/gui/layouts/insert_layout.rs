@@ -1,9 +1,10 @@
 use crate::gui::structs::state::State;
+use log::info;
 use tui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout},
+    layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Style},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
     Frame,
 };
 
@@ -13,14 +14,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
-        .constraints(
-            [
-                Constraint::Percentage(33),
-                Constraint::Percentage(33),
-                Constraint::Percentage(33),
-            ]
-            .as_ref(),
-        )
+        .constraints([Constraint::Percentage(33), Constraint::Percentage(33)].as_ref())
         .split(frame.size());
 
     let first_row = Layout::default()
@@ -32,39 +26,59 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
         .split(chunks[1]);
 
-    frame.render_widget(create_tags(), first_row[1]);
-    frame.render_widget(create_namespace(), second_row[0]);
+    let tags = create_tags(state);
+    let namespace = create_namespace(state);
+    frame.render_widget(tags, first_row[1]);
+    frame.render_widget(namespace, second_row[0]);
 }
 
-fn create_tags<'a>() -> Paragraph<'a> {
-    Paragraph::new("tags")
-        .style(
-            Style::default()
-                .fg(Color::Rgb(229, 229, 229))
-                .bg(Color::Rgb(201, 165, 249)),
-        )
-        .block(Block::default().borders(Borders::ALL).title(" Tags "))
+fn create_tags<'a>(state: &mut State) -> Paragraph<'a> {
+    let component_name = "tags";
+    Paragraph::new(
+        state
+            .get_mut_ref()
+            .focus
+            .get_component_input(component_name),
+    )
+    .style(get_style(state, component_name))
+    .alignment(Alignment::Left)
+    .wrap(Wrap { trim: true })
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .style(Style::default())
+            .title(" Tags ")
+            .border_type(BorderType::Plain),
+    )
 }
 
-fn create_namespace<'a>() -> Paragraph<'a> {
-    Paragraph::new("namespace")
-        .style(
-            Style::default()
-                .fg(Color::Rgb(229, 229, 229))
-                .bg(Color::Rgb(201, 165, 249)),
-        )
-        .block(Block::default().borders(Borders::ALL).title(" Namespace "))
+fn create_namespace<'a>(state: &mut State) -> Paragraph<'a> {
+    let component_name = "namespace";
+
+    Paragraph::new(
+        state
+            .get_mut_ref()
+            .focus
+            .get_component_input(component_name),
+    )
+    .style(get_style(state.get_mut_ref(), component_name))
+    .alignment(Alignment::Left)
+    .wrap(Wrap { trim: true })
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .style(Style::default())
+            .title(" Namespace ")
+            .border_type(BorderType::Plain),
+    )
 }
-// fn get_style(component_name: &str, component_state: &Components) -> Style {
-//     // info!(
-//     //     "validating if actual active component ({}) is equal to given component ({})",
-//     //     component_name, state.component_state.active_component.name
-//     // );
-//     if component_state.active_component.name.eq(component_name) {
-//         Style::default()
-//             .fg(Color::Rgb(229, 229, 229))
-//             .bg(Color::Rgb(201, 165, 249))
-//     } else {
-//         Style::default().fg(Color::Rgb(229, 229, 229))
-//     }
-// }
+
+fn get_style(state: &mut State, component_name: &str) -> Style {
+    if state.focus.is_in_focus(component_name) {
+        Style::default()
+            .fg(Color::Rgb(229, 229, 229))
+            .bg(Color::Rgb(201, 165, 249))
+    } else {
+        Style::default().fg(Color::Rgb(229, 229, 229))
+    }
+}

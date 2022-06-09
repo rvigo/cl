@@ -1,11 +1,15 @@
+use std::collections::HashMap;
+
+use log::info;
 use tui::widgets::ListState;
 
-use crate::{command_item::CommandItem, commands::Commands};
+use crate::{command_item::CommandItem, commands::Commands, gui::layouts::focus::Focus};
 
 use super::view_mode::ViewMode;
 
 #[derive(Debug, Clone)]
 pub struct State {
+    pub should_quit: bool,
     pub commands_state: ListState,
     pub namespace_state: ListState,
     pub commands: Commands,
@@ -13,11 +17,19 @@ pub struct State {
     pub current_namespace: String,
     pub current_command: Option<CommandItem>,
     pub view_mode: ViewMode,
+    pub focus: Focus,
 }
 
 impl State {
     pub fn with_items(commands: Commands, namespaces: Vec<String>) -> State {
+        let focus_items = vec![
+            (String::from("namespace"), true),
+            (String::from("tags"), false),
+            // (String::from("command"), false),
+        ];
+
         let mut state = State {
+            should_quit: false,
             commands_state: ListState::default(),
             namespace_state: ListState::default(),
             commands: commands.clone(),
@@ -28,9 +40,11 @@ impl State {
                 None => None,
             },
             view_mode: ViewMode::List,
+            focus: Focus::new(focus_items),
         };
         state.commands_state.select(Some(0));
         state.namespace_state.select(Some(0));
+        state.focus.focus_state.select(Some(0));
 
         state
     }

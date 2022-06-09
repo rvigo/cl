@@ -1,6 +1,7 @@
 use crate::command_item::CommandItem;
 use crate::gui::structs::state::State;
 
+use log::info;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout},
@@ -29,6 +30,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .commands_state
         .selected()
         .expect("a command should always be selected");
+    info!("got idx {idx}");
 
     let mut selected_command: CommandItem = state.filtered_commands().get(idx).unwrap().clone();
     state.current_command = Some(selected_command.clone());
@@ -84,7 +86,6 @@ fn create_tab_menu<'a>(state: &State) -> Tabs<'a> {
         .into_iter()
         .map(|tab| Spans::from(vec![Span::styled(tab.clone(), Style::default())]))
         .collect();
-
     Tabs::new(tab_menu)
         .select(state.namespace_state.selected().unwrap())
         .block(Block::default().title(" Namespaces ").borders(Borders::ALL))

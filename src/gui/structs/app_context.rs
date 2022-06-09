@@ -39,9 +39,9 @@ impl AppContext {
             self.terminal
                 .draw(|frame| select_ui(frame, &mut self.state))?;
             if let Event::Key(key) = event::read()? {
-                let should_end: bool = handle(key, self.state.get_mut_ref());
-                if should_end {
-                    info!("endind app");
+                handle(key, self.state.get_mut_ref());
+                if self.state.should_quit {
+                    info!("ending app");
                     return Ok(());
                 }
             }

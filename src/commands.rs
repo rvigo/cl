@@ -5,6 +5,7 @@ use crate::file_service;
 use anyhow::{anyhow, Result};
 
 use itertools::Itertools;
+use log::info;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
@@ -100,11 +101,13 @@ impl Commands {
     }
 
     pub fn all_commands(&self) -> Vec<CommandItem> {
-        self.clone().into_iter().map(|c| c).collect()
+        self.items.clone()
     }
 
     pub fn commands_from_namespace(&self, namespace: String) -> Result<Vec<CommandItem>> {
+        info!("getting commands from {namespace}");
         let commands: Vec<CommandItem> = self
+            .items
             .clone()
             .into_iter()
             .filter(|command| command.namespace == namespace)
