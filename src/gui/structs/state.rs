@@ -1,8 +1,8 @@
+use crate::{command_item::CommandItem, commands::Commands};
+
 use tui::widgets::ListState;
 
-use crate::{command_item::CommandItem, commands::Commands, gui::layouts::focus::Focus};
-
-use super::view_mode::ViewMode;
+use super::{insert_context::InsertContext, view_mode::ViewMode};
 
 #[derive(Debug, Clone)]
 pub struct State {
@@ -14,12 +14,13 @@ pub struct State {
     pub current_namespace: String,
     pub current_command: Option<CommandItem>,
     pub view_mode: ViewMode,
-    pub focus: Focus,
+    pub insert_context: InsertContext,
 }
 
 impl State {
     pub fn with_items(commands: Commands, namespaces: Vec<String>) -> State {
-        let focus_items = vec![
+        //TODO colocar esses itens como static????
+        let insert_menu_items = vec![
             (String::from("alias"), true),
             (String::from("namespace"), false),
             (String::from("command"), false),
@@ -39,11 +40,11 @@ impl State {
                 None => None,
             },
             view_mode: ViewMode::List,
-            focus: Focus::new(focus_items),
+            insert_context: InsertContext::new(insert_menu_items),
         };
         state.commands_state.select(Some(0));
         state.namespace_state.select(Some(0));
-        state.focus.focus_state.select(Some(0));
+        state.insert_context.focus_state.select(Some(0));
 
         state
     }

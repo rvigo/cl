@@ -1,7 +1,6 @@
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use log::info;
-
 use crate::gui::structs::{state::State, view_mode::ViewMode};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use log::{error, info};
 
 pub fn handle(key_event: KeyEvent, state: &mut State) {
     match state.view_mode {
@@ -27,7 +26,7 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
             code: KeyCode::Tab,
             modifiers: KeyModifiers::NONE,
         } => {
-            state.focus.next();
+            state.insert_context.next();
         }
         KeyEvent {
             code: KeyCode::Left,
@@ -37,17 +36,31 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
             code: KeyCode::BackTab,
             modifiers: KeyModifiers::SHIFT,
         } => {
-            state.focus.previous();
+            state.insert_context.previous();
         }
         KeyEvent {
             code: KeyCode::Char(c),
             modifiers: KeyModifiers::NONE,
-        } => state.focus.get_current_in_focus().input.push(c),
+        }
+        | KeyEvent {
+            code: KeyCode::Char(c),
+            modifiers: KeyModifiers::SHIFT,
+        } => state.insert_context.get_current_in_focus().input.push(c),
         KeyEvent {
             code: KeyCode::Backspace,
             modifiers: KeyModifiers::NONE,
         } => {
-            state.focus.get_current_in_focus().input.pop();
+            state.insert_context.get_current_in_focus().input.pop();
+        }
+        KeyEvent {
+            code: KeyCode::Enter,
+            modifiers: KeyModifiers::NONE,
+        } => {
+            //TODO implementar popup com msg de erro
+            match state.insert_context.build_command() {
+                Ok(_) => state.view_mode = ViewMode::List,
+                Err(error) => error!("{error}"),
+            }
         }
         _ => {}
     }

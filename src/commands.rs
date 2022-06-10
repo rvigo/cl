@@ -1,5 +1,3 @@
-use std::{collections::HashSet, env};
-
 use crate::command_item::CommandItem;
 use crate::file_service;
 use anyhow::{anyhow, Result};
@@ -37,15 +35,12 @@ impl Commands {
     }
 
     pub fn add_command(&mut self, command_item: CommandItem) -> Result<String> {
-        if let Some(alias) = command_item.clone().alias {
-            if self.clone().command_already_exists(&command_item) {
-                return Err(anyhow!(
-                    "Command with alias \"{alias}\" already exists in \"{}\" namespace",
-                    command_item.namespace
-                ));
-            }
-        } else {
-            println!("In order to avoid duplication, it's recommended to define an alias for the command.")
+        if self.clone().command_already_exists(&command_item) {
+            return Err(anyhow!(
+                "Command with alias \"{}\" already exists in \"{}\" namespace",
+                command_item.alias,
+                command_item.namespace
+            ));
         }
 
         self.items.push(command_item);
@@ -67,11 +62,9 @@ impl Commands {
             .into_iter()
             .filter(|command| {
                 if namespace.is_some() {
-                    command.alias.is_some()
-                        && command.alias.as_ref().unwrap().eq(&alias)
-                        && command.namespace.eq(namespace.as_ref().unwrap())
+                    command.alias.eq(&alias) && command.namespace.eq(namespace.as_ref().unwrap())
                 } else {
-                    command.alias.is_some() && command.alias.as_ref().unwrap().eq(&alias)
+                    command.alias.eq(&alias)
                 }
             })
             .collect::<Vec<CommandItem>>();
@@ -90,10 +83,9 @@ impl Commands {
         }
         self.items.retain(|command| {
             if namespace.is_some() {
-                !command.alias.as_ref().unwrap().eq(&alias)
-                    || !namespace.as_ref().unwrap().eq(&command.namespace)
+                !command.alias.eq(&alias) || !namespace.as_ref().unwrap().eq(&command.namespace)
             } else {
-                !command.alias.as_ref().unwrap().eq(&alias)
+                !command.alias.eq(&alias)
             }
         });
         self.save_items()?;
@@ -168,27 +160,27 @@ impl Commands {
         }
     }
 
-    pub fn info(&self) {
-        let commands = self.clone().items.into_iter().collect::<Vec<_>>().len();
-        let tags = self
-            .clone()
-            .items
-            .into_iter()
-            .filter(|item| item.tags.is_some())
-            .flat_map(|item| item.tags.unwrap())
-            .collect::<HashSet<String>>()
-            .len();
-        let namespaces = self.clone().namespaces().len();
-        let aliases = self
-            .clone()
-            .items
-            .into_iter()
-            .filter(|item| item.alias.is_some())
-            .map(|item| item.alias.unwrap())
-            .collect::<Vec<String>>()
-            .len();
-        println!("commands: {commands}\nnamespaces: {namespaces}\naliases: {aliases}\ntags: {tags}")
-    }
+    // pub fn info(&self) {
+    //     let commands = self.clone().items.into_iter().collect::<Vec<_>>().len();
+    //     let tags = self
+    //         .clone()
+    //         .items
+    //         .into_iter()
+    //         .filter(|item| item.tags.is_some())
+    //         .flat_map(|item| item.tags.unwrap())
+    //         .collect::<HashSet<String>>()
+    //         .len();
+    //     let namespaces = self.clone().namespaces().len();
+    //     let aliases = self
+    //         .clone()
+    //         .items
+    //         .into_iter()
+    //         .filter(|item| item.alias.is_some())
+    //         .map(|item| item.alias.unwrap())
+    //         .collect::<Vec<String>>()
+    //         .len();
+    //     println!("commands: {commands}\nnamespaces: {namespaces}\naliases: {aliases}\ntags: {tags}")
+    // }
 
     fn save_items(&self) -> Result<()> {
         Ok(())

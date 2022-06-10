@@ -103,7 +103,7 @@ fn create_command_items<'a>(state: &mut State) -> List<'a> {
         .filtered_commands()
         .into_iter()
         .map(|c| {
-            let lines = vec![Spans::from(c.alias.clone().unwrap_or(String::from("-")))];
+            let lines = vec![Spans::from(c.alias.clone())];
 
             ListItem::new(lines.clone().to_owned())
                 .style(Style::default().fg(Color::Rgb(229, 229, 229)))

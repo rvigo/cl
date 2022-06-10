@@ -1,5 +1,4 @@
 use crate::gui::structs::state::State;
-use log::info;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -50,7 +49,7 @@ fn render_tags_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut St
     let widget = Paragraph::new(
         state
             .get_mut_ref()
-            .focus
+            .insert_context
             .get_component_input(component_name),
     )
     .style(get_style(state, component_name))
@@ -65,7 +64,7 @@ fn render_tags_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut St
     );
 
     frame.render_widget(widget, area);
-    if state.focus.is_in_focus(component_name) {
+    if state.insert_context.is_in_focus(component_name) {
         set_cursor_positition(frame, state, area)
     }
 }
@@ -80,7 +79,7 @@ fn render_namespace_input_widget<'a, B: Backend>(
     let widget = Paragraph::new(
         state
             .get_mut_ref()
-            .focus
+            .insert_context
             .get_component_input(component_name),
     )
     .style(get_style(state.get_mut_ref(), component_name))
@@ -94,7 +93,7 @@ fn render_namespace_input_widget<'a, B: Backend>(
             .border_type(BorderType::Plain),
     );
     frame.render_widget(widget, area);
-    if state.focus.is_in_focus(component_name) {
+    if state.insert_context.is_in_focus(component_name) {
         set_cursor_positition(frame, state, area)
     }
 }
@@ -108,7 +107,7 @@ fn render_commannd_input_widget<'a, B: Backend>(
     let widget = Paragraph::new(
         state
             .get_mut_ref()
-            .focus
+            .insert_context
             .get_component_input(component_name),
     )
     .style(get_style(state.get_mut_ref(), component_name))
@@ -122,7 +121,7 @@ fn render_commannd_input_widget<'a, B: Backend>(
             .border_type(BorderType::Plain),
     );
     frame.render_widget(widget, area);
-    if state.focus.is_in_focus(component_name) {
+    if state.insert_context.is_in_focus(component_name) {
         set_cursor_positition(frame, state, area)
     }
 }
@@ -132,7 +131,7 @@ fn render_alias_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut S
     let widget = Paragraph::new(
         state
             .get_mut_ref()
-            .focus
+            .insert_context
             .get_component_input(component_name),
     )
     .style(get_style(state.get_mut_ref(), component_name))
@@ -146,7 +145,7 @@ fn render_alias_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut S
             .border_type(BorderType::Plain),
     );
     frame.render_widget(widget, area);
-    if state.focus.is_in_focus(component_name) {
+    if state.insert_context.is_in_focus(component_name) {
         set_cursor_positition(frame, state, area)
     }
 }
@@ -160,7 +159,7 @@ fn render_description_input_widget<'a, B: Backend>(
     let widget = Paragraph::new(
         state
             .get_mut_ref()
-            .focus
+            .insert_context
             .get_component_input(component_name),
     )
     .style(get_style(state.get_mut_ref(), component_name))
@@ -174,13 +173,13 @@ fn render_description_input_widget<'a, B: Backend>(
             .border_type(BorderType::Plain),
     );
     frame.render_widget(widget, area);
-    if state.focus.is_in_focus(component_name) {
+    if state.insert_context.is_in_focus(component_name) {
         set_cursor_positition(frame, state, area)
     }
 }
 
 fn get_style(state: &mut State, component_name: &str) -> Style {
-    if state.focus.is_in_focus(component_name) {
+    if state.insert_context.is_in_focus(component_name) {
         Style::default()
             .fg(Color::Rgb(229, 229, 229))
             .bg(Color::Rgb(201, 165, 249))
