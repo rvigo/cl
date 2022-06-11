@@ -193,11 +193,3 @@ impl Commands {
         &mut self.items
     }
 }
-
-impl Iterator for Commands {
-    type Item = CommandItem;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.get_items_mut_ref().clone().into_iter().next()
-    }
-}
