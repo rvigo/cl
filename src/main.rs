@@ -1,5 +1,5 @@
 use commands::Commands;
-use gui::structs::app_context::AppContext;
+use gui::contexts::app_context::AppContext;
 
 mod command_item;
 mod commands;
@@ -9,16 +9,17 @@ mod gui;
 mod utils;
 use std::error::Error;
 
+//TODO remover trait Debug dos structs
 fn main() -> Result<(), Box<dyn Error>> {
     log4rs::init_file("config/log4rs.yaml", Default::default()).unwrap();
 
     let commands = Commands::init();
 
-    let mut app_context = AppContext::new(commands)?;
+    let mut app_context = AppContext::create(commands)?;
 
     app_context.render()?;
 
-    app_context.restore_terminal()?;
+    app_context.destroy()?;
 
     Ok(())
 }

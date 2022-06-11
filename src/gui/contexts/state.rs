@@ -1,8 +1,6 @@
-use crate::{command_item::CommandItem, commands::Commands};
-
+use super::{insert_context::InsertContext, popup_state::PopUpState};
+use crate::{command_item::CommandItem, commands::Commands, gui::layouts::view_mode::ViewMode};
 use tui::widgets::ListState;
-
-use super::{insert_context::InsertContext, view_mode::ViewMode};
 
 #[derive(Debug, Clone)]
 pub struct State {
@@ -15,10 +13,11 @@ pub struct State {
     pub current_command: Option<CommandItem>,
     pub view_mode: ViewMode,
     pub insert_context: InsertContext,
+    pub popup_state: PopUpState,
 }
 
 impl State {
-    pub fn with_items(commands: Commands) -> State {
+    pub fn init(commands: Commands) -> State {
         //TODO colocar esses itens como static????
         let insert_menu_items = vec![
             (String::from("alias"), true),
@@ -41,6 +40,7 @@ impl State {
             },
             view_mode: ViewMode::List,
             insert_context: InsertContext::new(insert_menu_items),
+            popup_state: PopUpState::init(),
         };
         state.load_namespaces();
         state.commands_state.select(Some(0));

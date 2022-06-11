@@ -1,8 +1,6 @@
+use crate::gui::contexts::state::State;
 use tui::{backend::Backend, layout::Rect, Frame};
-
 use unicode_width::UnicodeWidthStr;
-
-use crate::gui::structs::state::State;
 
 pub fn set_cursor_positition<B: Backend>(frame: &mut Frame<B>, state: &mut State, area: Rect) {
     frame.set_cursor(

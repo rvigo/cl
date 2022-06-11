@@ -1,6 +1,6 @@
 use crate::{
     commands::Commands,
-    gui::{key_handler::handle, layouts::selector::select_ui, structs::state::State},
+    gui::{contexts::state::State, key_handler::handle, layouts::selector::select_ui},
 };
 use anyhow::Result;
 use crossterm::{
@@ -18,7 +18,7 @@ pub struct AppContext {
 }
 
 impl AppContext {
-    pub fn new(commands: Commands) -> Result<AppContext> {
+    pub fn create(commands: Commands) -> Result<AppContext> {
         // setup terminal
         enable_raw_mode()?;
         let mut stdout = io::stdout();
@@ -29,7 +29,7 @@ impl AppContext {
 
         Ok(AppContext {
             terminal,
-            state: State::with_items(commands.clone()),
+            state: State::init(commands.clone()),
         })
     }
 
@@ -48,7 +48,7 @@ impl AppContext {
         }
     }
 
-    pub fn restore_terminal(&mut self) -> Result<()> {
+    pub fn destroy(&mut self) -> Result<()> {
         disable_raw_mode()?;
         execute!(
             self.terminal.backend_mut(),

@@ -1,4 +1,8 @@
-use crate::gui::structs::state::State;
+use super::{
+    cursor::set_cursor_positition, help_layout::render_insert_helper_footer,
+    popup_layout::render_popup,
+};
+use crate::gui::contexts::state::State;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -7,17 +11,16 @@ use tui::{
     Frame,
 };
 
-use super::cursor::set_cursor_positition;
-
 pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
         .constraints(
             [
-                Constraint::Percentage(33),
-                Constraint::Percentage(33),
-                Constraint::Percentage(33),
+                Constraint::Percentage(30),
+                Constraint::Percentage(30),
+                Constraint::Percentage(30),
+                Constraint::Max(3),
             ]
             .as_ref(),
         )
@@ -31,16 +34,25 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(100)].as_ref())
         .split(chunks[1]);
-    let thidr_row = Layout::default()
+    let third_row = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
         .split(chunks[2]);
+    let fourth_row = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(100)].as_ref())
+        .split(chunks[3]);
 
-    render_tags_input_widget(frame, state, thidr_row[1]);
+    render_tags_input_widget(frame, state, third_row[1]);
     render_namespace_input_widget(frame, state, first_row[1]);
     render_alias_input_widget(frame, state, first_row[0]);
     render_commannd_input_widget(frame, state, second_row[0]);
-    render_description_input_widget(frame, state, thidr_row[0]);
+    render_description_input_widget(frame, state, third_row[0]);
+    frame.render_widget(render_insert_helper_footer(), fourth_row[0]);
+
+    if state.popup_state.show_popup {
+        render_popup(frame, state);
+    }
 }
 
 //TODO factory????
@@ -125,6 +137,7 @@ fn render_commannd_input_widget<'a, B: Backend>(
         set_cursor_positition(frame, state, area)
     }
 }
+
 fn render_alias_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State, area: Rect) {
     let component_name = "alias";
 
@@ -149,6 +162,7 @@ fn render_alias_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut S
         set_cursor_positition(frame, state, area)
     }
 }
+
 fn render_description_input_widget<'a, B: Backend>(
     frame: &mut Frame<B>,
     state: &mut State,

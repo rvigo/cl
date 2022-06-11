@@ -1,6 +1,7 @@
-use crate::command_item::CommandItem;
-use crate::gui::structs::state::State;
-
+use crate::{
+    command_item::CommandItem,
+    gui::{contexts::state::State, layouts::help_layout::render_helper_footer},
+};
 use log::info;
 use tui::{
     backend::Backend,
@@ -59,16 +60,6 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .constraints([Constraint::Percentage(70), Constraint::Length(3)].as_ref())
         .split(central_chunk[1]);
 
-    let help_content = "Quit: <Q>       New command: <Ins>";
-
-    let help = Paragraph::new(help_content).block(
-        Block::default()
-            .style(Style::default())
-            .borders(Borders::ALL)
-            .title(" Help ")
-            .border_type(BorderType::Plain),
-    );
-
     let command_state = state.get_command_state_mut_ref();
 
     frame.render_widget(tabs, chunks[0]);
@@ -76,7 +67,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     frame.render_widget(command, command_detail_chunks[0]);
     frame.render_widget(tags, command_detail_chunks[1]);
     frame.render_widget(description, chunks[1]);
-    frame.render_widget(help, chunks[3]);
+    frame.render_widget(render_helper_footer(), chunks[3]);
 }
 
 fn create_tab_menu<'a>(state: &State) -> Tabs<'a> {

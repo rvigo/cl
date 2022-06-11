@@ -1,11 +1,9 @@
 use crate::command_item::{CommandItem, CommandItemBuilder};
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
-use log::info;
 use tui::widgets::ListState;
 
 #[derive(Debug, Clone)]
-
 pub struct Item {
     name: String,
     in_focus: bool,
@@ -69,6 +67,7 @@ impl InsertContext {
         self.focus_state.select(Some(i));
         self.items.get_mut(i).unwrap().toggle_focus();
     }
+
     pub fn previous(&mut self) {
         let old_i = self.focus_state.selected().unwrap();
         self.items.get_mut(old_i).unwrap().toggle_focus();
@@ -144,7 +143,6 @@ impl InsertContext {
         match command.validate() {
             Ok(_) => {
                 self.clear_inputs();
-                info!("new command created: {:?}", command);
                 Ok(command)
             }
             Err(error) => Err(anyhow!(error)),
@@ -156,8 +154,8 @@ impl InsertContext {
     }
 
     fn clear_inputs(&mut self) {
-        for mut item in self.get_items_mut_ref().into_iter() {
-            item.input = String::from("")
+        for item in self.get_items_mut_ref().into_iter() {
+            item.input.clear()
         }
     }
 }

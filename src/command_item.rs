@@ -2,6 +2,7 @@ use anyhow::{anyhow, Result};
 use itertools::Itertools;
 use log::{error, info};
 use serde::{Deserialize, Serialize};
+
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub struct CommandItem {
     pub namespace: String,

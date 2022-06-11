@@ -1,5 +1,4 @@
-use crate::command_item::CommandItem;
-use crate::file_service;
+use crate::{command_item::CommandItem, file_service};
 use anyhow::{anyhow, Result};
 
 use itertools::Itertools;
