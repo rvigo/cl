@@ -34,7 +34,7 @@ impl Commands {
         keys
     }
 
-    pub fn add_command(&mut self, command_item: CommandItem) -> Result<String> {
+    pub fn add_command(&mut self, command_item: CommandItem) -> Result<()> {
         if self.clone().command_already_exists(&command_item) {
             return Err(anyhow!(
                 "Command with alias \"{}\" already exists in \"{}\" namespace",
@@ -45,7 +45,7 @@ impl Commands {
 
         self.items.push(command_item);
         self.save_items()?;
-        Ok(String::from("Command add"))
+        Ok(())
     }
 
     fn command_already_exists(&mut self, command_item: &CommandItem) -> bool {
@@ -183,11 +183,7 @@ impl Commands {
     // }
 
     fn save_items(&self) -> Result<()> {
-        Ok(())
-    }
-
-    pub fn push_command_item(&mut self, command_item: CommandItem) {
-        self.items.push(command_item);
+        file_service::write_to_file(self.items.clone())
     }
 
     pub fn get_command_item_ref(&self, idx: usize) -> Option<&CommandItem> {

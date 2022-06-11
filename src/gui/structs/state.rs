@@ -18,7 +18,7 @@ pub struct State {
 }
 
 impl State {
-    pub fn with_items(commands: Commands, namespaces: Vec<String>) -> State {
+    pub fn with_items(commands: Commands) -> State {
         //TODO colocar esses itens como static????
         let insert_menu_items = vec![
             (String::from("alias"), true),
@@ -33,7 +33,7 @@ impl State {
             commands_state: ListState::default(),
             namespace_state: ListState::default(),
             commands: commands.clone(),
-            namespaces,
+            namespaces: Default::default(),
             current_namespace: String::from("All"),
             current_command: match commands.clone().get_ref().get_command_item_ref(0) {
                 Some(value) => Some(value.to_owned()),
@@ -42,11 +42,22 @@ impl State {
             view_mode: ViewMode::List,
             insert_context: InsertContext::new(insert_menu_items),
         };
+        state.load_namespaces();
         state.commands_state.select(Some(0));
         state.namespace_state.select(Some(0));
         state.insert_context.focus_state.select(Some(0));
 
         state
+    }
+
+    pub fn load_namespaces(&mut self) {
+        let mut ns = self.commands.namespaces();
+        ns.insert(0, String::from("All"));
+        self.namespaces = ns;
+    }
+
+    pub fn reload_namespaces(&mut self) {
+        self.load_namespaces();
     }
 
     pub fn get_command_state_mut_ref(&mut self) -> &mut ListState {

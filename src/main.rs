@@ -9,20 +9,12 @@ mod gui;
 mod utils;
 use std::error::Error;
 
-/*
-    TODO inserir tela de insert REFATORADA
-    TODO repensar em como guardar o estado dos campos selecionados
-*/
-
 fn main() -> Result<(), Box<dyn Error>> {
     log4rs::init_file("config/log4rs.yaml", Default::default()).unwrap();
 
-    let mut commands = Commands::init();
-    let mut namespaces = commands.namespaces();
+    let commands = Commands::init();
 
-    namespaces.insert(0, "All".to_string());
-
-    let mut app_context = AppContext::new(commands, namespaces)?;
+    let mut app_context = AppContext::new(commands)?;
 
     app_context.render()?;
 

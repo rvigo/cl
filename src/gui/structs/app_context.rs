@@ -18,7 +18,7 @@ pub struct AppContext {
 }
 
 impl AppContext {
-    pub fn new(commands: Commands, namespaces: Vec<String>) -> Result<AppContext> {
+    pub fn new(commands: Commands) -> Result<AppContext> {
         // setup terminal
         enable_raw_mode()?;
         let mut stdout = io::stdout();
@@ -29,7 +29,7 @@ impl AppContext {
 
         Ok(AppContext {
             terminal,
-            state: State::with_items(commands.clone(), namespaces),
+            state: State::with_items(commands.clone()),
         })
     }
 

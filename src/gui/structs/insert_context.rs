@@ -109,30 +109,28 @@ impl InsertContext {
         for item in self.items.clone().into_iter() {
             match item.name.as_str() {
                 "alias" => {
-                    if item.input.is_empty() {
-                        command_builder.alias(item.input);
-                    }
+                    command_builder.alias(item.input);
                 }
                 "command" => {
                     command_builder.command(item.input);
                 }
                 "description" => {
                     if item.input.is_empty() {
-                        command_builder.description(Some(item.input));
-                    } else {
                         command_builder.description(None);
+                    } else {
+                        command_builder.description(Some(item.input));
                     }
                 }
                 "tags" => {
                     if item.input.is_empty() {
+                        command_builder.tags(None);
+                    } else {
                         command_builder.tags(Some(
                             item.input
                                 .split(',')
                                 .map(|char| char.to_string())
                                 .collect_vec(),
                         ));
-                    } else {
-                        command_builder.tags(None);
                     }
                 }
                 "namespace" => {

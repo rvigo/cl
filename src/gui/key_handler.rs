@@ -58,7 +58,13 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
         } => {
             //TODO implementar popup com msg de erro
             match state.insert_context.build_command() {
-                Ok(_) => state.view_mode = ViewMode::List,
+                Ok(command) => match state.commands.add_command(command) {
+                    Ok(_) => {
+                        state.reload_namespaces();
+                        state.view_mode = ViewMode::List
+                    }
+                    Err(error) => error!("{error}"),
+                },
                 Err(error) => error!("{error}"),
             }
         }
