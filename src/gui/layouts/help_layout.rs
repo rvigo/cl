@@ -4,7 +4,7 @@ use tui::{
 };
 
 pub fn render_helper_footer() -> Paragraph<'static> {
-    let help_content = "Quit <Q>       New command <I>       Right <TAB>       Left <BACKTAB>       Up <ArrowUp>       Down <ArrowDown>";
+    let help_content = "Quit <Q>       New command <I>       Edit command <E>       Right <TAB>       Left <BACKTAB>       Up <ArrowUp>       Down <ArrowDown>";
     Paragraph::new(help_content).block(
         Block::default()
             .style(Style::default())
