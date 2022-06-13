@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
-use log::{error, info};
+use log::error;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, PartialOrd, Ord)]
@@ -74,7 +74,6 @@ impl CommandItem {
     }
 
     pub fn validate(&self) -> Result<()> {
-        info!("self: {:#?}", self);
         if self.namespace.is_empty() || self.command.is_empty() || self.alias.is_empty() {
             error!("namespace, command and alias field cannot be empty!");
             return Err(anyhow!(

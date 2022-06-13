@@ -1,4 +1,4 @@
-use super::{insert_context::InsertContext, popup_state::PopUpState};
+use super::{ops_context::OpsContext, popup_state::PopUpState};
 use crate::{command_item::CommandItem, commands::Commands, gui::layouts::view_mode::ViewMode};
 use tui::widgets::ListState;
 
@@ -10,9 +10,8 @@ pub struct State {
     pub commands: Commands,
     pub namespaces: Vec<String>,
     pub current_namespace: String,
-    pub current_command: Option<CommandItem>,
     pub view_mode: ViewMode,
-    pub insert_context: InsertContext,
+    pub ops_context: OpsContext,
     pub popup_state: PopUpState,
 }
 
@@ -34,18 +33,19 @@ impl State {
             commands: commands.clone(),
             namespaces: Default::default(),
             current_namespace: String::from("All"),
-            current_command: match commands.clone().get_ref().get_command_item_ref(0) {
-                Some(value) => Some(value.to_owned()),
-                None => None,
-            },
             view_mode: ViewMode::List,
-            insert_context: InsertContext::new(insert_menu_items),
+            ops_context: OpsContext::new(insert_menu_items),
             popup_state: PopUpState::init(),
         };
         state.load_namespaces();
         state.commands_state.select(Some(0));
         state.namespace_state.select(Some(0));
-        state.insert_context.focus_state.select(Some(0));
+        state.ops_context.focus_state.select(Some(0));
+        state.ops_context.current_command = match commands.clone().get_ref().get_command_item_ref(0)
+        {
+            Some(value) => Some(value.to_owned()),
+            None => None,
+        };
 
         state
     }

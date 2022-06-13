@@ -8,6 +8,7 @@ pub fn handle(key_event: KeyEvent, state: &mut State) {
     match state.view_mode {
         ViewMode::List => handle_list(key_event, state),
         ViewMode::New => handle_insert(key_event, state),
+        ViewMode::Edit => handle_edit(key_event, state),
     }
 }
 
@@ -24,36 +25,33 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
                 state.view_mode = ViewMode::List;
             }
             KeyEvent {
-                code: KeyCode::Right | KeyCode::Tab,
+                code: KeyCode::Tab,
                 modifiers: KeyModifiers::NONE,
             } => {
-                state.insert_context.next();
+                state.ops_context.next();
             }
+
             KeyEvent {
-                code: KeyCode::Left,
-                modifiers: KeyModifiers::NONE,
-            }
-            | KeyEvent {
                 code: KeyCode::BackTab,
                 modifiers: KeyModifiers::SHIFT,
             } => {
-                state.insert_context.previous();
+                state.ops_context.previous();
             }
             KeyEvent {
                 code: KeyCode::Char(c),
                 modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-            } => state.insert_context.get_current_in_focus().input.push(c),
+            } => state.ops_context.get_current_in_focus().push(c),
             KeyEvent {
                 code: KeyCode::Backspace,
                 modifiers: KeyModifiers::NONE,
             } => {
-                state.insert_context.get_current_in_focus().input.pop();
+                state.ops_context.get_current_in_focus().pop();
             }
             KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
-            } => match state.insert_context.build_command() {
-                Ok(command) => match state.commands.add_command(command) {
+            } => match state.ops_context.build_command() {
+                Ok(command) => match state.commands.add_command(&command) {
                     Ok(_) => {
                         state.reload_namespaces();
                         state.view_mode = ViewMode::List
@@ -70,6 +68,78 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
                     state.popup_state.show_popup = true
                 }
             },
+            _ => {}
+        }
+    }
+}
+
+pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
+    if state.popup_state.show_popup {
+        handle_popup(key_event, state)
+    } else {
+        match key_event {
+            KeyEvent {
+                code: KeyCode::Esc,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                info!("changing ViewMode to LIST");
+                state.view_mode = ViewMode::List;
+            }
+            KeyEvent {
+                code: KeyCode::Right | KeyCode::Tab,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                state.ops_context.next();
+            }
+            KeyEvent {
+                code: KeyCode::Left,
+                modifiers: KeyModifiers::NONE,
+            }
+            | KeyEvent {
+                code: KeyCode::BackTab,
+                modifiers: KeyModifiers::SHIFT,
+            } => {
+                state.ops_context.previous();
+            }
+            KeyEvent {
+                code: KeyCode::Char(c),
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
+            } => state.ops_context.get_current_in_focus().push(c),
+            KeyEvent {
+                code: KeyCode::Backspace,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                state.ops_context.get_current_in_focus().pop();
+            }
+            KeyEvent {
+                code: KeyCode::Enter,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                let current_command = state.ops_context.get_current_command().unwrap();
+                let edited_command = state.ops_context.edit_command();
+
+                match edited_command {
+                    Ok(command) => match state
+                        .commands
+                        .add_edited_command(&command, &current_command)
+                    {
+                        Ok(_) => {
+                            state.reload_namespaces();
+                            state.view_mode = ViewMode::List
+                        }
+                        Err(error) => {
+                            state.popup_state.message_type = MessageType::Error;
+                            state.popup_state.message = error.to_string();
+                            state.popup_state.show_popup = true
+                        }
+                    },
+                    Err(error) => {
+                        state.popup_state.message_type = MessageType::Error;
+                        state.popup_state.message = error.to_string();
+                        state.popup_state.show_popup = true
+                    }
+                }
+            }
             _ => {}
         }
     }
@@ -126,6 +196,17 @@ pub fn handle_list(key_event: KeyEvent, state: &mut State) {
                 info!("changing ViewMode to NEW");
                 state.view_mode = ViewMode::New;
             }
+            KeyEvent {
+                code: KeyCode::Char('e'),
+                modifiers: KeyModifiers::NONE,
+            } => {
+                info!("changing ViewMode to EDIT");
+                state.view_mode = ViewMode::Edit;
+                state
+                    .get_mut_ref()
+                    .ops_context
+                    .set_selected_command_inputs();
+            }
             _ => {}
         }
     }
@@ -141,6 +222,7 @@ fn handle_popup(key_event: KeyEvent, state: &mut State) {
             state.popup_state.show_popup = false;
             state.popup_state.message_type = MessageType::None
         }
+
         _ => {}
     }
 }

@@ -2,7 +2,6 @@ use crate::{command_item::CommandItem, file_service};
 use anyhow::{anyhow, Result};
 
 use itertools::Itertools;
-use log::info;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
@@ -33,7 +32,7 @@ impl Commands {
         keys
     }
 
-    pub fn add_command(&mut self, command_item: CommandItem) -> Result<()> {
+    pub fn add_command(&mut self, command_item: &CommandItem) -> Result<()> {
         if self.clone().command_already_exists(&command_item) {
             return Err(anyhow!(
                 "Command with alias \"{}\" already exists in \"{}\" namespace",
@@ -42,7 +41,31 @@ impl Commands {
             ));
         }
 
-        self.items.push(command_item);
+        self.items.push(command_item.clone());
+        self.save_items()?;
+        Ok(())
+    }
+    pub fn add_edited_command(
+        &mut self,
+        edited_command_item: &CommandItem,
+        current_command_item: &CommandItem,
+    ) -> Result<()> {
+        if self.items.clone().into_iter().any(|c| {
+            c.alias.eq(&edited_command_item.alias)
+                && !edited_command_item.alias.eq(&current_command_item.alias)
+                && c.namespace.eq(&edited_command_item.namespace)
+        }) {
+            return Err(anyhow!(
+                "Command with alias \"{}\" already exists in \"{}\" namespace",
+                edited_command_item.alias,
+                edited_command_item.namespace
+            ));
+        }
+        self.items.retain(|command| {
+            !command.alias.eq(&current_command_item.alias)
+                || !command.namespace.eq(&current_command_item.namespace)
+        });
+        self.items.push(edited_command_item.clone());
         self.save_items()?;
         Ok(())
     }
@@ -96,7 +119,6 @@ impl Commands {
     }
 
     pub fn commands_from_namespace(&self, namespace: String) -> Result<Vec<CommandItem>> {
-        info!("getting commands from {namespace}");
         let commands: Vec<CommandItem> = self
             .items
             .clone()

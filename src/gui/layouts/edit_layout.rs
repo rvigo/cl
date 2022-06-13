@@ -3,6 +3,7 @@ use super::{
     popup_layout::render_popup,
 };
 use crate::gui::contexts::state::State;
+use log::info;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -58,22 +59,22 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
 //TODO factory????
 fn render_tags_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State, area: Rect) {
     let component_name = "tags";
-    let widget = Paragraph::new(
-        state
-            .get_mut_ref()
-            .ops_context
-            .get_component_input(component_name),
-    )
-    .style(get_style(state, component_name))
-    .alignment(Alignment::Left)
-    .wrap(Wrap { trim: true })
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .style(Style::default())
-            .title(" Tags ")
-            .border_type(BorderType::Plain),
-    );
+    let input = state
+        .get_mut_ref()
+        .ops_context
+        .get_component_input(component_name);
+
+    let widget = Paragraph::new(input)
+        .style(get_style(state, component_name))
+        .alignment(Alignment::Left)
+        .wrap(Wrap { trim: true })
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .style(Style::default())
+                .title(" Tags ")
+                .border_type(BorderType::Plain),
+        );
 
     frame.render_widget(widget, area);
     if state.ops_context.is_in_focus(component_name) {
@@ -140,7 +141,15 @@ fn render_commannd_input_widget<'a, B: Backend>(
 
 fn render_alias_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State, area: Rect) {
     let component_name = "alias";
-
+    let input = state
+        .get_mut_ref()
+        .ops_context
+        .get_component_input(component_name);
+    let current_command = &state.ops_context.current_command;
+    match current_command {
+        Some(c) => info!("selected command ({:#?}) alias input: {}", c, input),
+        None => info!("current_command does not have a selection"),
+    };
     let widget = Paragraph::new(
         state
             .get_mut_ref()
