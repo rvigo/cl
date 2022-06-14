@@ -1,4 +1,4 @@
-use crate::gui::contexts::state::State;
+use crate::gui::contexts::{popup_state::MessageType, state::State};
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -25,22 +25,16 @@ pub fn render_popup<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State) {
 
     frame.render_widget(Clear, area[1]);
     frame.render_widget(block, area[1]);
-    draw_ok_button(frame, area[1]);
+    match state.popup_state.message_type {
+        MessageType::Error => draw_ok_button(frame, area[1]),
+        MessageType::Confirmation => {
+            draw_ok_button(frame, area[1]);
+            draw_cancel_button(frame, area[1])
+        }
+        MessageType::None => {}
+    }
 }
-
 fn draw_ok_button<B: Backend>(frame: &mut Frame<B>, area: Rect) {
-    let ok_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(
-            [
-                Constraint::Percentage(33),
-                Constraint::Percentage(33),
-                Constraint::Percentage(33),
-            ]
-            .as_ref(),
-        )
-        .split(area);
-
     let ok_layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(
@@ -53,12 +47,54 @@ fn draw_ok_button<B: Backend>(frame: &mut Frame<B>, area: Rect) {
             .as_ref(),
         )
         .margin(1)
-        .split(ok_layout[2]);
+        .split(create_layout(area)[1]);
+
     let ok_button_widget = Paragraph::new("Ok <Enter>")
         .style(Style::default())
         .alignment(Alignment::Center)
         .block(Block::default().borders(Borders::NONE));
-    frame.render_widget(ok_button_widget, ok_layout[3]);
+    frame.render_widget(ok_button_widget, ok_layout[2]);
+}
+
+fn draw_cancel_button<B: Backend>(frame: &mut Frame<B>, area: Rect) {
+    let cancel_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(
+            [
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+            ]
+            .as_ref(),
+        )
+        .margin(1)
+        .split(create_layout(area)[1]);
+
+    let cancel_button_widget = Paragraph::new("Cancel <Esc>")
+        .style(Style::default())
+        .alignment(Alignment::Center)
+        .block(Block::default().borders(Borders::NONE));
+    frame.render_widget(cancel_button_widget, cancel_layout[3]);
+}
+
+fn create_layout(area: Rect) -> Vec<Rect> {
+    let layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+                Constraint::Percentage(33),
+                Constraint::Percentage(33),
+                Constraint::Percentage(33),
+            ]
+            .as_ref(),
+        )
+        .split(area);
+
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+        .split(layout[2])
 }
 
 fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Vec<Rect> {

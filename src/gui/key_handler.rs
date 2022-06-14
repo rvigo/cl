@@ -2,7 +2,10 @@ use crate::gui::contexts::state::State;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use log::info;
 
-use super::{contexts::popup_state::MessageType, layouts::view_mode::ViewMode};
+use super::{
+    contexts::popup_state::{Answer, MessageType},
+    layouts::view_mode::ViewMode,
+};
 
 pub fn handle(key_event: KeyEvent, state: &mut State) {
     match state.view_mode {
@@ -207,22 +210,70 @@ pub fn handle_list(key_event: KeyEvent, state: &mut State) {
                     .ops_context
                     .set_selected_command_inputs();
             }
+
+            KeyEvent {
+                code: KeyCode::Char('d'),
+                modifiers: KeyModifiers::NONE,
+            } => {
+                info!("showing warning popup");
+                state.popup_state.message =
+                    String::from("Are you sure you want to delete the command?");
+                state.popup_state.show_popup = true;
+                state.popup_state.message_type = MessageType::Confirmation
+            }
+
             _ => {}
         }
     }
 }
 
 fn handle_popup(key_event: KeyEvent, state: &mut State) {
-    match key_event {
-        KeyEvent {
-            code: KeyCode::Enter,
-            modifiers: KeyModifiers::NONE,
-        } => {
-            state.popup_state.message.clear();
-            state.popup_state.show_popup = false;
-            state.popup_state.message_type = MessageType::None
-        }
+    match state.popup_state.message_type {
+        MessageType::Error => match key_event {
+            KeyEvent {
+                code: KeyCode::Enter,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                state.popup_state.message.clear();
+                state.popup_state.show_popup = false;
+                state.popup_state.message_type = MessageType::None
+            }
+            _ => {}
+        },
 
-        _ => {}
+        MessageType::Confirmation => match key_event {
+            KeyEvent {
+                code: KeyCode::Enter,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                match state
+                    .commands
+                    .remove(&state.ops_context.get_current_command().unwrap())
+                {
+                    Ok(_) => {
+                        info!("the command was removed");
+                        state.popup_state.message.clear();
+                        state.popup_state.show_popup = false;
+                        state.popup_state.message_type = MessageType::None;
+                        state.popup_state.answer = Answer::None;
+                    }
+                    Err(error) => {
+                        state.popup_state.message = error.to_string();
+                        state.popup_state.message_type = MessageType::Error;
+                        state.popup_state.answer = Answer::None;
+                    }
+                }
+            }
+            KeyEvent {
+                code: KeyCode::Esc | KeyCode::Char('q'),
+                modifiers: KeyModifiers::NONE,
+            } => {
+                state.popup_state.message.clear();
+                state.popup_state.show_popup = false;
+                state.popup_state.message_type = MessageType::None
+            }
+            _ => {}
+        },
+        MessageType::None => {}
     }
 }

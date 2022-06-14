@@ -77,38 +77,9 @@ impl Commands {
             .any(|c| c.alias == command_item.alias && c.namespace.eq(&command_item.namespace))
     }
 
-    pub fn remove(&mut self, alias: String, namespace: Option<String>) -> Result<String> {
-        let commands = self
-            .items
-            .clone()
-            .into_iter()
-            .filter(|command| {
-                if namespace.is_some() {
-                    command.alias.eq(&alias) && command.namespace.eq(namespace.as_ref().unwrap())
-                } else {
-                    command.alias.eq(&alias)
-                }
-            })
-            .collect::<Vec<CommandItem>>();
-        if commands.is_empty() {
-            return Err(anyhow!("Cannot find command with alias {alias}"));
-        } else if commands.len() > 1 {
-            return Err(anyhow!(
-                "There are multiples commands with alias \"{alias}\" in differents namespaces:\n{}\n\
-            Please try again with the [namespace] flag",
-                commands
-                    .into_iter()
-                    .map(|c| format!(" - alias '{}' in namespace {}", alias, c.namespace))
-                    .collect::<Vec<String>>()
-                    .join("\n")
-            ));
-        }
+    pub fn remove(&mut self, command_item: &CommandItem) -> Result<String> {
         self.items.retain(|command| {
-            if namespace.is_some() {
-                !command.alias.eq(&alias) || !namespace.as_ref().unwrap().eq(&command.namespace)
-            } else {
-                !command.alias.eq(&alias)
-            }
+            !command.alias.eq(&command_item.alias) || !command_item.namespace.eq(&command.namespace)
         });
         self.save_items()?;
         Ok(String::from("Alias removed"))
@@ -133,74 +104,37 @@ impl Commands {
         Ok(commands)
     }
 
-    pub fn exec_alias(
-        &mut self,
-        alias: String,
-        mut args: Vec<String>,
-        namespace: Option<String>,
-    ) -> Result<String> {
-        Ok(String::from("ok"))
-        // match self.command_from_alias(&alias, namespace) {
-        //     Ok(command) => {
-        //         args.insert(0, command);
+    // pub fn exec_alias(
+    //     &mut self,
+    //     alias: String,
+    //     mut args: Vec<String>,
+    //     namespace: Option<String>,
+    // ) -> Result<String> {
+    //     Ok(String::from("ok"))
+    // match self.command_from_alias(&alias, namespace) {
+    //     Ok(command) => {
+    //         args.insert(0, command);
 
-        //         let shell = env::var("SHELL").unwrap_or(String::from("sh"));
-        //         println!(" - running {} {}", shell, &args.clone().join(" "));
-        //         let output = std::process::Command::new(shell)
-        //             .arg("-c")
-        //             .arg(args.join(" "))
-        //             .output();
+    //         let shell = env::var("SHELL").unwrap_or(String::from("sh"));
+    //         println!(" - running {} {}", shell, &args.clone().join(" "));
+    //         let output = std::process::Command::new(shell)
+    //             .arg("-c")
+    //             .arg(args.join(" "))
+    //             .output();
 
-        //         match output {
-        //             Ok(value) => {
-        //                 if value.status.success() {
-        //                     Ok(String::from_utf8_lossy(&value.stdout).to_string())
-        //                 } else {
-        //                     Err(anyhow!(String::from_utf8_lossy(&value.stderr).to_string()))
-        //                 }
-        //             }
-        //             Err(error) => Err(anyhow!(error.to_string())),
-        //         }
-        //     }
-        //     Err(error) => Err(anyhow!(error.to_string())),
-        // }
-    }
-
-    pub fn commands_by_tag(&self, tag: String) -> Result<Vec<CommandItem>> {
-        let commands: Vec<CommandItem> = self
-            .items
-            .clone()
-            .into_iter()
-            .filter(|c| c.tags.is_some() && c.tags.as_ref().unwrap().contains(&tag))
-            .collect();
-
-        if commands.is_empty() {
-            Err(anyhow!("No commands found for tag \"{tag}\""))
-        } else {
-            Ok(commands)
-        }
-    }
-
-    // pub fn info(&self) {
-    //     let commands = self.clone().items.into_iter().collect::<Vec<_>>().len();
-    //     let tags = self
-    //         .clone()
-    //         .items
-    //         .into_iter()
-    //         .filter(|item| item.tags.is_some())
-    //         .flat_map(|item| item.tags.unwrap())
-    //         .collect::<HashSet<String>>()
-    //         .len();
-    //     let namespaces = self.clone().namespaces().len();
-    //     let aliases = self
-    //         .clone()
-    //         .items
-    //         .into_iter()
-    //         .filter(|item| item.alias.is_some())
-    //         .map(|item| item.alias.unwrap())
-    //         .collect::<Vec<String>>()
-    //         .len();
-    //     println!("commands: {commands}\nnamespaces: {namespaces}\naliases: {aliases}\ntags: {tags}")
+    //         match output {
+    //             Ok(value) => {
+    //                 if value.status.success() {
+    //                     Ok(String::from_utf8_lossy(&value.stdout).to_string())
+    //                 } else {
+    //                     Err(anyhow!(String::from_utf8_lossy(&value.stderr).to_string()))
+    //                 }
+    //             }
+    //             Err(error) => Err(anyhow!(error.to_string())),
+    //         }
+    //     }
+    //     Err(error) => Err(anyhow!(error.to_string())),
+    // }
     // }
 
     fn save_items(&self) -> Result<()> {
@@ -209,9 +143,5 @@ impl Commands {
 
     pub fn get_command_item_ref(&self, idx: usize) -> Option<&CommandItem> {
         self.items.get(idx)
-    }
-
-    pub fn get_items_mut_ref(&mut self) -> &mut Vec<CommandItem> {
-        &mut self.items
     }
 }

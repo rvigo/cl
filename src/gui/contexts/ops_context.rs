@@ -194,13 +194,9 @@ impl OpsContext {
         self.items
             .iter_mut()
             .for_each(|item| match item.name.as_str() {
-                "alias" => {
-                    info!("setting input alias to {}", current_command.alias);
-                    item.get_mut_ref().input = current_command.alias.clone();
-                }
-                "command" => {
-                    item.get_mut_ref().input = current_command.command.clone();
-                }
+                "alias" => item.get_mut_ref().input = current_command.alias.clone(),
+                "command" => item.get_mut_ref().input = current_command.command.clone(),
+                "namespace" => item.get_mut_ref().input = current_command.namespace.clone(),
                 "description" => {
                     item.get_mut_ref().input = current_command
                         .description
@@ -216,26 +212,20 @@ impl OpsContext {
                         .join(",")
                         .to_string();
                 }
-                "namespace" => item.get_mut_ref().input = current_command.namespace.clone(),
+
                 _ => {}
             });
     }
 
     pub fn edit_command(&mut self) -> Result<CommandItem> {
         let mut command_item = self.get_current_command().unwrap();
-        self.items.clone().iter().for_each(|item| {
-            info!(
-                "command item {} field will be set to {}",
-                item.name, item.input
-            );
-
-            match item.name.as_str() {
-                "alias" => {
-                    command_item.alias = item.input.clone();
-                }
-                "command" => {
-                    command_item.command = item.input.clone();
-                }
+        self.items
+            .clone()
+            .iter()
+            .for_each(|item| match item.name.as_str() {
+                "alias" => command_item.alias = item.input.clone(),
+                "command" => command_item.command = item.input.clone(),
+                "namespace" => command_item.namespace = item.input.clone(),
                 "description" => {
                     if item.input.is_empty() {
                         command_item.description = None;
@@ -255,16 +245,11 @@ impl OpsContext {
                         );
                     }
                 }
-                "namespace" => {
-                    command_item.namespace = item.input.clone();
-                }
+
                 _ => {}
-            }
-            info!("command after edition: {:#?}", command_item);
-        });
+            });
         match command_item.clone().validate() {
             Ok(_) => {
-                info!("cleaning inputs after validation if everything went ok");
                 self.clear_inputs();
             }
             Err(error) => return Err(anyhow!(error)),

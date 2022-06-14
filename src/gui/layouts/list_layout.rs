@@ -1,8 +1,10 @@
 use crate::{
     command_item::CommandItem,
-    gui::{contexts::state::State, layouts::help_layout::render_helper_footer},
+    gui::{
+        contexts::{popup_state::Answer, state::State},
+        layouts::help_layout::render_helper_footer,
+    },
 };
-use log::info;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout},
@@ -11,6 +13,8 @@ use tui::{
     widgets::{Block, BorderType, Borders, List, ListItem, Paragraph, Tabs, Wrap},
     Frame,
 };
+
+use super::popup_layout::render_popup;
 
 pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let chunks = Layout::default()
@@ -31,7 +35,6 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .commands_state
         .selected()
         .expect("a command should always be selected");
-    info!("got idx {idx}");
 
     let mut selected_command: CommandItem = state.filtered_commands().get(idx).unwrap().clone();
     state
@@ -70,6 +73,14 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     frame.render_widget(tags, command_detail_chunks[1]);
     frame.render_widget(description, chunks[1]);
     frame.render_widget(render_helper_footer(), chunks[3]);
+
+    if state.popup_state.show_popup {
+        match state.popup_state.answer {
+            Answer::None => render_popup(frame, state),
+            Answer::Ok => state.popup_state.answer = Answer::Ok,
+            Answer::Cancel => state.popup_state.answer = Answer::Cancel,
+        }
+    }
 }
 
 fn create_tab_menu<'a>(state: &State) -> Tabs<'a> {
