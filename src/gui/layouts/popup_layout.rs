@@ -3,7 +3,8 @@ use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
-    widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
+    text::{Span, Spans},
+    widgets::{Block, BorderType, Borders, Clear, Paragraph, Tabs, Wrap},
     Frame,
 };
 
@@ -21,61 +22,40 @@ pub fn render_popup<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State) {
                 .border_type(BorderType::Plain),
         );
 
-    let area = centered_rect(50, 50, frame.size());
+    let area = centered_rect(45, 45, frame.size());
 
     frame.render_widget(Clear, area[1]);
     frame.render_widget(block, area[1]);
+
     match state.popup_state.message_type {
-        MessageType::Error => draw_ok_button(frame, area[1]),
-        MessageType::Confirmation => {
-            draw_ok_button(frame, area[1]);
-            draw_cancel_button(frame, area[1])
-        }
+        MessageType::Error => draw_option_buttons(frame, area[1], vec![String::from("Ok")]),
+        MessageType::Confirmation => draw_option_buttons(
+            frame,
+            area[1],
+            vec![String::from("Ok"), String::from("Cancel")],
+        ),
         MessageType::None => {}
     }
 }
-fn draw_ok_button<B: Backend>(frame: &mut Frame<B>, area: Rect) {
-    let ok_layout = Layout::default()
+
+fn draw_option_buttons<B: Backend>(frame: &mut Frame<B>, area: Rect, options: Vec<String>) {
+    let layout = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints(
-            [
-                Constraint::Percentage(25),
-                Constraint::Percentage(25),
-                Constraint::Percentage(25),
-                Constraint::Percentage(25),
-            ]
-            .as_ref(),
-        )
-        .margin(1)
-        .split(create_layout(area)[1]);
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+        .split(create_layout(area)[3]);
 
-    let ok_button_widget = Paragraph::new("Ok <Enter>")
+    let tab_menu: Vec<Spans> = options
+        .into_iter()
+        .map(|tab| Spans::from(vec![Span::styled(tab.clone(), Style::default())]))
+        .collect();
+
+    let tab = Tabs::new(tab_menu)
+        .block(Block::default().borders(Borders::NONE))
         .style(Style::default())
-        .alignment(Alignment::Center)
-        .block(Block::default().borders(Borders::NONE));
-    frame.render_widget(ok_button_widget, ok_layout[2]);
-}
+        .highlight_style(Style::default().fg(Color::Rgb(201, 165, 249)))
+        .divider(Span::raw(""));
 
-fn draw_cancel_button<B: Backend>(frame: &mut Frame<B>, area: Rect) {
-    let cancel_layout = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(
-            [
-                Constraint::Percentage(25),
-                Constraint::Percentage(25),
-                Constraint::Percentage(25),
-                Constraint::Percentage(25),
-            ]
-            .as_ref(),
-        )
-        .margin(1)
-        .split(create_layout(area)[1]);
-
-    let cancel_button_widget = Paragraph::new("Cancel <Esc>")
-        .style(Style::default())
-        .alignment(Alignment::Center)
-        .block(Block::default().borders(Borders::NONE));
-    frame.render_widget(cancel_button_widget, cancel_layout[3]);
+    frame.render_widget(tab, layout[1]);
 }
 
 fn create_layout(area: Rect) -> Vec<Rect> {
@@ -83,9 +63,10 @@ fn create_layout(area: Rect) -> Vec<Rect> {
         .direction(Direction::Vertical)
         .constraints(
             [
-                Constraint::Percentage(33),
-                Constraint::Percentage(33),
-                Constraint::Percentage(33),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
             ]
             .as_ref(),
         )
@@ -93,8 +74,16 @@ fn create_layout(area: Rect) -> Vec<Rect> {
 
     Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-        .split(layout[2])
+        .constraints(
+            [
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+            ]
+            .as_ref(),
+        )
+        .split(layout[3])
 }
 
 fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Vec<Rect> {
