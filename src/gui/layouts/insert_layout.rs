@@ -195,7 +195,7 @@ fn render_description_input_widget<'a, B: Backend>(
 fn get_style(state: &mut State, component_name: &str) -> Style {
     if state.ops_context.is_in_focus(component_name) {
         Style::default()
-            .fg(Color::Rgb(229, 229, 229))
+            .fg(Color::Black)
             .bg(Color::Rgb(201, 165, 249))
     } else {
         Style::default().fg(Color::Rgb(229, 229, 229))
