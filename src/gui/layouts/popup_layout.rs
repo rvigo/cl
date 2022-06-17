@@ -1,15 +1,18 @@
-use crate::gui::contexts::{popup_state::MessageType, state::State};
+use crate::gui::contexts::{
+    popup::{Answer, MessageType},
+    state::State,
+};
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, BorderType, Borders, Clear, Paragraph, Tabs, Wrap},
     Frame,
 };
 
 pub fn render_popup<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State) {
-    let block = Paragraph::new(state.popup_state.message.clone())
+    let block = Paragraph::new(state.popup.message.clone())
         .style(Style::default().fg(Color::Rgb(229, 229, 229)))
         .alignment(Alignment::Left)
         .wrap(Wrap { trim: true })
@@ -17,7 +20,7 @@ pub fn render_popup<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State) {
             Block::default()
                 .borders(Borders::ALL)
                 .style(Style::default())
-                .title(state.popup_state.message_type.to_string())
+                .title(state.popup.message_type.to_string())
                 .title_alignment(Alignment::Left)
                 .border_type(BorderType::Plain),
         );
@@ -27,32 +30,43 @@ pub fn render_popup<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     frame.render_widget(Clear, area[1]);
     frame.render_widget(block, area[1]);
 
-    match state.popup_state.message_type {
-        MessageType::Error => draw_option_buttons(frame, area[1], vec![String::from("Ok")]),
-        MessageType::Confirmation => draw_option_buttons(
-            frame,
-            area[1],
-            vec![String::from("Ok"), String::from("Cancel")],
-        ),
+    match state.popup.message_type {
+        MessageType::Error => {
+            state.popup.options = vec![Answer::Ok];
+            draw_option_buttons(frame, area[1], state)
+        }
+
+        MessageType::Confirmation => {
+            state.popup.options = vec![Answer::Ok, Answer::Cancel];
+            draw_option_buttons(frame, area[1], state)
+        }
         MessageType::None => {}
     }
 }
 
-fn draw_option_buttons<B: Backend>(frame: &mut Frame<B>, area: Rect, options: Vec<String>) {
+fn draw_option_buttons<B: Backend>(frame: &mut Frame<B>, area: Rect, state: &mut State) {
     let layout = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
         .split(create_layout(area)[3]);
 
-    let tab_menu: Vec<Spans> = options
+    let tab_menu: Vec<Spans> = state
+        .popup
+        .options
+        .clone()
         .into_iter()
-        .map(|tab| Spans::from(vec![Span::styled(tab.clone(), Style::default())]))
+        .map(|tab| Spans::from(vec![Span::styled(tab.to_string(), Style::default())]))
         .collect();
 
     let tab = Tabs::new(tab_menu)
-        .block(Block::default().borders(Borders::NONE))
+        .block(Block::default())
         .style(Style::default())
-        .highlight_style(Style::default().fg(Color::Rgb(201, 165, 249)))
+        .select(state.popup.options_state.selected().unwrap())
+        .highlight_style(
+            Style::default()
+                .fg(Color::Rgb(201, 165, 249))
+                .add_modifier(Modifier::UNDERLINED),
+        )
         .divider(Span::raw(""));
 
     frame.render_widget(tab, layout[1]);

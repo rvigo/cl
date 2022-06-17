@@ -1,4 +1,4 @@
-use super::{ops_context::OpsContext, popup_state::PopUpState};
+use super::{ops_context::OpsContext, popup::PopUp};
 use crate::{command_item::CommandItem, commands::Commands, gui::layouts::view_mode::ViewMode};
 use tui::widgets::ListState;
 
@@ -12,7 +12,7 @@ pub struct State {
     pub current_namespace: String,
     pub view_mode: ViewMode,
     pub ops_context: OpsContext,
-    pub popup_state: PopUpState,
+    pub popup: PopUp,
 }
 
 impl State {
@@ -35,7 +35,7 @@ impl State {
             current_namespace: String::from("All"),
             view_mode: ViewMode::List,
             ops_context: OpsContext::new(insert_menu_items),
-            popup_state: PopUpState::init(),
+            popup: PopUp::init(),
         };
         state.load_namespaces();
         state.commands_state.select(Some(0));
@@ -46,6 +46,7 @@ impl State {
             Some(value) => Some(value.to_owned()),
             None => None,
         };
+        state.popup.options_state.select(Some(0));
 
         state
     }

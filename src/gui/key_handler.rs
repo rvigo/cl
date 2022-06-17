@@ -3,7 +3,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use log::info;
 
 use super::{
-    contexts::popup_state::{Answer, MessageType},
+    contexts::popup::{Answer, MessageType},
     layouts::view_mode::ViewMode,
 };
 
@@ -16,7 +16,7 @@ pub fn handle(key_event: KeyEvent, state: &mut State) {
 }
 
 pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
-    if state.popup_state.show_popup {
+    if state.popup.popup {
         handle_popup(key_event, state)
     } else {
         match key_event {
@@ -60,15 +60,15 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
                         state.view_mode = ViewMode::List
                     }
                     Err(error) => {
-                        state.popup_state.message_type = MessageType::Error;
-                        state.popup_state.message = error.to_string();
-                        state.popup_state.show_popup = true
+                        state.popup.message_type = MessageType::Error;
+                        state.popup.message = error.to_string();
+                        state.popup.popup = true
                     }
                 },
                 Err(error) => {
-                    state.popup_state.message_type = MessageType::Error;
-                    state.popup_state.message = error.to_string();
-                    state.popup_state.show_popup = true
+                    state.popup.message_type = MessageType::Error;
+                    state.popup.message = error.to_string();
+                    state.popup.popup = true
                 }
             },
             _ => {}
@@ -77,7 +77,7 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
 }
 
 pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
-    if state.popup_state.show_popup {
+    if state.popup.popup {
         handle_popup(key_event, state)
     } else {
         match key_event {
@@ -131,15 +131,15 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
                             state.view_mode = ViewMode::List
                         }
                         Err(error) => {
-                            state.popup_state.message_type = MessageType::Error;
-                            state.popup_state.message = error.to_string();
-                            state.popup_state.show_popup = true
+                            state.popup.message_type = MessageType::Error;
+                            state.popup.message = error.to_string();
+                            state.popup.popup = true
                         }
                     },
                     Err(error) => {
-                        state.popup_state.message_type = MessageType::Error;
-                        state.popup_state.message = error.to_string();
-                        state.popup_state.show_popup = true
+                        state.popup.message_type = MessageType::Error;
+                        state.popup.message = error.to_string();
+                        state.popup.popup = true
                     }
                 }
             }
@@ -149,7 +149,7 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
 }
 
 pub fn handle_list(key_event: KeyEvent, state: &mut State) {
-    if state.popup_state.show_popup {
+    if state.popup.popup {
         handle_popup(key_event, state)
     } else {
         match key_event {
@@ -216,10 +216,9 @@ pub fn handle_list(key_event: KeyEvent, state: &mut State) {
                 modifiers: KeyModifiers::NONE,
             } => {
                 info!("showing warning popup");
-                state.popup_state.message =
-                    String::from("Are you sure you want to delete the command?");
-                state.popup_state.show_popup = true;
-                state.popup_state.message_type = MessageType::Confirmation
+                state.popup.message = String::from("Are you sure you want to delete the command?");
+                state.popup.popup = true;
+                state.popup.message_type = MessageType::Confirmation
             }
 
             _ => {}
@@ -228,49 +227,75 @@ pub fn handle_list(key_event: KeyEvent, state: &mut State) {
 }
 
 fn handle_popup(key_event: KeyEvent, state: &mut State) {
-    match state.popup_state.message_type {
+    match state.popup.message_type {
         MessageType::Error => match key_event {
             KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
             } => {
-                state.popup_state.message.clear();
-                state.popup_state.show_popup = false;
-                state.popup_state.message_type = MessageType::None
+                state.popup.message.clear();
+                state.popup.popup = false;
+                state.popup.message_type = MessageType::None
             }
             _ => {}
         },
 
         MessageType::Confirmation => match key_event {
             KeyEvent {
+                code: KeyCode::Right,
+                modifiers: KeyModifiers::NONE,
+            } => state.popup.next(),
+            KeyEvent {
+                code: KeyCode::Left,
+                modifiers: KeyModifiers::NONE,
+            } => state.popup.previous(),
+            KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
             } => {
-                match state
-                    .commands
-                    .remove(&state.ops_context.get_current_command().unwrap())
-                {
-                    Ok(_) => {
-                        info!("the command was removed");
-                        state.popup_state.message.clear();
-                        state.popup_state.show_popup = false;
-                        state.popup_state.message_type = MessageType::None;
-                        state.popup_state.answer = Answer::None;
+                state.popup.answer = state
+                    .popup
+                    .options
+                    .get(state.popup.options_state.selected().unwrap())
+                    .cloned()
+                    .unwrap();
+                match state.popup.answer {
+                    Answer::Ok => {
+                        info!("answer was ok");
+                        match state
+                            .commands
+                            .remove(&state.ops_context.get_current_command().unwrap())
+                        {
+                            Ok(_) => {
+                                info!("the command was removed");
+                                state.popup.message.clear();
+                                state.popup.popup = false;
+                                state.popup.message_type = MessageType::None;
+                                state.popup.answer = Answer::None;
+                            }
+                            Err(error) => {
+                                state.popup.message = error.to_string();
+                                state.popup.message_type = MessageType::Error;
+                                state.popup.answer = Answer::None;
+                            }
+                        }
                     }
-                    Err(error) => {
-                        state.popup_state.message = error.to_string();
-                        state.popup_state.message_type = MessageType::Error;
-                        state.popup_state.answer = Answer::None;
+                    Answer::Cancel => {
+                        info!("answer was cancel");
+                        state.popup.message.clear();
+                        state.popup.popup = false;
+                        state.popup.message_type = MessageType::None
                     }
+                    _ => {}
                 }
             }
             KeyEvent {
                 code: KeyCode::Esc | KeyCode::Char('q'),
                 modifiers: KeyModifiers::NONE,
             } => {
-                state.popup_state.message.clear();
-                state.popup_state.show_popup = false;
-                state.popup_state.message_type = MessageType::None
+                state.popup.message.clear();
+                state.popup.popup = false;
+                state.popup.message_type = MessageType::None
             }
             _ => {}
         },

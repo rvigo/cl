@@ -1,7 +1,7 @@
 use crate::{
     command_item::CommandItem,
     gui::{
-        contexts::{popup_state::Answer, state::State},
+        contexts::{popup::Answer, state::State},
         layouts::help_layout::render_helper_footer,
     },
 };
@@ -74,11 +74,11 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     frame.render_widget(description, chunks[1]);
     frame.render_widget(render_helper_footer(), chunks[3]);
 
-    if state.popup_state.show_popup {
-        match state.popup_state.answer {
+    if state.popup.popup {
+        match state.popup.answer {
             Answer::None => render_popup(frame, state),
-            Answer::Ok => state.popup_state.answer = Answer::Ok,
-            Answer::Cancel => state.popup_state.answer = Answer::Cancel,
+            Answer::Ok => state.popup.answer = Answer::Ok,
+            Answer::Cancel => state.popup.answer = Answer::Cancel,
         }
     }
 }
