@@ -6,7 +6,7 @@ use tui::widgets::ListState;
 pub enum MessageType {
     None,
     Error,
-    Confirmation,
+    Warning,
 }
 
 #[derive(Debug, Clone)]
@@ -48,6 +48,15 @@ impl PopUp {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.message.clear();
+        self.popup = false;
+        self.message_type = MessageType::None;
+        self.answer = Answer::None;
+        self.options.clear();
+        self.options_state.select(Some(0));
+    }
+
     pub fn next(&mut self) {
         let i = match self.options_state.selected() {
             Some(i) => {
@@ -84,7 +93,7 @@ impl fmt::Display for MessageType {
         match self {
             MessageType::None => write!(f, ""),
             MessageType::Error => write!(f, " Error "),
-            MessageType::Confirmation => write!(f, " Warning "),
+            MessageType::Warning => write!(f, " Warning "),
         }
     }
 }

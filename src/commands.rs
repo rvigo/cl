@@ -63,7 +63,7 @@ impl Commands {
         }
         self.items.retain(|command| {
             !command.alias.eq(&current_command_item.alias)
-                || !command.namespace.eq(&current_command_item.namespace)
+                && !command.namespace.eq(&current_command_item.namespace)
         });
         self.items.push(edited_command_item.clone());
         self.save_items()?;
@@ -90,12 +90,13 @@ impl Commands {
     }
 
     pub fn commands_from_namespace(&self, namespace: String) -> Result<Vec<CommandItem>> {
-        let commands: Vec<CommandItem> = self
+        let mut commands: Vec<CommandItem> = self
             .items
             .clone()
             .into_iter()
             .filter(|command| command.namespace == namespace)
             .collect();
+        commands.sort();
         if commands.is_empty() {
             return Err(anyhow!(
                 "There are no commands to show for namespace \"{namespace}\"."
@@ -137,7 +138,8 @@ impl Commands {
     // }
     // }
 
-    fn save_items(&self) -> Result<()> {
+    fn save_items(&mut self) -> Result<()> {
+        self.items.sort();
         file_service::write_to_file(self.items.clone())
     }
 

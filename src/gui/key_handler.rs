@@ -218,7 +218,7 @@ pub fn handle_list(key_event: KeyEvent, state: &mut State) {
                 info!("showing warning popup");
                 state.popup.message = String::from("Are you sure you want to delete the command?");
                 state.popup.popup = true;
-                state.popup.message_type = MessageType::Confirmation
+                state.popup.message_type = MessageType::Warning
             }
 
             _ => {}
@@ -233,14 +233,12 @@ fn handle_popup(key_event: KeyEvent, state: &mut State) {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
             } => {
-                state.popup.message.clear();
-                state.popup.popup = false;
-                state.popup.message_type = MessageType::None
+                state.popup.clear();
             }
             _ => {}
         },
 
-        MessageType::Confirmation => match key_event {
+        MessageType::Warning => match key_event {
             KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
@@ -268,23 +266,16 @@ fn handle_popup(key_event: KeyEvent, state: &mut State) {
                         {
                             Ok(_) => {
                                 info!("the command was removed");
-                                state.popup.message.clear();
-                                state.popup.popup = false;
-                                state.popup.message_type = MessageType::None;
-                                state.popup.answer = Answer::None;
+                                state.popup.clear()
                             }
                             Err(error) => {
+                                state.popup.clear();
                                 state.popup.message = error.to_string();
-                                state.popup.message_type = MessageType::Error;
-                                state.popup.answer = Answer::None;
                             }
                         }
                     }
                     Answer::Cancel => {
-                        info!("answer was cancel");
-                        state.popup.message.clear();
-                        state.popup.popup = false;
-                        state.popup.message_type = MessageType::None
+                        state.popup.clear();
                     }
                     _ => {}
                 }
@@ -293,9 +284,7 @@ fn handle_popup(key_event: KeyEvent, state: &mut State) {
                 code: KeyCode::Esc | KeyCode::Char('q'),
                 modifiers: KeyModifiers::NONE,
             } => {
-                state.popup.message.clear();
-                state.popup.popup = false;
-                state.popup.message_type = MessageType::None
+                state.popup.clear();
             }
             _ => {}
         },

@@ -25,7 +25,6 @@ impl State {
             (String::from("description"), false),
             (String::from("tags"), false),
         ];
-
         let mut state = State {
             should_quit: false,
             commands_state: ListState::default(),
@@ -52,8 +51,10 @@ impl State {
     }
 
     pub fn load_namespaces(&mut self) {
+        self.namespace_state.select(Some(0));
         let mut ns = self.commands.namespaces();
         ns.insert(0, String::from("All"));
+        self.current_namespace = String::from("All");
         self.namespaces = ns;
     }
 

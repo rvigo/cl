@@ -3,7 +3,6 @@ use super::{
     popup_layout::render_popup,
 };
 use crate::gui::contexts::state::State;
-use log::info;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -141,15 +140,6 @@ fn render_commannd_input_widget<'a, B: Backend>(
 
 fn render_alias_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State, area: Rect) {
     let component_name = "alias";
-    let input = state
-        .get_mut_ref()
-        .ops_context
-        .get_component_input(component_name);
-    let current_command = &state.ops_context.current_command;
-    match current_command {
-        Some(c) => info!("selected command ({:#?}) alias input: {}", c, input),
-        None => info!("current_command does not have a selection"),
-    };
     let widget = Paragraph::new(
         state
             .get_mut_ref()

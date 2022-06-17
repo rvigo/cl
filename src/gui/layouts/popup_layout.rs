@@ -36,7 +36,7 @@ pub fn render_popup<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State) {
             draw_option_buttons(frame, area[1], state)
         }
 
-        MessageType::Confirmation => {
+        MessageType::Warning => {
             state.popup.options = vec![Answer::Ok, Answer::Cancel];
             draw_option_buttons(frame, area[1], state)
         }
@@ -45,10 +45,7 @@ pub fn render_popup<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State) {
 }
 
 fn draw_option_buttons<B: Backend>(frame: &mut Frame<B>, area: Rect, state: &mut State) {
-    let layout = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-        .split(create_layout(area)[3]);
+    let layout = create_buttom_area(area, state);
 
     let tab_menu: Vec<Spans> = state
         .popup
@@ -59,7 +56,7 @@ fn draw_option_buttons<B: Backend>(frame: &mut Frame<B>, area: Rect, state: &mut
         .collect();
 
     let tab = Tabs::new(tab_menu)
-        .block(Block::default())
+        .block(Block::default().borders(Borders::NONE))
         .style(Style::default())
         .select(state.popup.options_state.selected().unwrap())
         .highlight_style(
@@ -69,12 +66,35 @@ fn draw_option_buttons<B: Backend>(frame: &mut Frame<B>, area: Rect, state: &mut
         )
         .divider(Span::raw(""));
 
-    frame.render_widget(tab, layout[1]);
+    frame.render_widget(tab, layout[layout.len() - 1]);
 }
 
-fn create_layout(area: Rect) -> Vec<Rect> {
+fn create_buttom_area(area: Rect, state: &mut State) -> Vec<Rect> {
     let layout = Layout::default()
-        .direction(Direction::Vertical)
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(100)].as_ref())
+        .split(create_buttom_layout(area)[4]);
+
+    let constraints = if state.popup.options.len() == 2 {
+        vec![Constraint::Percentage(50), Constraint::Percentage(50)]
+    } else {
+        vec![
+            Constraint::Percentage(25),
+            Constraint::Percentage(25),
+            Constraint::Percentage(25),
+            Constraint::Percentage(25),
+        ]
+    };
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(constraints.as_ref())
+        .split(layout[0])
+}
+
+// uses the lower right space to render buttons
+fn create_buttom_layout(area: Rect) -> Vec<Rect> {
+    let layout = Layout::default()
+        .direction(Direction::Horizontal)
         .constraints(
             [
                 Constraint::Percentage(25),
@@ -87,13 +107,14 @@ fn create_layout(area: Rect) -> Vec<Rect> {
         .split(area);
 
     Layout::default()
-        .direction(Direction::Horizontal)
+        .direction(Direction::Vertical)
         .constraints(
             [
-                Constraint::Percentage(25),
-                Constraint::Percentage(25),
-                Constraint::Percentage(25),
-                Constraint::Percentage(25),
+                Constraint::Percentage(20),
+                Constraint::Percentage(20),
+                Constraint::Percentage(20),
+                Constraint::Percentage(20),
+                Constraint::Percentage(20),
             ]
             .as_ref(),
         )
