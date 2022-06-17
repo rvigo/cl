@@ -31,6 +31,12 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         )
         .split(frame.size());
 
+    let main_block = Block::default()
+        .borders(Borders::ALL)
+        .style(Style::default())
+        .title(" Command List ")
+        .border_type(BorderType::Plain);
+
     let idx = state
         .commands_state
         .selected()
@@ -38,7 +44,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
 
     let mut selected_command: CommandItem = state.filtered_commands().get(idx).unwrap().clone();
     state
-        .ops_context
+        .context
         .set_current_command(Some(selected_command.clone()));
 
     let tags_str = selected_command.tags_str();
@@ -67,6 +73,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
 
     let command_state = state.get_command_state_mut_ref();
 
+    frame.render_widget(main_block, frame.size());
     frame.render_widget(tabs, chunks[0]);
     frame.render_stateful_widget(commands, central_chunk[0], command_state);
     frame.render_widget(command, command_detail_chunks[0]);

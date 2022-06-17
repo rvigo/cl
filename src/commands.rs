@@ -45,6 +45,7 @@ impl Commands {
         self.save_items()?;
         Ok(())
     }
+
     pub fn add_edited_command(
         &mut self,
         edited_command_item: &CommandItem,

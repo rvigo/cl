@@ -31,6 +31,7 @@ impl Default for CommandItemBuilder {
         }
     }
 }
+
 impl CommandItemBuilder {
     pub fn namespace(&mut self, namespace: String) -> &mut CommandItemBuilder {
         self.namespace = namespace;

@@ -31,29 +31,29 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
                 code: KeyCode::Tab,
                 modifiers: KeyModifiers::NONE,
             } => {
-                state.ops_context.next();
+                state.context.next();
             }
 
             KeyEvent {
                 code: KeyCode::BackTab,
                 modifiers: KeyModifiers::SHIFT,
             } => {
-                state.ops_context.previous();
+                state.context.previous();
             }
             KeyEvent {
                 code: KeyCode::Char(c),
                 modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-            } => state.ops_context.get_current_in_focus().push(c),
+            } => state.context.get_current_in_focus().push(c),
             KeyEvent {
                 code: KeyCode::Backspace,
                 modifiers: KeyModifiers::NONE,
             } => {
-                state.ops_context.get_current_in_focus().pop();
+                state.context.get_current_in_focus().pop();
             }
             KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
-            } => match state.ops_context.build_command() {
+            } => match state.context.build_command() {
                 Ok(command) => match state.commands.add_command(&command) {
                     Ok(_) => {
                         state.reload_namespaces();
@@ -92,7 +92,7 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
                 code: KeyCode::Right | KeyCode::Tab,
                 modifiers: KeyModifiers::NONE,
             } => {
-                state.ops_context.next();
+                state.context.next();
             }
             KeyEvent {
                 code: KeyCode::Left,
@@ -102,24 +102,24 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
                 code: KeyCode::BackTab,
                 modifiers: KeyModifiers::SHIFT,
             } => {
-                state.ops_context.previous();
+                state.context.previous();
             }
             KeyEvent {
                 code: KeyCode::Char(c),
                 modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-            } => state.ops_context.get_current_in_focus().push(c),
+            } => state.context.get_current_in_focus().push(c),
             KeyEvent {
                 code: KeyCode::Backspace,
                 modifiers: KeyModifiers::NONE,
             } => {
-                state.ops_context.get_current_in_focus().pop();
+                state.context.get_current_in_focus().pop();
             }
             KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
             } => {
-                let current_command = state.ops_context.get_current_command().unwrap();
-                let edited_command = state.ops_context.edit_command();
+                let current_command = state.context.get_current_command().unwrap();
+                let edited_command = state.context.edit_command();
 
                 match edited_command {
                     Ok(command) => match state
@@ -205,10 +205,7 @@ pub fn handle_list(key_event: KeyEvent, state: &mut State) {
             } => {
                 info!("changing ViewMode to EDIT");
                 state.view_mode = ViewMode::Edit;
-                state
-                    .get_mut_ref()
-                    .ops_context
-                    .set_selected_command_inputs();
+                state.get_mut_ref().context.set_selected_command_inputs();
             }
 
             KeyEvent {
@@ -262,7 +259,7 @@ fn handle_popup(key_event: KeyEvent, state: &mut State) {
                         info!("answer was ok");
                         match state
                             .commands
-                            .remove(&state.ops_context.get_current_command().unwrap())
+                            .remove(&state.context.get_current_command().unwrap())
                         {
                             Ok(_) => {
                                 info!("the command was removed");

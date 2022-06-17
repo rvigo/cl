@@ -1,4 +1,4 @@
-use super::{ops_context::OpsContext, popup::PopUp};
+use super::{context::Context, popup::PopUp};
 use crate::{command_item::CommandItem, commands::Commands, gui::layouts::view_mode::ViewMode};
 use tui::widgets::ListState;
 
@@ -11,7 +11,7 @@ pub struct State {
     pub namespaces: Vec<String>,
     pub current_namespace: String,
     pub view_mode: ViewMode,
-    pub ops_context: OpsContext,
+    pub context: Context,
     pub popup: PopUp,
 }
 
@@ -33,15 +33,14 @@ impl State {
             namespaces: Default::default(),
             current_namespace: String::from("All"),
             view_mode: ViewMode::List,
-            ops_context: OpsContext::new(insert_menu_items),
+            context: Context::new(insert_menu_items),
             popup: PopUp::init(),
         };
         state.load_namespaces();
         state.commands_state.select(Some(0));
         state.namespace_state.select(Some(0));
-        state.ops_context.focus_state.select(Some(0));
-        state.ops_context.current_command = match commands.clone().get_ref().get_command_item_ref(0)
-        {
+        state.context.focus_state.select(Some(0));
+        state.context.current_command = match commands.clone().get_ref().get_command_item_ref(0) {
             Some(value) => Some(value.to_owned()),
             None => None,
         };

@@ -3,7 +3,6 @@ use std::char;
 use crate::command_item::{CommandItem, CommandItemBuilder};
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
-use log::info;
 use tui::widgets::ListState;
 
 #[derive(Debug, Clone)]
@@ -44,19 +43,19 @@ impl Item {
 }
 
 #[derive(Debug, Clone)]
-pub struct OpsContext {
+pub struct Context {
     pub focus_state: ListState,
     items: Vec<Item>,
     pub current_command: Option<CommandItem>,
 }
 
-impl OpsContext {
-    pub fn new(items: Vec<(String, bool)>) -> OpsContext {
+impl Context {
+    pub fn new(items: Vec<(String, bool)>) -> Context {
         let items = items
             .into_iter()
             .map(|(name, focus)| Item::new(name, focus))
             .collect_vec();
-        OpsContext {
+        Context {
             items,
             focus_state: ListState::default(),
             current_command: None,
@@ -73,6 +72,7 @@ impl OpsContext {
     pub fn set_current_command(&mut self, command: Option<CommandItem>) {
         self.current_command = command;
     }
+
     fn clear_inputs(&mut self) {
         for item in self.get_vec_of_mut_items() {
             item.clear_input()
@@ -181,7 +181,6 @@ impl OpsContext {
         let command = command_builder.build();
         match command.validate() {
             Ok(_) => {
-                info!("cleaning inputs after validation if everything went ok");
                 self.clear_inputs();
                 Ok(command)
             }

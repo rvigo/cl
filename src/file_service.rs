@@ -24,6 +24,7 @@ pub fn load_commands_file<'a>() -> Vec<CommandItem> {
         Err(error) => panic!("{error}"),
     }
 }
+
 pub fn write_to_file(values: Vec<CommandItem>) -> Result<()> {
     let mut map: HashMap<String, Vec<CommandItem>> = HashMap::new();
     for item in values {

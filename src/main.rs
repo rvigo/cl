@@ -1,5 +1,5 @@
 use commands::Commands;
-use gui::contexts::app_context::AppContext;
+use gui::contexts::app::AppContext;
 
 mod command_item;
 mod commands;

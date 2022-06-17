@@ -26,6 +26,12 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         )
         .split(frame.size());
 
+    let insert_block = Block::default()
+        .borders(Borders::ALL)
+        .style(Style::default())
+        .title(" Insert ")
+        .border_type(BorderType::Plain);
+
     let first_row = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
@@ -43,6 +49,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .constraints([Constraint::Percentage(100)].as_ref())
         .split(chunks[3]);
 
+    frame.render_widget(insert_block, frame.size());
     render_tags_input_widget(frame, state, third_row[1]);
     render_namespace_input_widget(frame, state, first_row[1]);
     render_alias_input_widget(frame, state, first_row[0]);
@@ -61,7 +68,7 @@ fn render_tags_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut St
     let widget = Paragraph::new(
         state
             .get_mut_ref()
-            .ops_context
+            .context
             .get_component_input(component_name),
     )
     .style(get_style(state, component_name))
@@ -76,7 +83,7 @@ fn render_tags_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut St
     );
 
     frame.render_widget(widget, area);
-    if state.ops_context.is_in_focus(component_name) {
+    if state.context.is_in_focus(component_name) {
         set_cursor_positition(frame, state, area)
     }
 }
@@ -91,7 +98,7 @@ fn render_namespace_input_widget<'a, B: Backend>(
     let widget = Paragraph::new(
         state
             .get_mut_ref()
-            .ops_context
+            .context
             .get_component_input(component_name),
     )
     .style(get_style(state.get_mut_ref(), component_name))
@@ -105,7 +112,7 @@ fn render_namespace_input_widget<'a, B: Backend>(
             .border_type(BorderType::Plain),
     );
     frame.render_widget(widget, area);
-    if state.ops_context.is_in_focus(component_name) {
+    if state.context.is_in_focus(component_name) {
         set_cursor_positition(frame, state, area)
     }
 }
@@ -119,7 +126,7 @@ fn render_commannd_input_widget<'a, B: Backend>(
     let widget = Paragraph::new(
         state
             .get_mut_ref()
-            .ops_context
+            .context
             .get_component_input(component_name),
     )
     .style(get_style(state.get_mut_ref(), component_name))
@@ -133,7 +140,7 @@ fn render_commannd_input_widget<'a, B: Backend>(
             .border_type(BorderType::Plain),
     );
     frame.render_widget(widget, area);
-    if state.ops_context.is_in_focus(component_name) {
+    if state.context.is_in_focus(component_name) {
         set_cursor_positition(frame, state, area)
     }
 }
@@ -144,7 +151,7 @@ fn render_alias_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut S
     let widget = Paragraph::new(
         state
             .get_mut_ref()
-            .ops_context
+            .context
             .get_component_input(component_name),
     )
     .style(get_style(state.get_mut_ref(), component_name))
@@ -158,7 +165,7 @@ fn render_alias_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut S
             .border_type(BorderType::Plain),
     );
     frame.render_widget(widget, area);
-    if state.ops_context.is_in_focus(component_name) {
+    if state.context.is_in_focus(component_name) {
         set_cursor_positition(frame, state, area)
     }
 }
@@ -173,7 +180,7 @@ fn render_description_input_widget<'a, B: Backend>(
     let widget = Paragraph::new(
         state
             .get_mut_ref()
-            .ops_context
+            .context
             .get_component_input(component_name),
     )
     .style(get_style(state.get_mut_ref(), component_name))
@@ -187,13 +194,13 @@ fn render_description_input_widget<'a, B: Backend>(
             .border_type(BorderType::Plain),
     );
     frame.render_widget(widget, area);
-    if state.ops_context.is_in_focus(component_name) {
+    if state.context.is_in_focus(component_name) {
         set_cursor_positition(frame, state, area)
     }
 }
 
 fn get_style(state: &mut State, component_name: &str) -> Style {
-    if state.ops_context.is_in_focus(component_name) {
+    if state.context.is_in_focus(component_name) {
         Style::default()
             .fg(Color::Black)
             .bg(Color::Rgb(201, 165, 249))
