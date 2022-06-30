@@ -220,7 +220,11 @@ pub fn handle_list(key_event: KeyEvent, state: &mut State) {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
             } => {
-                state.to_be_executed = state.current_command_item().map(|i| i.to_owned());
+                state.to_be_executed = state
+                    .filtered_commands()
+                    .get(state.commands_state.selected().unwrap())
+                    .map(|i| i.to_owned());
+                info!("to be executed: {:?}", state.to_be_executed);
                 state.should_quit = true
             }
             _ => {}

@@ -146,11 +146,6 @@ impl State {
         }
     }
 
-    pub fn current_command_item(&self) -> Option<&CommandItem> {
-        self.commands
-            .get_command_item_ref(self.commands_state.selected()?)
-    }
-
     pub fn execute_callback_command(&self) -> Result<()> {
         match &self.to_be_executed {
             Some(command) => self.commands.exec_command(command)?,
