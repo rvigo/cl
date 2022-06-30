@@ -19,7 +19,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     app_context.render()?;
 
-    app_context.destroy()?;
+    app_context.clear()?;
+    app_context.callback_command()?;
 
     Ok(())
 }

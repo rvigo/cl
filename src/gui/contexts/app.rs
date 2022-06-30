@@ -48,7 +48,7 @@ impl AppContext {
         }
     }
 
-    pub fn destroy(&mut self) -> Result<()> {
+    pub fn clear(&mut self) -> Result<()> {
         disable_raw_mode()?;
         execute!(
             self.terminal.backend_mut(),
@@ -57,6 +57,11 @@ impl AppContext {
         )?;
 
         self.terminal.show_cursor()?;
+        Ok(())
+    }
+
+    pub fn callback_command(&self) -> Result<()> {
+        self.state.execute_callback_command()?;
         Ok(())
     }
 }

@@ -1,5 +1,6 @@
 use crate::{command_item::CommandItem, file_service};
 use anyhow::{anyhow, Result};
+use std::env;
 
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -106,38 +107,16 @@ impl Commands {
         Ok(commands)
     }
 
-    // pub fn exec_alias(
-    //     &mut self,
-    //     alias: String,
-    //     mut args: Vec<String>,
-    //     namespace: Option<String>,
-    // ) -> Result<String> {
-    //     Ok(String::from("ok"))
-    // match self.command_from_alias(&alias, namespace) {
-    //     Ok(command) => {
-    //         args.insert(0, command);
+    pub fn exec_command(&self, command_item: &CommandItem) -> Result<()> {
+        let shell = env::var("SHELL").unwrap_or(String::from("sh"));
+        let output = std::process::Command::new(shell)
+            .arg("-c")
+            .arg(command_item.command.to_string())
+            .spawn();
 
-    //         let shell = env::var("SHELL").unwrap_or(String::from("sh"));
-    //         println!(" - running {} {}", shell, &args.clone().join(" "));
-    //         let output = std::process::Command::new(shell)
-    //             .arg("-c")
-    //             .arg(args.join(" "))
-    //             .output();
-
-    //         match output {
-    //             Ok(value) => {
-    //                 if value.status.success() {
-    //                     Ok(String::from_utf8_lossy(&value.stdout).to_string())
-    //                 } else {
-    //                     Err(anyhow!(String::from_utf8_lossy(&value.stderr).to_string()))
-    //                 }
-    //             }
-    //             Err(error) => Err(anyhow!(error.to_string())),
-    //         }
-    //     }
-    //     Err(error) => Err(anyhow!(error.to_string())),
-    // }
-    // }
+        output?.wait()?;
+        Ok(())
+    }
 
     fn save_items(&mut self) -> Result<()> {
         self.items.sort();

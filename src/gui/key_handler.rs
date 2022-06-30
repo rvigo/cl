@@ -1,11 +1,10 @@
-use crate::gui::contexts::state::State;
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use log::info;
-
 use super::{
     contexts::popup::{Answer, MessageType},
     layouts::view_mode::ViewMode,
 };
+use crate::gui::contexts::state::State;
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use log::info;
 
 pub fn handle(key_event: KeyEvent, state: &mut State) {
     match state.view_mode {
@@ -217,7 +216,13 @@ pub fn handle_list(key_event: KeyEvent, state: &mut State) {
                 state.popup.popup = true;
                 state.popup.message_type = MessageType::Warning
             }
-
+            KeyEvent {
+                code: KeyCode::Enter,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                state.to_be_executed = state.current_command_item().map(|i| i.to_owned());
+                state.should_quit = true
+            }
             _ => {}
         }
     }

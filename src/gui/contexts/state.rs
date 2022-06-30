@@ -1,5 +1,6 @@
 use super::{context::Context, popup::PopUp};
 use crate::{command_item::CommandItem, commands::Commands, gui::layouts::view_mode::ViewMode};
+use anyhow::Result;
 use tui::widgets::ListState;
 
 #[derive(Debug, Clone)]
@@ -13,6 +14,7 @@ pub struct State {
     pub view_mode: ViewMode,
     pub context: Context,
     pub popup: PopUp,
+    pub to_be_executed: Option<CommandItem>,
 }
 
 impl State {
@@ -35,6 +37,7 @@ impl State {
             view_mode: ViewMode::List,
             context: Context::new(insert_menu_items),
             popup: PopUp::init(),
+            to_be_executed: None,
         };
         state.load_namespaces();
         state.commands_state.select(Some(0));
@@ -141,5 +144,19 @@ impl State {
                 .commands_from_namespace(self.current_namespace.clone())
                 .expect("cannot save a command without an namespace")
         }
+    }
+
+    pub fn current_command_item(&self) -> Option<&CommandItem> {
+        self.commands
+            .get_command_item_ref(self.commands_state.selected()?)
+    }
+
+    pub fn execute_callback_command(&self) -> Result<()> {
+        match &self.to_be_executed {
+            Some(command) => self.commands.exec_command(command)?,
+            None => return Err(anyhow::anyhow!("ops")),
+        }
+
+        Ok(())
     }
 }
