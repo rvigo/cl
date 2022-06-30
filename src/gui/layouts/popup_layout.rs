@@ -36,7 +36,7 @@ pub fn render_popup<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State) {
             draw_option_buttons(frame, area[1], state)
         }
 
-        MessageType::Warning => {
+        MessageType::Delete => {
             state.popup.options = vec![Answer::Ok, Answer::Cancel];
             draw_option_buttons(frame, area[1], state)
         }

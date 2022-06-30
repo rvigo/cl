@@ -3,7 +3,7 @@ use itertools::Itertools;
 use log::error;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub struct CommandItem {
     pub namespace: String,
     pub command: String,
@@ -83,5 +83,19 @@ impl CommandItem {
         }
 
         Ok(())
+    }
+}
+
+impl Default for CommandItem {
+    fn default() -> Self {
+        CommandItem {
+            namespace: String::from(""),
+            command: String::from("your command string goes here"),
+            description: Some(String::from(
+                "a nice description of your command goes here (optional)",
+            )),
+            alias: String::from("your command alias"),
+            tags: Some(vec![String::from("optional"), String::from("tags")]),
+        }
     }
 }

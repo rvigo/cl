@@ -1,9 +1,8 @@
 use crate::{command_item::CommandItem, file_service};
 use anyhow::{anyhow, Result};
-use std::env;
-
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use std::env;
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct Commands {
@@ -63,7 +62,7 @@ impl Commands {
                 edited_command_item.namespace
             ));
         }
-        self.items.retain(|command| {
+        self.items.clone().retain(|command| {
             !command.alias.eq(&current_command_item.alias)
                 && !command.namespace.eq(&current_command_item.namespace)
         });
@@ -87,18 +86,22 @@ impl Commands {
         Ok(String::from("Alias removed"))
     }
 
-    pub fn all_commands(&self) -> Vec<CommandItem> {
-        self.items.clone()
+    pub fn all_commands(&mut self) -> Vec<CommandItem> {
+        if self.items.is_empty() {
+            vec![CommandItem::default()]
+        } else {
+            self.items.clone()
+        }
     }
 
-    pub fn commands_from_namespace(&self, namespace: String) -> Result<Vec<CommandItem>> {
-        let mut commands: Vec<CommandItem> = self
+    pub fn commands_from_namespace(&mut self, namespace: String) -> Result<Vec<CommandItem>> {
+        let commands: Vec<CommandItem> = self
             .items
             .clone()
             .into_iter()
             .filter(|command| command.namespace == namespace)
             .collect();
-        commands.sort();
+
         if commands.is_empty() {
             return Err(anyhow!(
                 "There are no commands to show for namespace \"{namespace}\"."
@@ -119,7 +122,6 @@ impl Commands {
     }
 
     fn save_items(&mut self) -> Result<()> {
-        self.items.sort();
         file_service::write_to_file(self.items.clone())
     }
 

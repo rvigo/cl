@@ -1,12 +1,12 @@
-use commands::Commands;
-use gui::contexts::app::AppContext;
-
 mod command_item;
 mod commands;
 mod config;
 mod file_service;
 mod gui;
 mod utils;
+
+use commands::Commands;
+use gui::contexts::app::AppContext;
 use std::error::Error;
 
 //TODO remover trait Debug dos structs

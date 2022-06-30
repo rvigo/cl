@@ -1,3 +1,4 @@
+use super::popup_layout::render_popup;
 use crate::{
     command_item::CommandItem,
     gui::{
@@ -13,8 +14,6 @@ use tui::{
     widgets::{Block, BorderType, Borders, List, ListItem, Paragraph, Tabs, Wrap},
     Frame,
 };
-
-use super::popup_layout::render_popup;
 
 pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let chunks = Layout::default()
@@ -42,7 +41,11 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .selected()
         .expect("a command should always be selected");
 
-    let mut selected_command: CommandItem = state.filtered_commands().get(idx).unwrap().clone();
+    let mut selected_command: CommandItem = state
+        .filtered_commands()
+        .get(idx)
+        .unwrap_or(&CommandItem::default())
+        .clone();
     state
         .context
         .set_current_command(Some(selected_command.clone()));
@@ -81,11 +84,10 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     frame.render_widget(description, chunks[1]);
     frame.render_widget(render_helper_footer(), chunks[3]);
 
-    if state.popup.popup {
+    if state.popup.show_popup {
         match state.popup.answer {
             Answer::None => render_popup(frame, state),
-            Answer::Ok => state.popup.answer = Answer::Ok,
-            Answer::Cancel => state.popup.answer = Answer::Cancel,
+            _ => {}
         }
     }
 }

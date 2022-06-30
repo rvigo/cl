@@ -1,12 +1,11 @@
 use std::fmt;
-
 use tui::widgets::ListState;
 
 #[derive(Debug, Clone)]
 pub enum MessageType {
     None,
     Error,
-    Warning,
+    Delete,
 }
 
 #[derive(Debug, Clone)]
@@ -28,7 +27,7 @@ impl fmt::Display for Answer {
 
 #[derive(Debug, Clone)]
 pub struct PopUp {
-    pub popup: bool,
+    pub show_popup: bool,
     pub message: String,
     pub message_type: MessageType,
     pub answer: Answer,
@@ -39,7 +38,7 @@ pub struct PopUp {
 impl PopUp {
     pub fn init() -> PopUp {
         PopUp {
-            popup: false,
+            show_popup: false,
             message: String::from(""),
             message_type: MessageType::None,
             answer: Answer::None,
@@ -50,7 +49,7 @@ impl PopUp {
 
     pub fn clear(&mut self) {
         self.message.clear();
-        self.popup = false;
+        self.show_popup = false;
         self.message_type = MessageType::None;
         self.answer = Answer::None;
         self.options.clear();
@@ -93,7 +92,7 @@ impl fmt::Display for MessageType {
         match self {
             MessageType::None => write!(f, ""),
             MessageType::Error => write!(f, " Error "),
-            MessageType::Warning => write!(f, " Warning "),
+            MessageType::Delete => write!(f, " Warning "),
         }
     }
 }

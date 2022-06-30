@@ -55,7 +55,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     render_description_input_widget(frame, state, third_row[0]);
     frame.render_widget(render_insert_helper_footer(), fourth_row[0]);
 
-    if state.popup.popup {
+    if state.popup.show_popup {
         render_popup(frame, state);
     }
 }

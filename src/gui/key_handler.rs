@@ -15,7 +15,7 @@ pub fn handle(key_event: KeyEvent, state: &mut State) {
 }
 
 pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
-    if state.popup.popup {
+    if state.popup.show_popup {
         handle_popup(key_event, state)
     } else {
         match key_event {
@@ -61,13 +61,13 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
                     Err(error) => {
                         state.popup.message_type = MessageType::Error;
                         state.popup.message = error.to_string();
-                        state.popup.popup = true
+                        state.popup.show_popup = true
                     }
                 },
                 Err(error) => {
                     state.popup.message_type = MessageType::Error;
                     state.popup.message = error.to_string();
-                    state.popup.popup = true
+                    state.popup.show_popup = true
                 }
             },
             _ => {}
@@ -76,7 +76,7 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
 }
 
 pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
-    if state.popup.popup {
+    if state.popup.show_popup {
         handle_popup(key_event, state)
     } else {
         match key_event {
@@ -132,13 +132,13 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
                         Err(error) => {
                             state.popup.message_type = MessageType::Error;
                             state.popup.message = error.to_string();
-                            state.popup.popup = true
+                            state.popup.show_popup = true
                         }
                     },
                     Err(error) => {
                         state.popup.message_type = MessageType::Error;
                         state.popup.message = error.to_string();
-                        state.popup.popup = true
+                        state.popup.show_popup = true
                     }
                 }
             }
@@ -148,7 +148,7 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
 }
 
 pub fn handle_list(key_event: KeyEvent, state: &mut State) {
-    if state.popup.popup {
+    if state.popup.show_popup {
         handle_popup(key_event, state)
     } else {
         match key_event {
@@ -213,8 +213,8 @@ pub fn handle_list(key_event: KeyEvent, state: &mut State) {
             } => {
                 info!("showing warning popup");
                 state.popup.message = String::from("Are you sure you want to delete the command?");
-                state.popup.popup = true;
-                state.popup.message_type = MessageType::Warning
+                state.popup.show_popup = true;
+                state.popup.message_type = MessageType::Delete;
             }
             KeyEvent {
                 code: KeyCode::Enter,
@@ -244,7 +244,7 @@ fn handle_popup(key_event: KeyEvent, state: &mut State) {
             _ => {}
         },
 
-        MessageType::Warning => match key_event {
+        MessageType::Delete => match key_event {
             KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
@@ -265,14 +265,13 @@ fn handle_popup(key_event: KeyEvent, state: &mut State) {
                     .unwrap();
                 match state.popup.answer {
                     Answer::Ok => {
-                        info!("answer was ok");
                         match state
                             .commands
                             .remove(&state.context.get_current_command().unwrap())
                         {
                             Ok(_) => {
-                                info!("the command was removed");
-                                state.popup.clear()
+                                state.popup.clear();
+                                state.reload_namespaces()
                             }
                             Err(error) => {
                                 state.popup.clear();

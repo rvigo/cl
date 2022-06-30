@@ -149,7 +149,7 @@ impl State {
     pub fn execute_callback_command(&self) -> Result<()> {
         match &self.to_be_executed {
             Some(command) => self.commands.exec_command(command)?,
-            None => return Err(anyhow::anyhow!("ops")),
+            None => return Ok(()), //there is nothing to handle
         }
 
         Ok(())
