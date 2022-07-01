@@ -9,7 +9,7 @@ use tui::{
 };
 
 pub fn render_helper_footer() -> Paragraph<'static> {
-    let help_content = "Help <F1>";
+    let help_content = "Show help <F1>";
     Paragraph::new(help_content)
         .alignment(Alignment::Right)
         .block(

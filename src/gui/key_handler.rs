@@ -4,7 +4,6 @@ use super::{
 };
 use crate::gui::contexts::state::State;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use log::info;
 
 pub fn handle(key_event: KeyEvent, state: &mut State) {
     match state.view_mode {
@@ -25,7 +24,6 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
                 code: KeyCode::Esc,
                 modifiers: KeyModifiers::NONE,
             } => {
-                info!("changing ViewMode to LIST");
                 state.view_mode = ViewMode::List;
             }
             KeyEvent {
@@ -92,7 +90,6 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
                 code: KeyCode::Esc,
                 modifiers: KeyModifiers::NONE,
             } => {
-                info!("changing ViewMode to LIST");
                 state.view_mode = ViewMode::List;
             }
             KeyEvent {
@@ -170,7 +167,6 @@ pub fn handle_list(key_event: KeyEvent, state: &mut State) {
                 code: KeyCode::Char('q'),
                 modifiers: KeyModifiers::NONE,
             } => {
-                info!("shoul quit = true");
                 state.should_quit = true;
             }
             KeyEvent {
@@ -209,14 +205,12 @@ pub fn handle_list(key_event: KeyEvent, state: &mut State) {
                 code: KeyCode::Insert | KeyCode::Char('i'),
                 modifiers: KeyModifiers::NONE,
             } => {
-                info!("changing ViewMode to NEW");
                 state.view_mode = ViewMode::New;
             }
             KeyEvent {
                 code: KeyCode::Char('e'),
                 modifiers: KeyModifiers::NONE,
             } => {
-                info!("changing ViewMode to EDIT");
                 state.view_mode = ViewMode::Edit;
                 state.get_mut_ref().context.set_selected_command_inputs();
             }
@@ -225,7 +219,6 @@ pub fn handle_list(key_event: KeyEvent, state: &mut State) {
                 code: KeyCode::Char('d'),
                 modifiers: KeyModifiers::NONE,
             } => {
-                info!("showing warning popup");
                 state.popup.message = String::from("Are you sure you want to delete the command?");
                 state.popup.show_popup = true;
                 state.popup.message_type = MessageType::Delete;
@@ -238,7 +231,6 @@ pub fn handle_list(key_event: KeyEvent, state: &mut State) {
                     .filtered_commands()
                     .get(state.commands_state.selected().unwrap())
                     .map(|i| i.to_owned());
-                info!("to be executed: {:?}", state.to_be_executed);
                 state.should_quit = true
             }
             KeyEvent {

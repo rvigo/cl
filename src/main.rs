@@ -9,8 +9,6 @@ use commands::Commands;
 use gui::contexts::app::AppContext;
 use std::error::Error;
 
-//TODO remover trait Debug dos structs
-//TODO ajustar log file
 fn main() -> Result<(), Box<dyn Error>> {
     configs::log_config::init()?;
 

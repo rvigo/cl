@@ -5,7 +5,7 @@ use anyhow::{anyhow, Result};
 use itertools::Itertools;
 use tui::widgets::ListState;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Item {
     name: String,
     in_focus: bool,
@@ -42,7 +42,7 @@ impl Item {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Context {
     pub focus_state: ListState,
     items: Vec<Item>,

@@ -3,7 +3,7 @@ use crate::{command_item::CommandItem, commands::Commands, gui::layouts::view_mo
 use anyhow::Result;
 use tui::widgets::ListState;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct State {
     pub should_quit: bool,
     pub commands_state: ListState,

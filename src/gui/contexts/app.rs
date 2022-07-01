@@ -8,7 +8,6 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use log::info;
 use std::io;
 use tui::{backend::CrosstermBackend, Terminal};
 
@@ -34,14 +33,12 @@ impl AppContext {
     }
 
     pub fn render(&mut self) -> Result<()> {
-        info!("starting the render process");
         loop {
             self.terminal
                 .draw(|frame| select_ui(frame, &mut self.state))?;
             if let Event::Key(key) = event::read()? {
                 handle(key, self.state.get_mut_ref());
                 if self.state.should_quit {
-                    info!("ending app");
                     return Ok(());
                 }
             }

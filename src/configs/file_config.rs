@@ -10,7 +10,7 @@ const HOMEDIR: &str = ".config/command_list";
 const COMMAND_FILE: &str = "commands.toml";
 const CONFIG: &str = "config.toml";
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct FileConfig {
     pub config_home_path: Option<PathBuf>,
     pub command_file_path: Option<PathBuf>,

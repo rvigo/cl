@@ -1,9 +1,8 @@
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
-use log::error;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Clone, Eq, PartialEq, PartialOrd, Ord)]
 pub struct CommandItem {
     pub namespace: String,
     pub command: String,
@@ -76,7 +75,6 @@ impl CommandItem {
 
     pub fn validate(&self) -> Result<()> {
         if self.namespace.is_empty() || self.command.is_empty() || self.alias.is_empty() {
-            error!("namespace, command and alias field cannot be empty!");
             return Err(anyhow!(
                 "namespace, command and alias field cannot be empty!"
             ));
