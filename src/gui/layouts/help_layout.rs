@@ -25,13 +25,13 @@ pub fn render_helper_footer() -> Paragraph<'static> {
 fn list_options() -> String {
     String::from(
         "\n \
-        Quit <Q>\n \
-        New command <I>\n \
-        Delete <D>\n \
-        Edit command <E>\n \
-        Right <TAB>\n \
-        Left <BACKTAB>\n \
-        Up <ArrowUp>\n \
+        Quit <Q>\n\n \
+        New command <I>\n\n \
+        Delete <D>\n\n \
+        Edit command <E>\n\n \
+        Right <TAB>\n\n \
+        Left <BACKTAB>\n\n \
+        Up <ArrowUp>\n\n \
         Down <ArrowDown>",
     )
 }
@@ -39,9 +39,9 @@ fn list_options() -> String {
 fn insert_or_update_options() -> String {
     String::from(
         "\n \
-        Return <ESC>\n \
-        Right <TAB>\n \
-        Left <BACKTAB>\n \
+        Return <ESC>\n\n \
+        Right <TAB>\n\n \
+        Left <BACKTAB>\n\n \
         Create <Enter>",
     )
 }

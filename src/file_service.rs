@@ -1,9 +1,13 @@
-use crate::{command_item::CommandItem, config, utils::to_toml};
+use crate::{
+    command_item::CommandItem,
+    configs::file_config::{load_or_build_config, FileConfig},
+    utils::to_toml,
+};
 use anyhow::Result;
 use std::{collections::HashMap, fs};
 
-fn load_config() -> config::Config {
-    config::load_or_build_config().expect("cannot load config file")
+fn load_config() -> FileConfig {
+    load_or_build_config().expect("cannot load config file")
 }
 
 fn open_file() -> String {

@@ -11,12 +11,12 @@ const COMMAND_FILE: &str = "commands.toml";
 const CONFIG: &str = "config.toml";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Config {
+pub struct FileConfig {
     pub config_home_path: Option<PathBuf>,
     pub command_file_path: Option<PathBuf>,
 }
 
-impl Config {
+impl FileConfig {
     pub fn new(home_path: &Path) -> Self {
         Self {
             config_home_path: Some(home_path.to_path_buf()),
@@ -25,14 +25,14 @@ impl Config {
     }
 }
 
-pub fn load_or_build_config() -> Result<Config, Error> {
+pub fn load_or_build_config() -> Result<FileConfig, Error> {
     match dirs::home_dir() {
         Some(home) => load_or_build(&home),
         None => Err(anyhow!("No $HOME directory found for config.")),
     }
 }
 
-fn load_or_build(path: &Path) -> Result<Config, Error> {
+fn load_or_build(path: &Path) -> Result<FileConfig, Error> {
     let home_path = Path::new(&path);
 
     let home_dir = home_path.join(HOMEDIR);
@@ -43,7 +43,7 @@ fn load_or_build(path: &Path) -> Result<Config, Error> {
     let config_path = home_dir.join(CONFIG);
     let config = if config_path.exists() {
         let data = std::fs::read_to_string(config_path.clone())?;
-        let mut loaded_config: Config = from_toml(&data);
+        let mut loaded_config: FileConfig = from_toml(&data);
 
         if loaded_config.command_file_path.is_none() {
             loaded_config.command_file_path = Some(home_dir.join(COMMAND_FILE));
@@ -62,7 +62,7 @@ fn load_or_build(path: &Path) -> Result<Config, Error> {
 
         Ok(loaded_config)
     } else {
-        let new_config = Config::new(&home_dir);
+        let new_config = FileConfig::new(&home_dir);
         save_config(&new_config, &config_path)?;
         Ok(new_config)
     };
@@ -70,7 +70,7 @@ fn load_or_build(path: &Path) -> Result<Config, Error> {
     config
 }
 
-fn save_config(config_to_save: &Config, config_path: &Path) -> Result<()> {
+fn save_config(config_to_save: &FileConfig, config_path: &Path) -> Result<()> {
     let s = to_toml(config_to_save);
     save_file(s, config_path)?;
     Ok(())

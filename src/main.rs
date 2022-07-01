@@ -1,6 +1,6 @@
 mod command_item;
 mod commands;
-mod config;
+mod configs;
 mod file_service;
 mod gui;
 mod utils;
@@ -10,8 +10,9 @@ use gui::contexts::app::AppContext;
 use std::error::Error;
 
 //TODO remover trait Debug dos structs
+//TODO ajustar log file
 fn main() -> Result<(), Box<dyn Error>> {
-    log4rs::init_file("./src/config/log4rs.yaml", Default::default()).unwrap();
+    configs::log_config::init()?;
 
     let commands = Commands::init();
 
