@@ -1,28 +1,95 @@
+use super::view_mode::ViewMode;
+use crate::gui::contexts::state::State;
 use tui::{
-    style::Style,
-    widgets::{Block, BorderType, Borders, Paragraph},
+    backend::Backend,
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    style::{Color, Style},
+    widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
+    Frame,
 };
 
 pub fn render_helper_footer() -> Paragraph<'static> {
-    let help_content =
-        "Quit <Q>       New command <I>       Delete <D>       Edit command <E>       \
-    Right <TAB>       Left <BACKTAB>       Up <ArrowUp>       Down <ArrowDown>";
-    Paragraph::new(help_content).block(
-        Block::default()
-            .style(Style::default())
-            .borders(Borders::ALL)
-            .title(" Help ")
-            .border_type(BorderType::Plain),
+    let help_content = "Help <F1>";
+    Paragraph::new(help_content)
+        .alignment(Alignment::Right)
+        .block(
+            Block::default()
+                .style(Style::default())
+                .borders(Borders::ALL)
+                .title(" Help ")
+                .title_alignment(Alignment::Right)
+                .border_type(BorderType::Plain),
+        )
+}
+
+fn list_options() -> String {
+    String::from(
+        "\n \
+        Quit <Q>\n \
+        New command <I>\n \
+        Delete <D>\n \
+        Edit command <E>\n \
+        Right <TAB>\n \
+        Left <BACKTAB>\n \
+        Up <ArrowUp>\n \
+        Down <ArrowDown>",
     )
 }
 
-pub fn render_insert_helper_footer() -> Paragraph<'static> {
-    let help_content = "Return <ESC>       Right <TAB>       Left <BACKTAB>       Create <Enter>";
-    Paragraph::new(help_content).block(
-        Block::default()
-            .style(Style::default())
-            .borders(Borders::ALL)
-            .title(" Help ")
-            .border_type(BorderType::Plain),
+fn insert_or_update_options() -> String {
+    String::from(
+        "\n \
+        Return <ESC>\n \
+        Right <TAB>\n \
+        Left <BACKTAB>\n \
+        Create <Enter>",
     )
+}
+
+pub fn render_help<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State) {
+    let block = Paragraph::new(match state.view_mode {
+        ViewMode::List => list_options(),
+        _ => insert_or_update_options(),
+    })
+    .style(Style::default().fg(Color::Rgb(229, 229, 229)))
+    .alignment(Alignment::Left)
+    .wrap(Wrap { trim: true })
+    .block(
+        Block::default()
+            .borders(Borders::ALL)
+            .style(Style::default())
+            .title("Help")
+            .title_alignment(Alignment::Center)
+            .border_type(BorderType::Plain),
+    );
+
+    let area = centered_rect(90, 90, frame.size());
+
+    frame.render_widget(Clear, area[1]);
+    frame.render_widget(block, area[1]);
+}
+
+fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Vec<Rect> {
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+                Constraint::Percentage((100 - percent_y) / 2),
+                Constraint::Percentage(percent_x),
+                Constraint::Percentage((100 - percent_y) / 2),
+            ]
+            .as_ref(),
+        )
+        .split(r);
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(
+            [
+                Constraint::Percentage((100 - percent_x) / 2),
+                Constraint::Percentage(percent_y),
+                Constraint::Percentage((100 - percent_x) / 2),
+            ]
+            .as_ref(),
+        )
+        .split(popup_layout[1])
 }

@@ -14,6 +14,7 @@ pub struct State {
     pub view_mode: ViewMode,
     pub context: Context,
     pub popup: PopUp,
+    pub show_help: bool,
     pub to_be_executed: Option<CommandItem>,
 }
 
@@ -37,6 +38,7 @@ impl State {
             view_mode: ViewMode::List,
             context: Context::new(insert_menu_items),
             popup: PopUp::init(),
+            show_help: false,
             to_be_executed: None,
         };
         state.load_namespaces();

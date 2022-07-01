@@ -1,4 +1,4 @@
-use super::popup_layout::render_popup;
+use super::{help_layout::render_help, popup_layout::render_popup};
 use crate::{
     command_item::CommandItem,
     gui::{
@@ -84,6 +84,9 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     frame.render_widget(description, chunks[1]);
     frame.render_widget(render_helper_footer(), chunks[3]);
 
+    if state.show_help {
+        render_help(frame, state)
+    }
     if state.popup.show_popup {
         match state.popup.answer {
             Answer::None => render_popup(frame, state),

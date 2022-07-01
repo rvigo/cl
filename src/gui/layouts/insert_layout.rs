@@ -1,5 +1,6 @@
 use super::{
-    cursor::set_cursor_positition, help_layout::render_insert_helper_footer,
+    cursor::set_cursor_positition,
+    help_layout::{render_help, render_helper_footer},
     popup_layout::render_popup,
 };
 use crate::gui::contexts::state::State;
@@ -55,8 +56,11 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     render_alias_input_widget(frame, state, first_row[0]);
     render_commannd_input_widget(frame, state, second_row[0]);
     render_description_input_widget(frame, state, third_row[0]);
-    frame.render_widget(render_insert_helper_footer(), fourth_row[0]);
+    frame.render_widget(render_helper_footer(), fourth_row[0]);
 
+    if state.show_help {
+        render_help(frame, state)
+    }
     if state.popup.show_popup {
         render_popup(frame, state);
     }

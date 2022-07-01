@@ -17,6 +17,8 @@ pub fn handle(key_event: KeyEvent, state: &mut State) {
 pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
     if state.popup.show_popup {
         handle_popup(key_event, state)
+    } else if state.show_help {
+        handle_help(key_event, state)
     } else {
         match key_event {
             KeyEvent {
@@ -70,6 +72,10 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
                     state.popup.show_popup = true
                 }
             },
+            KeyEvent {
+                code: KeyCode::F(1),
+                modifiers: KeyModifiers::NONE,
+            } => state.show_help = true,
             _ => {}
         }
     }
@@ -78,6 +84,8 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
 pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
     if state.popup.show_popup {
         handle_popup(key_event, state)
+    } else if state.show_help {
+        handle_help(key_event, state)
     } else {
         match key_event {
             KeyEvent {
@@ -142,6 +150,10 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
                     }
                 }
             }
+            KeyEvent {
+                code: KeyCode::F(1),
+                modifiers: KeyModifiers::NONE,
+            } => state.show_help = true,
             _ => {}
         }
     }
@@ -150,6 +162,8 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
 pub fn handle_list(key_event: KeyEvent, state: &mut State) {
     if state.popup.show_popup {
         handle_popup(key_event, state)
+    } else if state.show_help {
+        handle_help(key_event, state)
     } else {
         match key_event {
             KeyEvent {
@@ -227,6 +241,10 @@ pub fn handle_list(key_event: KeyEvent, state: &mut State) {
                 info!("to be executed: {:?}", state.to_be_executed);
                 state.should_quit = true
             }
+            KeyEvent {
+                code: KeyCode::F(1),
+                modifiers: KeyModifiers::NONE,
+            } => state.show_help = true,
             _ => {}
         }
     }
@@ -294,5 +312,11 @@ fn handle_popup(key_event: KeyEvent, state: &mut State) {
             _ => {}
         },
         MessageType::None => {}
+    }
+}
+
+fn handle_help(key_event: KeyEvent, state: &mut State) {
+    match key_event {
+        _ => state.show_help = false,
     }
 }

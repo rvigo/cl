@@ -11,7 +11,7 @@ use std::error::Error;
 
 //TODO remover trait Debug dos structs
 fn main() -> Result<(), Box<dyn Error>> {
-    log4rs::init_file("config/log4rs.yaml", Default::default()).unwrap();
+    log4rs::init_file("./src/config/log4rs.yaml", Default::default()).unwrap();
 
     let commands = Commands::init();
 
