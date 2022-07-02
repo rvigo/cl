@@ -52,6 +52,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "cl"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "crossterm",
+ "dirs",
+ "itertools",
+ "log",
+ "log4rs",
+ "serde",
+ "toml",
+ "tui",
+ "unicode-width",
+]
+
+[[package]]
 name = "crossterm"
 version = "0.23.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -520,22 +536,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "653be63c80a3296da5551e1bfd2cca35227e13cdd08c6668903ae2f4f77aa1f6"
 dependencies = [
  "unsafe-any",
-]
-
-[[package]]
-name = "ui"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "crossterm",
- "dirs",
- "itertools",
- "log",
- "log4rs",
- "serde",
- "toml",
- "tui",
- "unicode-width",
 ]
 
 [[package]]
