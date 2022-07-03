@@ -97,3 +97,34 @@ impl Default for CommandItem {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    fn build_default_command() -> CommandItem {
+        let mut command = CommandItemBuilder::default();
+        command
+            .tags(Some(vec![String::from("tag1")]))
+            .alias(String::from("test alias"))
+            .namespace(String::from("test namespace"))
+            .description(Some(String::from("test description")))
+            .command(String::from("test command"));
+
+        command.build()
+    }
+
+    #[test]
+    fn should_get_tags_as_str() {
+        let mut command = build_default_command();
+        let tags = command.tags_str();
+        assert_eq!(String::from("tag1"), tags)
+    }
+
+    #[test]
+    fn should_validate_the_command() -> Result<()> {
+        let command = build_default_command();
+        assert!(command.validate().is_ok());
+        Ok(())
+    }
+}

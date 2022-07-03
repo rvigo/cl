@@ -1,4 +1,5 @@
 use crate::{
+    command_file_service::CommandFileService,
     commands::Commands,
     gui::{contexts::state::State, key_handler::handle, layouts::selector::select_ui},
 };
@@ -17,7 +18,7 @@ pub struct AppContext {
 }
 
 impl AppContext {
-    pub fn create(commands: Commands) -> Result<AppContext> {
+    pub fn create() -> Result<AppContext> {
         // setup terminal
         enable_raw_mode()?;
         let mut stdout = io::stdout();
@@ -26,9 +27,13 @@ impl AppContext {
         let mut terminal = Terminal::new(backend)?;
         terminal.hide_cursor()?;
 
+        let command_file_service = CommandFileService::init();
+        let command_items = command_file_service.load_commands_from_file();
+        let commands = Commands::init(command_items);
+
         Ok(AppContext {
             terminal,
-            state: State::init(commands.clone()),
+            state: State::init(commands),
         })
     }
 

@@ -1,4 +1,4 @@
-use crate::{command_item::CommandItem, file_service};
+use crate::{command_file_service::CommandFileService, command_item::CommandItem};
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -7,12 +7,17 @@ use std::env;
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Commands {
     items: Vec<CommandItem>,
+
+    //TODO rethink this dependency
+    #[serde(skip_serializing, skip_deserializing)]
+    file_service: CommandFileService,
 }
 
 impl Commands {
-    pub fn init() -> Commands {
+    pub fn init(items: Vec<CommandItem>) -> Commands {
         return Self {
-            items: file_service::load_commands_file(),
+            items,
+            file_service: CommandFileService::init(),
         };
     }
 
@@ -62,10 +67,11 @@ impl Commands {
                 edited_command_item.namespace
             ));
         }
-        self.items.clone().retain(|command| {
+        self.items.retain(|command| {
             !command.alias.eq(&current_command_item.alias)
                 && !command.namespace.eq(&current_command_item.namespace)
         });
+
         self.items.push(edited_command_item.clone());
         self.save_items()?;
         Ok(())
@@ -122,7 +128,7 @@ impl Commands {
     }
 
     fn save_items(&mut self) -> Result<()> {
-        file_service::write_to_file(self.items.clone())
+        self.file_service.write_to_file(self.items.clone())
     }
 
     pub fn get_command_item_ref(&self, idx: usize) -> Option<&CommandItem> {

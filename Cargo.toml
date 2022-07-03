@@ -7,12 +7,10 @@ edition = "2021"
 
 [dependencies]
 tui = "0.18.0"
-crossterm = "0.23.2"
+crossterm = "0.24.0"
 toml = "0.5.9"
 anyhow = "1.0.0"
 serde = { version = "1.0.104", features = ["derive"] }
 dirs = "4.0.0"
 itertools = "0.10.3"
-log = "0.4"
-log4rs = "1.1.1"
 unicode-width = "0.1"

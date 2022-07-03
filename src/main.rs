@@ -1,20 +1,15 @@
+mod command_file_service;
 mod command_item;
 mod commands;
 mod configs;
-mod file_service;
 mod gui;
 mod utils;
 
-use commands::Commands;
 use gui::contexts::app::AppContext;
 use std::error::Error;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    configs::log_config::init()?;
-
-    let commands = Commands::init();
-
-    let mut app_context = AppContext::create(commands)?;
+    let mut app_context = AppContext::create()?;
 
     app_context.render()?;
 
