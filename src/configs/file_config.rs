@@ -1,5 +1,5 @@
 use crate::utils::{from_toml, to_toml};
-use anyhow::{anyhow, Result};
+use anyhow::{bail, Result};
 use dirs::home_dir;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -87,6 +87,6 @@ fn create_empty_command_file(path: &PathBuf) -> Result<()> {
 fn save_file(toml_content_as_string: String, path: &Path) -> Result<()> {
     match write(path, toml_content_as_string) {
         Ok(_) => Ok(()),
-        Err(err) => Err(anyhow!(err)),
+        Err(err) => bail!(err),
     }
 }

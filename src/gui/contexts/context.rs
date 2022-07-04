@@ -1,7 +1,7 @@
 use std::char;
 
 use crate::command_item::{CommandItem, CommandItemBuilder};
-use anyhow::{anyhow, Result};
+use anyhow::{bail, Result};
 use itertools::Itertools;
 use tui::widgets::ListState;
 
@@ -184,7 +184,7 @@ impl Context {
                 self.clear_inputs();
                 Ok(command)
             }
-            Err(error) => Err(anyhow!(error)),
+            Err(error) => bail!(error),
         }
     }
 
@@ -248,11 +248,10 @@ impl Context {
                 _ => {}
             });
         match command_item.clone().validate() {
-            Ok(_) => {
-                self.clear_inputs();
-            }
-            Err(error) => return Err(anyhow!(error)),
+            Ok(_) => self.clear_inputs(),
+            Err(error) => bail!(error),
         };
+
         Ok(command_item)
     }
 }

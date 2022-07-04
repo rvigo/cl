@@ -96,3 +96,27 @@ impl fmt::Display for MessageType {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn should_clear_popup_state() {
+        let mut popup = PopUp::init();
+
+        popup.message = String::from("test message");
+        popup.message_type = MessageType::Error;
+        popup.answer = Answer::Ok;
+
+        assert!(!popup.message.is_empty());
+        assert!(matches!(popup.message_type, MessageType::Error));
+        assert!(matches!(popup.answer, Answer::Ok));
+
+        popup.clear();
+
+        assert!(popup.message.is_empty());
+        assert!(matches!(popup.message_type, MessageType::None));
+        assert!(matches!(popup.answer, Answer::None));
+    }
+}

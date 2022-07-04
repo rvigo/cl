@@ -1,8 +1,8 @@
-use anyhow::{anyhow, Result};
+use anyhow::{bail, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 pub struct CommandItem {
     pub namespace: String,
     pub command: String,
@@ -75,9 +75,7 @@ impl CommandItem {
 
     pub fn validate(&self) -> Result<()> {
         if self.namespace.is_empty() || self.command.is_empty() || self.alias.is_empty() {
-            return Err(anyhow!(
-                "namespace, command and alias field cannot be empty!"
-            ));
+            bail!("namespace, command and alias field cannot be empty!");
         }
 
         Ok(())
@@ -122,9 +120,19 @@ mod test {
     }
 
     #[test]
-    fn should_validate_the_command() -> Result<()> {
+    fn should_validate_the_command() {
         let command = build_default_command();
+
         assert!(command.validate().is_ok());
-        Ok(())
+    }
+
+    #[test]
+    fn should_return_an_error_when_command_is_not_valid() {
+        let mut command = build_default_command();
+        command.alias = String::from("");
+        command.command = String::from("");
+        command.namespace = String::from("");
+
+        assert!(command.validate().is_err());
     }
 }

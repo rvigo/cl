@@ -28,6 +28,7 @@ impl State {
             (String::from("description"), false),
             (String::from("tags"), false),
         ];
+
         let mut state = State {
             should_quit: false,
             commands_state: ListState::default(),
@@ -41,6 +42,7 @@ impl State {
             show_help: false,
             to_be_executed: None,
         };
+
         state.load_namespaces();
         state.commands_state.select(Some(0));
         state.namespace_state.select(Some(0));

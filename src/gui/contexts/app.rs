@@ -1,7 +1,7 @@
 use crate::{
     command_file_service::CommandFileService,
     commands::Commands,
-    gui::{contexts::state::State, key_handler::handle, layouts::selector::select_ui},
+    gui::{contexts::state::State, key_handler::KeyHandler, layouts::selector::select_ui},
 };
 use anyhow::Result;
 use crossterm::{
@@ -15,6 +15,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 pub struct AppContext {
     pub terminal: Terminal<CrosstermBackend<std::io::Stdout>>,
     pub state: State,
+    pub key_handler: KeyHandler,
 }
 
 impl AppContext {
@@ -31,9 +32,12 @@ impl AppContext {
         let command_items = command_file_service.load_commands_from_file();
         let commands = Commands::init(command_items);
 
+        let key_handler = KeyHandler::new(command_file_service);
+
         Ok(AppContext {
             terminal,
             state: State::init(commands),
+            key_handler,
         })
     }
 
@@ -42,7 +46,7 @@ impl AppContext {
             self.terminal
                 .draw(|frame| select_ui(frame, &mut self.state))?;
             if let Event::Key(key) = event::read()? {
-                handle(key, self.state.get_mut_ref());
+                self.key_handler.handle(key, self.state.get_mut_ref());
                 if self.state.should_quit {
                     return Ok(());
                 }
