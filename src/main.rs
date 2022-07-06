@@ -47,7 +47,7 @@ fn run_exec_command(sub_matches: &ArgMatches) -> Result<()> {
         .collect();
 
     let mut selected_command = commands.find_command(alias.clone(), namespace)?;
-    selected_command.command = selected_command.command + &args.join(" ");
+    selected_command.command = format!("{} {}", selected_command.command, &args.join(" "));
     commands.exec_command(&selected_command)?;
 
     Ok(())
