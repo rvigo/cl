@@ -36,13 +36,16 @@ impl KeyHandler {
                     state.view_mode = ViewMode::List;
                 }
                 KeyEvent {
-                    code: KeyCode::Tab,
+                    code: KeyCode::Right | KeyCode::Tab,
                     modifiers: KeyModifiers::NONE,
                 } => {
                     state.context.next();
                 }
-
                 KeyEvent {
+                    code: KeyCode::Left,
+                    modifiers: KeyModifiers::NONE,
+                }
+                | KeyEvent {
                     code: KeyCode::BackTab,
                     modifiers: KeyModifiers::SHIFT,
                 } => {
@@ -293,9 +296,11 @@ impl KeyHandler {
                                 .commands
                                 .remove(&state.context.get_current_command().unwrap())
                             {
-                                Ok(_) => {
-                                    state.popup.clear();
-                                    state.reload_namespaces()
+                                Ok(items) => {
+                                    if let Ok(()) = self.file_service.write_to_file(items) {
+                                        state.popup.clear();
+                                        state.reload_namespaces()
+                                    }
                                 }
                                 Err(error) => {
                                     state.popup.clear();
