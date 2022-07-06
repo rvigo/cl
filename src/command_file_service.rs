@@ -19,7 +19,11 @@ impl CommandFileService {
         let file_path = &self.file_path;
         match std::fs::read_to_string(file_path.to_str().unwrap()) {
             Ok(file) => file,
-            Err(error) => panic!("cannot create a new commands.toml file: {error}"),
+            Err(error) => panic!(
+                "cannot create a new commands.toml file at {}: {}",
+                file_path.to_str().unwrap(),
+                error
+            ),
         }
     }
 
