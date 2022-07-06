@@ -88,10 +88,16 @@ impl Default for CommandItem {
             namespace: String::from(""),
             command: String::from("your command string goes here"),
             description: Some(String::from(
-                "a nice description of your command goes here (optional)",
+                "This is a demo entry and will be deleted as soon you save your first command.
+                Also, a nice description of your command goes here (optional)",
             )),
             alias: String::from("your command alias"),
-            tags: Some(vec![String::from("optional"), String::from("tags")]),
+            tags: Some(vec![
+                String::from("optional"),
+                String::from("tags"),
+                String::from("comma"),
+                String::from("separated"),
+            ]),
         }
     }
 }

@@ -120,6 +120,34 @@ impl Commands {
         output?.wait()?;
         Ok(())
     }
+
+    pub fn find_command(&self, alias: String, namespace: Option<String>) -> Result<CommandItem> {
+        let commands: Vec<CommandItem> = self
+            .items
+            .clone()
+            .into_iter()
+            .filter(|c| {
+                if namespace.is_none() {
+                    true
+                } else {
+                    c.namespace.eq(namespace.as_ref().unwrap())
+                }
+            })
+            .filter(|c| c.alias.eq(&alias))
+            .collect();
+
+        if commands.len() > 1 {
+            bail!(
+                "There are commands with the alias \'{}\' in multiples namespaces. \
+            Please use the \'--namespace\' flag",
+                alias
+            )
+        } else if commands.is_empty() {
+            bail!("The command \'{}\' was not found!", alias)
+        } else {
+            Ok(commands.first().unwrap().to_owned())
+        }
+    }
 }
 
 #[cfg(test)]
