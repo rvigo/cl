@@ -1,0 +1,42 @@
+project_name: cl
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    main: .github/utils/dummy.go
+    binary: cl
+    hooks:
+      post:
+        - sh .github/utils/post_build.sh
+archives:
+  - replacements:
+      amd64: x86_64
+brews:
+  - name: cl
+    description: |
+      "cl (Command List) is a way to group all your aliases, once in a while or multiple usages 
+      with a lot of args commands in an organized and human readable place"
+    homepage: https://github.com/rvigo/homebrew-cl
+    tap:
+      owner: rvigo
+      name: homebrew-cl
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    install: bin.install "cl"
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
