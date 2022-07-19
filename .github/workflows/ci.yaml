@@ -1,0 +1,151 @@
+name: Build & Release
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  format:
+    name: Source formatting check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt
+
+      - name: Check formatting
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: -- --check
+  # clippy:
+  #   name: Lint
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - name: Install toolchain
+  #       uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #         profile: minimal
+  #         components: clippy
+  #         override: true
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Check the lints
+  #       uses: actions-rs/cargo@v1
+  #       with:
+  #         command: clippy
+  #         args: --verbose -- -D warnings
+  create_release:
+    needs: [
+        #clippy,
+        format,
+      ]
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: false
+          prerelease: false
+  build:
+    name: Build and release
+    needs: create_release
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        target:
+          [
+            x86_64-apple-darwin,
+            aarch64-unknown-linux-gnu,
+            aarch64-apple-darwin,
+            x86_64-unknown-linux-gnu,
+          ]
+
+        include:
+          - target: x86_64-apple-darwin
+            os: macos
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu
+          - target: aarch64-apple-darwin
+            os: macos
+    steps:
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          default: true
+          target: ${{ matrix.target }}
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Test
+        run: cargo test
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          use-cross: ${{ matrix.os == 'ubuntu' }}
+          args: --release --bins --target ${{ matrix.target }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: cl-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/
+  homebrew:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Download darwin_arm64
+        uses: actions/download-artifact@v3
+        with:
+          name: cl-aarch64-apple-darwin
+          path: target/aarch64-apple-darwin/release/
+      - name: Download darwin_amd64_v1
+        uses: actions/download-artifact@v3
+        with:
+          name: cl-x86_64-apple-darwin
+          path: target/x86_64-apple-darwin/release/
+      - name: Download linux_amd64_v1
+        uses: actions/download-artifact@v3
+        with:
+          name: cl-x86_64-unknown-linux-gnu
+          path: target/x86_64-unknown-linux-gnu/release/
+      - name: Download linux_arm64
+        uses: actions/download-artifact@v3
+        with:
+          name: cl-aarch64-unknown-linux-gnu
+          path: target/aarch64-unknown-linux-gnu/release/
+      - name: Set up Go
+        uses: actions/setup-go@v2
+      - name: Release binaries
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      - name: Check Result
+        run: |
+          cat result.done
