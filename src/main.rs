@@ -14,7 +14,9 @@ use commands::Commands;
 use gui::contexts::app::AppContext;
 
 fn main() -> Result<()> {
-    let matches = app::build_app().get_matches();
+    let app = app::build_app();
+
+    let matches = app.get_matches();
 
     match matches.subcommand() {
         Some(("X", sub_matches)) => run_exec_command(sub_matches),

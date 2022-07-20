@@ -1,5 +1,3 @@
-use toml;
-
 pub fn to_toml<T>(value: &T) -> String
 where
     T: for<'de> serde::Deserialize<'de> + serde::Serialize,
