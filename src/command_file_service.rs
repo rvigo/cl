@@ -27,7 +27,7 @@ impl CommandFileService {
         }
     }
 
-    pub fn load_commands_from_file<'a>(&self) -> Vec<CommandItem> {
+    pub fn load_commands_from_file(&self) -> Vec<CommandItem> {
         match toml::from_str::<HashMap<String, Vec<CommandItem>>>(&self.open_file()) {
             Ok(toml) => {
                 let mut items: Vec<CommandItem> = toml.into_iter().flat_map(|(_, c)| c).collect();
