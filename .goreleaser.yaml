@@ -19,9 +19,9 @@ archives:
 brews:
   - name: cl
     description: |
-      "cl (Command List) is a way to group all your aliases, once in a while or multiple usages 
-      with a lot of args commands in an organized and human readable place"
-    homepage: https://github.com/rvigo/homebrew-cl
+      cl (Command List) is a way to group all your aliases, once in a while or multiple usages 
+      with a lot of args commands in an organized and human readable place
+    homepage: https://github.com/rvigo/cl
     tap:
       owner: rvigo
       name: homebrew-cl
@@ -32,6 +32,12 @@ brews:
     install: bin.install "cl"
 checksum:
   name_template: "checksums.txt"
+release:
+  github:
+    owner: rvigo
+    name: cl
+  prerelease: auto
+  draft: false
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
 changelog:
