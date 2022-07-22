@@ -11,24 +11,13 @@ pub struct CommandItem {
     pub tags: Option<Vec<String>>,
 }
 
+#[derive(Default)]
 pub struct CommandItemBuilder {
     namespace: String,
     command: String,
     description: Option<String>,
     alias: String,
     tags: Option<Vec<String>>,
-}
-
-impl Default for CommandItemBuilder {
-    fn default() -> Self {
-        Self {
-            namespace: Default::default(),
-            command: Default::default(),
-            description: Default::default(),
-            alias: Default::default(),
-            tags: Default::default(),
-        }
-    }
 }
 
 impl CommandItemBuilder {
@@ -69,7 +58,7 @@ impl CommandItem {
         self.tags
             .as_ref()
             .unwrap_or(&vec![String::from("")])
-            .into_iter()
+            .iter()
             .join(", ")
     }
 

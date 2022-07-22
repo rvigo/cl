@@ -26,7 +26,7 @@ impl KeyHandler {
         if state.popup.show_popup {
             self.handle_popup(key_event, state)
         } else if state.show_help {
-            self.handle_help(key_event, state)
+            self.handle_help(state)
         } else {
             match key_event {
                 KeyEvent {
@@ -97,7 +97,7 @@ impl KeyHandler {
         if state.popup.show_popup {
             self.handle_popup(key_event, state)
         } else if state.show_help {
-            self.handle_help(key_event, state)
+            self.handle_help(state)
         } else {
             match key_event {
                 KeyEvent {
@@ -176,7 +176,7 @@ impl KeyHandler {
         if state.popup.show_popup {
             self.handle_popup(key_event, state)
         } else if state.show_help {
-            self.handle_help(key_event, state)
+            self.handle_help(state)
         } else {
             match key_event {
                 KeyEvent {
@@ -261,15 +261,15 @@ impl KeyHandler {
 
     fn handle_popup(&self, key_event: KeyEvent, state: &mut State) {
         match state.popup.message_type {
-            MessageType::Error => match key_event {
-                KeyEvent {
+            MessageType::Error => {
+                if let KeyEvent {
                     code: KeyCode::Enter,
                     modifiers: KeyModifiers::NONE,
-                } => {
+                } = key_event
+                {
                     state.popup.clear();
                 }
-                _ => {}
-            },
+            }
 
             MessageType::Delete => match key_event {
                 KeyEvent {
@@ -326,9 +326,7 @@ impl KeyHandler {
         }
     }
 
-    fn handle_help(&self, key_event: KeyEvent, state: &mut State) {
-        match key_event {
-            _ => state.show_help = false,
-        }
+    fn handle_help(&self, state: &mut State) {
+        state.show_help = false;
     }
 }

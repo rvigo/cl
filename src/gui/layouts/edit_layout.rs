@@ -65,7 +65,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
 }
 
 //TODO factory????
-fn render_tags_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State, area: Rect) {
+fn render_tags_input_widget<B: Backend>(frame: &mut Frame<B>, state: &mut State, area: Rect) {
     let component_name = "tags";
     let input = state
         .get_mut_ref()
@@ -90,11 +90,7 @@ fn render_tags_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut St
     }
 }
 
-fn render_namespace_input_widget<'a, B: Backend>(
-    frame: &mut Frame<B>,
-    state: &mut State,
-    area: Rect,
-) {
+fn render_namespace_input_widget<B: Backend>(frame: &mut Frame<B>, state: &mut State, area: Rect) {
     let component_name = "namespace";
 
     let widget = Paragraph::new(
@@ -118,11 +114,7 @@ fn render_namespace_input_widget<'a, B: Backend>(
         set_cursor_positition(frame, state, area)
     }
 }
-fn render_commannd_input_widget<'a, B: Backend>(
-    frame: &mut Frame<B>,
-    state: &mut State,
-    area: Rect,
-) {
+fn render_commannd_input_widget<B: Backend>(frame: &mut Frame<B>, state: &mut State, area: Rect) {
     let component_name = "command";
 
     let widget = Paragraph::new(
@@ -147,7 +139,7 @@ fn render_commannd_input_widget<'a, B: Backend>(
     }
 }
 
-fn render_alias_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State, area: Rect) {
+fn render_alias_input_widget<B: Backend>(frame: &mut Frame<B>, state: &mut State, area: Rect) {
     let component_name = "alias";
     let widget = Paragraph::new(
         state
@@ -171,7 +163,7 @@ fn render_alias_input_widget<'a, B: Backend>(frame: &mut Frame<B>, state: &mut S
     }
 }
 
-fn render_description_input_widget<'a, B: Backend>(
+fn render_description_input_widget<B: Backend>(
     frame: &mut Frame<B>,
     state: &mut State,
     area: Rect,

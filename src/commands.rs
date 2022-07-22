@@ -11,7 +11,7 @@ pub struct Commands {
 
 impl Commands {
     pub fn init(items: Vec<CommandItem>) -> Commands {
-        return Self { items };
+        Self { items }
     }
 
     pub fn get_ref(&self) -> &Commands {
@@ -35,7 +35,7 @@ impl Commands {
     }
 
     pub fn add_command(&mut self, command_item: &CommandItem) -> Result<Vec<CommandItem>> {
-        if self.clone().command_already_exists(&command_item) {
+        if self.clone().command_already_exists(command_item) {
             bail!(
                 "Command with alias \"{}\" already exists in \"{}\" namespace",
                 command_item.alias,
@@ -110,11 +110,11 @@ impl Commands {
     }
 
     pub fn exec_command(&self, command_item: &CommandItem) -> Result<()> {
-        let shell = env::var("SHELL").unwrap_or(String::from("sh"));
+        let shell = env::var("SHELL").unwrap_or_else(|_| String::from("sh"));
         println!("{} {}", shell, command_item.command);
         let output = std::process::Command::new(shell)
             .arg("-c")
-            .arg(command_item.command.to_string())
+            .arg(&command_item.command)
             .spawn();
 
         output?.wait()?;
