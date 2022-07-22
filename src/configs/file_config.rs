@@ -38,22 +38,20 @@ pub fn load() -> Result<FileConfig> {
     }
 
     let config_path = app_home_dir.join(CONFIG_FILE);
-    let config = if config_path.exists() {
-        let mut config: FileConfig = from_toml(&read_to_string(config_path.clone())?);
+    if config_path.exists() {
+        let mut config: FileConfig = from_toml(&read_to_string(config_path)?);
         validate_config(&mut config)?;
 
         Ok(config)
     } else {
         let new_config = create_new_files(&app_home_dir)?;
         Ok(new_config)
-    };
-
-    config
+    }
 }
 
-fn create_new_files(app_home_dir: &PathBuf) -> Result<FileConfig> {
-    let new_config = FileConfig::new(&app_home_dir);
-    create_new_config(&app_home_dir)?;
+fn create_new_files(app_home_dir: &Path) -> Result<FileConfig> {
+    let new_config = FileConfig::new(app_home_dir);
+    create_new_config(app_home_dir)?;
     create_empty_command_file(&app_home_dir.join(COMMAND_FILE))?;
     Ok(new_config)
 }
@@ -66,8 +64,8 @@ fn validate_config(config: &mut FileConfig) -> Result<()> {
     Ok(())
 }
 
-fn create_new_config(home_path: &PathBuf) -> Result<()> {
-    let new_config = FileConfig::new(&home_path);
+fn create_new_config(home_path: &Path) -> Result<()> {
+    let new_config = FileConfig::new(home_path);
     let config_as_str = to_toml(&new_config);
     let config_file_path = new_config
         .config_home_path
@@ -81,10 +79,10 @@ fn create_new_config(home_path: &PathBuf) -> Result<()> {
     }
 }
 
-fn create_empty_command_file(path: &PathBuf) -> Result<()> {
+fn create_empty_command_file(path: &Path) -> Result<()> {
     save_file(
         String::from(""), //empty toml file
-        &path,
+        path,
     )
 }
 

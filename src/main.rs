@@ -39,16 +39,14 @@ fn run_exec_command(sub_matches: &ArgMatches) -> Result<()> {
     let commands = Commands::init(command_items);
 
     let alias: String = sub_matches.value_of("alias").unwrap().into();
-    let namespace = sub_matches
-        .value_of("namespace")
-        .map_or(None, |n| Some(String::from(n)));
+    let namespace = sub_matches.value_of("namespace").map(String::from);
     let args: Vec<String> = sub_matches
         .values_of("args")
-        .unwrap_or(clap::Values::default())
+        .unwrap_or_default()
         .map(String::from)
         .collect();
 
-    let mut selected_command = commands.find_command(alias.clone(), namespace)?;
+    let mut selected_command = commands.find_command(alias, namespace)?;
     selected_command.command = format!("{} {}", selected_command.command, &args.join(" "));
     commands.exec_command(&selected_command)?;
 

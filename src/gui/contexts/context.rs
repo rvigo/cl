@@ -134,8 +134,7 @@ impl Context {
         self.items
             .clone()
             .iter_mut()
-            .filter(|item| item.name == component_name)
-            .next()
+            .find(|item| item.name == component_name)
             .unwrap()
             .get_mut_ref()
             .input
@@ -209,7 +208,6 @@ impl Context {
                         .as_ref()
                         .unwrap_or(&vec![String::from("")])
                         .join(",")
-                        .to_string();
                 }
 
                 _ => {}
@@ -247,7 +245,7 @@ impl Context {
 
                 _ => {}
             });
-        match command_item.clone().validate() {
+        match command_item.validate() {
             Ok(_) => self.clear_inputs(),
             Err(error) => bail!(error),
         };

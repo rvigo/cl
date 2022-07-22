@@ -56,7 +56,9 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let state = state.get_mut_ref();
 
     let command_str: String = selected_command.command;
-    let description_str: String = selected_command.description.unwrap_or(String::from(""));
+    let description_str: String = selected_command
+        .description
+        .unwrap_or_else(|| String::from(""));
 
     let command = create_command_details(command_str);
     let tabs = create_tab_menu(state.get_ref());
@@ -88,9 +90,8 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         render_help(frame, state)
     }
     if state.popup.show_popup {
-        match state.popup.answer {
-            Answer::None => render_popup(frame, state),
-            _ => {}
+        if let Answer::None = state.popup.answer {
+            render_popup(frame, state)
         }
     }
 }
@@ -100,7 +101,7 @@ fn create_tab_menu<'a>(state: &State) -> Tabs<'a> {
         .namespaces
         .clone()
         .into_iter()
-        .map(|tab| Spans::from(vec![Span::styled(tab.clone(), Style::default())]))
+        .map(|tab| Spans::from(vec![Span::styled(tab, Style::default())]))
         .collect();
     Tabs::new(tab_menu)
         .select(state.namespace_state.selected().unwrap())
@@ -119,7 +120,7 @@ fn create_command_items<'a>(state: &mut State) -> List<'a> {
         .filtered_commands()
         .into_iter()
         .map(|c| {
-            let lines = vec![Spans::from(c.alias.clone())];
+            let lines = vec![Spans::from(c.alias)];
 
             ListItem::new(lines.clone().to_owned())
                 .style(Style::default().fg(Color::Rgb(229, 229, 229)))

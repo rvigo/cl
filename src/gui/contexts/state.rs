@@ -47,10 +47,10 @@ impl State {
         state.commands_state.select(Some(0));
         state.namespace_state.select(Some(0));
         state.context.focus_state.select(Some(0));
-        state.context.current_command = match commands.clone().get_ref().get_command_item_ref(0) {
-            Some(value) => Some(value.to_owned()),
-            None => None,
-        };
+        state.context.current_command = commands
+            .get_ref()
+            .get_command_item_ref(0)
+            .map(|value| value.to_owned());
         state.popup.options_state.select(Some(0));
 
         state

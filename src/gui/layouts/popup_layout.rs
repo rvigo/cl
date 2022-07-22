@@ -11,7 +11,7 @@ use tui::{
     Frame,
 };
 
-pub fn render_popup<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State) {
+pub fn render_popup<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let block = Paragraph::new(state.popup.message.clone())
         .style(Style::default().fg(Color::Rgb(229, 229, 229)))
         .alignment(Alignment::Left)

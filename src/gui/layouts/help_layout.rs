@@ -46,7 +46,7 @@ fn insert_or_update_options() -> String {
     )
 }
 
-pub fn render_help<'a, B: Backend>(frame: &mut Frame<B>, state: &mut State) {
+pub fn render_help<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let block = Paragraph::new(match state.view_mode {
         ViewMode::List => list_options(),
         _ => insert_or_update_options(),
