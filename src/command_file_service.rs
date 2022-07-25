@@ -2,7 +2,7 @@ use crate::{command_item::CommandItem, configs::file_config, utils::to_toml};
 use anyhow::Result;
 use std::{collections::HashMap, fs, path::PathBuf};
 
-#[derive(Clone, Default)]
+#[derive(Default)]
 pub struct CommandFileService {
     pub file_path: PathBuf,
 }
@@ -38,10 +38,11 @@ impl CommandFileService {
         }
     }
 
-    pub fn write_to_file(&self, items: Vec<CommandItem>) -> Result<()> {
+    pub fn write_to_file(&self, items: &Vec<CommandItem>) -> Result<()> {
         let mut map: HashMap<String, Vec<CommandItem>> = HashMap::new();
         for item in items {
-            if let Some(commands) = map.get_mut(&item.clone().namespace) {
+            let item = item.to_owned();
+            if let Some(commands) = map.get_mut(&item.namespace) {
                 commands.push(item);
             } else {
                 map.insert(item.clone().namespace, vec![item]);

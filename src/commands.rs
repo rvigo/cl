@@ -14,10 +14,6 @@ impl Commands {
         Self { items }
     }
 
-    pub fn get_ref(&self) -> &Commands {
-        self
-    }
-
     pub fn get_command_item_ref(&self, idx: usize) -> Option<&CommandItem> {
         self.items.get(idx)
     }

@@ -1,14 +1,12 @@
 use std::fmt;
 use tui::widgets::ListState;
 
-#[derive(Clone)]
 pub enum MessageType {
     None,
     Error,
     Delete,
 }
 
-#[derive(Clone)]
 pub enum Answer {
     None,
     Ok,
@@ -25,7 +23,6 @@ impl fmt::Display for Answer {
     }
 }
 
-#[derive(Clone)]
 pub struct PopUp {
     pub show_popup: bool,
     pub message: String,

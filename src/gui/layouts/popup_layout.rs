@@ -50,8 +50,7 @@ fn draw_option_buttons<B: Backend>(frame: &mut Frame<B>, area: Rect, state: &mut
     let tab_menu: Vec<Spans> = state
         .popup
         .options
-        .clone()
-        .into_iter()
+        .iter()
         .map(|tab| Spans::from(vec![Span::styled(tab.to_string(), Style::default())]))
         .collect();
 

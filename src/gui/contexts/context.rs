@@ -5,7 +5,6 @@ use anyhow::{bail, Result};
 use itertools::Itertools;
 use tui::widgets::ListState;
 
-#[derive(Clone)]
 pub struct Item {
     name: String,
     in_focus: bool,
@@ -19,10 +18,6 @@ impl Item {
             in_focus,
             input: String::from(""),
         }
-    }
-
-    pub fn get_mut_ref(&mut self) -> &mut Item {
-        self
     }
 
     pub fn toggle_focus(&mut self) {
@@ -42,7 +37,6 @@ impl Item {
     }
 }
 
-#[derive(Clone)]
 pub struct Context {
     pub focus_state: ListState,
     items: Vec<Item>,
@@ -61,12 +55,9 @@ impl Context {
             current_command: None,
         }
     }
-    pub fn get_vec_of_mut_items(&mut self) -> Vec<&mut Item> {
-        self.items.iter_mut().collect_vec()
-    }
 
-    pub fn get_current_command(&self) -> Option<CommandItem> {
-        self.current_command.clone()
+    pub fn get_current_command(&self) -> Option<&CommandItem> {
+        self.current_command.as_ref()
     }
 
     pub fn set_current_command(&mut self, command: Option<CommandItem>) {
@@ -74,7 +65,7 @@ impl Context {
     }
 
     fn clear_inputs(&mut self) {
-        for item in self.get_vec_of_mut_items() {
+        for item in self.items.iter_mut().collect_vec() {
             item.clear_input()
         }
     }
@@ -130,32 +121,30 @@ impl Context {
         current
     }
 
-    pub fn get_component_input(&self, component_name: &str) -> String {
+    pub fn get_component_input(&mut self, component_name: &str) -> String {
         self.items
-            .clone()
             .iter_mut()
             .find(|item| item.name == component_name)
             .unwrap()
-            .get_mut_ref()
             .input
             .clone()
     }
 
     pub fn build_command(&mut self) -> Result<CommandItem> {
         let mut command_builder = CommandItemBuilder::default();
-        for item in self.items.clone().into_iter() {
+        for item in self.items.iter() {
             match item.name.as_str() {
                 "alias" => {
-                    command_builder.alias(item.input);
+                    command_builder.alias(item.input.to_string());
                 }
                 "command" => {
-                    command_builder.command(item.input);
+                    command_builder.command(item.input.to_string());
                 }
                 "description" => {
                     if item.input.is_empty() {
                         command_builder.description(None);
                     } else {
-                        command_builder.description(Some(item.input));
+                        command_builder.description(Some(item.input.to_string()));
                     }
                 }
                 "tags" => {
@@ -171,7 +160,7 @@ impl Context {
                     }
                 }
                 "namespace" => {
-                    command_builder.namespace(item.input);
+                    command_builder.namespace(item.input.to_string());
                 }
                 _ => {}
             }
@@ -192,18 +181,18 @@ impl Context {
         self.items
             .iter_mut()
             .for_each(|item| match item.name.as_str() {
-                "alias" => item.get_mut_ref().input = current_command.alias.clone(),
-                "command" => item.get_mut_ref().input = current_command.command.clone(),
-                "namespace" => item.get_mut_ref().input = current_command.namespace.clone(),
+                "alias" => item.input = current_command.alias.clone(),
+                "command" => item.input = current_command.command.clone(),
+                "namespace" => item.input = current_command.namespace.clone(),
                 "description" => {
-                    item.get_mut_ref().input = current_command
+                    item.input = current_command
                         .description
                         .as_ref()
                         .unwrap_or(&String::from(""))
                         .to_string();
                 }
                 "tags" => {
-                    item.get_mut_ref().input = current_command
+                    item.input = current_command
                         .tags
                         .as_ref()
                         .unwrap_or(&vec![String::from("")])
@@ -215,40 +204,41 @@ impl Context {
     }
 
     pub fn edit_command(&mut self) -> Result<CommandItem> {
-        let mut command_item = self.get_current_command().unwrap();
-        self.items
-            .clone()
-            .iter()
-            .for_each(|item| match item.name.as_str() {
-                "alias" => command_item.alias = item.input.clone(),
-                "command" => command_item.command = item.input.clone(),
-                "namespace" => command_item.namespace = item.input.clone(),
-                "description" => {
-                    if item.input.is_empty() {
-                        command_item.description = None;
-                    } else {
-                        command_item.description = Some(item.input.clone());
-                    }
+        let mut command_item = self
+            .get_current_command()
+            .map(|item| item.to_owned())
+            .unwrap();
+        self.items.iter().for_each(|item| match item.name.as_str() {
+            "alias" => command_item.alias = item.input.clone(),
+            "command" => command_item.command = item.input.clone(),
+            "namespace" => command_item.namespace = item.input.clone(),
+            "description" => {
+                if item.input.is_empty() {
+                    command_item.description = None;
+                } else {
+                    command_item.description = Some(item.input.clone());
                 }
-                "tags" => {
-                    if item.input.is_empty() {
-                        command_item.tags = None;
-                    } else {
-                        command_item.tags = Some(
-                            item.input
-                                .split(',')
-                                .map(|char| char.to_string())
-                                .collect_vec(),
-                        );
-                    }
+            }
+            "tags" => {
+                if item.input.is_empty() {
+                    command_item.tags = None;
+                } else {
+                    command_item.tags = Some(
+                        item.input
+                            .split(',')
+                            .map(|char| char.to_string())
+                            .collect_vec(),
+                    );
                 }
+            }
 
-                _ => {}
-            });
-        match command_item.validate() {
-            Ok(_) => self.clear_inputs(),
-            Err(error) => bail!(error),
+            _ => {}
+        });
+
+        if let Err(error) = command_item.validate() {
+            bail!(error)
         };
+        self.clear_inputs();
 
         Ok(command_item)
     }
