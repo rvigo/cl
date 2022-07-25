@@ -31,7 +31,7 @@ impl Commands {
     }
 
     pub fn add_command(&mut self, command_item: &CommandItem) -> Result<Vec<CommandItem>> {
-        if self.clone().command_already_exists(command_item) {
+        if self.command_already_exists(command_item) {
             bail!(
                 "Command with alias \"{}\" already exists in \"{}\" namespace",
                 command_item.alias,
@@ -70,16 +70,15 @@ impl Commands {
 
     fn command_already_exists(&mut self, command_item: &CommandItem) -> bool {
         self.items
-            .clone()
-            .into_iter()
+            .iter()
             .any(|c| c.alias == command_item.alias && c.namespace.eq(&command_item.namespace))
     }
 
-    pub fn remove(&mut self, command_item: &CommandItem) -> Result<Vec<CommandItem>> {
+    pub fn remove(&mut self, command_item: &CommandItem) -> Result<&Vec<CommandItem>> {
         self.items.retain(|command| {
             !command.alias.eq(&command_item.alias) || !command_item.namespace.eq(&command.namespace)
         });
-        Ok(self.items.clone())
+        Ok(&self.items)
     }
 
     pub fn all_commands(&mut self) -> Vec<CommandItem> {
@@ -108,13 +107,23 @@ impl Commands {
     pub fn exec_command(&self, command_item: &CommandItem) -> Result<()> {
         let shell = env::var("SHELL").unwrap_or_else(|_| String::from("sh"));
         println!("{} {}", shell, command_item.command);
-        let output = std::process::Command::new(shell)
+        let command = std::process::Command::new(shell)
             .arg("-c")
             .arg(&command_item.command)
             .spawn();
 
-        output?.wait()?;
-        Ok(())
+        if let Ok(exit_status) = command?.wait() {
+            if exit_status.success() {
+                Ok(())
+            } else {
+                bail!(
+                    "The command exited with status code {:?}",
+                    exit_status.code().unwrap_or(1)
+                )
+            }
+        } else {
+            bail!("Cannot run the command")
+        }
     }
 
     pub fn find_command(&self, alias: String, namespace: Option<String>) -> Result<CommandItem> {
