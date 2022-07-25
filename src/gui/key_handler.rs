@@ -1,5 +1,8 @@
 use super::{
-    contexts::popup::{Answer, MessageType},
+    contexts::{
+        context::Context,
+        popup::{Answer, MessageType},
+    },
     layouts::view_mode::ViewMode,
 };
 use crate::{command_file_service::CommandFileService, gui::contexts::state::State};
@@ -67,7 +70,7 @@ impl KeyHandler {
                 } => match state.context.build_command() {
                     Ok(command) => match state.commands.add_command(&command) {
                         Ok(items) => {
-                            if let Ok(()) = self.file_service.write_to_file(items) {
+                            if let Ok(()) = self.file_service.write_to_file(&items) {
                                 state.reload_namespaces();
                                 state.view_mode = ViewMode::List
                             }
@@ -136,8 +139,9 @@ impl KeyHandler {
                     code: KeyCode::Enter,
                     modifiers: KeyModifiers::NONE,
                 } => {
-                    let current_command = state.context.get_current_command().unwrap();
-                    let edited_command = state.context.edit_command();
+                    let context: &mut Context = &mut state.context;
+                    let current_command = context.get_current_command().unwrap().clone();
+                    let edited_command = context.edit_command();
 
                     match edited_command {
                         Ok(command) => match state
@@ -145,7 +149,7 @@ impl KeyHandler {
                             .add_edited_command(&command, &current_command)
                         {
                             Ok(items) => {
-                                if let Ok(()) = self.file_service.write_to_file(items) {
+                                if let Ok(()) = self.file_service.write_to_file(&items) {
                                     state.reload_namespaces();
                                     state.view_mode = ViewMode::List
                                 }
@@ -228,7 +232,7 @@ impl KeyHandler {
                     modifiers: KeyModifiers::NONE,
                 } => {
                     state.view_mode = ViewMode::Edit;
-                    state.get_mut_ref().context.set_selected_command_inputs();
+                    state.context.set_selected_command_inputs();
                 }
 
                 KeyEvent {
@@ -247,7 +251,7 @@ impl KeyHandler {
                     state.to_be_executed = state
                         .filtered_commands()
                         .get(state.commands_state.selected().unwrap())
-                        .map(|i| i.to_owned());
+                        .cloned();
                     state.should_quit = true
                 }
                 KeyEvent {
@@ -284,17 +288,16 @@ impl KeyHandler {
                     code: KeyCode::Enter,
                     modifiers: KeyModifiers::NONE,
                 } => {
-                    state.popup.answer = state
+                    match state
                         .popup
                         .options
                         .get(state.popup.options_state.selected().unwrap())
-                        .cloned()
-                        .unwrap();
-                    match state.popup.answer {
+                        .unwrap()
+                    {
                         Answer::Ok => {
                             match state
                                 .commands
-                                .remove(&state.context.get_current_command().unwrap())
+                                .remove(state.context.get_current_command().unwrap())
                             {
                                 Ok(items) => {
                                     if let Ok(()) = self.file_service.write_to_file(items) {

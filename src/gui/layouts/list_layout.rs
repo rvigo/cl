@@ -41,11 +41,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .selected()
         .expect("a command should always be selected");
 
-    let mut selected_command: CommandItem = state
-        .filtered_commands()
-        .get(idx)
-        .unwrap_or(&CommandItem::default())
-        .clone();
+    let mut selected_command: CommandItem = state.filtered_commands().get(idx).unwrap().clone();
     state
         .context
         .set_current_command(Some(selected_command.clone()));
@@ -53,18 +49,19 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let tags_str = selected_command.tags_str();
 
     //renewing state
-    let state = state.get_mut_ref();
+    let state = state;
 
-    let command_str: String = selected_command.command;
+    let command_str: String = selected_command.command.clone();
     let description_str: String = selected_command
+        .clone()
         .description
         .unwrap_or_else(|| String::from(""));
 
     let command = create_command_details(command_str);
-    let tabs = create_tab_menu(state.get_ref());
+    let tabs = create_tab_menu(state);
     let tags = create_tags_menu(tags_str);
     let description = create_command_description(description_str);
-    let commands = create_command_items(state.get_mut_ref());
+    let commands = create_command_items(state);
 
     let central_chunk = Layout::default()
         .direction(Direction::Horizontal)
@@ -76,7 +73,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .constraints([Constraint::Percentage(70), Constraint::Length(3)].as_ref())
         .split(central_chunk[1]);
 
-    let command_state = state.get_command_state_mut_ref();
+    let command_state = &mut state.commands_state;
 
     frame.render_widget(main_block, frame.size());
     frame.render_widget(tabs, chunks[0]);

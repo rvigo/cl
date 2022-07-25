@@ -3,7 +3,6 @@ use crate::{command_item::CommandItem, commands::Commands, gui::layouts::view_mo
 use anyhow::Result;
 use tui::widgets::ListState;
 
-#[derive(Clone)]
 pub struct State {
     pub should_quit: bool,
     pub commands_state: ListState,
@@ -48,7 +47,6 @@ impl State {
         state.namespace_state.select(Some(0));
         state.context.focus_state.select(Some(0));
         state.context.current_command = commands
-            .get_ref()
             .get_command_item_ref(0)
             .map(|value| value.to_owned());
         state.popup.options_state.select(Some(0));
@@ -66,18 +64,6 @@ impl State {
 
     pub fn reload_namespaces(&mut self) {
         self.load_namespaces();
-    }
-
-    pub fn get_command_state_mut_ref(&mut self) -> &mut ListState {
-        &mut self.commands_state
-    }
-
-    pub fn get_ref(&self) -> &State {
-        self
-    }
-
-    pub fn get_mut_ref(&mut self) -> &mut State {
-        self
     }
 
     pub fn next_command_item(&mut self) {
@@ -151,9 +137,8 @@ impl State {
     }
 
     pub fn execute_callback_command(&self) -> Result<()> {
-        match &self.to_be_executed {
-            Some(command) => self.commands.exec_command(command)?,
-            None => return Ok(()), //there is nothing to handle
+        if let Some(command) = &self.to_be_executed {
+            self.commands.exec_command(command)?;
         }
 
         Ok(())

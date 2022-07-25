@@ -46,7 +46,7 @@ impl AppContext {
             self.terminal
                 .draw(|frame| select_ui(frame, &mut self.state))?;
             if let Event::Key(key) = event::read()? {
-                self.key_handler.handle(key, self.state.get_mut_ref());
+                self.key_handler.handle(key, &mut self.state);
                 if self.state.should_quit {
                     return Ok(());
                 }
