@@ -54,7 +54,7 @@ impl CommandItemBuilder {
 }
 
 impl CommandItem {
-    pub fn tags_str(&mut self) -> String {
+    pub fn tags_as_string(&mut self) -> String {
         self.tags
             .as_ref()
             .unwrap_or(&vec![String::from("")])
@@ -110,7 +110,7 @@ mod test {
     #[test]
     fn should_get_tags_as_str() {
         let mut command = build_default_command();
-        let tags = command.tags_str();
+        let tags = command.tags_as_string();
         assert_eq!(String::from("tag1"), tags)
     }
 

@@ -18,19 +18,18 @@ impl Commands {
         self.items.get(idx)
     }
 
-    pub fn namespaces(&mut self) -> Vec<String> {
+    pub fn namespaces(&self) -> Vec<String> {
         let mut keys: Vec<String> = self
             .items
-            .clone()
-            .into_iter()
-            .map(|command| command.namespace)
+            .iter()
+            .map(|command| command.namespace.clone())
             .unique()
             .collect();
         keys.sort();
         keys
     }
 
-    pub fn add_command(&mut self, command_item: &CommandItem) -> Result<Vec<CommandItem>> {
+    pub fn add_command(&mut self, command_item: &CommandItem) -> Result<&Vec<CommandItem>> {
         if self.command_already_exists(command_item) {
             bail!(
                 "Command with alias \"{}\" already exists in \"{}\" namespace",
@@ -40,14 +39,14 @@ impl Commands {
         }
 
         self.items.push(command_item.clone());
-        Ok(self.items.clone())
+        Ok(&self.items)
     }
 
     pub fn add_edited_command(
         &mut self,
         edited_command_item: &CommandItem,
         current_command_item: &CommandItem,
-    ) -> Result<Vec<CommandItem>> {
+    ) -> Result<&Vec<CommandItem>> {
         if self.items.clone().into_iter().any(|c| {
             c.alias.eq(&edited_command_item.alias)
                 && !edited_command_item.alias.eq(&current_command_item.alias)
@@ -65,10 +64,10 @@ impl Commands {
         });
 
         self.items.push(edited_command_item.clone());
-        Ok(self.items.clone())
+        Ok(&self.items)
     }
 
-    fn command_already_exists(&mut self, command_item: &CommandItem) -> bool {
+    fn command_already_exists(&self, command_item: &CommandItem) -> bool {
         self.items
             .iter()
             .any(|c| c.alias == command_item.alias && c.namespace.eq(&command_item.namespace))
@@ -85,21 +84,24 @@ impl Commands {
         if self.items.is_empty() {
             vec![CommandItem::default()]
         } else {
+            self.items.sort_by_key(|command| command.alias.clone());
             self.items.clone()
         }
     }
 
-    pub fn commands_from_namespace(&mut self, namespace: String) -> Result<Vec<CommandItem>> {
-        let commands: Vec<CommandItem> = self
+    pub fn commands_from_namespace(&self, namespace: String) -> Result<Vec<CommandItem>> {
+        let mut commands: Vec<CommandItem> = self
             .items
-            .clone()
-            .into_iter()
+            .iter()
             .filter(|command| command.namespace == namespace)
+            .map(|item| item.to_owned())
             .collect();
 
         if commands.is_empty() {
             bail!("There are no commands to show for namespace \"{namespace}\".");
         }
+
+        commands.sort_by_key(|command| command.alias.clone());
 
         Ok(commands)
     }
@@ -129,8 +131,7 @@ impl Commands {
     pub fn find_command(&self, alias: String, namespace: Option<String>) -> Result<CommandItem> {
         let commands: Vec<CommandItem> = self
             .items
-            .clone()
-            .into_iter()
+            .iter()
             .filter(|c| {
                 if namespace.is_none() {
                     true
@@ -139,6 +140,7 @@ impl Commands {
                 }
             })
             .filter(|c| c.alias.eq(&alias))
+            .map(|item| item.to_owned())
             .collect();
 
         if commands.len() > 1 {
@@ -178,7 +180,7 @@ mod test {
 
     #[test]
     fn should_return_all_namespaces() {
-        let mut commands = build_commands();
+        let commands = build_commands();
         let namespaces = commands.namespaces();
         assert_eq!(
             vec![
@@ -210,7 +212,7 @@ mod test {
 
     #[test]
     fn should_validate_if_command_already_exists() {
-        let mut commands = build_commands();
+        let commands = build_commands();
         let mut duplicated_command = CommandItemBuilder::default();
         duplicated_command
             .alias(String::from("test alias"))
@@ -223,7 +225,7 @@ mod test {
 
     #[test]
     fn should_return_all_commands_from_namespace() {
-        let mut commands = build_commands();
+        let commands = build_commands();
         let commands_from_namespace =
             commands.commands_from_namespace(String::from("test namespace2"));
 
@@ -234,7 +236,7 @@ mod test {
 
     #[test]
     fn should_return_an_error_when_there_are_no_commands_from_namespace() {
-        let mut commands = build_commands();
+        let commands = build_commands();
         let invalid_namespace = String::from("invalid");
         let commands_from_namespace = commands.commands_from_namespace(invalid_namespace.clone());
 

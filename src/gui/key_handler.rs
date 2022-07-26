@@ -57,12 +57,12 @@ impl KeyHandler {
                 KeyEvent {
                     code: KeyCode::Char(c),
                     modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-                } => state.context.get_current_in_focus().push(c),
+                } => state.context.get_current_in_focus_mut().unwrap().push(c),
                 KeyEvent {
                     code: KeyCode::Backspace,
                     modifiers: KeyModifiers::NONE,
                 } => {
-                    state.context.get_current_in_focus().pop();
+                    state.context.get_current_in_focus_mut().unwrap().pop();
                 }
                 KeyEvent {
                     code: KeyCode::Enter,
@@ -70,8 +70,8 @@ impl KeyHandler {
                 } => match state.context.build_command() {
                     Ok(command) => match state.commands.add_command(&command) {
                         Ok(items) => {
-                            if let Ok(()) = self.file_service.write_to_file(&items) {
-                                state.reload_namespaces();
+                            if let Ok(()) = self.file_service.write_to_file(items) {
+                                state.reload_state();
                                 state.view_mode = ViewMode::List
                             }
                         }
@@ -128,12 +128,12 @@ impl KeyHandler {
                 KeyEvent {
                     code: KeyCode::Char(c),
                     modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-                } => state.context.get_current_in_focus().push(c),
+                } => state.context.get_current_in_focus_mut().unwrap().push(c),
                 KeyEvent {
                     code: KeyCode::Backspace,
                     modifiers: KeyModifiers::NONE,
                 } => {
-                    state.context.get_current_in_focus().pop();
+                    state.context.get_current_in_focus_mut().unwrap().pop();
                 }
                 KeyEvent {
                     code: KeyCode::Enter,
@@ -149,8 +149,8 @@ impl KeyHandler {
                             .add_edited_command(&command, &current_command)
                         {
                             Ok(items) => {
-                                if let Ok(()) = self.file_service.write_to_file(&items) {
-                                    state.reload_namespaces();
+                                if let Ok(()) = self.file_service.write_to_file(items) {
+                                    state.reload_state();
                                     state.view_mode = ViewMode::List
                                 }
                             }
@@ -302,7 +302,7 @@ impl KeyHandler {
                                 Ok(items) => {
                                     if let Ok(()) = self.file_service.write_to_file(items) {
                                         state.popup.clear();
-                                        state.reload_namespaces()
+                                        state.reload_state();
                                     }
                                 }
                                 Err(error) => {
