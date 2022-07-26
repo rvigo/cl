@@ -20,7 +20,7 @@ impl KeyHandler {
     pub fn handle(&self, key_event: KeyEvent, state: &mut State) {
         match state.view_mode {
             ViewMode::List => self.handle_list(key_event, state),
-            ViewMode::New => self.handle_insert(key_event, state),
+            ViewMode::Insert => self.handle_insert(key_event, state),
             ViewMode::Edit => self.handle_edit(key_event, state),
         }
     }
@@ -225,7 +225,7 @@ impl KeyHandler {
                     code: KeyCode::Insert | KeyCode::Char('i'),
                     modifiers: KeyModifiers::NONE,
                 } => {
-                    state.view_mode = ViewMode::New;
+                    state.view_mode = ViewMode::Insert;
                 }
                 KeyEvent {
                     code: KeyCode::Char('e'),
@@ -236,7 +236,7 @@ impl KeyHandler {
                 }
 
                 KeyEvent {
-                    code: KeyCode::Char('d'),
+                    code: KeyCode::Char('d') | KeyCode::Delete,
                     modifiers: KeyModifiers::NONE,
                 } => {
                     state.popup.message =
