@@ -1,14 +1,14 @@
 use super::{
-    cursor::set_cursor_positition,
     help_layout::{render_help, render_helper_footer},
+    layout_utils::render_widget,
     popup_layout::render_popup,
 };
-use crate::gui::contexts::{context::Item, state::State};
+use crate::gui::contexts::state::State;
 use tui::{
     backend::Backend,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
-    widgets::{Block, BorderType, Borders, Paragraph, Wrap},
+    layout::{Constraint, Direction, Layout},
+    style::Style,
+    widgets::{Block, BorderType, Borders},
     Frame,
 };
 
@@ -70,34 +70,5 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     }
     if state.popup.show_popup {
         render_popup(frame, state);
-    }
-}
-
-fn render_widget<B: Backend>(frame: &mut Frame<B>, state: &State, area: Rect, item: &Item) {
-    let widget = Paragraph::new(state.context.get_component_input(item.name()))
-        .style(get_style(state, item.name()))
-        .alignment(Alignment::Left)
-        .wrap(Wrap { trim: true })
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .style(Style::default())
-                .title(item.title())
-                .border_type(BorderType::Plain),
-        );
-
-    frame.render_widget(widget, area);
-    if state.context.is_in_focus(item.name()) {
-        set_cursor_positition(frame, state.context.get_current_in_focus().unwrap(), area)
-    }
-}
-
-fn get_style(state: &State, component_name: &str) -> Style {
-    if state.context.is_in_focus(component_name) {
-        Style::default()
-            .fg(Color::Black)
-            .bg(Color::Rgb(201, 165, 249))
-    } else {
-        Style::default().fg(Color::Rgb(229, 229, 229))
     }
 }
