@@ -41,12 +41,13 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .selected()
         .expect("a command should always be selected");
 
-    let mut selected_command: CommandItem = state.filtered_commands().get(idx).unwrap().clone();
+    let mut selected_command: CommandItem = state.filtered_commands().get(idx).unwrap().to_owned();
+
     state
         .context
         .set_current_command(Some(selected_command.clone()));
 
-    let tags_str = selected_command.tags_str();
+    let tags_str = selected_command.tags_as_string();
 
     //renewing state
     let state = state;

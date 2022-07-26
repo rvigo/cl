@@ -1,4 +1,4 @@
-use std::char;
+use std::{char, vec};
 
 use crate::command_item::{CommandItem, CommandItemBuilder};
 use anyhow::{bail, Result};
@@ -7,17 +7,26 @@ use tui::widgets::ListState;
 
 pub struct Item {
     name: String,
+    title: String,
     in_focus: bool,
     pub input: String,
 }
 
 impl Item {
-    pub fn new(name: String, in_focus: bool) -> Item {
+    pub fn new(name: String, title: String, in_focus: bool) -> Item {
         Item {
             name,
+            title,
             in_focus,
             input: String::from(""),
         }
+    }
+
+    pub fn title(&self) -> &str {
+        &self.title
+    }
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
     pub fn toggle_focus(&mut self) {
@@ -44,16 +53,20 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(items: Vec<(String, bool)>) -> Context {
+    pub fn new(items: Vec<(String, String, bool)>) -> Context {
         let items = items
             .into_iter()
-            .map(|(name, focus)| Item::new(name, focus))
+            .map(|(name, title, focus)| Item::new(name, title, focus))
             .collect_vec();
         Context {
             items,
             focus_state: ListState::default(),
             current_command: None,
         }
+    }
+
+    pub fn items(&self) -> &Vec<Item> {
+        &self.items
     }
 
     pub fn get_current_command(&self) -> Option<&CommandItem> {
@@ -113,21 +126,20 @@ impl Context {
         self.items.get_mut(i).unwrap().toggle_focus();
     }
 
-    pub fn get_current_in_focus(&mut self) -> &mut Item {
-        let current = self
-            .items
-            .get_mut(self.focus_state.selected().unwrap())
-            .unwrap();
-        current
+    pub fn get_current_in_focus(&self) -> Option<&Item> {
+        self.items.get(self.focus_state.selected().unwrap())
+    }
+    pub fn get_current_in_focus_mut(&mut self) -> Option<&mut Item> {
+        self.items.get_mut(self.focus_state.selected().unwrap())
     }
 
-    pub fn get_component_input(&mut self, component_name: &str) -> String {
+    pub fn get_component_input(&self, component_name: &str) -> &str {
         self.items
-            .iter_mut()
-            .find(|item| item.name == component_name)
+            .iter()
+            .find(|item| item.name.eq(component_name))
             .unwrap()
             .input
-            .clone()
+            .as_str()
     }
 
     pub fn build_command(&mut self) -> Result<CommandItem> {

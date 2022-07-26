@@ -21,11 +21,19 @@ impl State {
     pub fn init(commands: Commands) -> State {
         //TODO colocar esses itens como static????
         let insert_menu_items = vec![
-            (String::from("alias"), true),
-            (String::from("namespace"), false),
-            (String::from("command"), false),
-            (String::from("description"), false),
-            (String::from("tags"), false),
+            (String::from("alias"), String::from(" Alias "), true),
+            (
+                String::from("namespace"),
+                String::from(" Namespace "),
+                false,
+            ),
+            (String::from("command"), String::from(" Command "), false),
+            (
+                String::from("description"),
+                String::from(" Description "),
+                false,
+            ),
+            (String::from("tags"), String::from(" Tags "), false),
         ];
 
         let mut state = State {
@@ -62,8 +70,9 @@ impl State {
         self.namespaces = ns;
     }
 
-    pub fn reload_namespaces(&mut self) {
+    pub fn reload_state(&mut self) {
         self.load_namespaces();
+        self.commands_state.select(Some(0));
     }
 
     pub fn next_command_item(&mut self) {
@@ -127,12 +136,19 @@ impl State {
     }
 
     pub fn filtered_commands(&mut self) -> Vec<CommandItem> {
-        if self.current_namespace == "All" {
+        if self.current_namespace.eq("All") {
             self.commands.all_commands()
         } else {
-            self.commands
+            let namespaces = self
+                .commands
                 .commands_from_namespace(self.current_namespace.clone())
-                .expect("cannot save a command without an namespace")
+                .expect("cannot save a command without an namespace");
+
+            if namespaces.is_empty() {
+                self.commands.all_commands()
+            } else {
+                namespaces
+            }
         }
     }
 
