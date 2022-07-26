@@ -36,7 +36,7 @@ fn list_options() -> String {
     )
 }
 
-fn insert_or_update_options() -> String {
+fn insert_options() -> String {
     String::from(
         "\n \
         Return <ESC>\n\n \
@@ -46,10 +46,21 @@ fn insert_or_update_options() -> String {
     )
 }
 
+fn edit_options() -> String {
+    String::from(
+        "\n \
+        Return <ESC>\n\n \
+        Right <TAB>\n\n \
+        Left <BACKTAB>\n\n \
+        Update <Enter>",
+    )
+}
+
 pub fn render_help<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let block = Paragraph::new(match state.view_mode {
         ViewMode::List => list_options(),
-        _ => insert_or_update_options(),
+        ViewMode::Edit => edit_options(),
+        ViewMode::Insert => insert_options(),
     })
     .style(Style::default().fg(Color::Rgb(229, 229, 229)))
     .alignment(Alignment::Left)
