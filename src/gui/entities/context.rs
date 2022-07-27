@@ -43,6 +43,7 @@ impl Default for Fields {
         ])
     }
 }
+
 pub struct Context {
     pub focus_state: ListState,
     fields: Fields,
@@ -75,9 +76,9 @@ impl Context {
     }
 
     fn clear_inputs(&mut self) {
-        for item in self.fields.0.iter_mut().collect_vec() {
-            item.clear_input()
-        }
+        self.fields_mut()
+            .iter_mut()
+            .for_each(|field| field.clear_input());
     }
 
     pub fn is_in_focus(&self, name: &str) -> bool {
@@ -142,8 +143,7 @@ impl Context {
 
     pub fn build_command(&mut self) -> Result<Command> {
         let mut command_builder = CommandBuilder::default();
-        self.fields
-            .0
+        self.fields_mut()
             .iter_mut()
             .for_each(|item| match item.field_type() {
                 FieldType::Alias => {
@@ -218,8 +218,7 @@ impl Context {
             .get_current_command()
             .map(|item| item.to_owned())
             .unwrap();
-        self.fields
-            .0
+        self.fields()
             .iter()
             .for_each(|item| match item.field_type() {
                 FieldType::Alias => command_item.alias = item.input.clone(),

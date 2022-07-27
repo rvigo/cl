@@ -1,11 +1,11 @@
 use super::{
-    contexts::{
+    entities::{
         context::Context,
         popup::{Answer, MessageType},
     },
     layouts::view_mode::ViewMode,
 };
-use crate::{command_file_service::CommandFileService, gui::contexts::state::State};
+use crate::{command_file_service::CommandFileService, gui::entities::state::State};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub struct KeyHandler {

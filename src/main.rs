@@ -11,7 +11,7 @@ use clap::ArgMatches;
 use cli::app;
 use command_file_service::CommandFileService;
 use commands::Commands;
-use gui::contexts::app::AppContext;
+use gui::entities::app::AppContext;
 
 fn main() -> Result<()> {
     let app = app::build_app();

@@ -1,5 +1,5 @@
 use super::{edit_layout, insert_layout, list_layout, view_mode::ViewMode};
-use crate::gui::contexts::state::State;
+use crate::gui::entities::state::State;
 use std::io::Stdout;
 use tui::{backend::CrosstermBackend, Frame};
 

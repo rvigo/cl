@@ -3,7 +3,7 @@ use super::{
     layout_utils::render_widget,
     popup_layout::render_popup,
 };
-use crate::gui::contexts::{field::FieldType, state::State};
+use crate::gui::entities::{field::FieldType, state::State};
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
