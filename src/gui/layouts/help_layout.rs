@@ -1,5 +1,5 @@
 use super::view_mode::ViewMode;
-use crate::gui::contexts::state::State;
+use crate::gui::entities::state::State;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},

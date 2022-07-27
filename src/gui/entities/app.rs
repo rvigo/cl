@@ -1,7 +1,7 @@
 use crate::{
     command_file_service::CommandFileService,
     commands::Commands,
-    gui::{contexts::state::State, key_handler::KeyHandler, layouts::selector::select_ui},
+    gui::{entities::state::State, key_handler::KeyHandler, layouts::selector::select_ui},
 };
 use anyhow::Result;
 use crossterm::{

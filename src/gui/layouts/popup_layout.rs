@@ -1,4 +1,4 @@
-use crate::gui::contexts::{
+use crate::gui::entities::{
     popup::{Answer, MessageType},
     state::State,
 };

@@ -1,5 +1,5 @@
 use super::cursor::set_cursor_positition;
-use crate::gui::contexts::{field::Field, state::State};
+use crate::gui::entities::{field::Field, state::State};
 use tui::{
     backend::Backend,
     layout::{Alignment, Rect},

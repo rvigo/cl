@@ -1,4 +1,3 @@
-use crate::utils::{from_toml, to_toml};
 use anyhow::{bail, Result};
 use dirs::home_dir;
 use serde::{Deserialize, Serialize};
@@ -7,11 +6,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use super::{from_toml, to_toml};
+
 const APP_HOME_DIR: &str = ".config/cl";
 const COMMAND_FILE: &str = "commands.toml";
 const CONFIG_FILE: &str = "config.toml";
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct FileConfig {
     pub config_home_path: Option<PathBuf>,
     pub command_file_path: Option<PathBuf>,

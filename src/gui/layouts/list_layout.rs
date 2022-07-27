@@ -2,7 +2,7 @@ use super::{help_layout::render_help, popup_layout::render_popup};
 use crate::{
     command::Command,
     gui::{
-        contexts::{popup::Answer, state::State},
+        entities::{popup::Answer, state::State},
         layouts::help_layout::render_helper_footer,
     },
 };
