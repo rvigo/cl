@@ -1,6 +1,6 @@
 use super::{help_layout::render_help, popup_layout::render_popup};
 use crate::{
-    command_item::CommandItem,
+    command::Command,
     gui::{
         contexts::{popup::Answer, state::State},
         layouts::help_layout::render_helper_footer,
@@ -41,7 +41,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .selected()
         .expect("a command should always be selected");
 
-    let mut selected_command: CommandItem = state.filtered_commands().get(idx).unwrap().to_owned();
+    let mut selected_command: Command = state.filtered_commands().get(idx).unwrap().to_owned();
 
     state
         .context

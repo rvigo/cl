@@ -1,5 +1,5 @@
 use super::{context::Context, popup::PopUp};
-use crate::{command_item::CommandItem, commands::Commands, gui::layouts::view_mode::ViewMode};
+use crate::{command::Command, commands::Commands, gui::layouts::view_mode::ViewMode};
 use anyhow::Result;
 use tui::widgets::ListState;
 
@@ -14,28 +14,11 @@ pub struct State {
     pub context: Context,
     pub popup: PopUp,
     pub show_help: bool,
-    pub to_be_executed: Option<CommandItem>,
+    pub to_be_executed: Option<Command>,
 }
 
 impl State {
     pub fn init(commands: Commands) -> State {
-        //TODO colocar esses itens como static????
-        let insert_menu_items = vec![
-            (String::from("alias"), String::from(" Alias "), true),
-            (
-                String::from("namespace"),
-                String::from(" Namespace "),
-                false,
-            ),
-            (String::from("command"), String::from(" Command "), false),
-            (
-                String::from("description"),
-                String::from(" Description "),
-                false,
-            ),
-            (String::from("tags"), String::from(" Tags "), false),
-        ];
-
         let mut state = State {
             should_quit: false,
             commands_state: ListState::default(),
@@ -44,7 +27,7 @@ impl State {
             namespaces: Default::default(),
             current_namespace: String::from("All"),
             view_mode: ViewMode::List,
-            context: Context::new(insert_menu_items),
+            context: Context::new(),
             popup: PopUp::init(),
             show_help: false,
             to_be_executed: None,
@@ -135,7 +118,7 @@ impl State {
         self.commands_state.select(Some(0));
     }
 
-    pub fn filtered_commands(&mut self) -> Vec<CommandItem> {
+    pub fn filtered_commands(&mut self) -> Vec<Command> {
         if self.current_namespace.eq("All") {
             self.commands.all_commands()
         } else {

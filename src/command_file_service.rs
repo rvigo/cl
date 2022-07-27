@@ -1,4 +1,4 @@
-use crate::{command_item::CommandItem, configs::file_config, utils::to_toml};
+use crate::{command::Command, configs::file_config, utils::to_toml};
 use anyhow::Result;
 use std::{collections::HashMap, fs, path::PathBuf};
 
@@ -27,10 +27,10 @@ impl CommandFileService {
         }
     }
 
-    pub fn load_commands_from_file(&self) -> Vec<CommandItem> {
-        match toml::from_str::<HashMap<String, Vec<CommandItem>>>(&self.open_file()) {
+    pub fn load_commands_from_file(&self) -> Vec<Command> {
+        match toml::from_str::<HashMap<String, Vec<Command>>>(&self.open_file()) {
             Ok(toml) => {
-                let mut items: Vec<CommandItem> = toml.into_iter().flat_map(|(_, c)| c).collect();
+                let mut items: Vec<Command> = toml.into_iter().flat_map(|(_, c)| c).collect();
                 items.sort();
                 items
             }
@@ -38,8 +38,8 @@ impl CommandFileService {
         }
     }
 
-    pub fn write_to_file(&self, items: &Vec<CommandItem>) -> Result<()> {
-        let mut map: HashMap<String, Vec<CommandItem>> = HashMap::new();
+    pub fn write_to_file(&self, items: &Vec<Command>) -> Result<()> {
+        let mut map: HashMap<String, Vec<Command>> = HashMap::new();
         for item in items {
             let item = item.to_owned();
             if let Some(commands) = map.get_mut(&item.namespace) {
@@ -49,7 +49,7 @@ impl CommandFileService {
             }
         }
 
-        let toml = to_toml::<HashMap<String, Vec<CommandItem>>>(&map);
+        let toml = to_toml::<HashMap<String, Vec<Command>>>(&map);
         let file_path = &self.file_path;
         fs::write(file_path, toml).expect("Error writing the new command.");
 

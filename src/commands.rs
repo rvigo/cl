@@ -1,4 +1,4 @@
-use crate::command_item::CommandItem;
+use crate::command::Command;
 use anyhow::{bail, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -6,15 +6,15 @@ use std::env;
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Commands {
-    items: Vec<CommandItem>,
+    items: Vec<Command>,
 }
 
 impl Commands {
-    pub fn init(items: Vec<CommandItem>) -> Commands {
+    pub fn init(items: Vec<Command>) -> Commands {
         Self { items }
     }
 
-    pub fn get_command_item_ref(&self, idx: usize) -> Option<&CommandItem> {
+    pub fn get_command_item_ref(&self, idx: usize) -> Option<&Command> {
         self.items.get(idx)
     }
 
@@ -29,7 +29,7 @@ impl Commands {
         keys
     }
 
-    pub fn add_command(&mut self, command_item: &CommandItem) -> Result<&Vec<CommandItem>> {
+    pub fn add_command(&mut self, command_item: &Command) -> Result<&Vec<Command>> {
         if self.command_already_exists(command_item) {
             bail!(
                 "Command with alias \"{}\" already exists in \"{}\" namespace",
@@ -44,9 +44,9 @@ impl Commands {
 
     pub fn add_edited_command(
         &mut self,
-        edited_command_item: &CommandItem,
-        current_command_item: &CommandItem,
-    ) -> Result<&Vec<CommandItem>> {
+        edited_command_item: &Command,
+        current_command_item: &Command,
+    ) -> Result<&Vec<Command>> {
         if self.items.clone().into_iter().any(|c| {
             c.alias.eq(&edited_command_item.alias)
                 && !edited_command_item.alias.eq(&current_command_item.alias)
@@ -67,30 +67,30 @@ impl Commands {
         Ok(&self.items)
     }
 
-    fn command_already_exists(&self, command_item: &CommandItem) -> bool {
+    fn command_already_exists(&self, command_item: &Command) -> bool {
         self.items
             .iter()
             .any(|c| c.alias == command_item.alias && c.namespace.eq(&command_item.namespace))
     }
 
-    pub fn remove(&mut self, command_item: &CommandItem) -> Result<&Vec<CommandItem>> {
+    pub fn remove(&mut self, command_item: &Command) -> Result<&Vec<Command>> {
         self.items.retain(|command| {
             !command.alias.eq(&command_item.alias) || !command_item.namespace.eq(&command.namespace)
         });
         Ok(&self.items)
     }
 
-    pub fn all_commands(&mut self) -> Vec<CommandItem> {
+    pub fn all_commands(&mut self) -> Vec<Command> {
         if self.items.is_empty() {
-            vec![CommandItem::default()]
+            vec![Command::default()]
         } else {
             self.items.sort_by_key(|command| command.alias.clone());
             self.items.clone()
         }
     }
 
-    pub fn commands_from_namespace(&self, namespace: String) -> Result<Vec<CommandItem>> {
-        let mut commands: Vec<CommandItem> = self
+    pub fn commands_from_namespace(&self, namespace: String) -> Result<Vec<Command>> {
+        let mut commands: Vec<Command> = self
             .items
             .iter()
             .filter(|command| command.namespace == namespace)
@@ -106,7 +106,7 @@ impl Commands {
         Ok(commands)
     }
 
-    pub fn exec_command(&self, command_item: &CommandItem) -> Result<()> {
+    pub fn exec_command(&self, command_item: &Command) -> Result<()> {
         let shell = env::var("SHELL").unwrap_or_else(|_| String::from("sh"));
         println!("{} {}", shell, command_item.command);
         let command = std::process::Command::new(shell)
@@ -128,8 +128,8 @@ impl Commands {
         }
     }
 
-    pub fn find_command(&self, alias: String, namespace: Option<String>) -> Result<CommandItem> {
-        let commands: Vec<CommandItem> = self
+    pub fn find_command(&self, alias: String, namespace: Option<String>) -> Result<Command> {
+        let commands: Vec<Command> = self
             .items
             .iter()
             .filter(|c| {
@@ -160,15 +160,15 @@ impl Commands {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::command_item::CommandItemBuilder;
+    use crate::command::CommandBuilder;
 
     fn build_commands() -> Commands {
-        let mut command1 = CommandItemBuilder::default();
+        let mut command1 = CommandBuilder::default();
         command1
             .alias(String::from("test alias"))
             .namespace(String::from("test namespace1"))
             .command(String::from("test command"));
-        let mut command2 = CommandItemBuilder::default();
+        let mut command2 = CommandBuilder::default();
         command2
             .alias(String::from("test alias"))
             .namespace(String::from("test namespace2"))
@@ -202,7 +202,7 @@ mod test {
     fn should_return_welcome_command_when_there_is_no_saved_command() {
         let mut commands = Commands::init(Vec::default());
         let all_command_items = commands.all_commands();
-        let default_command_item = CommandItem::default();
+        let default_command_item = Command::default();
         assert_eq!(all_command_items.len(), 1);
         assert_eq!(
             default_command_item,
@@ -213,7 +213,7 @@ mod test {
     #[test]
     fn should_validate_if_command_already_exists() {
         let commands = build_commands();
-        let mut duplicated_command = CommandItemBuilder::default();
+        let mut duplicated_command = CommandBuilder::default();
         duplicated_command
             .alias(String::from("test alias"))
             .namespace(String::from("test namespace1"))
@@ -274,7 +274,7 @@ mod test {
 
         assert_eq!(2, all_commands.len());
 
-        let new_command = CommandItem::default();
+        let new_command = Command::default();
         let new_command_list = commands.add_command(&new_command);
 
         if let Ok(items) = new_command_list {
@@ -286,7 +286,7 @@ mod test {
     #[test]
     fn should_add_an_edited_command() -> Result<()> {
         let mut commands = build_commands();
-        let current_command = CommandItem::default();
+        let current_command = Command::default();
 
         commands.add_command(&current_command)?;
 
@@ -310,7 +310,7 @@ mod test {
     #[test]
     fn should_return_an_error_when_edit_a_duplicated_alias_command() -> Result<()> {
         let mut commands = build_commands();
-        let current_command = CommandItem::default();
+        let current_command = Command::default();
 
         commands.add_command(&current_command)?;
 

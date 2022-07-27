@@ -1,6 +1,6 @@
 mod cli;
+mod command;
 mod command_file_service;
-mod command_item;
 mod commands;
 mod configs;
 mod gui;

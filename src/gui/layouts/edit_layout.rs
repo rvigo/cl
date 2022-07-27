@@ -3,7 +3,7 @@ use super::{
     layout_utils::render_widget,
     popup_layout::render_popup,
 };
-use crate::gui::contexts::state::State;
+use crate::gui::contexts::{field::FieldType, state::State};
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
@@ -49,14 +49,13 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .split(chunks[3]);
 
     frame.render_widget(edit_block, frame.size());
-    for item in state.context.items().iter() {
-        match item.name() {
-            "tags" => render_widget(frame, state, third_row[1], item),
-            "namespace" => render_widget(frame, state, first_row[1], item),
-            "alias" => render_widget(frame, state, first_row[0], item),
-            "command" => render_widget(frame, state, second_row[0], item),
-            "description" => render_widget(frame, state, third_row[0], item),
-            _ => {}
+    for item in state.context.fields().iter() {
+        match item.field_type() {
+            FieldType::Tags => render_widget(frame, state, third_row[1], item),
+            FieldType::Namespace => render_widget(frame, state, first_row[1], item),
+            FieldType::Alias => render_widget(frame, state, first_row[0], item),
+            FieldType::Command => render_widget(frame, state, second_row[0], item),
+            FieldType::Description => render_widget(frame, state, third_row[0], item),
         }
     }
 

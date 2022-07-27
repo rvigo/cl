@@ -3,7 +3,7 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
-pub struct CommandItem {
+pub struct Command {
     pub namespace: String,
     pub command: String,
     pub description: Option<String>,
@@ -12,7 +12,7 @@ pub struct CommandItem {
 }
 
 #[derive(Default)]
-pub struct CommandItemBuilder {
+pub struct CommandBuilder {
     namespace: String,
     command: String,
     description: Option<String>,
@@ -20,30 +20,30 @@ pub struct CommandItemBuilder {
     tags: Option<Vec<String>>,
 }
 
-impl CommandItemBuilder {
-    pub fn namespace(&mut self, namespace: String) -> &mut CommandItemBuilder {
+impl CommandBuilder {
+    pub fn namespace(&mut self, namespace: String) -> &mut CommandBuilder {
         self.namespace = namespace;
         self
     }
-    pub fn alias(&mut self, alias: String) -> &mut CommandItemBuilder {
+    pub fn alias(&mut self, alias: String) -> &mut CommandBuilder {
         self.alias = alias;
         self
     }
-    pub fn command(&mut self, command: String) -> &mut CommandItemBuilder {
+    pub fn command(&mut self, command: String) -> &mut CommandBuilder {
         self.command = command;
         self
     }
-    pub fn description(&mut self, description: Option<String>) -> &mut CommandItemBuilder {
+    pub fn description(&mut self, description: Option<String>) -> &mut CommandBuilder {
         self.description = description;
         self
     }
-    pub fn tags(&mut self, tags: Option<Vec<String>>) -> &mut CommandItemBuilder {
+    pub fn tags(&mut self, tags: Option<Vec<String>>) -> &mut CommandBuilder {
         self.tags = tags;
         self
     }
 
-    pub fn build(self) -> CommandItem {
-        CommandItem {
+    pub fn build(self) -> Command {
+        Command {
             namespace: self.namespace,
             command: self.command,
             description: self.description,
@@ -53,7 +53,7 @@ impl CommandItemBuilder {
     }
 }
 
-impl CommandItem {
+impl Command {
     pub fn tags_as_string(&mut self) -> String {
         self.tags
             .as_ref()
@@ -71,9 +71,9 @@ impl CommandItem {
     }
 }
 
-impl Default for CommandItem {
+impl Default for Command {
     fn default() -> Self {
-        CommandItem {
+        Command {
             namespace: String::from(""),
             command: String::from("your command string goes here"),
             description: Some(String::from(
@@ -95,8 +95,8 @@ impl Default for CommandItem {
 mod test {
     use super::*;
 
-    fn build_default_command() -> CommandItem {
-        let mut command = CommandItemBuilder::default();
+    fn build_default_command() -> Command {
+        let mut command = CommandBuilder::default();
         command
             .tags(Some(vec![String::from("tag1")]))
             .alias(String::from("test alias"))

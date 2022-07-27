@@ -1,5 +1,5 @@
 use super::cursor::set_cursor_positition;
-use crate::gui::contexts::{context::Item, state::State};
+use crate::gui::contexts::{field::Field, state::State};
 use tui::{
     backend::Backend,
     layout::{Alignment, Rect},
@@ -8,7 +8,7 @@ use tui::{
     Frame,
 };
 
-pub fn render_widget<B: Backend>(frame: &mut Frame<B>, state: &State, area: Rect, item: &Item) {
+pub fn render_widget<B: Backend>(frame: &mut Frame<B>, state: &State, area: Rect, item: &Field) {
     let widget = Paragraph::new(state.context.get_component_input(item.name()))
         .style(get_style(state, item.name()))
         .alignment(Alignment::Left)
