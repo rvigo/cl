@@ -232,7 +232,7 @@ impl KeyHandler {
                     modifiers: KeyModifiers::NONE,
                 } => {
                     state.view_mode = ViewMode::Edit;
-                    state.context.set_selected_command_inputs();
+                    state.context.set_selected_command_input();
                 }
 
                 KeyEvent {

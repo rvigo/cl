@@ -1,102 +1,99 @@
-use std::{char, vec};
-
-use crate::command_item::{CommandItem, CommandItemBuilder};
+use super::field::{Field, FieldType};
+use crate::command::{Command, CommandBuilder};
 use anyhow::{bail, Result};
 use itertools::Itertools;
+use std::vec;
 use tui::widgets::ListState;
 
-pub struct Item {
-    name: String,
-    title: String,
-    in_focus: bool,
-    pub input: String,
-}
+pub struct Fields(Vec<Field>);
 
-impl Item {
-    pub fn new(name: String, title: String, in_focus: bool) -> Item {
-        Item {
-            name,
-            title,
-            in_focus,
-            input: String::from(""),
-        }
-    }
-
-    pub fn title(&self) -> &str {
-        &self.title
-    }
-    pub fn name(&self) -> &str {
-        &self.name
-    }
-
-    pub fn toggle_focus(&mut self) {
-        self.in_focus = !self.in_focus
-    }
-
-    pub fn push(&mut self, c: char) {
-        self.input.push(c);
-    }
-
-    pub fn pop(&mut self) {
-        self.input.pop();
-    }
-
-    pub fn clear_input(&mut self) {
-        self.input.clear();
+impl Default for Fields {
+    fn default() -> Self {
+        Fields(vec![
+            Field::new(
+                String::from("tags"),
+                String::from(" Tags "),
+                FieldType::Tags,
+                true,
+            ),
+            Field::new(
+                String::from("namespace"),
+                String::from(" Namespace "),
+                FieldType::Namespace,
+                false,
+            ),
+            Field::new(
+                String::from("command"),
+                String::from(" Command "),
+                FieldType::Command,
+                false,
+            ),
+            Field::new(
+                String::from("description"),
+                String::from(" Description "),
+                FieldType::Description,
+                false,
+            ),
+            Field::new(
+                String::from("alias"),
+                String::from(" Alias "),
+                FieldType::Alias,
+                false,
+            ),
+        ])
     }
 }
-
 pub struct Context {
     pub focus_state: ListState,
-    items: Vec<Item>,
-    pub current_command: Option<CommandItem>,
+    fields: Fields,
+    pub current_command: Option<Command>,
 }
 
 impl Context {
-    pub fn new(items: Vec<(String, String, bool)>) -> Context {
-        let items = items
-            .into_iter()
-            .map(|(name, title, focus)| Item::new(name, title, focus))
-            .collect_vec();
+    pub fn new() -> Context {
         Context {
-            items,
+            fields: Fields::default(),
             focus_state: ListState::default(),
             current_command: None,
         }
     }
 
-    pub fn items(&self) -> &Vec<Item> {
-        &self.items
+    pub fn fields(&self) -> &Vec<Field> {
+        &self.fields.0
     }
 
-    pub fn get_current_command(&self) -> Option<&CommandItem> {
+    pub fn fields_mut(&mut self) -> &mut Vec<Field> {
+        &mut self.fields.0
+    }
+
+    pub fn get_current_command(&self) -> Option<&Command> {
         self.current_command.as_ref()
     }
 
-    pub fn set_current_command(&mut self, command: Option<CommandItem>) {
+    pub fn set_current_command(&mut self, command: Option<Command>) {
         self.current_command = command;
     }
 
     fn clear_inputs(&mut self) {
-        for item in self.items.iter_mut().collect_vec() {
+        for item in self.fields.0.iter_mut().collect_vec() {
             item.clear_input()
         }
     }
 
     pub fn is_in_focus(&self, name: &str) -> bool {
         let item = self
-            .items
+            .fields()
             .get(self.focus_state.selected().unwrap())
             .unwrap();
-        item.name == name && item.in_focus
+        item.name().eq(name) && item.in_focus()
     }
 
     pub fn next(&mut self) {
-        let old_i = self.focus_state.selected().unwrap();
-        self.items.get_mut(old_i).unwrap().toggle_focus();
-        let i = match self.focus_state.selected() {
+        let old_idx = self.focus_state.selected().unwrap();
+        self.fields_mut().get_mut(old_idx).unwrap().toggle_focus();
+        let idx = match self.focus_state.selected() {
             Some(i) => {
-                if i >= self.items.len() - 1 {
+                if i >= self.fields.0.len() - 1 {
                     0
                 } else {
                     i + 1
@@ -105,61 +102,57 @@ impl Context {
             None => 0,
         };
 
-        self.focus_state.select(Some(i));
-        self.items.get_mut(i).unwrap().toggle_focus();
+        self.focus_state.select(Some(idx));
+        self.fields.0.get_mut(idx).unwrap().toggle_focus();
     }
 
     pub fn previous(&mut self) {
-        let old_i = self.focus_state.selected().unwrap();
-        self.items.get_mut(old_i).unwrap().toggle_focus();
-        let i = match self.focus_state.selected() {
+        let old_idx = self.focus_state.selected().unwrap();
+        self.fields_mut().get_mut(old_idx).unwrap().toggle_focus();
+        let idx = match self.focus_state.selected() {
             Some(i) => {
                 if i == 0 {
-                    self.items.len() - 1
+                    self.fields.0.len() - 1
                 } else {
                     i - 1
                 }
             }
             None => 0,
         };
-        self.focus_state.select(Some(i));
-        self.items.get_mut(i).unwrap().toggle_focus();
+        self.focus_state.select(Some(idx));
+        self.fields_mut().get_mut(idx).unwrap().toggle_focus();
     }
 
-    pub fn get_current_in_focus(&self) -> Option<&Item> {
-        self.items.get(self.focus_state.selected().unwrap())
+    pub fn get_current_in_focus(&self) -> Option<&Field> {
+        self.fields().get(self.focus_state.selected().unwrap())
     }
-    pub fn get_current_in_focus_mut(&mut self) -> Option<&mut Item> {
-        self.items.get_mut(self.focus_state.selected().unwrap())
+    pub fn get_current_in_focus_mut(&mut self) -> Option<&mut Field> {
+        let idx = self.focus_state.selected().unwrap();
+        self.fields_mut().get_mut(idx)
     }
 
     pub fn get_component_input(&self, component_name: &str) -> &str {
-        self.items
+        self.fields()
             .iter()
-            .find(|item| item.name.eq(component_name))
+            .find(|item| item.name().eq(component_name))
             .unwrap()
             .input
             .as_str()
     }
 
-    pub fn build_command(&mut self) -> Result<CommandItem> {
-        let mut command_builder = CommandItemBuilder::default();
-        for item in self.items.iter() {
-            match item.name.as_str() {
-                "alias" => {
+    pub fn build_command(&mut self) -> Result<Command> {
+        let mut command_builder = CommandBuilder::default();
+        self.fields
+            .0
+            .iter_mut()
+            .for_each(|item| match item.field_type() {
+                FieldType::Alias => {
                     command_builder.alias(item.input.to_string());
                 }
-                "command" => {
+                FieldType::Command => {
                     command_builder.command(item.input.to_string());
                 }
-                "description" => {
-                    if item.input.is_empty() {
-                        command_builder.description(None);
-                    } else {
-                        command_builder.description(Some(item.input.to_string()));
-                    }
-                }
-                "tags" => {
+                FieldType::Tags => {
                     if item.input.is_empty() {
                         command_builder.tags(None);
                     } else {
@@ -171,12 +164,18 @@ impl Context {
                         ));
                     }
                 }
-                "namespace" => {
+                FieldType::Description => {
+                    if item.input.is_empty() {
+                        command_builder.description(None);
+                    } else {
+                        command_builder.description(Some(item.input.to_string()));
+                    }
+                }
+
+                FieldType::Namespace => {
                     command_builder.namespace(item.input.to_string());
                 }
-                _ => {}
-            }
-        }
+            });
 
         let command = command_builder.build();
         match command.validate() {
@@ -188,64 +187,64 @@ impl Context {
         }
     }
 
-    pub fn set_selected_command_inputs(&mut self) {
+    pub fn set_selected_command_input(&mut self) {
         let current_command = self.current_command.as_mut().unwrap();
-        self.items
+        self.fields
+            .0
             .iter_mut()
-            .for_each(|item| match item.name.as_str() {
-                "alias" => item.input = current_command.alias.clone(),
-                "command" => item.input = current_command.command.clone(),
-                "namespace" => item.input = current_command.namespace.clone(),
-                "description" => {
+            .for_each(|item| match item.field_type() {
+                FieldType::Alias => item.input = current_command.alias.clone(),
+                FieldType::Command => item.input = current_command.command.clone(),
+                FieldType::Namespace => item.input = current_command.namespace.clone(),
+                FieldType::Description => {
                     item.input = current_command
                         .description
                         .as_ref()
                         .unwrap_or(&String::from(""))
                         .to_string();
                 }
-                "tags" => {
+                FieldType::Tags => {
                     item.input = current_command
                         .tags
                         .as_ref()
                         .unwrap_or(&vec![String::from("")])
                         .join(",")
                 }
-
-                _ => {}
             });
     }
 
-    pub fn edit_command(&mut self) -> Result<CommandItem> {
+    pub fn edit_command(&mut self) -> Result<Command> {
         let mut command_item = self
             .get_current_command()
             .map(|item| item.to_owned())
             .unwrap();
-        self.items.iter().for_each(|item| match item.name.as_str() {
-            "alias" => command_item.alias = item.input.clone(),
-            "command" => command_item.command = item.input.clone(),
-            "namespace" => command_item.namespace = item.input.clone(),
-            "description" => {
-                if item.input.is_empty() {
-                    command_item.description = None;
-                } else {
-                    command_item.description = Some(item.input.clone());
+        self.fields
+            .0
+            .iter()
+            .for_each(|item| match item.field_type() {
+                FieldType::Alias => command_item.alias = item.input.clone(),
+                FieldType::Command => command_item.command = item.input.clone(),
+                FieldType::Namespace => command_item.namespace = item.input.clone(),
+                FieldType::Description => {
+                    if item.input.is_empty() {
+                        command_item.description = None;
+                    } else {
+                        command_item.description = Some(item.input.clone());
+                    }
                 }
-            }
-            "tags" => {
-                if item.input.is_empty() {
-                    command_item.tags = None;
-                } else {
-                    command_item.tags = Some(
-                        item.input
-                            .split(',')
-                            .map(|char| char.to_string())
-                            .collect_vec(),
-                    );
+                FieldType::Tags => {
+                    if item.input.is_empty() {
+                        command_item.tags = None;
+                    } else {
+                        command_item.tags = Some(
+                            item.input
+                                .split(',')
+                                .map(|char| char.to_string())
+                                .collect_vec(),
+                        );
+                    }
                 }
-            }
-
-            _ => {}
-        });
+            });
 
         if let Err(error) = command_item.validate() {
             bail!(error)
