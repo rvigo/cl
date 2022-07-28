@@ -1,21 +1,18 @@
 mod cli;
 mod command;
-mod command_file_service;
 mod commands;
-mod configs;
 mod gui;
-mod utils;
+mod resources;
 
 use anyhow::Result;
 use clap::ArgMatches;
 use cli::app;
-use command_file_service::CommandFileService;
 use commands::Commands;
 use gui::entities::app::AppContext;
+use resources::{app_configuration::AppConfiguration, file_service::CommandFileService};
 
 fn main() -> Result<()> {
     let app = app::build_app();
-
     let matches = app.get_matches();
 
     match matches.subcommand() {
@@ -27,15 +24,14 @@ fn main() -> Result<()> {
 fn run_main_app() -> Result<()> {
     let mut app_context = AppContext::create()?;
     app_context.render()?;
-    app_context.clear()?;
-    app_context.callback_command()?;
 
-    Ok(())
+    app_context.callback_command()
 }
 
 fn run_exec_command(sub_matches: &ArgMatches) -> Result<()> {
-    let command_file_service = CommandFileService::init();
-    let command_items = command_file_service.load_commands_from_file();
+    let config = AppConfiguration::init()?;
+    let command_file_service = CommandFileService::init(config.command_file_path());
+    let command_items = command_file_service.load_commands_from_file()?;
     let commands = Commands::init(command_items);
 
     let alias: String = sub_matches.value_of("alias").unwrap().into();
@@ -48,7 +44,6 @@ fn run_exec_command(sub_matches: &ArgMatches) -> Result<()> {
 
     let mut selected_command = commands.find_command(alias, namespace)?;
     selected_command.command = format!("{} {}", selected_command.command, &args.join(" "));
-    commands.exec_command(&selected_command)?;
 
-    Ok(())
+    commands.exec_command(&selected_command)
 }

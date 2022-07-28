@@ -127,6 +127,7 @@ impl Context {
     pub fn get_current_in_focus(&self) -> Option<&Field> {
         self.fields().get(self.focus_state.selected().unwrap())
     }
+
     pub fn get_current_in_focus_mut(&mut self) -> Option<&mut Field> {
         let idx = self.focus_state.selected().unwrap();
         self.fields_mut().get_mut(idx)
@@ -135,7 +136,7 @@ impl Context {
     pub fn get_component_input(&self, component_name: &str) -> &str {
         self.fields()
             .iter()
-            .find(|item| item.name().eq(component_name))
+            .find(|field| field.name().eq(component_name))
             .unwrap()
             .input
             .as_str()
@@ -145,35 +146,31 @@ impl Context {
         let mut command_builder = CommandBuilder::default();
         self.fields_mut()
             .iter_mut()
-            .for_each(|item| match item.field_type() {
+            .for_each(|field| match field.field_type() {
                 FieldType::Alias => {
-                    command_builder.alias(item.input.to_string());
+                    command_builder.alias(field.input.to_string());
                 }
                 FieldType::Command => {
-                    command_builder.command(item.input.to_string());
+                    command_builder.command(field.input.to_string());
                 }
                 FieldType::Tags => {
-                    if item.input.is_empty() {
+                    if field.input.is_empty() {
                         command_builder.tags(None);
                     } else {
-                        command_builder.tags(Some(
-                            item.input
-                                .split(',')
-                                .map(|char| char.to_string())
-                                .collect_vec(),
-                        ));
+                        command_builder
+                            .tags(Some(field.input.split(',').map(String::from).collect_vec()));
                     }
                 }
                 FieldType::Description => {
-                    if item.input.is_empty() {
+                    if field.input.is_empty() {
                         command_builder.description(None);
                     } else {
-                        command_builder.description(Some(item.input.to_string()));
+                        command_builder.description(Some(field.input.to_string()));
                     }
                 }
 
                 FieldType::Namespace => {
-                    command_builder.namespace(item.input.to_string());
+                    command_builder.namespace(field.input.to_string());
                 }
             });
 
@@ -192,19 +189,19 @@ impl Context {
         self.fields
             .0
             .iter_mut()
-            .for_each(|item| match item.field_type() {
-                FieldType::Alias => item.input = current_command.alias.clone(),
-                FieldType::Command => item.input = current_command.command.clone(),
-                FieldType::Namespace => item.input = current_command.namespace.clone(),
+            .for_each(|field| match field.field_type() {
+                FieldType::Alias => field.input = current_command.alias.clone(),
+                FieldType::Command => field.input = current_command.command.clone(),
+                FieldType::Namespace => field.input = current_command.namespace.clone(),
                 FieldType::Description => {
-                    item.input = current_command
+                    field.input = current_command
                         .description
                         .as_ref()
                         .unwrap_or(&String::from(""))
                         .to_string();
                 }
                 FieldType::Tags => {
-                    item.input = current_command
+                    field.input = current_command
                         .tags
                         .as_ref()
                         .unwrap_or(&vec![String::from("")])
@@ -214,29 +211,30 @@ impl Context {
     }
 
     pub fn edit_command(&mut self) -> Result<Command> {
-        let mut command_item = self
+        let mut command = self
             .get_current_command()
-            .map(|item| item.to_owned())
+            .map(|command| command.to_owned())
             .unwrap();
         self.fields()
             .iter()
-            .for_each(|item| match item.field_type() {
-                FieldType::Alias => command_item.alias = item.input.clone(),
-                FieldType::Command => command_item.command = item.input.clone(),
-                FieldType::Namespace => command_item.namespace = item.input.clone(),
+            .for_each(|field| match field.field_type() {
+                FieldType::Alias => command.alias = field.input.clone(),
+                FieldType::Command => command.command = field.input.clone(),
+                FieldType::Namespace => command.namespace = field.input.clone(),
                 FieldType::Description => {
-                    if item.input.is_empty() {
-                        command_item.description = None;
+                    if field.input.is_empty() {
+                        command.description = None;
                     } else {
-                        command_item.description = Some(item.input.clone());
+                        command.description = Some(field.input.clone());
                     }
                 }
                 FieldType::Tags => {
-                    if item.input.is_empty() {
-                        command_item.tags = None;
+                    if field.input.is_empty() {
+                        command.tags = None;
                     } else {
-                        command_item.tags = Some(
-                            item.input
+                        command.tags = Some(
+                            field
+                                .input
                                 .split(',')
                                 .map(|char| char.to_string())
                                 .collect_vec(),
@@ -245,11 +243,11 @@ impl Context {
                 }
             });
 
-        if let Err(error) = command_item.validate() {
+        if let Err(error) = command.validate() {
             bail!(error)
         };
         self.clear_inputs();
 
-        Ok(command_item)
+        Ok(command)
     }
 }

@@ -1,7 +1,7 @@
 use crate::{
-    command_file_service::CommandFileService,
     commands::Commands,
     gui::{entities::state::State, key_handler::KeyHandler, layouts::selector::select_ui},
+    resources::{app_configuration::AppConfiguration, file_service::CommandFileService},
 };
 use anyhow::Result;
 use crossterm::{
@@ -28,8 +28,10 @@ impl AppContext {
         let mut terminal = Terminal::new(backend)?;
         terminal.hide_cursor()?;
 
-        let command_file_service = CommandFileService::init();
-        let command_items = command_file_service.load_commands_from_file();
+        let config = AppConfiguration::init()?;
+        let command_file_service = CommandFileService::init(config.command_file_path());
+
+        let command_items = command_file_service.load_commands_from_file()?;
         let commands = Commands::init(command_items);
 
         let key_handler = KeyHandler::new(command_file_service);
@@ -54,7 +56,7 @@ impl AppContext {
         }
     }
 
-    pub fn clear(&mut self) -> Result<()> {
+    fn clear(&mut self) -> Result<()> {
         disable_raw_mode()?;
         execute!(
             self.terminal.backend_mut(),
@@ -63,11 +65,19 @@ impl AppContext {
         )?;
 
         self.terminal.show_cursor()?;
+
         Ok(())
     }
 
     pub fn callback_command(&self) -> Result<()> {
-        self.state.execute_callback_command()?;
-        Ok(())
+        self.state.execute_callback_command()
+    }
+}
+
+impl Drop for AppContext {
+    fn drop(&mut self) {
+        if let Err(error) = self.clear() {
+            eprintln!("{error}")
+        }
     }
 }

@@ -5,7 +5,7 @@ use super::{
     },
     layouts::view_mode::ViewMode,
 };
-use crate::{command_file_service::CommandFileService, gui::entities::state::State};
+use crate::{gui::entities::state::State, resources::file_service::CommandFileService};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub struct KeyHandler {
@@ -70,7 +70,7 @@ impl KeyHandler {
                 } => match state.context.build_command() {
                     Ok(command) => match state.commands.add_command(&command) {
                         Ok(items) => {
-                            if let Ok(()) = self.file_service.write_to_file(items) {
+                            if let Ok(()) = self.file_service.write_to_command_file(items) {
                                 state.reload_state();
                                 state.view_mode = ViewMode::List
                             }
@@ -149,7 +149,7 @@ impl KeyHandler {
                             .add_edited_command(&command, &current_command)
                         {
                             Ok(items) => {
-                                if let Ok(()) = self.file_service.write_to_file(items) {
+                                if let Ok(()) = self.file_service.write_to_command_file(items) {
                                     state.reload_state();
                                     state.view_mode = ViewMode::List
                                 }
@@ -300,7 +300,7 @@ impl KeyHandler {
                                 .remove(state.context.get_current_command().unwrap())
                             {
                                 Ok(items) => {
-                                    if let Ok(()) = self.file_service.write_to_file(items) {
+                                    if let Ok(()) = self.file_service.write_to_command_file(items) {
                                         state.popup.clear();
                                         state.reload_state();
                                     }
