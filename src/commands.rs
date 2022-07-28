@@ -114,17 +114,24 @@ impl Commands {
             .arg(&command_item.command)
             .spawn();
 
-        if let Ok(exit_status) = command?.wait() {
-            if exit_status.success() {
-                Ok(())
-            } else {
+        match command?.wait() {
+            Ok(exit_status) => {
+                if exit_status.success() {
+                    Ok(())
+                } else {
+                    bail!(
+                        "The command exited with status code {:?}",
+                        exit_status.code().unwrap()
+                    )
+                }
+            }
+            Err(error) => {
                 bail!(
-                    "The command exited with status code {:?}",
-                    exit_status.code().unwrap_or(1)
+                    "Cannot run the command with alias {}: {}",
+                    command_item.alias,
+                    error
                 )
             }
-        } else {
-            bail!("Cannot run the command")
         }
     }
 
@@ -145,12 +152,11 @@ impl Commands {
 
         if commands.len() > 1 {
             bail!(
-                "There are commands with the alias \'{}\' in multiples namespaces. \
-            Please use the \'--namespace\' flag",
-                alias
+                "There are commands with the alias \'{alias}\' in multiples namespaces. \
+            Please use the \'--namespace\' flag"
             )
         } else if commands.is_empty() {
-            bail!("The command \'{}\' was not found!", alias)
+            bail!("The command \'{alias}\' was not found!")
         } else {
             Ok(commands.first().unwrap().to_owned())
         }
