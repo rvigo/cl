@@ -36,6 +36,7 @@ impl KeyHandler {
                     code: KeyCode::Esc,
                     modifiers: KeyModifiers::NONE,
                 } => {
+                    state.context.clear_inputs();
                     state.view_mode = ViewMode::List;
                 }
                 KeyEvent {
@@ -107,6 +108,7 @@ impl KeyHandler {
                     code: KeyCode::Esc,
                     modifiers: KeyModifiers::NONE,
                 } => {
+                    state.context.clear_inputs();
                     state.view_mode = ViewMode::List;
                 }
                 KeyEvent {

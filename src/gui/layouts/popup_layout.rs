@@ -1,3 +1,4 @@
+use super::layout_utils::centered_rect;
 use crate::gui::entities::{
     popup::{Answer, MessageType},
     state::State,
@@ -118,29 +119,4 @@ fn create_buttom_layout(area: Rect) -> Vec<Rect> {
             .as_ref(),
         )
         .split(layout[3])
-}
-
-fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Vec<Rect> {
-    let popup_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(
-            [
-                Constraint::Percentage((100 - percent_y) / 2),
-                Constraint::Percentage(percent_x),
-                Constraint::Percentage((100 - percent_y) / 2),
-            ]
-            .as_ref(),
-        )
-        .split(r);
-    Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(
-            [
-                Constraint::Percentage((100 - percent_x) / 2),
-                Constraint::Percentage(percent_y),
-                Constraint::Percentage((100 - percent_x) / 2),
-            ]
-            .as_ref(),
-        )
-        .split(popup_layout[1])
 }

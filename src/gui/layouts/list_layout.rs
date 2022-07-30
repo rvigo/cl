@@ -41,7 +41,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .selected()
         .expect("a command should always be selected");
 
-    let mut selected_command: Command = state.filtered_commands().get(idx).unwrap().to_owned();
+    let selected_command: Command = state.filtered_commands().get(idx).unwrap().to_owned();
 
     state
         .context
@@ -49,12 +49,8 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
 
     let tags_str = selected_command.tags_as_string();
 
-    //renewing state
-    let state = state;
-
     let command_str: String = selected_command.command.clone();
     let description_str: String = selected_command
-        .clone()
         .description
         .unwrap_or_else(|| String::from(""));
 
@@ -74,11 +70,9 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .constraints([Constraint::Percentage(70), Constraint::Length(3)].as_ref())
         .split(central_chunk[1]);
 
-    let command_state = &mut state.commands_state;
-
     frame.render_widget(main_block, frame.size());
     frame.render_widget(tabs, chunks[0]);
-    frame.render_stateful_widget(commands, central_chunk[0], command_state);
+    frame.render_stateful_widget(commands, central_chunk[0], &mut state.commands_state);
     frame.render_widget(command, command_detail_chunks[0]);
     frame.render_widget(tags, command_detail_chunks[1]);
     frame.render_widget(description, chunks[1]);
