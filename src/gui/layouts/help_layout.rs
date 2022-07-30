@@ -1,8 +1,8 @@
-use super::view_mode::ViewMode;
+use super::{layout_utils::centered_rect, view_mode::ViewMode};
 use crate::gui::entities::state::State;
 use tui::{
     backend::Backend,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::Alignment,
     style::{Color, Style},
     widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
     Frame,
@@ -56,7 +56,7 @@ fn edit_options() -> String {
     )
 }
 
-pub fn render_help<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
+pub fn render_help<B: Backend>(frame: &mut Frame<B>, state: &State) {
     let block = Paragraph::new(match state.view_mode {
         ViewMode::List => list_options(),
         ViewMode::Edit => edit_options(),
@@ -69,7 +69,7 @@ pub fn render_help<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         Block::default()
             .borders(Borders::ALL)
             .style(Style::default())
-            .title("Help")
+            .title(" Help ")
             .title_alignment(Alignment::Center)
             .border_type(BorderType::Plain),
     );
@@ -78,29 +78,4 @@ pub fn render_help<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
 
     frame.render_widget(Clear, area[1]);
     frame.render_widget(block, area[1]);
-}
-
-fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Vec<Rect> {
-    let popup_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(
-            [
-                Constraint::Percentage((100 - percent_y) / 2),
-                Constraint::Percentage(percent_x),
-                Constraint::Percentage((100 - percent_y) / 2),
-            ]
-            .as_ref(),
-        )
-        .split(r);
-    Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(
-            [
-                Constraint::Percentage((100 - percent_x) / 2),
-                Constraint::Percentage(percent_y),
-                Constraint::Percentage((100 - percent_x) / 2),
-            ]
-            .as_ref(),
-        )
-        .split(popup_layout[1])
 }

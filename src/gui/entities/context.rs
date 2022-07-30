@@ -11,9 +11,9 @@ impl Default for Fields {
     fn default() -> Self {
         Fields(vec![
             Field::new(
-                String::from("tags"),
-                String::from(" Tags "),
-                FieldType::Tags,
+                String::from("alias"),
+                String::from(" Alias "),
+                FieldType::Alias,
                 true,
             ),
             Field::new(
@@ -35,9 +35,9 @@ impl Default for Fields {
                 false,
             ),
             Field::new(
-                String::from("alias"),
-                String::from(" Alias "),
-                FieldType::Alias,
+                String::from("tags"),
+                String::from(" Tags "),
+                FieldType::Tags,
                 false,
             ),
         ])
@@ -75,7 +75,7 @@ impl Context {
         self.current_command = command;
     }
 
-    fn clear_inputs(&mut self) {
+    pub fn clear_inputs(&mut self) {
         self.fields_mut()
             .iter_mut()
             .for_each(|field| field.clear_input());
@@ -232,13 +232,7 @@ impl Context {
                     if field.input.is_empty() {
                         command.tags = None;
                     } else {
-                        command.tags = Some(
-                            field
-                                .input
-                                .split(',')
-                                .map(|char| char.to_string())
-                                .collect_vec(),
-                        );
+                        command.tags = Some(field.input.split(',').map(String::from).collect_vec());
                     }
                 }
             });
