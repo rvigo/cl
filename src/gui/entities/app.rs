@@ -9,7 +9,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use std::io;
+use std::{io, panic};
 use tui::{backend::CrosstermBackend, Terminal};
 
 pub struct AppContext {
@@ -44,6 +44,7 @@ impl AppContext {
     }
 
     pub fn render(&mut self) -> Result<()> {
+        self.handle_panic();
         loop {
             self.terminal
                 .draw(|frame| select_ui(frame, &mut self.state))?;
@@ -56,7 +57,13 @@ impl AppContext {
         }
     }
 
-    fn clear(&mut self) -> Result<()> {
+    fn handle_panic(&self) {
+        panic::set_hook(Box::new(|e| {
+            eprintln!("{}", e);
+        }));
+    }
+
+    pub fn clear(&mut self) -> Result<()> {
         disable_raw_mode()?;
         execute!(
             self.terminal.backend_mut(),
@@ -71,13 +78,5 @@ impl AppContext {
 
     pub fn callback_command(&self) -> Result<()> {
         self.state.execute_callback_command()
-    }
-}
-
-impl Drop for AppContext {
-    fn drop(&mut self) {
-        if let Err(error) = self.clear() {
-            eprintln!("{error}")
-        }
     }
 }

@@ -24,6 +24,7 @@ fn main() -> Result<()> {
 fn run_main_app() -> Result<()> {
     let mut app_context = AppContext::create()?;
     app_context.render()?;
+    app_context.clear()?;
 
     app_context.callback_command()
 }

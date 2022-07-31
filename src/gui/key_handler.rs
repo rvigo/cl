@@ -40,16 +40,12 @@ impl KeyHandler {
                     state.view_mode = ViewMode::List;
                 }
                 KeyEvent {
-                    code: KeyCode::Right | KeyCode::Tab,
+                    code: KeyCode::Tab,
                     modifiers: KeyModifiers::NONE,
                 } => {
                     state.context.next();
                 }
                 KeyEvent {
-                    code: KeyCode::Left,
-                    modifiers: KeyModifiers::NONE,
-                }
-                | KeyEvent {
                     code: KeyCode::BackTab,
                     modifiers: KeyModifiers::SHIFT,
                 } => {
@@ -58,13 +54,45 @@ impl KeyHandler {
                 KeyEvent {
                     code: KeyCode::Char(c),
                     modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-                } => state.context.get_current_in_focus_mut().unwrap().push(c),
+                } => state.context.get_current_in_focus_mut().unwrap().on_char(c),
                 KeyEvent {
                     code: KeyCode::Backspace,
                     modifiers: KeyModifiers::NONE,
                 } => {
-                    state.context.get_current_in_focus_mut().unwrap().pop();
+                    state
+                        .context
+                        .get_current_in_focus_mut()
+                        .unwrap()
+                        .on_backspace();
                 }
+                KeyEvent {
+                    code: KeyCode::Left,
+                    modifiers: KeyModifiers::NONE,
+                } => {
+                    state
+                        .context
+                        .get_current_in_focus_mut()
+                        .unwrap()
+                        .decrease_cursor_offset();
+                }
+                KeyEvent {
+                    code: KeyCode::Right,
+                    modifiers: KeyModifiers::NONE,
+                } => {
+                    state
+                        .context
+                        .get_current_in_focus_mut()
+                        .unwrap()
+                        .increase_cursor_offset();
+                }
+                KeyEvent {
+                    code: KeyCode::Delete,
+                    modifiers: KeyModifiers::NONE,
+                } => state
+                    .context
+                    .get_current_in_focus_mut()
+                    .unwrap()
+                    .on_delete_key(),
                 KeyEvent {
                     code: KeyCode::Enter,
                     modifiers: KeyModifiers::NONE,
@@ -112,16 +140,12 @@ impl KeyHandler {
                     state.view_mode = ViewMode::List;
                 }
                 KeyEvent {
-                    code: KeyCode::Right | KeyCode::Tab,
+                    code: KeyCode::Tab,
                     modifiers: KeyModifiers::NONE,
                 } => {
                     state.context.next();
                 }
                 KeyEvent {
-                    code: KeyCode::Left,
-                    modifiers: KeyModifiers::NONE,
-                }
-                | KeyEvent {
                     code: KeyCode::BackTab,
                     modifiers: KeyModifiers::SHIFT,
                 } => {
@@ -130,13 +154,45 @@ impl KeyHandler {
                 KeyEvent {
                     code: KeyCode::Char(c),
                     modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-                } => state.context.get_current_in_focus_mut().unwrap().push(c),
+                } => state.context.get_current_in_focus_mut().unwrap().on_char(c),
                 KeyEvent {
                     code: KeyCode::Backspace,
                     modifiers: KeyModifiers::NONE,
                 } => {
-                    state.context.get_current_in_focus_mut().unwrap().pop();
+                    state
+                        .context
+                        .get_current_in_focus_mut()
+                        .unwrap()
+                        .on_backspace();
                 }
+                KeyEvent {
+                    code: KeyCode::Left,
+                    modifiers: KeyModifiers::NONE,
+                } => {
+                    state
+                        .context
+                        .get_current_in_focus_mut()
+                        .unwrap()
+                        .decrease_cursor_offset();
+                }
+                KeyEvent {
+                    code: KeyCode::Right,
+                    modifiers: KeyModifiers::NONE,
+                } => {
+                    state
+                        .context
+                        .get_current_in_focus_mut()
+                        .unwrap()
+                        .increase_cursor_offset();
+                }
+                KeyEvent {
+                    code: KeyCode::Delete,
+                    modifiers: KeyModifiers::NONE,
+                } => state
+                    .context
+                    .get_current_in_focus_mut()
+                    .unwrap()
+                    .on_delete_key(),
                 KeyEvent {
                     code: KeyCode::Enter,
                     modifiers: KeyModifiers::NONE,
