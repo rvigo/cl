@@ -1,6 +1,11 @@
 use super::{context::Context, popup::PopUp};
-use crate::{command::Command, commands::Commands, gui::layouts::view_mode::ViewMode};
+use crate::{
+    command::{Command, CommandBuilder},
+    commands::Commands,
+    gui::layouts::view_mode::ViewMode,
+};
 use anyhow::Result;
+use itertools::Itertools;
 use tui::widgets::ListState;
 
 pub struct State {
@@ -15,6 +20,8 @@ pub struct State {
     pub popup: PopUp,
     pub show_help: bool,
     pub to_be_executed: Option<Command>,
+    pub find_flag: bool,
+    pub query_string: String,
 }
 
 impl State {
@@ -31,6 +38,8 @@ impl State {
             popup: PopUp::init(),
             show_help: false,
             to_be_executed: None,
+            find_flag: false,
+            query_string: String::from(""),
         };
 
         state.load_namespaces();
@@ -119,7 +128,7 @@ impl State {
     }
 
     pub fn filtered_commands(&mut self) -> Vec<Command> {
-        if self.current_namespace.eq("All") {
+        let filtered_commands = if self.current_namespace.eq("All") {
             self.commands.all_commands()
         } else {
             let namespaces = self
@@ -132,7 +141,9 @@ impl State {
             } else {
                 namespaces
             }
-        }
+        };
+
+        self.filter_commands_by_query_string(filtered_commands)
     }
 
     pub fn execute_callback_command(&self) -> Result<()> {
@@ -141,5 +152,45 @@ impl State {
         }
 
         Ok(())
+    }
+
+    pub fn get_current_command(&mut self) -> Command {
+        let idx = self
+            .commands_state
+            .selected()
+            .expect("a command should always be selected");
+
+        if self.filtered_commands().is_empty() {
+            //creates an empty command
+            return CommandBuilder::default().build();
+        }
+
+        self.filtered_commands().get(idx).unwrap().to_owned()
+    }
+
+    pub fn set_find_active(&mut self) {
+        self.find_flag = true
+    }
+
+    pub fn set_find_deactive(&mut self) {
+        self.find_flag = false
+    }
+
+    fn filter_commands_by_query_string(&mut self, commands: Vec<Command>) -> Vec<Command> {
+        commands
+            .iter()
+            .filter(|command| {
+                command.namespace.contains(&self.query_string)
+                    || command.alias.contains(&self.query_string)
+                    || command.tags_as_string().contains(&self.query_string)
+                    || (command.description.is_some()
+                        && command
+                            .description
+                            .as_ref()
+                            .unwrap()
+                            .contains(&self.query_string))
+            })
+            .map(|command| command.to_owned())
+            .collect_vec()
     }
 }

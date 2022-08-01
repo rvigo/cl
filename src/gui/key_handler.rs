@@ -239,8 +239,18 @@ impl KeyHandler {
             self.handle_popup(key_event, state)
         } else if state.show_help {
             self.handle_help(state)
+        }
+        if state.find_flag {
+            self.handle_find(key_event, state)
         } else {
             match key_event {
+                KeyEvent {
+                    code: KeyCode::Char('f'),
+                    modifiers: KeyModifiers::NONE,
+                } => {
+                    //unlock find frame
+                    state.set_find_active()
+                }
                 KeyEvent {
                     code: KeyCode::Char('q'),
                     modifiers: KeyModifiers::NONE,
@@ -389,5 +399,28 @@ impl KeyHandler {
 
     fn handle_help(&self, state: &mut State) {
         state.show_help = false;
+    }
+
+    fn handle_find(&self, key_event: KeyEvent, state: &mut State) {
+        match key_event {
+            KeyEvent {
+                code: KeyCode::Char(c),
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
+            } => {
+                state.query_string.push(c);
+            }
+            KeyEvent {
+                code: KeyCode::Backspace,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                state.query_string.pop();
+            }
+
+            KeyEvent {
+                code: KeyCode::Esc,
+                modifiers: KeyModifiers::NONE,
+            } => state.set_find_deactive(),
+            _ => {}
+        }
     }
 }
