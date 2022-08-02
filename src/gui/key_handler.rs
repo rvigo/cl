@@ -73,7 +73,7 @@ impl KeyHandler {
                         .context
                         .get_current_in_focus_mut()
                         .unwrap()
-                        .decrease_cursor_offset();
+                        .move_cursor_backward();
                 }
                 KeyEvent {
                     code: KeyCode::Right,
@@ -83,7 +83,7 @@ impl KeyHandler {
                         .context
                         .get_current_in_focus_mut()
                         .unwrap()
-                        .increase_cursor_offset();
+                        .move_cursor_foward();
                 }
                 KeyEvent {
                     code: KeyCode::Delete,
@@ -173,7 +173,7 @@ impl KeyHandler {
                         .context
                         .get_current_in_focus_mut()
                         .unwrap()
-                        .decrease_cursor_offset();
+                        .move_cursor_backward();
                 }
                 KeyEvent {
                     code: KeyCode::Right,
@@ -183,7 +183,7 @@ impl KeyHandler {
                         .context
                         .get_current_in_focus_mut()
                         .unwrap()
-                        .increase_cursor_offset();
+                        .move_cursor_foward();
                 }
                 KeyEvent {
                     code: KeyCode::Delete,
