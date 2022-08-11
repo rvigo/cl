@@ -19,7 +19,7 @@ impl KeyHandler {
 
     pub fn handle(&self, key_event: KeyEvent, state: &mut State) {
         match state.view_mode {
-            ViewMode::List => self.handle_list(key_event, state),
+            ViewMode::Main => self.handle_list(key_event, state),
             ViewMode::Insert => self.handle_insert(key_event, state),
             ViewMode::Edit => self.handle_edit(key_event, state),
         }
@@ -37,7 +37,7 @@ impl KeyHandler {
                     modifiers: KeyModifiers::NONE,
                 } => {
                     state.context.clear_inputs();
-                    state.view_mode = ViewMode::List;
+                    state.view_mode = ViewMode::Main;
                 }
                 KeyEvent {
                     code: KeyCode::Tab,
@@ -101,7 +101,7 @@ impl KeyHandler {
                         Ok(items) => {
                             if let Ok(()) = self.file_service.write_to_command_file(items) {
                                 state.reload_state();
-                                state.view_mode = ViewMode::List
+                                state.view_mode = ViewMode::Main
                             }
                         }
                         Err(error) => {
@@ -137,7 +137,7 @@ impl KeyHandler {
                     modifiers: KeyModifiers::NONE,
                 } => {
                     state.context.clear_inputs();
-                    state.view_mode = ViewMode::List;
+                    state.view_mode = ViewMode::Main;
                 }
                 KeyEvent {
                     code: KeyCode::Tab,
@@ -209,7 +209,7 @@ impl KeyHandler {
                             Ok(items) => {
                                 if let Ok(()) = self.file_service.write_to_command_file(items) {
                                     state.reload_state();
-                                    state.view_mode = ViewMode::List
+                                    state.view_mode = ViewMode::Main
                                 }
                             }
                             Err(error) => {

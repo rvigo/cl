@@ -59,7 +59,7 @@ fn edit_options() -> String {
 
 pub fn render_help<B: Backend>(frame: &mut Frame<B>, state: &State) {
     let block = Paragraph::new(match state.view_mode {
-        ViewMode::List => list_options(),
+        ViewMode::Main => list_options(),
         ViewMode::Edit => edit_options(),
         ViewMode::Insert => insert_options(),
     })
