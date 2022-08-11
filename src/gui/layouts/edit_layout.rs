@@ -56,6 +56,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
             FieldType::Alias => render_widget(frame, state, first_row[0], item),
             FieldType::Command => render_widget(frame, state, second_row[0], item),
             FieldType::Description => render_widget(frame, state, third_row[0], item),
+            _ => {}
         }
     }
 
