@@ -32,7 +32,8 @@ fn list_options() -> String {
         Right <TAB>\n\n \
         Left <BACKTAB>\n\n \
         Up <ArrowUp>\n\n \
-        Down <ArrowDown>",
+        Down <ArrowDown>\n\n \
+        Find <F>",
     )
 }
 

@@ -7,6 +7,7 @@ pub enum FieldType {
     Command,
     Description,
     Namespace,
+    QueryBox,
 }
 
 pub struct Field {

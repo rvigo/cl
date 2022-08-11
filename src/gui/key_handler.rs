@@ -240,7 +240,7 @@ impl KeyHandler {
         } else if state.show_help {
             self.handle_help(state)
         }
-        if state.find_flag {
+        if state.query_box.in_focus() {
             self.handle_find(key_event, state)
         } else {
             match key_event {
@@ -249,7 +249,7 @@ impl KeyHandler {
                     modifiers: KeyModifiers::NONE,
                 } => {
                     //unlock find frame
-                    state.set_find_active()
+                    state.query_box.toggle_focus()
                 }
                 KeyEvent {
                     code: KeyCode::Char('q'),
@@ -407,19 +407,21 @@ impl KeyHandler {
                 code: KeyCode::Char(c),
                 modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
             } => {
-                state.query_string.push(c);
+                state.query_box.on_char(c);
+                state.reload_state()
             }
             KeyEvent {
                 code: KeyCode::Backspace,
                 modifiers: KeyModifiers::NONE,
             } => {
-                state.query_string.pop();
+                state.query_box.on_backspace();
+                state.reload_state()
             }
 
             KeyEvent {
-                code: KeyCode::Esc,
+                code: KeyCode::Esc | KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
-            } => state.set_find_deactive(),
+            } => state.query_box.toggle_focus(),
             _ => {}
         }
     }

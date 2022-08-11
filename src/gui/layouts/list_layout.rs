@@ -1,14 +1,14 @@
-use super::{help_layout::render_help, popup_layout::render_popup};
+use super::{cursor::set_cursor_positition, help_layout::render_help, popup_layout::render_popup};
 use crate::{
     command::Command,
     gui::{
-        entities::{popup::Answer, state::State},
+        entities::{field::Field, popup::Answer, state::State},
         layouts::help_layout::render_helper_footer,
     },
 };
 use tui::{
     backend::Backend,
-    layout::{Alignment, Constraint, Direction, Layout},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, BorderType, Borders, List, ListItem, Paragraph, Tabs, Wrap},
@@ -76,10 +76,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     frame.render_widget(command, command_detail_chunks[0]);
     frame.render_widget(tags, command_detail_chunks[1]);
     frame.render_widget(description, chunks[1]);
-    frame.render_widget(
-        create_find(state.query_string.clone(), state.find_flag),
-        last_line[0],
-    );
+    create_query_box(frame, &mut state.query_box, last_line[0]);
     frame.render_widget(render_helper_footer(), last_line[1]);
 
     if state.show_help {
@@ -92,9 +89,21 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     }
 }
 
-fn create_find<'a>(find_string: String, find_flag: bool) -> Paragraph<'a> {
-    Paragraph::new(find_string)
-        .style(if find_flag {
+fn create_query_box<B: Backend>(frame: &mut Frame<B>, query_box: &mut Field, area: Rect) {
+    let mut query_string;
+    if !query_box.in_focus() && query_box.input.is_empty() {
+        query_string = String::from("Press F to find commands")
+    } else {
+        query_string = query_box.input.clone()
+    }
+
+    if query_box.in_focus() {
+        query_string = query_box.input.clone();
+        set_cursor_positition(frame, query_box, area);
+    }
+
+    let query_box = Paragraph::new(query_string.clone())
+        .style(if query_box.in_focus() {
             Style::default()
                 .fg(Color::Black)
                 .bg(Color::Rgb(201, 165, 249))
@@ -109,7 +118,9 @@ fn create_find<'a>(find_string: String, find_flag: bool) -> Paragraph<'a> {
                 .style(Style::default())
                 .title(" Find ")
                 .border_type(BorderType::Plain),
-        )
+        );
+
+    frame.render_widget(query_box, area);
 }
 
 fn create_tab_menu<'a>(state: &State) -> Tabs<'a> {

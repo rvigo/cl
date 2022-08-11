@@ -171,6 +171,7 @@ impl Context {
                 FieldType::Namespace => {
                     command_builder.namespace(field.input.to_string());
                 }
+                _ => {}
             });
 
         let command = command_builder.build();
@@ -204,6 +205,7 @@ impl Context {
                         .unwrap_or(&vec![String::from("")])
                         .join(",")
                 }
+                _ => {}
             };
             field.reset_cursor_position();
         });
@@ -234,6 +236,7 @@ impl Context {
                         command.tags = Some(field.input.split(',').map(String::from).collect_vec());
                     }
                 }
+                _ => {}
             });
 
         if let Err(error) = command.validate() {

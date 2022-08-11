@@ -1,4 +1,4 @@
-use super::{context::Context, popup::PopUp};
+use super::{context::Context, field::Field, popup::PopUp};
 use crate::{
     command::{Command, CommandBuilder},
     commands::Commands,
@@ -20,8 +20,7 @@ pub struct State {
     pub popup: PopUp,
     pub show_help: bool,
     pub to_be_executed: Option<Command>,
-    pub find_flag: bool,
-    pub query_string: String,
+    pub query_box: Field,
 }
 
 impl State {
@@ -38,8 +37,12 @@ impl State {
             popup: PopUp::init(),
             show_help: false,
             to_be_executed: None,
-            find_flag: false,
-            query_string: String::from(""),
+            query_box: Field::new(
+                String::from("query_box"),
+                String::from("Find"),
+                super::field::FieldType::QueryBox,
+                false,
+            ),
         };
 
         state.load_namespaces();
@@ -56,10 +59,9 @@ impl State {
 
     pub fn load_namespaces(&mut self) {
         self.namespace_state.select(Some(0));
-        let mut ns = self.commands.namespaces();
-        ns.insert(0, String::from("All"));
-        self.current_namespace = String::from("All");
-        self.namespaces = ns;
+        self.namespaces = self.commands.namespaces();
+        self.current_namespace = self.namespaces[0].clone();
+        self.filtered_namespaces()
     }
 
     pub fn reload_state(&mut self) {
@@ -70,7 +72,7 @@ impl State {
     pub fn next_command_item(&mut self) {
         let i = match self.commands_state.selected() {
             Some(i) => {
-                if i >= self.filtered_commands().len() - 1 {
+                if self.filtered_commands().is_empty() || i >= self.filtered_commands().len() - 1 {
                     0
                 } else {
                     i + 1
@@ -84,8 +86,10 @@ impl State {
     pub fn previous_command_item(&mut self) {
         let i = match self.commands_state.selected() {
             Some(i) => {
-                if i == 0 {
+                if i == 0 && !self.filtered_commands().is_empty() {
                     self.filtered_commands().len() - 1
+                } else if i == 0 && self.filtered_commands().is_empty() {
+                    0
                 } else {
                     i - 1
                 }
@@ -107,7 +111,7 @@ impl State {
             None => 0,
         };
         self.namespace_state.select(Some(i));
-        self.current_namespace = String::from(self.namespaces.get(i).unwrap_or(&"All".to_string()));
+        self.current_namespace = String::from(self.namespaces.get(i).unwrap());
         self.commands_state.select(Some(0));
     }
 
@@ -123,27 +127,30 @@ impl State {
             None => 0,
         };
         self.namespace_state.select(Some(i));
-        self.current_namespace = String::from(self.namespaces.get(i).unwrap_or(&"All".to_string()));
+        self.current_namespace = String::from(self.namespaces.get(i).unwrap());
         self.commands_state.select(Some(0));
     }
 
     pub fn filtered_commands(&mut self) -> Vec<Command> {
-        let filtered_commands = if self.current_namespace.eq("All") {
-            self.commands.all_commands()
+        if let Ok(commands) = self
+            .commands
+            .commands(self.current_namespace.clone(), self.query_box.input.clone())
+        {
+            commands
         } else {
-            let namespaces = self
-                .commands
-                .commands_from_namespace(self.current_namespace.clone())
-                .expect("cannot save a command without an namespace");
+            vec![]
+        }
+    }
 
-            if namespaces.is_empty() {
-                self.commands.all_commands()
-            } else {
-                namespaces
-            }
-        };
-
-        self.filter_commands_by_query_string(filtered_commands)
+    pub fn filtered_namespaces(&mut self) {
+        self.namespaces = self
+            .filtered_commands()
+            .iter()
+            .map(|command| command.namespace.clone())
+            .unique()
+            .collect();
+        self.namespaces.insert(0, String::from("All"));
+        self.namespaces.sort();
     }
 
     pub fn execute_callback_command(&self) -> Result<()> {
@@ -166,31 +173,5 @@ impl State {
         }
 
         self.filtered_commands().get(idx).unwrap().to_owned()
-    }
-
-    pub fn set_find_active(&mut self) {
-        self.find_flag = true
-    }
-
-    pub fn set_find_deactive(&mut self) {
-        self.find_flag = false
-    }
-
-    fn filter_commands_by_query_string(&mut self, commands: Vec<Command>) -> Vec<Command> {
-        commands
-            .iter()
-            .filter(|command| {
-                command.namespace.contains(&self.query_string)
-                    || command.alias.contains(&self.query_string)
-                    || command.tags_as_string().contains(&self.query_string)
-                    || (command.description.is_some()
-                        && command
-                            .description
-                            .as_ref()
-                            .unwrap()
-                            .contains(&self.query_string))
-            })
-            .map(|command| command.to_owned())
-            .collect_vec()
     }
 }
