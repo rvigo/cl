@@ -1,4 +1,8 @@
-use super::{context::Context, field::Field, popup::PopUp};
+use super::{
+    context::Context,
+    field::{Field, FieldType},
+    popup::PopUp,
+};
 use crate::{command::Command, commands::Commands, gui::layouts::view_mode::ViewMode};
 use anyhow::Result;
 use itertools::Itertools;
@@ -36,7 +40,7 @@ impl State {
             query_box: Field::new(
                 String::from("query_box"),
                 String::from("Find"),
-                super::field::FieldType::QueryBox,
+                FieldType::QueryBox,
                 false,
             ),
         };
@@ -57,7 +61,7 @@ impl State {
         self.namespace_state.select(Some(0));
         self.namespaces = self.commands.namespaces();
         self.current_namespace = self.namespaces[0].clone();
-        self.filtered_namespaces()
+        self.filter_namespaces()
     }
 
     pub fn reload_state(&mut self) {
@@ -68,7 +72,7 @@ impl State {
     pub fn next_command_item(&mut self) {
         let i = match self.commands_state.selected() {
             Some(i) => {
-                if self.filtered_commands().is_empty() || i >= self.filtered_commands().len() - 1 {
+                if self.filter_commands().is_empty() || i >= self.filter_commands().len() - 1 {
                     0
                 } else {
                     i + 1
@@ -82,9 +86,9 @@ impl State {
     pub fn previous_command_item(&mut self) {
         let i = match self.commands_state.selected() {
             Some(i) => {
-                if i == 0 && !self.filtered_commands().is_empty() {
-                    self.filtered_commands().len() - 1
-                } else if i == 0 && self.filtered_commands().is_empty() {
+                if i == 0 && !self.filter_commands().is_empty() {
+                    self.filter_commands().len() - 1
+                } else if i == 0 && self.filter_commands().is_empty() {
                     0
                 } else {
                     i - 1
@@ -127,7 +131,7 @@ impl State {
         self.commands_state.select(Some(0));
     }
 
-    pub fn filtered_commands(&mut self) -> Vec<Command> {
+    pub fn filter_commands(&mut self) -> Vec<Command> {
         if let Ok(commands) = self
             .commands
             .commands(self.current_namespace.clone(), self.query_box.input.clone())
@@ -138,9 +142,9 @@ impl State {
         }
     }
 
-    pub fn filtered_namespaces(&mut self) {
+    pub fn filter_namespaces(&mut self) {
         self.namespaces = self
-            .filtered_commands()
+            .filter_commands()
             .iter()
             .map(|command| command.namespace.clone())
             .unique()
