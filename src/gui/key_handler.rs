@@ -239,8 +239,7 @@ impl KeyHandler {
             self.handle_popup(key_event, state)
         } else if state.show_help {
             self.handle_help(state)
-        }
-        if state.query_box.in_focus() {
+        } else if state.query_box.in_focus() {
             self.handle_query_box(key_event, state)
         } else {
             match key_event {
@@ -299,28 +298,34 @@ impl KeyHandler {
                     code: KeyCode::Char('e'),
                     modifiers: KeyModifiers::NONE,
                 } => {
-                    state.view_mode = ViewMode::Edit;
-                    state.context.set_selected_command_input();
+                    if !state.context.get_current_command().unwrap().is_empty() {
+                        state.view_mode = ViewMode::Edit;
+                        state.context.set_selected_command_input();
+                    }
                 }
 
                 KeyEvent {
                     code: KeyCode::Char('d') | KeyCode::Delete,
                     modifiers: KeyModifiers::NONE,
                 } => {
-                    state.popup.message =
-                        String::from("Are you sure you want to delete the command?");
-                    state.popup.show_popup = true;
-                    state.popup.message_type = MessageType::Delete;
+                    if !state.context.get_current_command().unwrap().is_empty() {
+                        state.popup.message =
+                            String::from("Are you sure you want to delete the command?");
+                        state.popup.show_popup = true;
+                        state.popup.message_type = MessageType::Delete;
+                    }
                 }
                 KeyEvent {
                     code: KeyCode::Enter,
                     modifiers: KeyModifiers::NONE,
                 } => {
-                    state.to_be_executed = state
-                        .filtered_commands()
-                        .get(state.commands_state.selected().unwrap())
-                        .cloned();
-                    state.should_quit = true
+                    if !state.context.get_current_command().unwrap().is_empty() {
+                        state.to_be_executed = state
+                            .filtered_commands()
+                            .get(state.commands_state.selected().unwrap())
+                            .cloned();
+                        state.should_quit = true
+                    }
                 }
                 KeyEvent {
                     code: KeyCode::F(1),
@@ -438,7 +443,7 @@ impl KeyHandler {
                     .move_cursor_foward();
             }
             KeyEvent {
-                code: KeyCode::Esc | KeyCode::Enter,
+                code: KeyCode::Esc | KeyCode::Enter | KeyCode::Down | KeyCode::Up,
                 modifiers: KeyModifiers::NONE,
             } => state.query_box.toggle_focus(),
             _ => {}

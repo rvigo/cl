@@ -1,6 +1,6 @@
 use super::{cursor::set_cursor_positition, help_layout::render_help, popup_layout::render_popup};
 use crate::{
-    command::Command,
+    command::{Command, CommandBuilder},
     gui::{
         entities::{field::Field, popup::Answer, state::State},
         layouts::help_layout::render_helper_footer,
@@ -36,7 +36,17 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .title(" Command List ")
         .border_type(BorderType::Plain);
 
-    let selected_command: Command = state.get_current_command();
+    let idx = state
+        .commands_state
+        .selected()
+        .expect("a command should always be selected");
+
+    let selected_command: Command = if state.filtered_commands().is_empty() {
+        //creates an empty command
+        CommandBuilder::default().build()
+    } else {
+        state.filtered_commands().get(idx).unwrap().to_owned()
+    };
 
     state
         .context

@@ -61,7 +61,9 @@ impl Command {
             .iter()
             .join(", ")
     }
-
+    pub fn is_empty(&self) -> bool {
+        self.namespace.is_empty() && self.alias.is_empty() && self.command.is_empty()
+    }
     pub fn validate(&self) -> Result<()> {
         if self.namespace.is_empty() || self.command.is_empty() || self.alias.is_empty() {
             bail!("namespace, command and alias field cannot be empty!");
