@@ -41,11 +41,11 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .selected()
         .expect("a command should always be selected");
 
-    let selected_command: Command = if state.filtered_commands().is_empty() {
+    let selected_command: Command = if state.filter_commands().is_empty() {
         //creates an empty command
         CommandBuilder::default().build()
     } else {
-        state.filtered_commands().get(idx).unwrap().to_owned()
+        state.filter_commands().get(idx).unwrap().to_owned()
     };
 
     state
@@ -154,7 +154,7 @@ fn create_tab_menu<'a>(state: &State) -> Tabs<'a> {
 
 fn create_command_items<'a>(state: &mut State) -> List<'a> {
     let list_items: Vec<ListItem> = state
-        .filtered_commands()
+        .filter_commands()
         .into_iter()
         .map(|c| {
             let lines = vec![Spans::from(c.alias)];

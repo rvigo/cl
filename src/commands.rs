@@ -37,32 +37,14 @@ impl Commands {
         let mut commands: Vec<Command> = self
             .items
             .iter()
+            .filter(|command| self.commands_by_namespace_predicate(namespace.clone(), command))
             .filter(|command| {
-                if namespace.eq(&String::from("All")) {
-                    true
-                } else {
-                    command.namespace.eq(&namespace)
-                }
-            })
-            .filter(|command| {
-                if !query_string.is_empty() {
-                    command.namespace.contains(&query_string)
-                        || command.alias.contains(&query_string)
-                        || command.tags_as_string().contains(&query_string)
-                        || (command.description.is_some()
-                            && command
-                                .description
-                                .as_ref()
-                                .unwrap()
-                                .contains(&query_string))
-                } else {
-                    true
-                }
+                self.commands_by_query_string_predicate(query_string.clone(), command)
             })
             .map(|item| item.to_owned())
             .collect();
 
-        if !self.items.is_empty() && commands.is_empty() {
+        if commands.is_empty() {
             bail!("There are no commands to show for namespace \"{namespace}\".");
         }
 
@@ -89,10 +71,10 @@ impl Commands {
         edited_command_item: &Command,
         current_command_item: &Command,
     ) -> Result<&Vec<Command>> {
-        if self.items.clone().into_iter().any(|c| {
-            c.alias.eq(&edited_command_item.alias)
+        if self.items.clone().iter().any(|command| {
+            command.alias.eq(&edited_command_item.alias)
                 && !edited_command_item.alias.eq(&current_command_item.alias)
-                && c.namespace.eq(&edited_command_item.namespace)
+                && command.namespace.eq(&edited_command_item.namespace)
         }) {
             bail!(
                 "Command with alias \"{}\" already exists in \"{}\" namespace",
@@ -176,6 +158,40 @@ impl Commands {
         self.items
             .iter()
             .any(|c| c.alias == command_item.alias && c.namespace.eq(&command_item.namespace))
+    }
+
+    fn commands_by_query_string_predicate(
+        &self,
+        mut query_string: String,
+        command: &Command,
+    ) -> bool {
+        if !query_string.is_empty() {
+            query_string = query_string.to_lowercase();
+            command.namespace.to_lowercase().contains(&query_string)
+                || command.alias.to_lowercase().contains(&query_string)
+                || command.command.to_lowercase().contains(&query_string)
+                || command
+                    .tags_as_string()
+                    .to_lowercase()
+                    .contains(&query_string)
+                || (command.description.is_some()
+                    && command
+                        .description
+                        .as_ref()
+                        .unwrap()
+                        .to_lowercase()
+                        .contains(&query_string))
+        } else {
+            true
+        }
+    }
+
+    fn commands_by_namespace_predicate(&self, namespace: String, command: &Command) -> bool {
+        if namespace.eq(&String::from("All")) {
+            true
+        } else {
+            command.namespace.eq(&namespace)
+        }
     }
 }
 

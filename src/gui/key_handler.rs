@@ -321,7 +321,7 @@ impl KeyHandler {
                 } => {
                     if !state.context.get_current_command().unwrap().is_empty() {
                         state.to_be_executed = state
-                            .filtered_commands()
+                            .filter_commands()
                             .get(state.commands_state.selected().unwrap())
                             .cloned();
                         state.should_quit = true
