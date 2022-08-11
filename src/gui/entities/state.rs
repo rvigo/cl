@@ -32,7 +32,7 @@ impl State {
             commands: commands.clone(),
             namespaces: Default::default(),
             current_namespace: String::from("All"),
-            view_mode: ViewMode::List,
+            view_mode: ViewMode::Main,
             context: Context::new(),
             popup: PopUp::init(),
             show_help: false,
