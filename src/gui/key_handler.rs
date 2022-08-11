@@ -19,7 +19,7 @@ impl KeyHandler {
 
     pub fn handle(&self, key_event: KeyEvent, state: &mut State) {
         match state.view_mode {
-            ViewMode::Main => self.handle_list(key_event, state),
+            ViewMode::Main => self.handle_main(key_event, state),
             ViewMode::Insert => self.handle_insert(key_event, state),
             ViewMode::Edit => self.handle_edit(key_event, state),
         }
@@ -234,14 +234,14 @@ impl KeyHandler {
         }
     }
 
-    pub fn handle_list(&self, key_event: KeyEvent, state: &mut State) {
+    pub fn handle_main(&self, key_event: KeyEvent, state: &mut State) {
         if state.popup.show_popup {
             self.handle_popup(key_event, state)
         } else if state.show_help {
             self.handle_help(state)
         }
         if state.query_box.in_focus() {
-            self.handle_find(key_event, state)
+            self.handle_query_box(key_event, state)
         } else {
             match key_event {
                 KeyEvent {
@@ -401,7 +401,7 @@ impl KeyHandler {
         state.show_help = false;
     }
 
-    fn handle_find(&self, key_event: KeyEvent, state: &mut State) {
+    fn handle_query_box(&self, key_event: KeyEvent, state: &mut State) {
         match key_event {
             KeyEvent {
                 code: KeyCode::Char(c),
@@ -417,7 +417,26 @@ impl KeyHandler {
                 state.query_box.on_backspace();
                 state.reload_state()
             }
-
+            KeyEvent {
+                code: KeyCode::Left,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                state
+                    .context
+                    .get_current_in_focus_mut()
+                    .unwrap()
+                    .move_cursor_backward();
+            }
+            KeyEvent {
+                code: KeyCode::Right,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                state
+                    .context
+                    .get_current_in_focus_mut()
+                    .unwrap()
+                    .move_cursor_foward();
+            }
             KeyEvent {
                 code: KeyCode::Esc | KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,

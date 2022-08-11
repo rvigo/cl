@@ -11,7 +11,6 @@ use crossterm::{
 };
 use std::{io, panic};
 use tui::{backend::CrosstermBackend, Terminal};
-
 pub struct AppContext {
     pub terminal: Terminal<CrosstermBackend<std::io::Stdout>>,
     pub state: State,
