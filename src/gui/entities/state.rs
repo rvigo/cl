@@ -1,9 +1,5 @@
 use super::{context::Context, field::Field, popup::PopUp};
-use crate::{
-    command::{Command, CommandBuilder},
-    commands::Commands,
-    gui::layouts::view_mode::ViewMode,
-};
+use crate::{command::Command, commands::Commands, gui::layouts::view_mode::ViewMode};
 use anyhow::Result;
 use itertools::Itertools;
 use tui::widgets::ListState;
@@ -159,19 +155,5 @@ impl State {
         }
 
         Ok(())
-    }
-
-    pub fn get_current_command(&mut self) -> Command {
-        let idx = self
-            .commands_state
-            .selected()
-            .expect("a command should always be selected");
-
-        if self.filtered_commands().is_empty() {
-            //creates an empty command
-            return CommandBuilder::default().build();
-        }
-
-        self.filtered_commands().get(idx).unwrap().to_owned()
     }
 }
