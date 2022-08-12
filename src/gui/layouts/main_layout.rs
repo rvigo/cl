@@ -58,7 +58,6 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let description_str: String = selected_command
         .description
         .unwrap_or_else(|| String::from(""));
-
     let command = create_command_details(command_str);
     let tabs = create_tab_menu(state);
     let tags = create_tags_menu(tags_str);
@@ -102,7 +101,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
 fn create_query_box<B: Backend>(frame: &mut Frame<B>, query_box: &mut Field, area: Rect) {
     let mut query_string;
     if !query_box.in_focus() && query_box.input.is_empty() {
-        query_string = String::from("Press F to find commands")
+        query_string = String::from("Press <F> to find commands")
     } else {
         query_string = query_box.input.clone()
     }
