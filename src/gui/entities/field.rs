@@ -66,7 +66,7 @@ impl Field {
             self.input.pop();
         } else if self.cursor_position > 0 {
             let idx: usize = self.cursor_position as usize;
-            self.input.remove(idx);
+            self.input.remove(idx - 1);
         }
         self.move_cursor_backward()
     }

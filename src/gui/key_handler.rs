@@ -423,24 +423,23 @@ impl KeyHandler {
                 state.reload_state()
             }
             KeyEvent {
+                code: KeyCode::Delete,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                state.query_box.on_delete_key();
+                state.reload_state()
+            }
+            KeyEvent {
                 code: KeyCode::Left,
                 modifiers: KeyModifiers::NONE,
             } => {
-                state
-                    .context
-                    .get_current_in_focus_mut()
-                    .unwrap()
-                    .move_cursor_backward();
+                state.query_box.move_cursor_backward();
             }
             KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
             } => {
-                state
-                    .context
-                    .get_current_in_focus_mut()
-                    .unwrap()
-                    .move_cursor_foward();
+                state.query_box.move_cursor_foward();
             }
             KeyEvent {
                 code: KeyCode::Esc | KeyCode::Enter | KeyCode::Down | KeyCode::Up,
