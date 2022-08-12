@@ -39,7 +39,7 @@ impl State {
             to_be_executed: None,
             query_box: Field::new(
                 String::from("query_box"),
-                String::from("Find"),
+                String::from(" Find "),
                 FieldType::QueryBox,
                 false,
             ),
