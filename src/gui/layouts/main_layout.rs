@@ -117,16 +117,22 @@ fn create_query_box<B: Backend>(frame: &mut Frame<B>, query_box: &mut Field, are
             Style::default()
                 .fg(Color::Black)
                 .bg(Color::Rgb(201, 165, 249))
+        } else if !query_box.in_focus() && !query_box.input.is_empty() {
+            Style::default().fg(Color::Rgb(201, 165, 249))
         } else {
-            Style::default()
+            Style::default().fg(Color::Rgb(229, 229, 229))
         })
         .alignment(Alignment::Left)
         .wrap(Wrap { trim: true })
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .style(Style::default())
-                .title(" Find ")
+                .style(if !query_box.in_focus() {
+                    Style::default().fg(Color::Rgb(229, 229, 229))
+                } else {
+                    Style::default()
+                })
+                .title(query_box.title())
                 .border_type(BorderType::Plain),
         );
 
