@@ -1,5 +1,5 @@
-pub mod app_configuration;
-pub mod file_service;
+pub(super) mod app_configuration;
+pub(super) mod file_service;
 
 mod utils {
     pub fn to_toml<T>(value: &T) -> String

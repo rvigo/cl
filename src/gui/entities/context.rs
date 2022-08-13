@@ -168,10 +168,10 @@ impl Context {
                         command_builder.description(Some(field.input.to_string()));
                     }
                 }
-
                 FieldType::Namespace => {
                     command_builder.namespace(field.input.to_string());
                 }
+                _ => {}
             });
 
         let command = command_builder.build();
@@ -186,10 +186,8 @@ impl Context {
 
     pub fn set_selected_command_input(&mut self) {
         let current_command = self.current_command.as_mut().unwrap();
-        self.fields
-            .0
-            .iter_mut()
-            .for_each(|field| match field.field_type() {
+        self.fields.0.iter_mut().for_each(|field| {
+            match field.field_type() {
                 FieldType::Alias => field.input = current_command.alias.clone(),
                 FieldType::Command => field.input = current_command.command.clone(),
                 FieldType::Namespace => field.input = current_command.namespace.clone(),
@@ -207,7 +205,10 @@ impl Context {
                         .unwrap_or(&vec![String::from("")])
                         .join(",")
                 }
-            });
+                _ => {}
+            };
+            field.reset_cursor_position();
+        });
     }
 
     pub fn edit_command(&mut self) -> Result<Command> {
@@ -235,6 +236,7 @@ impl Context {
                         command.tags = Some(field.input.split(',').map(String::from).collect_vec());
                     }
                 }
+                _ => {}
             });
 
         if let Err(error) = command.validate() {
