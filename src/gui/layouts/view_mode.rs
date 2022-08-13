@@ -1,5 +1,5 @@
 pub enum ViewMode {
-    List,
+    Main,
     Insert,
     Edit,
 }

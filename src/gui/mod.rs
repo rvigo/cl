@@ -1,3 +1,3 @@
-pub mod entities;
-pub mod key_handler;
-pub mod layouts;
+pub(super) mod entities;
+mod key_handler;
+mod layouts;

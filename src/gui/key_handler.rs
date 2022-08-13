@@ -19,7 +19,7 @@ impl KeyHandler {
 
     pub fn handle(&self, key_event: KeyEvent, state: &mut State) {
         match state.view_mode {
-            ViewMode::List => self.handle_list(key_event, state),
+            ViewMode::Main => self.handle_main(key_event, state),
             ViewMode::Insert => self.handle_insert(key_event, state),
             ViewMode::Edit => self.handle_edit(key_event, state),
         }
@@ -37,7 +37,7 @@ impl KeyHandler {
                     modifiers: KeyModifiers::NONE,
                 } => {
                     state.context.clear_inputs();
-                    state.view_mode = ViewMode::List;
+                    state.view_mode = ViewMode::Main;
                 }
                 KeyEvent {
                     code: KeyCode::Tab,
@@ -73,7 +73,7 @@ impl KeyHandler {
                         .context
                         .get_current_in_focus_mut()
                         .unwrap()
-                        .decrease_cursor_offset();
+                        .move_cursor_backward();
                 }
                 KeyEvent {
                     code: KeyCode::Right,
@@ -83,7 +83,7 @@ impl KeyHandler {
                         .context
                         .get_current_in_focus_mut()
                         .unwrap()
-                        .increase_cursor_offset();
+                        .move_cursor_foward();
                 }
                 KeyEvent {
                     code: KeyCode::Delete,
@@ -101,7 +101,7 @@ impl KeyHandler {
                         Ok(items) => {
                             if let Ok(()) = self.file_service.write_to_command_file(items) {
                                 state.reload_state();
-                                state.view_mode = ViewMode::List
+                                state.view_mode = ViewMode::Main
                             }
                         }
                         Err(error) => {
@@ -137,7 +137,7 @@ impl KeyHandler {
                     modifiers: KeyModifiers::NONE,
                 } => {
                     state.context.clear_inputs();
-                    state.view_mode = ViewMode::List;
+                    state.view_mode = ViewMode::Main;
                 }
                 KeyEvent {
                     code: KeyCode::Tab,
@@ -173,7 +173,7 @@ impl KeyHandler {
                         .context
                         .get_current_in_focus_mut()
                         .unwrap()
-                        .decrease_cursor_offset();
+                        .move_cursor_backward();
                 }
                 KeyEvent {
                     code: KeyCode::Right,
@@ -183,7 +183,7 @@ impl KeyHandler {
                         .context
                         .get_current_in_focus_mut()
                         .unwrap()
-                        .increase_cursor_offset();
+                        .move_cursor_foward();
                 }
                 KeyEvent {
                     code: KeyCode::Delete,
@@ -209,7 +209,7 @@ impl KeyHandler {
                             Ok(items) => {
                                 if let Ok(()) = self.file_service.write_to_command_file(items) {
                                     state.reload_state();
-                                    state.view_mode = ViewMode::List
+                                    state.view_mode = ViewMode::Main
                                 }
                             }
                             Err(error) => {
@@ -234,13 +234,22 @@ impl KeyHandler {
         }
     }
 
-    pub fn handle_list(&self, key_event: KeyEvent, state: &mut State) {
+    pub fn handle_main(&self, key_event: KeyEvent, state: &mut State) {
         if state.popup.show_popup {
             self.handle_popup(key_event, state)
         } else if state.show_help {
             self.handle_help(state)
+        } else if state.query_box.in_focus() {
+            self.handle_query_box(key_event, state)
         } else {
             match key_event {
+                KeyEvent {
+                    code: KeyCode::Char('f'),
+                    modifiers: KeyModifiers::NONE,
+                } => {
+                    //unlock find frame
+                    state.query_box.toggle_focus()
+                }
                 KeyEvent {
                     code: KeyCode::Char('q'),
                     modifiers: KeyModifiers::NONE,
@@ -289,28 +298,34 @@ impl KeyHandler {
                     code: KeyCode::Char('e'),
                     modifiers: KeyModifiers::NONE,
                 } => {
-                    state.view_mode = ViewMode::Edit;
-                    state.context.set_selected_command_input();
+                    if !state.context.get_current_command().unwrap().is_empty() {
+                        state.view_mode = ViewMode::Edit;
+                        state.context.set_selected_command_input();
+                    }
                 }
 
                 KeyEvent {
                     code: KeyCode::Char('d') | KeyCode::Delete,
                     modifiers: KeyModifiers::NONE,
                 } => {
-                    state.popup.message =
-                        String::from("Are you sure you want to delete the command?");
-                    state.popup.show_popup = true;
-                    state.popup.message_type = MessageType::Delete;
+                    if !state.context.get_current_command().unwrap().is_empty() {
+                        state.popup.message =
+                            String::from("Are you sure you want to delete the command?");
+                        state.popup.show_popup = true;
+                        state.popup.message_type = MessageType::Delete;
+                    }
                 }
                 KeyEvent {
                     code: KeyCode::Enter,
                     modifiers: KeyModifiers::NONE,
                 } => {
-                    state.to_be_executed = state
-                        .filtered_commands()
-                        .get(state.commands_state.selected().unwrap())
-                        .cloned();
-                    state.should_quit = true
+                    if !state.context.get_current_command().unwrap().is_empty() {
+                        state.to_be_executed = state
+                            .filter_commands()
+                            .get(state.commands_state.selected().unwrap())
+                            .cloned();
+                        state.should_quit = true
+                    }
                 }
                 KeyEvent {
                     code: KeyCode::F(1),
@@ -389,5 +404,48 @@ impl KeyHandler {
 
     fn handle_help(&self, state: &mut State) {
         state.show_help = false;
+    }
+
+    fn handle_query_box(&self, key_event: KeyEvent, state: &mut State) {
+        match key_event {
+            KeyEvent {
+                code: KeyCode::Char(c),
+                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
+            } => {
+                state.query_box.on_char(c);
+                state.reload_state()
+            }
+            KeyEvent {
+                code: KeyCode::Backspace,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                state.query_box.on_backspace();
+                state.reload_state()
+            }
+            KeyEvent {
+                code: KeyCode::Delete,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                state.query_box.on_delete_key();
+                state.reload_state()
+            }
+            KeyEvent {
+                code: KeyCode::Left,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                state.query_box.move_cursor_backward();
+            }
+            KeyEvent {
+                code: KeyCode::Right,
+                modifiers: KeyModifiers::NONE,
+            } => {
+                state.query_box.move_cursor_foward();
+            }
+            KeyEvent {
+                code: KeyCode::Esc | KeyCode::Enter | KeyCode::Down | KeyCode::Up,
+                modifiers: KeyModifiers::NONE,
+            } => state.query_box.toggle_focus(),
+            _ => {}
+        }
     }
 }

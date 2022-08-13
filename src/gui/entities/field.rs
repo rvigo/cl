@@ -7,6 +7,7 @@ pub enum FieldType {
     Command,
     Description,
     Namespace,
+    QueryBox,
 }
 
 pub struct Field {
@@ -15,7 +16,7 @@ pub struct Field {
     field_type: FieldType,
     in_focus: bool,
     pub input: String,
-    cursor_offset: u16,
+    cursor_position: u16,
 }
 
 impl Field {
@@ -26,7 +27,7 @@ impl Field {
             field_type,
             in_focus,
             input: String::from(""),
-            cursor_offset: 0,
+            cursor_position: 0,
         }
     }
     pub fn field_type(&self) -> &FieldType {
@@ -41,43 +42,43 @@ impl Field {
     pub fn in_focus(&self) -> bool {
         self.in_focus
     }
-    pub fn cursor_offset(&self) -> u16 {
-        self.cursor_offset
+    pub fn cursor_position(&self) -> u16 {
+        self.cursor_position
     }
 
     pub fn toggle_focus(&mut self) {
-        self.clear_offset();
+        self.reset_cursor_position();
         self.in_focus = !self.in_focus
     }
 
     pub fn on_char(&mut self, c: char) {
-        if self.cursor_offset == self.input_width() {
+        if self.cursor_position == self.input_width() {
             self.input.push(c);
         } else {
-            let idx: usize = self.cursor_offset as usize;
+            let idx: usize = self.cursor_position as usize;
             self.input.insert(idx, c);
         }
-        self.increase_cursor_offset();
+        self.move_cursor_foward();
     }
 
     pub fn on_backspace(&mut self) {
-        if self.cursor_offset == self.input_width() {
+        if self.cursor_position == self.input_width() {
             self.input.pop();
-        } else if self.cursor_offset > 0 {
-            let idx: usize = self.cursor_offset as usize;
-            self.input.remove(idx);
+        } else if self.cursor_position > 0 {
+            let idx: usize = self.cursor_position as usize;
+            self.input.remove(idx - 1);
         }
-        self.decrease_cursor_offset()
+        self.move_cursor_backward()
     }
 
     pub fn on_delete_key(&mut self) {
         if self.input_width() > 0 {
-            match self.cursor_offset.cmp(&(self.input_width() - 1)) {
+            match self.cursor_position.cmp(&(self.input_width() - 1)) {
                 Ordering::Equal => {
                     self.input.pop();
                 }
                 Ordering::Less => {
-                    let idx: usize = self.cursor_offset as usize;
+                    let idx: usize = self.cursor_position as usize;
                     self.input.remove(idx);
                 }
                 _ => {}
@@ -93,19 +94,19 @@ impl Field {
         self.input.clear();
     }
 
-    pub fn increase_cursor_offset(&mut self) {
-        if self.cursor_offset != self.input_width() {
-            self.cursor_offset += 1;
+    pub fn move_cursor_foward(&mut self) {
+        if self.cursor_position != self.input_width() {
+            self.cursor_position += 1;
         }
     }
 
-    pub fn decrease_cursor_offset(&mut self) {
-        if self.cursor_offset != 0 {
-            self.cursor_offset -= 1
+    pub fn move_cursor_backward(&mut self) {
+        if self.cursor_position != 0 {
+            self.cursor_position -= 1
         }
     }
 
-    fn clear_offset(&mut self) {
-        self.cursor_offset = self.input_width()
+    pub fn reset_cursor_position(&mut self) {
+        self.cursor_position = self.input_width()
     }
 }
