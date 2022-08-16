@@ -68,26 +68,23 @@ impl Commands {
 
     pub fn add_edited_command(
         &mut self,
-        edited_command_item: &Command,
-        current_command_item: &Command,
+        edited_command: &Command,
+        current_command: &Command,
     ) -> Result<&Vec<Command>> {
         if self.items.clone().iter().any(|command| {
-            command.alias.eq(&edited_command_item.alias)
-                && !edited_command_item.alias.eq(&current_command_item.alias)
-                && command.namespace.eq(&edited_command_item.namespace)
+            command.alias.eq(&edited_command.alias)
+                && !edited_command.alias.eq(&current_command.alias)
+                && command.namespace.eq(&edited_command.namespace)
         }) {
             bail!(
                 "Command with alias \"{}\" already exists in \"{}\" namespace",
-                edited_command_item.alias,
-                edited_command_item.namespace
+                edited_command.alias,
+                edited_command.namespace
             );
         }
-        self.items.retain(|command| {
-            !command.alias.eq(&current_command_item.alias)
-                && !command.namespace.eq(&current_command_item.namespace)
-        });
+        self.items.retain(|command| command != current_command);
 
-        self.items.push(edited_command_item.clone());
+        self.items.push(edited_command.clone());
         Ok(&self.items)
     }
 
@@ -200,20 +197,40 @@ mod test {
     use super::*;
     use crate::command::CommandBuilder;
 
+    fn command_factory(
+        alias: &str,
+        namespace: &str,
+        command: &str,
+        tags: Option<Vec<&str>>,
+        description: Option<&str>,
+    ) -> Command {
+        let mut builder = CommandBuilder::default();
+        builder
+            .alias(String::from(alias))
+            .namespace(String::from(namespace))
+            .command(String::from(command))
+            .description(description.map(String::from))
+            .tags(tags.map(|v| v.into_iter().map(String::from).collect_vec()));
+        builder.build()
+    }
     fn build_commands() -> Commands {
-        let mut command1 = CommandBuilder::default();
-        command1
-            .alias(String::from("test alias"))
-            .namespace(String::from("test namespace1"))
-            .command(String::from("test command"));
-        let mut command2 = CommandBuilder::default();
-        command2
-            .alias(String::from("test alias"))
-            .namespace(String::from("test namespace2"))
-            .command(String::from("test command"));
+        let command1 = command_factory(
+            "alias1",
+            "namespace1",
+            "command1",
+            Some(vec!["tag1", "tag2"]),
+            Some("description"),
+        );
 
-        let commands = Commands::init(vec![command1.build(), command2.build()]);
-        commands
+        let command2 = command_factory(
+            "alias2",
+            "namespace2",
+            "command2",
+            Some(vec!["tag1", "tag2"]),
+            Some("description"),
+        );
+
+        Commands::init(vec![command1, command2])
     }
 
     #[test]
@@ -223,8 +240,8 @@ mod test {
         assert_eq!(
             vec![
                 String::from("All"),
-                String::from("test namespace1"),
-                String::from("test namespace2")
+                String::from("namespace1"),
+                String::from("namespace2")
             ],
             namespaces
         )
@@ -256,9 +273,9 @@ mod test {
         let commands = build_commands();
         let mut duplicated_command = CommandBuilder::default();
         duplicated_command
-            .alias(String::from("test alias"))
-            .namespace(String::from("test namespace1"))
-            .command(String::from("test command"));
+            .alias(String::from("alias1"))
+            .namespace(String::from("namespace1"))
+            .command(String::from("command"));
 
         let already_exists = commands.command_already_exists(&duplicated_command.build());
         assert_eq!(true, already_exists)
@@ -268,7 +285,7 @@ mod test {
     fn should_return_all_commands_from_namespace() {
         let commands = build_commands();
         let commands_from_namespace =
-            commands.commands(String::from("test namespace2"), String::from(""));
+            commands.commands(String::from("namespace2"), String::from(""));
 
         if let Ok(items) = commands_from_namespace {
             assert_eq!(1, items.len())
@@ -332,28 +349,30 @@ mod test {
     #[test]
     fn should_add_an_edited_command() -> Result<()> {
         let mut commands = build_commands();
-        let current_command = Command::default();
-
-        commands.add_command(&current_command)?;
-
-        assert_eq!(
-            3,
-            commands
-                .commands(String::from("All"), String::from(""))
-                .unwrap()
-                .len()
+        let new_command = command_factory(
+            "alias2",
+            "namespace1",
+            "command2",
+            Some(vec!["tag1", "tag2"]),
+            Some("description"),
         );
 
-        let mut edited_command = current_command.clone();
-        edited_command.description = Some(String::from("edited command"));
+        if let Ok(items) = commands.add_command(&new_command) {
+            assert_eq!(3, items.len())
+        }
+
+        let mut edited_command = commands
+            .find_command(String::from("alias2"), Some(String::from("namespace1")))
+            .unwrap();
+        edited_command.description = Some(String::from("edited description"));
 
         let command_list_with_edited_command =
-            commands.add_edited_command(&edited_command, &current_command);
+            commands.add_edited_command(&edited_command, &new_command);
 
         if let Ok(items) = command_list_with_edited_command {
             assert_eq!(3, items.len());
             assert!(items.contains(&edited_command));
-            assert!(!items.contains(&current_command));
+            assert!(!items.contains(&new_command));
         }
 
         Ok(())
@@ -376,7 +395,7 @@ mod test {
 
         let mut edited_command = current_command.clone();
         edited_command.description = Some(String::from("edited command"));
-        edited_command.namespace = String::from("test namespace1");
+        edited_command.namespace = String::from("namespace1");
 
         let command_list_with_edited_command =
             commands.add_edited_command(&edited_command, &current_command);
