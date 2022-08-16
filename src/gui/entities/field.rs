@@ -92,6 +92,7 @@ impl Field {
 
     pub fn clear_input(&mut self) {
         self.input.clear();
+        self.reset_cursor_position();
     }
 
     pub fn move_cursor_foward(&mut self) {

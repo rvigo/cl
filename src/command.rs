@@ -69,7 +69,7 @@ impl Command {
     pub fn validate(&self) -> Result<()> {
         if self.is_empty() {
             bail!("namespace, command and alias field cannot be empty!");
-        } else if self.alias.to_lowercase().contains(" ") {
+        } else if self.alias.to_lowercase().contains(' ') {
             bail!("the alias must not contain whitespace as the application may interpret some words as arguments")
         }
 
