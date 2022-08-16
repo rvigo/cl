@@ -22,11 +22,11 @@ pub struct CommandBuilder {
 
 impl CommandBuilder {
     pub fn namespace(&mut self, namespace: String) -> &mut CommandBuilder {
-        self.namespace = namespace;
+        self.namespace = namespace.trim().to_string();
         self
     }
     pub fn alias(&mut self, alias: String) -> &mut CommandBuilder {
-        self.alias = alias;
+        self.alias = alias.trim().to_string();
         self
     }
     pub fn command(&mut self, command: String) -> &mut CommandBuilder {
@@ -63,12 +63,14 @@ impl Command {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.namespace.is_empty() && self.alias.is_empty() && self.command.is_empty()
+        self.namespace.is_empty() || self.alias.is_empty() || self.command.is_empty()
     }
 
     pub fn validate(&self) -> Result<()> {
         if self.is_empty() {
             bail!("namespace, command and alias field cannot be empty!");
+        } else if self.alias.to_lowercase().contains(" ") {
+            bail!("the alias must not contain whitespace as the application may interpret some words as arguments")
         }
 
         Ok(())
@@ -103,10 +105,10 @@ mod test {
         let mut command = CommandBuilder::default();
         command
             .tags(Some(vec![String::from("tag1")]))
-            .alias(String::from("test alias"))
-            .namespace(String::from("test namespace"))
-            .description(Some(String::from("test description")))
-            .command(String::from("test command"));
+            .alias(String::from("alias"))
+            .namespace(String::from("namespace"))
+            .description(Some(String::from("description")))
+            .command(String::from("command"));
 
         command.build()
     }
