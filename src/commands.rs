@@ -41,7 +41,7 @@ impl Commands {
             .filter(|command| {
                 self.commands_by_query_string_predicate(query_string.clone(), command)
             })
-            .map(|item| item.to_owned())
+            .map(|command| command.to_owned())
             .collect();
 
         if commands.is_empty() {
@@ -128,15 +128,11 @@ impl Commands {
         let commands: Vec<Command> = self
             .items
             .iter()
-            .filter(|c| {
-                if namespace.is_none() {
-                    true
-                } else {
-                    c.namespace.eq(namespace.as_ref().unwrap())
-                }
+            .filter(|command| {
+                namespace.is_none() || command.namespace.eq(namespace.as_ref().unwrap())
             })
-            .filter(|c| c.alias.eq(&alias))
-            .map(|item| item.to_owned())
+            .filter(|command| command.alias.eq(&alias))
+            .map(|command| command.to_owned())
             .collect();
 
         if commands.len() > 1 {
@@ -152,9 +148,9 @@ impl Commands {
     }
 
     fn command_already_exists(&self, command_item: &Command) -> bool {
-        self.items
-            .iter()
-            .any(|c| c.alias == command_item.alias && c.namespace.eq(&command_item.namespace))
+        self.items.iter().any(|command| {
+            command.alias == command_item.alias && command.namespace.eq(&command_item.namespace)
+        })
     }
 
     fn commands_by_query_string_predicate(
@@ -162,7 +158,7 @@ impl Commands {
         mut query_string: String,
         command: &Command,
     ) -> bool {
-        if !query_string.is_empty() {
+        query_string.is_empty() || {
             query_string = query_string.to_lowercase();
             command.namespace.to_lowercase().contains(&query_string)
                 || command.alias.to_lowercase().contains(&query_string)
@@ -178,17 +174,11 @@ impl Commands {
                         .unwrap()
                         .to_lowercase()
                         .contains(&query_string))
-        } else {
-            true
         }
     }
 
     fn commands_by_namespace_predicate(&self, namespace: String, command: &Command) -> bool {
-        if namespace.eq(&String::from("All")) {
-            true
-        } else {
-            command.namespace.eq(&namespace)
-        }
+        namespace.eq(&String::from("All")) || command.namespace.eq(&namespace)
     }
 }
 
