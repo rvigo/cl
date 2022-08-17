@@ -128,6 +128,47 @@ mod test {
     }
 
     #[test]
+    fn should_not_validate_the_command_with_invalid_alias() {
+        let mut invalid_command = CommandBuilder::default();
+        invalid_command
+            .tags(Some(vec![String::from("tag1")]))
+            .alias(String::from("invalid alias"))
+            .namespace(String::from("namespace"))
+            .description(Some(String::from("description")))
+            .command(String::from("command"));
+
+        let invalid_command = invalid_command.build();
+
+        let result = invalid_command.validate();
+        assert!(result.is_err());
+        let error_msg = result.unwrap_err().to_string();
+        assert_eq!(
+            "the alias must not contain whitespace as the application may interpret some words as arguments",
+            error_msg
+        )
+    }
+
+    #[test]
+    fn should_not_validate_the_command_with_missing_mandatory_field() {
+        let mut invalid_command = CommandBuilder::default();
+        invalid_command
+            .tags(Some(vec![String::from("tag1")]))
+            .alias(String::from("alias"))
+            .description(Some(String::from("description")))
+            .command(String::from("command"));
+
+        let invalid_command = invalid_command.build();
+
+        let result = invalid_command.validate();
+        assert!(result.is_err());
+        let error_msg = result.unwrap_err().to_string();
+        assert_eq!(
+            "namespace, command and alias field cannot be empty!",
+            error_msg
+        )
+    }
+
+    #[test]
     fn should_return_an_error_when_command_is_not_valid() {
         let mut command = build_default_command();
         command.alias = String::from("");
