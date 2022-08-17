@@ -101,7 +101,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
 fn create_query_box<B: Backend>(frame: &mut Frame<B>, query_box: &mut Field, area: Rect) {
     let mut query_string;
     if !query_box.in_focus() && query_box.input.is_empty() {
-        query_string = String::from("Press <F> to find commands")
+        query_string = String::from("Press <f> to find commands")
     } else {
         query_string = query_box.input.clone()
     }

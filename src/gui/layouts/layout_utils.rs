@@ -8,21 +8,21 @@ use tui::{
     Frame,
 };
 
-pub fn render_widget<B: Backend>(frame: &mut Frame<B>, state: &State, area: Rect, item: &Field) {
-    let widget = Paragraph::new(state.context.get_component_input(item.name()))
-        .style(get_style(state, item.name()))
+pub fn render_widget<B: Backend>(frame: &mut Frame<B>, state: &State, area: Rect, field: &Field) {
+    let widget = Paragraph::new(state.context.get_component_input(field.name()))
+        .style(get_style(state, field.name()))
         .alignment(Alignment::Left)
         .wrap(Wrap { trim: true })
         .block(
             Block::default()
                 .borders(Borders::ALL)
                 .style(Style::default())
-                .title(item.title())
+                .title(field.title())
                 .border_type(BorderType::Plain),
         );
 
     frame.render_widget(widget, area);
-    if state.context.is_in_focus(item.name()) {
+    if state.context.is_in_focus(field.name()) {
         set_cursor_positition(frame, state.context.get_current_in_focus().unwrap(), area)
     }
 }

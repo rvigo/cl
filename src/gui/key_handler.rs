@@ -277,13 +277,13 @@ impl KeyHandler {
                     state.next_namespace();
                 }
                 KeyEvent {
-                    code: KeyCode::Down | KeyCode::Char('j'),
+                    code: KeyCode::Down | KeyCode::Char('k'),
                     modifiers: KeyModifiers::NONE,
                 } => {
                     state.next_command_item();
                 }
                 KeyEvent {
-                    code: KeyCode::Up | KeyCode::Char('k'),
+                    code: KeyCode::Up | KeyCode::Char('j'),
                     modifiers: KeyModifiers::NONE,
                 } => {
                     state.previous_command_item();
@@ -328,7 +328,7 @@ impl KeyHandler {
                     }
                 }
                 KeyEvent {
-                    code: KeyCode::F(1),
+                    code: KeyCode::F(1) | KeyCode::Char('?'),
                     modifiers: KeyModifiers::NONE,
                 } => state.show_help = true,
                 _ => {}
