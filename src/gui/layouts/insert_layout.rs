@@ -52,13 +52,13 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
 
     frame.render_widget(insert_block, frame.size());
 
-    for item in state.context.fields().iter() {
-        match item.field_type() {
-            FieldType::Tags => render_widget(frame, state, third_row[1], item),
-            FieldType::Namespace => render_widget(frame, state, first_row[1], item),
-            FieldType::Alias => render_widget(frame, state, first_row[0], item),
-            FieldType::Command => render_widget(frame, state, second_row[0], item),
-            FieldType::Description => render_widget(frame, state, third_row[0], item),
+    for field in state.context.fields().iter() {
+        match field.field_type() {
+            FieldType::Tags => render_widget(frame, state, third_row[1], field),
+            FieldType::Namespace => render_widget(frame, state, first_row[1], field),
+            FieldType::Alias => render_widget(frame, state, first_row[0], field),
+            FieldType::Command => render_widget(frame, state, second_row[0], field),
+            FieldType::Description => render_widget(frame, state, third_row[0], field),
             _ => {}
         }
     }

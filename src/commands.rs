@@ -53,16 +53,16 @@ impl Commands {
         Ok(commands)
     }
 
-    pub fn add_command(&mut self, command_item: &Command) -> Result<&Vec<Command>> {
-        if self.command_already_exists(command_item) {
+    pub fn add_command(&mut self, command: &Command) -> Result<&Vec<Command>> {
+        if self.command_already_exists(command) {
             bail!(
                 "Command with alias \"{}\" already exists in \"{}\" namespace",
-                command_item.alias,
-                command_item.namespace
+                command.alias,
+                command.namespace
             );
         }
 
-        self.items.push(command_item.clone());
+        self.items.push(command.clone());
         Ok(&self.items)
     }
 
@@ -88,10 +88,9 @@ impl Commands {
         Ok(&self.items)
     }
 
-    pub fn remove(&mut self, command_item: &Command) -> Result<&Vec<Command>> {
-        self.items.retain(|command| {
-            !command.alias.eq(&command_item.alias) || !command_item.namespace.eq(&command.namespace)
-        });
+    pub fn remove(&mut self, command: &Command) -> Result<&Vec<Command>> {
+        self.items
+            .retain(|c| !c.alias.eq(&command.alias) || !command.namespace.eq(&c.namespace));
         Ok(&self.items)
     }
 

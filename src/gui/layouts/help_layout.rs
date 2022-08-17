@@ -22,44 +22,47 @@ pub fn render_helper_footer() -> Paragraph<'static> {
         )
 }
 
-fn list_options() -> String {
+fn main_options() -> String {
     String::from(
         "\n \
-        Quit <Q>\n\n \
-        New command <I>\n\n \
-        Delete <D>\n\n \
-        Edit command <E>\n\n \
-        Right <TAB>\n\n \
-        Left <BACKTAB>\n\n \
-        Up <ArrowUp>\n\n \
-        Down <ArrowDown>\n\n \
-        Find <F>",
+        Quit <q>\n\n \
+        New command <Insert / i>\n\n \
+        Delete <Delete / d>\n\n \
+        Edit command <e>\n\n \
+        Right <Right / Tab / l>\n\n \
+        Left <Left / Shift + Tab / h>\n\n \
+        Up <Up / j>\n\n \
+        Down <Down / k>\n\n \
+        Find Commands <f>\n\n \
+        Help <F1 / ?>",
     )
 }
 
 fn insert_options() -> String {
     String::from(
         "\n \
-        Return <ESC>\n\n \
-        Right <TAB>\n\n \
-        Left <BACKTAB>\n\n \
-        Create <Enter>",
+        Return <Esc>\n\n \
+        Next Field <Tab>\n\n \
+        Previous Field <Shift + Tab>\n\n \
+        Create Command <Enter>\n\n \
+        Help <F1>",
     )
 }
 
 fn edit_options() -> String {
     String::from(
         "\n \
-        Return <ESC>\n\n \
-        Right <TAB>\n\n \
-        Left <BACKTAB>\n\n \
-        Update <Enter>",
+        Return <Esc>\n\n \
+        Next Field <Tab>\n\n \
+        Previous Field <Shift + Tab>\n\n \
+        Update Command <Enter>\n\n \
+        Help <F1>",
     )
 }
 
 pub fn render_help<B: Backend>(frame: &mut Frame<B>, state: &State) {
     let block = Paragraph::new(match state.view_mode {
-        ViewMode::Main => list_options(),
+        ViewMode::Main => main_options(),
         ViewMode::Edit => edit_options(),
         ViewMode::Insert => insert_options(),
     })
