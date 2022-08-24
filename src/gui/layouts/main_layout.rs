@@ -49,7 +49,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     };
 
     state
-        .context
+        .field_context
         .set_current_command(Some(selected_command.clone()));
 
     let tags_str = selected_command.tags_as_string();

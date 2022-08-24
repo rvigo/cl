@@ -1,60 +1,62 @@
-use super::utils::to_toml;
+use super::{config::CONFIG, utils::to_toml};
 use crate::command::Command;
 use anyhow::{bail, Result};
 use std::{
     collections::HashMap,
     fs::{read_to_string, write},
-    path::PathBuf,
+    path::Path,
 };
 
-#[derive(Default)]
-pub struct CommandFileService {
-    pub command_file_path: PathBuf,
+pub fn save_file(contents: String, path: &Path) -> Result<()> {
+    if let Err(error) = write(path, contents) {
+        bail!(
+            "Error writing to file {}: {}",
+            path.to_str().unwrap(),
+            error
+        )
+    }
+    Ok(())
 }
 
-impl CommandFileService {
-    pub fn init(command_file_path: PathBuf) -> CommandFileService {
-        CommandFileService { command_file_path }
+pub fn open_file(path: &Path) -> Result<String> {
+    let path_str = path.to_str().unwrap();
+    match read_to_string(path_str) {
+        Ok(file) => Ok(file),
+        Err(error) => bail!("cannot read {}: {}", path_str, error),
     }
+}
 
-    fn open_command_file(&self) -> Result<String> {
-        let file_path = &self.command_file_path;
-        match read_to_string(file_path.to_str().unwrap()) {
-            Ok(file) => Ok(file),
-            Err(error) => bail!("cannot read commands.toml: {}", error),
+pub fn load_commands_from_file() -> Result<Vec<Command>> {
+    match toml::from_str::<HashMap<String, Vec<Command>>>(&open_file(
+        &CONFIG.get_command_file_path(),
+    )?) {
+        Ok(toml) => {
+            let mut commands: Vec<Command> = toml
+                .into_iter()
+                .flat_map(|(_, _commands)| _commands)
+                .collect();
+            commands.sort();
+            Ok(commands)
+        }
+        Err(error) => bail!("{error}"),
+    }
+}
+
+pub fn write_to_command_file(commands: &Vec<Command>) -> Result<()> {
+    let mut map: HashMap<String, Vec<Command>> = HashMap::new();
+    for command in commands {
+        let item = command.to_owned();
+        if let Some(commands) = map.get_mut(&item.namespace) {
+            commands.push(item);
+        } else {
+            map.insert(item.clone().namespace, vec![item]);
         }
     }
 
-    pub fn load_commands_from_file(&self) -> Result<Vec<Command>> {
-        match toml::from_str::<HashMap<String, Vec<Command>>>(&self.open_command_file()?) {
-            Ok(toml) => {
-                let mut items: Vec<Command> = toml
-                    .into_iter()
-                    .flat_map(|(_, commands)| commands)
-                    .collect();
-                items.sort();
-                Ok(items)
-            }
-            Err(error) => bail!("{error}"),
-        }
+    let toml = to_toml::<HashMap<String, Vec<Command>>>(&map);
+    let path = &CONFIG.get_command_file_path();
+    if let Err(error) = save_file(toml, path) {
+        bail!("Error writing the new command: {}", error)
     }
-
-    pub fn write_to_command_file(&self, items: &Vec<Command>) -> Result<()> {
-        let mut map: HashMap<String, Vec<Command>> = HashMap::new();
-        for item in items {
-            let item = item.to_owned();
-            if let Some(commands) = map.get_mut(&item.namespace) {
-                commands.push(item);
-            } else {
-                map.insert(item.clone().namespace, vec![item]);
-            }
-        }
-
-        let toml = to_toml::<HashMap<String, Vec<Command>>>(&map);
-        let file_path = &self.command_file_path;
-        if let Err(error) = write(file_path, toml) {
-            bail!("Error writing the new command: {}", error)
-        }
-        Ok(())
-    }
+    Ok(())
 }

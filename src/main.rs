@@ -9,7 +9,7 @@ use clap::ArgMatches;
 use cli::app;
 use commands::Commands;
 use gui::entities::app::AppContext;
-use resources::{app_configuration::AppConfiguration, file_service::CommandFileService};
+use resources::file_service;
 
 fn main() -> Result<()> {
     let app = app::build_app();
@@ -30,9 +30,7 @@ fn run_main_app() -> Result<()> {
 }
 
 fn run_exec_command(sub_matches: &ArgMatches) -> Result<()> {
-    let config = AppConfiguration::init()?;
-    let command_file_service = CommandFileService::init(config.command_file_path());
-    let command_items = command_file_service.load_commands_from_file()?;
+    let command_items = file_service::load_commands_from_file()?;
     let commands = Commands::init(command_items);
 
     let alias: String = sub_matches.value_of("alias").unwrap().into();

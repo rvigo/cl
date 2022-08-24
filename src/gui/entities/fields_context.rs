@@ -7,52 +7,15 @@ use tui::widgets::ListState;
 
 pub struct Fields(Vec<Field>);
 
-impl Default for Fields {
-    fn default() -> Self {
-        Fields(vec![
-            Field::new(
-                String::from("alias"),
-                String::from(" Alias "),
-                FieldType::Alias,
-                true,
-            ),
-            Field::new(
-                String::from("namespace"),
-                String::from(" Namespace "),
-                FieldType::Namespace,
-                false,
-            ),
-            Field::new(
-                String::from("command"),
-                String::from(" Command "),
-                FieldType::Command,
-                false,
-            ),
-            Field::new(
-                String::from("description"),
-                String::from(" Description "),
-                FieldType::Description,
-                false,
-            ),
-            Field::new(
-                String::from("tags"),
-                String::from(" Tags "),
-                FieldType::Tags,
-                false,
-            ),
-        ])
-    }
-}
-
-pub struct Context {
+pub struct FieldsContext {
     pub focus_state: ListState,
     fields: Fields,
     pub current_command: Option<Command>,
 }
 
-impl Context {
-    pub fn new() -> Context {
-        Context {
+impl FieldsContext {
+    pub fn new() -> FieldsContext {
+        FieldsContext {
             fields: Fields::default(),
             focus_state: ListState::default(),
             current_command: None,
@@ -245,5 +208,42 @@ impl Context {
         self.clear_inputs();
 
         Ok(command)
+    }
+}
+
+impl Default for Fields {
+    fn default() -> Self {
+        Fields(vec![
+            Field::new(
+                String::from("alias"),
+                String::from(" Alias "),
+                FieldType::Alias,
+                true,
+            ),
+            Field::new(
+                String::from("namespace"),
+                String::from(" Namespace "),
+                FieldType::Namespace,
+                false,
+            ),
+            Field::new(
+                String::from("command"),
+                String::from(" Command "),
+                FieldType::Command,
+                false,
+            ),
+            Field::new(
+                String::from("description"),
+                String::from(" Description "),
+                FieldType::Description,
+                false,
+            ),
+            Field::new(
+                String::from("tags"),
+                String::from(" Tags "),
+                FieldType::Tags,
+                false,
+            ),
+        ])
     }
 }

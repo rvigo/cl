@@ -19,15 +19,15 @@ impl Commands {
     }
 
     pub fn namespaces(&self) -> Vec<String> {
-        let mut keys: Vec<String> = self
+        let mut namespaces: Vec<String> = self
             .items
             .iter()
             .map(|command| command.namespace.clone())
             .unique()
             .collect();
-        keys.insert(0, String::from("All"));
-        keys.sort();
-        keys
+        namespaces.insert(0, String::from("All"));
+        namespaces.sort();
+        namespaces
     }
 
     pub fn commands(&self, namespace: String, query_string: String) -> Result<Vec<Command>> {

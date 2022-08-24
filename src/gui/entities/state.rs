@@ -1,6 +1,6 @@
 use super::{
-    context::Context,
     field::{Field, FieldType},
+    fields_context::FieldsContext,
     popup::PopUp,
 };
 use crate::{command::Command, commands::Commands, gui::layouts::view_mode::ViewMode};
@@ -16,7 +16,7 @@ pub struct State {
     pub namespaces: Vec<String>,
     pub current_namespace: String,
     pub view_mode: ViewMode,
-    pub context: Context,
+    pub field_context: FieldsContext,
     pub popup: PopUp,
     pub show_help: bool,
     pub to_be_executed: Option<Command>,
@@ -33,7 +33,7 @@ impl State {
             namespaces: Default::default(),
             current_namespace: String::from("All"),
             view_mode: ViewMode::Main,
-            context: Context::new(),
+            field_context: FieldsContext::new(),
             popup: PopUp::init(),
             show_help: false,
             to_be_executed: None,
@@ -48,8 +48,8 @@ impl State {
         state.load_namespaces();
         state.commands_state.select(Some(0));
         state.namespace_state.select(Some(0));
-        state.context.focus_state.select(Some(0));
-        state.context.current_command = commands
+        state.field_context.focus_state.select(Some(0));
+        state.field_context.current_command = commands
             .get_command_item_ref(0)
             .map(|value| value.to_owned());
         state.popup.options_state.select(Some(0));
@@ -69,7 +69,7 @@ impl State {
         self.commands_state.select(Some(0));
     }
 
-    pub fn next_command_item(&mut self) {
+    pub fn next_command(&mut self) {
         let i = match self.commands_state.selected() {
             Some(i) => {
                 if self.filter_commands().is_empty() || i >= self.filter_commands().len() - 1 {
@@ -83,7 +83,7 @@ impl State {
         self.commands_state.select(Some(i));
     }
 
-    pub fn previous_command_item(&mut self) {
+    pub fn previous_command(&mut self) {
         let i = match self.commands_state.selected() {
             Some(i) => {
                 if i == 0 && !self.filter_commands().is_empty() {

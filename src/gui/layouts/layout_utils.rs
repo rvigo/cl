@@ -9,7 +9,7 @@ use tui::{
 };
 
 pub fn render_widget<B: Backend>(frame: &mut Frame<B>, state: &State, area: Rect, field: &Field) {
-    let widget = Paragraph::new(state.context.get_component_input(field.name()))
+    let widget = Paragraph::new(state.field_context.get_component_input(field.name()))
         .style(get_style(state, field.name()))
         .alignment(Alignment::Left)
         .wrap(Wrap { trim: true })
@@ -22,13 +22,17 @@ pub fn render_widget<B: Backend>(frame: &mut Frame<B>, state: &State, area: Rect
         );
 
     frame.render_widget(widget, area);
-    if state.context.is_in_focus(field.name()) {
-        set_cursor_positition(frame, state.context.get_current_in_focus().unwrap(), area)
+    if state.field_context.is_in_focus(field.name()) {
+        set_cursor_positition(
+            frame,
+            state.field_context.get_current_in_focus().unwrap(),
+            area,
+        )
     }
 }
 
 fn get_style(state: &State, component_name: &str) -> Style {
-    if state.context.is_in_focus(component_name) {
+    if state.field_context.is_in_focus(component_name) {
         Style::default()
             .fg(Color::Black)
             .bg(Color::Rgb(201, 165, 249))
