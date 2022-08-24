@@ -26,6 +26,7 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Esc,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 state.field_context.clear_inputs();
                 state.view_mode = ViewMode::Main;
@@ -33,18 +34,21 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Tab,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 state.field_context.next();
             }
             KeyEvent {
                 code: KeyCode::BackTab,
                 modifiers: KeyModifiers::SHIFT,
+                ..
             } => {
                 state.field_context.previous();
             }
             KeyEvent {
                 code: KeyCode::Char(c),
                 modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
+                ..
             } => state
                 .field_context
                 .get_current_in_focus_mut()
@@ -53,6 +57,7 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Backspace,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 state
                     .field_context
@@ -63,6 +68,7 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Left,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 state
                     .field_context
@@ -73,6 +79,7 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 state
                     .field_context
@@ -83,6 +90,7 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Delete,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => state
                 .field_context
                 .get_current_in_focus_mut()
@@ -91,6 +99,7 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => match state.field_context.build_command() {
                 Ok(command) => match state.commands.add_command(&command) {
                     Ok(commands) => {
@@ -114,6 +123,7 @@ pub fn handle_insert(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::F(1),
                 modifiers: KeyModifiers::NONE,
+                ..
             } => state.show_help = true,
             _ => {}
         }
@@ -130,6 +140,7 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Esc,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 state.field_context.clear_inputs();
                 state.view_mode = ViewMode::Main;
@@ -137,18 +148,19 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Tab,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 state.field_context.next();
             }
             KeyEvent {
                 code: KeyCode::BackTab,
                 modifiers: KeyModifiers::SHIFT,
-            } => {
-                state.field_context.previous();
-            }
+                ..
+            } => state.field_context.previous(),
             KeyEvent {
                 code: KeyCode::Char(c),
                 modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
+                ..
             } => state
                 .field_context
                 .get_current_in_focus_mut()
@@ -157,6 +169,7 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Backspace,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 state
                     .field_context
@@ -167,6 +180,7 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Left,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 state
                     .field_context
@@ -177,6 +191,7 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 state
                     .field_context
@@ -187,6 +202,7 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Delete,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => state
                 .field_context
                 .get_current_in_focus_mut()
@@ -195,6 +211,7 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 let context: &mut FieldsContext = &mut state.field_context;
                 let current_command = context.get_current_command().unwrap().clone();
@@ -227,6 +244,7 @@ pub fn handle_edit(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::F(1),
                 modifiers: KeyModifiers::NONE,
+                ..
             } => state.show_help = true,
             _ => {}
         }
@@ -245,6 +263,7 @@ pub fn handle_main(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Char('f'),
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 //unlock find frame
                 state.query_box.toggle_focus()
@@ -252,50 +271,59 @@ pub fn handle_main(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Char('q'),
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 state.should_quit = true;
             }
             KeyEvent {
                 code: KeyCode::Left | KeyCode::Char('h'),
                 modifiers: KeyModifiers::NONE,
+                ..
             }
             | KeyEvent {
                 code: KeyCode::BackTab,
                 modifiers: KeyModifiers::SHIFT,
+                ..
             } => {
                 state.previous_namespace();
             }
             KeyEvent {
                 code: KeyCode::Right | KeyCode::Char('l'),
                 modifiers: KeyModifiers::NONE,
+                ..
             }
             | KeyEvent {
                 code: KeyCode::Tab,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 state.next_namespace();
             }
             KeyEvent {
                 code: KeyCode::Down | KeyCode::Char('k'),
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 state.next_command();
             }
             KeyEvent {
                 code: KeyCode::Up | KeyCode::Char('j'),
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 state.previous_command();
             }
             KeyEvent {
                 code: KeyCode::Insert | KeyCode::Char('i'),
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 state.view_mode = ViewMode::Insert;
             }
             KeyEvent {
                 code: KeyCode::Char('e'),
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 if !state
                     .field_context
@@ -311,6 +339,7 @@ pub fn handle_main(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Char('d') | KeyCode::Delete,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 if !state
                     .field_context
@@ -327,6 +356,7 @@ pub fn handle_main(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 if !state
                     .field_context
@@ -344,6 +374,7 @@ pub fn handle_main(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::F(1) | KeyCode::Char('?'),
                 modifiers: KeyModifiers::NONE,
+                ..
             } => state.show_help = true,
             _ => {}
         }
@@ -356,6 +387,7 @@ fn handle_popup(key_event: KeyEvent, state: &mut State) {
             if let KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
+                ..
             } = key_event
             {
                 state.popup.clear();
@@ -366,14 +398,17 @@ fn handle_popup(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Right,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => state.popup.next(),
             KeyEvent {
                 code: KeyCode::Left,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => state.popup.previous(),
             KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 match state
                     .popup
@@ -407,6 +442,7 @@ fn handle_popup(key_event: KeyEvent, state: &mut State) {
             KeyEvent {
                 code: KeyCode::Esc | KeyCode::Char('q'),
                 modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 state.popup.clear();
             }
@@ -425,6 +461,7 @@ fn handle_query_box(key_event: KeyEvent, state: &mut State) {
         KeyEvent {
             code: KeyCode::Char(c),
             modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
+            ..
         } => {
             state.query_box.on_char(c);
             state.reload_state()
@@ -432,6 +469,7 @@ fn handle_query_box(key_event: KeyEvent, state: &mut State) {
         KeyEvent {
             code: KeyCode::Backspace,
             modifiers: KeyModifiers::NONE,
+            ..
         } => {
             state.query_box.on_backspace();
             state.reload_state()
@@ -439,6 +477,7 @@ fn handle_query_box(key_event: KeyEvent, state: &mut State) {
         KeyEvent {
             code: KeyCode::Delete,
             modifiers: KeyModifiers::NONE,
+            ..
         } => {
             state.query_box.on_delete_key();
             state.reload_state()
@@ -446,18 +485,21 @@ fn handle_query_box(key_event: KeyEvent, state: &mut State) {
         KeyEvent {
             code: KeyCode::Left,
             modifiers: KeyModifiers::NONE,
+            ..
         } => {
             state.query_box.move_cursor_backward();
         }
         KeyEvent {
             code: KeyCode::Right,
             modifiers: KeyModifiers::NONE,
+            ..
         } => {
             state.query_box.move_cursor_foward();
         }
         KeyEvent {
             code: KeyCode::Esc | KeyCode::Enter | KeyCode::Down | KeyCode::Up,
             modifiers: KeyModifiers::NONE,
+            ..
         } => state.query_box.toggle_focus(),
         _ => {}
     }
