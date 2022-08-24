@@ -18,3 +18,4 @@ dirs = "4.0.0"
 itertools = "0.10.3"
 unicode-width = "0.1"
 clap = { version = "3.1.17", features = ["color"] }
+lazy_static = "1.4.0"

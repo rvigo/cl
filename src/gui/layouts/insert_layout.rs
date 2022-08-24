@@ -52,7 +52,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
 
     frame.render_widget(insert_block, frame.size());
 
-    for field in state.context.fields().iter() {
+    for field in state.field_context.fields().iter() {
         match field.field_type() {
             FieldType::Tags => render_widget(frame, state, third_row[1], field),
             FieldType::Namespace => render_widget(frame, state, first_row[1], field),

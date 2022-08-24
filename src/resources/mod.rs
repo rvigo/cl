@@ -1,4 +1,4 @@
-pub(super) mod app_configuration;
+pub(super) mod config;
 pub(super) mod file_service;
 
 mod utils {

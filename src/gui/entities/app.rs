@@ -1,7 +1,7 @@
 use crate::{
     commands::Commands,
-    gui::{entities::state::State, key_handler::KeyHandler, layouts::selector::select_ui},
-    resources::{app_configuration::AppConfiguration, file_service::CommandFileService},
+    gui::{entities::state::State, key_handler, layouts::selector::select_ui},
+    resources::file_service,
 };
 use anyhow::Result;
 use crossterm::{
@@ -15,7 +15,6 @@ use tui::{backend::CrosstermBackend, Terminal};
 pub struct AppContext {
     pub terminal: Terminal<CrosstermBackend<std::io::Stdout>>,
     pub state: State,
-    pub key_handler: KeyHandler,
 }
 
 impl AppContext {
@@ -28,18 +27,12 @@ impl AppContext {
         let mut terminal = Terminal::new(backend)?;
         terminal.hide_cursor()?;
 
-        let config = AppConfiguration::init()?;
-        let command_file_service = CommandFileService::init(config.command_file_path());
-
-        let command_items = command_file_service.load_commands_from_file()?;
+        let command_items = file_service::load_commands_from_file()?;
         let commands = Commands::init(command_items);
-
-        let key_handler = KeyHandler::new(command_file_service);
 
         Ok(AppContext {
             terminal,
             state: State::init(commands),
-            key_handler,
         })
     }
 
@@ -49,7 +42,7 @@ impl AppContext {
             self.terminal
                 .draw(|frame| select_ui(frame, &mut self.state))?;
             if let Event::Key(key) = event::read()? {
-                self.key_handler.handle(key, &mut self.state);
+                key_handler::handle(key, &mut self.state);
                 if self.state.should_quit {
                     return Ok(());
                 }
