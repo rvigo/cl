@@ -1,4 +1,5 @@
-use clap::{AppSettings, Arg, ColorChoice, Command};
+use clap::{AppSettings, Arg, ColorChoice, Command, builder::StringValueParser};
+
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
@@ -34,7 +35,11 @@ pub fn build_app() -> Command<'static> {
                         .help("The alias' namespace in case of duplicated command")
                         .value_name("NAMESPACE")
                         .requires("alias"),
-                ),
+                ).arg(Arg::new("named").value_name("NAMED PARAMETERS").value_parser(StringValueParser::new())
+                .last(true)
+                .takes_value(true)
+                .multiple_values(true))
+                
         )
         .args_conflicts_with_subcommands(true);
 
