@@ -35,7 +35,12 @@ pub fn build_app() -> Command<'static> {
                         .help("The alias' namespace in case of duplicated command")
                         .value_name("NAMESPACE")
                         .requires("alias"),
-                ).arg(Arg::new("named").value_name("NAMED PARAMETERS").value_parser(StringValueParser::new())
+                )
+                .arg(Arg::new("named")
+                .value_name("NAMED PARAMETERS")
+                .help("The command named parameters. Should be used after all args. \
+                        E.g: cl X <some-alias> -- --named_parameter1=1 --named_parameter2 2")
+                .value_parser(StringValueParser::new())
                 .last(true)
                 .takes_value(true)
                 .multiple_values(true))
@@ -55,7 +60,7 @@ mod test {
     }
 
     #[test]
-    fn should_run_with_no_args() {
+    fn should_run_with_no_subcommand() {
         let argv = ["cl"];
         let matches = get_matches(&argv);
 
@@ -64,8 +69,16 @@ mod test {
     }
 
     #[test]
-    fn should_run_with_x_arg() {
+    fn should_run_with_x_subcommand() {
         let argv = ["cl", "X", "test_alias", "arg1"];
+        let matches = get_matches(&argv);
+
+        assert_eq!(matches.subcommand().is_some(), true);
+    }
+
+    #[test]
+    fn should_run_with_x_subcommand_and_named_parameters() {
+        let argv = ["cl", "X", "test_alias", "--", "--named", "value"];
         let matches = get_matches(&argv);
 
         assert_eq!(matches.subcommand().is_some(), true);
