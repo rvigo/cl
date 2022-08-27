@@ -140,7 +140,7 @@ impl Commands {
             Please use the \'--namespace\' flag"
             )
         } else if commands.is_empty() {
-            bail!("The command \'{alias}\' was not found!")
+            bail!("The alias \'{alias}\' was not found!")
         } else {
             Ok(commands.first().unwrap().to_owned())
         }
