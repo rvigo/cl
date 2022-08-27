@@ -16,7 +16,7 @@ fn main() -> Result<()> {
     let matches = app.get_matches();
 
     match matches.subcommand() {
-        Some(("X", sub_matches)) => run_exec_command(sub_matches),
+        Some(("X", sub_matches)) => run_command(sub_matches),
         _ => run_main_app(),
     }
 }
@@ -29,12 +29,12 @@ fn run_main_app() -> Result<()> {
     app_context.callback_command()
 }
 
-fn run_exec_command(sub_matches: &ArgMatches) -> Result<()> {
+fn run_command(sub_matches: &ArgMatches) -> Result<()> {
     let command_items = file_service::load_commands_from_file()?;
     let commands = Commands::init(command_items);
 
     let alias: String = sub_matches.get_one::<String>("alias").unwrap().into();
-    let namespace = sub_matches.get_one::<String>("namespace").map(String::from);
+    let namespace: Option<String> = sub_matches.get_one::<String>("namespace").map(String::from);
     let args: Vec<String> = sub_matches
         .get_many::<String>("args")
         .unwrap_or_default()
