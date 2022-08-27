@@ -23,13 +23,13 @@ pub(super) mod utils {
                     if arg.contains('=') {
                         //handle --option=value string
                         let mut values = arg.split('=');
-                        let key = values.next().unwrap().to_string().replace("--", "");
+                        let key = values.next().unwrap().to_string().replacen("--", "", 1);
                         let value = values.next().unwrap().to_string();
                         mapped_args.insert(key, value);
                         continue;
                     }
 
-                    let key = arg.replace("--", "");
+                    let key = arg.replacen("--", "", 1);
                     mapped_args.insert(key, String::default());
                 } else {
                     let key = mapped_args
@@ -42,7 +42,6 @@ pub(super) mod utils {
                 }
             }
             validate_args(&mapped_args, &command)?;
-
             command = command.replace('#', "");
             if let Ok(command) = strfmt(&command, &mapped_args) {
                 Ok(command)
