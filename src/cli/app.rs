@@ -1,4 +1,4 @@
-use clap::{AppSettings, Arg, ColorChoice, Command, builder::StringValueParser};
+use clap::{AppSettings, Arg, ColorChoice, Command};
 
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -10,6 +10,7 @@ pub fn build_app() -> Command<'static> {
         .color(ColorChoice::Auto)
         .setting(AppSettings::DeriveDisplayOrder)
         .dont_collapse_args_in_usage(true)
+        .args_conflicts_with_subcommands(true)
         .propagate_version(true)
         .subcommand(
             Command::new("X")
@@ -40,14 +41,11 @@ pub fn build_app() -> Command<'static> {
                 .value_name("NAMED PARAMETERS")
                 .help("The command named parameters. Should be used after all args. \
                         E.g: cl X <some-alias> -- --named_parameter1=1 --named_parameter2 2")
-                .value_parser(StringValueParser::new())
                 .last(true)
                 .takes_value(true)
                 .multiple_values(true))
                 
-        )
-        .args_conflicts_with_subcommands(true);
-
+        );
     app
 }
 

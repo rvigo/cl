@@ -1,9 +1,15 @@
 pub(super) mod app;
 
 pub(super) mod utils {
-    use anyhow::{bail, Context, Result};
+    use anyhow::{bail, Result};
     use std::collections::HashMap;
     use strfmt::strfmt;
+
+    const DEFAULT_NAMED_PARAMS_ERROR_MESSAGE: &str = "This command has named parameters! \
+    You should provide them exactly as in the command";
+    const INVALID_NAMED_PARAMS_ERROR_MESSAGE: &str = "Invalid named arguments! \
+        You should provide them exactly as in the command";
+    const INVALID_NAMED_PARAMS_VALUE_ERROR_MESSAGE: &str = "Invalid named arguments values!";
 
     pub fn prepare_command(
         mut command: String,
@@ -12,7 +18,7 @@ pub(super) mod utils {
     ) -> Result<String> {
         if command.contains('#') {
             let mut mapped_args = HashMap::<String, String>::new();
-            for arg in named_args {
+            for arg in named_args.clone() {
                 if arg.starts_with("--") {
                     if arg.contains('=') {
                         //handle --option=value string
@@ -35,10 +41,18 @@ pub(super) mod utils {
                     mapped_args.insert(key, arg);
                 }
             }
-            validate_args(&mapped_args)?;
+            validate_args(&mapped_args, &command)?;
 
             command = command.replace('#', "");
-            strfmt(&command, &mapped_args).context("Cannnot map named args!")
+            if let Ok(command) = strfmt(&command, &mapped_args) {
+                Ok(command)
+            } else {
+                bail!(
+                    "Cannot build the command with these arguments: {}\n\n{}",
+                    named_args.join(", "),
+                    DEFAULT_NAMED_PARAMS_ERROR_MESSAGE,
+                );
+            }
         } else {
             if !args.is_empty() {
                 command = format!("{} {}", command, &args.join(" "));
@@ -48,15 +62,25 @@ pub(super) mod utils {
         }
     }
 
-    fn validate_args(mapped_args: &HashMap<String, String>) -> Result<()> {
+    fn validate_args(mapped_args: &HashMap<String, String>, command: &str) -> Result<()> {
+        let mut error_message: &str = "";
         if mapped_args.is_empty() {
-            bail!(
-                "This command has named parameters! You should provide them exactly as in the command"
-            )
+            error_message = DEFAULT_NAMED_PARAMS_ERROR_MESSAGE;
         } else if mapped_args.iter().any(|(k, _)| k.is_empty()) {
-            bail!("Invalid named arguments! You should provide them exactly as in the command")
+            error_message = INVALID_NAMED_PARAMS_ERROR_MESSAGE;
         } else if mapped_args.iter().any(|(_, v)| v.is_empty()) {
-            bail!("Invalid named arguments values!")
+            error_message = INVALID_NAMED_PARAMS_VALUE_ERROR_MESSAGE;
+        }
+        if !error_message.is_empty() {
+            let message: String = if mapped_args.is_empty() {
+                format!("Cannot run the command {}\n\n{}", command, error_message)
+            } else {
+                format!(
+                    "Cannot run the command {} with the provided arguments\n\n{}",
+                    command, error_message
+                )
+            };
+            bail!(message)
         }
 
         Ok(())
@@ -86,26 +110,33 @@ pub(super) mod utils {
 
         #[test]
         fn should_return_error_when_an_invalid_named_parameter_is_given() {
-            let result = prepare_command(
-                String::from("echo #{name}"),
-                vec![String::from("--invalid"), String::from("unit_test")],
-                vec![],
-            );
+            let named_args: Vec<String> =
+                vec![String::from("--invalid"), String::from("unit_test")];
+            let result: Result<String> =
+                prepare_command(String::from("echo #{name}"), named_args.clone(), vec![]);
             assert_eq!(result.is_err(), true);
-            assert_eq!(result.unwrap_err().to_string(), "Cannnot map named args!");
+            assert_eq!(
+                result.unwrap_err().to_string(),
+                format!(
+                    "Cannot build the command with these arguments: {}\n\n{}",
+                    named_args.join(", "),
+                    DEFAULT_NAMED_PARAMS_ERROR_MESSAGE
+                ),
+            );
         }
 
         #[test]
         fn should_return_error_when_an_invalid_named_parameter_value_is_given() {
-            let result = prepare_command(
-                String::from("echo #{name}"),
-                vec![String::from("--name")],
-                vec![],
-            );
+            let named_args: Vec<String> = vec![String::from("--name")];
+            let result: Result<String> =
+                prepare_command(String::from("echo #{name}"), named_args.clone(), vec![]);
             assert_eq!(result.is_err(), true);
             assert_eq!(
                 result.unwrap_err().to_string(),
-                "Invalid named arguments values!"
+                format!(
+                    "Cannot run the command echo #{{name}} with the provided arguments\n\n{}",
+                    INVALID_NAMED_PARAMS_VALUE_ERROR_MESSAGE
+                )
             );
         }
     }
