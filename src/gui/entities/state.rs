@@ -155,6 +155,13 @@ impl State {
 
     pub fn execute_callback_command(&self) -> Result<()> {
         if let Some(command) = &self.to_be_executed {
+            if command.command.contains("#{") {
+                eprintln!(
+                    "Warning: This command appears to contains one or more named parameters placeholders. \
+                    It may not run correctly using the interface.\n\
+                If you want to use these parameters, please use the CLI option (cl X --help)\n"
+                )
+            }
             self.commands.exec_command(command)?;
         }
 
