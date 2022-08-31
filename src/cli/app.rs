@@ -12,7 +12,8 @@ pub fn build_app() -> Command<'static> {
         .args_conflicts_with_subcommands(true)
         .propagate_version(true)
         .subcommand(
-            Command::new("X")
+            Command::new("exec")
+                .visible_aliases(&["X", "x"])
                 .about("Execute a command by alias")
                 .arg(
                     Arg::new("alias")
@@ -66,7 +67,7 @@ mod test {
 
     #[test]
     fn should_run_with_x_subcommand() {
-        let argv = ["cl", "X", "test_alias", "arg1"];
+        let argv = ["cl", "exec", "test_alias", "arg1"];
         let matches = get_matches(&argv);
 
         assert_eq!(matches.subcommand().is_some(), true);
@@ -74,7 +75,7 @@ mod test {
 
     #[test]
     fn should_run_with_x_subcommand_and_named_parameters() {
-        let argv = ["cl", "X", "test_alias", "--", "--named", "value"];
+        let argv = ["cl", "exec", "test_alias", "--", "--named", "value"];
         let matches = get_matches(&argv);
 
         assert_eq!(matches.subcommand().is_some(), true);

@@ -16,7 +16,7 @@ fn main() -> Result<()> {
     let matches = app.get_matches();
 
     match matches.subcommand() {
-        Some(("X", sub_matches)) => run_command(sub_matches),
+        Some(("exec", sub_matches)) => run_command(sub_matches),
         _ => run_main_app(),
     }
 }
