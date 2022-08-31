@@ -120,8 +120,13 @@ impl FieldsContext {
                     if field.input.is_empty() {
                         command_builder.tags(None);
                     } else {
-                        command_builder
-                            .tags(Some(field.input.split(',').map(String::from).collect_vec()));
+                        command_builder.tags(Some(
+                            field
+                                .input
+                                .split(',')
+                                .map(|tag| String::from(tag.trim()))
+                                .collect_vec(),
+                        ));
                     }
                 }
                 FieldType::Description => {
@@ -166,7 +171,7 @@ impl FieldsContext {
                         .tags
                         .as_ref()
                         .unwrap_or(&vec![String::from("")])
-                        .join(",")
+                        .join(", ")
                 }
                 _ => {}
             };
@@ -196,7 +201,13 @@ impl FieldsContext {
                     if field.input.is_empty() {
                         command.tags = None;
                     } else {
-                        command.tags = Some(field.input.split(',').map(String::from).collect_vec());
+                        command.tags = Some(
+                            field
+                                .input
+                                .split(',')
+                                .map(|tag| String::from(tag.trim()))
+                                .collect_vec(),
+                        );
                     }
                 }
                 _ => {}
