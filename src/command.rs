@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{ensure, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
@@ -67,11 +67,13 @@ impl Command {
     }
 
     pub fn validate(&self) -> Result<()> {
-        if self.is_empty() {
-            bail!("namespace, command and alias field cannot be empty!");
-        } else if self.alias.to_lowercase().contains(' ') {
-            bail!("the alias must not contain whitespace as the application may interpret some words as arguments")
-        }
+        ensure!(
+            !self.is_empty(),
+            "namespace, command and alias field cannot be empty!"
+        );
+        ensure!(
+            !self.alias.to_lowercase().contains(' '),
+         "the alias must not contain whitespace as the application may interpret some words as arguments");
 
         Ok(())
     }

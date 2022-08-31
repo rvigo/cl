@@ -1,6 +1,6 @@
 [package]
 name = "cl"
-version = "0.2.4"
+version = "0.3.0"
 edition = "2021"
 homepage = "https://github.com/rvigo/cl"
 repository = "https://github.com/rvigo/cl"
@@ -19,3 +19,4 @@ itertools = "0.10.3"
 unicode-width = "0.1"
 clap = { version = "3.1.17", features = ["color"] }
 lazy_static = "1.4.0"
+strfmt = "0.2.2"
