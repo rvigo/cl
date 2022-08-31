@@ -22,7 +22,7 @@ pub fn open_file(path: &Path) -> Result<String> {
     let path_str = path.to_str().unwrap();
     match read_to_string(path_str) {
         Ok(file) => Ok(file),
-        Err(error) => bail!("cannot read {}: {}", path_str, error),
+        Err(error) => bail!("Cannot read {}: {}", path_str, error),
     }
 }
 

@@ -202,9 +202,7 @@ impl FieldsContext {
                 _ => {}
             });
 
-        if let Err(error) = command.validate() {
-            bail!(error)
-        };
+        command.validate()?;
         self.clear_inputs();
 
         Ok(command)
