@@ -16,7 +16,7 @@ You must have `Rust` and `Cargo` installed ([please follow the official Rust sit
 
   ``` bash
   # this will download the lastest tag 
-  $ git clone --depth 1 -b v0.3.2 git@github.com:rvigo/cl.git
+  $ git clone --depth 1 -b v0.3.4 git@github.com:rvigo/cl.git
   # and then install the application
   $ cargo install --path .
   ```
