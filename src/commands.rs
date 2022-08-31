@@ -1,5 +1,5 @@
 use crate::command::Command;
-use anyhow::{bail, Result};
+use anyhow::{bail, ensure, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -44,9 +44,10 @@ impl Commands {
             .map(|command| command.to_owned())
             .collect();
 
-        if commands.is_empty() {
-            bail!("There are no commands to show for namespace \"{namespace}\".");
-        }
+        ensure!(
+            !commands.is_empty(),
+            "There are no commands to show for namespace \"{namespace}\"."
+        );
 
         commands.sort_by_key(|command| command.alias.clone());
 
@@ -54,13 +55,12 @@ impl Commands {
     }
 
     pub fn add_command(&mut self, command: &Command) -> Result<&Vec<Command>> {
-        if self.command_already_exists(command) {
-            bail!(
-                "Command with alias \"{}\" already exists in \"{}\" namespace",
-                command.alias,
-                command.namespace
-            );
-        }
+        ensure!(
+            !self.command_already_exists(command),
+            "Command with alias \"{}\" already exists in \"{}\" namespace",
+            command.alias,
+            command.namespace
+        );
 
         self.items.push(command.clone());
         Ok(&self.items)
@@ -71,17 +71,17 @@ impl Commands {
         edited_command: &Command,
         current_command: &Command,
     ) -> Result<&Vec<Command>> {
-        if self.items.clone().iter().any(|command| {
-            command.alias.eq(&edited_command.alias)
-                && !edited_command.alias.eq(&current_command.alias)
-                && command.namespace.eq(&edited_command.namespace)
-        }) {
-            bail!(
-                "Command with alias \"{}\" already exists in \"{}\" namespace",
-                edited_command.alias,
-                edited_command.namespace
-            );
-        }
+        ensure!(
+            !self.items.clone().iter().any(|command| {
+                command.alias.eq(&edited_command.alias)
+                    && !edited_command.alias.eq(&current_command.alias)
+                    && command.namespace.eq(&edited_command.namespace)
+            }),
+            "Command with alias \"{}\" already exists in \"{}\" namespace",
+            edited_command.alias,
+            edited_command.namespace
+        );
+
         self.items.retain(|command| command != current_command);
 
         self.items.push(edited_command.clone());
