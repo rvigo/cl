@@ -45,7 +45,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "cl"
-version = "0.2.4"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -54,6 +54,7 @@ dependencies = [
  "itertools",
  "lazy_static",
  "serde",
+ "strfmt",
  "toml",
  "tui",
  "unicode-width",
@@ -350,6 +351,12 @@ name = "smallvec"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2fd0db749597d91ff862fd1d55ea87f7855a744a8425a64695b6fca237d1dad1"
+
+[[package]]
+name = "strfmt"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26cdabcdab6da7e8c2ac1160e917ec83e78bbe3e10325e17d532718c67a4828f"
 
 [[package]]
 name = "strsim"

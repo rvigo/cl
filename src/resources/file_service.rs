@@ -1,6 +1,6 @@
 use super::{config::CONFIG, utils::to_toml};
 use crate::command::Command;
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use std::{
     collections::HashMap,
     fs::{read_to_string, write},
@@ -22,7 +22,7 @@ pub fn open_file(path: &Path) -> Result<String> {
     let path_str = path.to_str().unwrap();
     match read_to_string(path_str) {
         Ok(file) => Ok(file),
-        Err(error) => bail!("cannot read {}: {}", path_str, error),
+        Err(error) => bail!("Cannot read {}: {}", path_str, error),
     }
 }
 
@@ -55,8 +55,5 @@ pub fn write_to_command_file(commands: &Vec<Command>) -> Result<()> {
 
     let toml = to_toml::<HashMap<String, Vec<Command>>>(&map);
     let path = &CONFIG.get_command_file_path();
-    if let Err(error) = save_file(toml, path) {
-        bail!("Error writing the new command: {}", error)
-    }
-    Ok(())
+    save_file(toml, path).context("Error writing the new command")
 }
