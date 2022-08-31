@@ -6,6 +6,7 @@ use super::{
 use crate::{command::Command, commands::Commands, gui::layouts::view_mode::ViewMode};
 use anyhow::Result;
 use itertools::Itertools;
+use std::{thread, time::Duration};
 use tui::widgets::ListState;
 
 pub struct State {
@@ -159,9 +160,15 @@ impl State {
                 eprintln!(
                     "Warning: This command appears to contains one or more named parameters placeholders. \
                     It may not run correctly using the interface.\n\
-                If you want to use these parameters, please use the CLI option (cl X --help)\n"
-                )
+                If you want to use these parameters, please use the CLI option (cl X --help)"
+                );
+
+                let seconds_to_sleep = Duration::from_secs(3);
+                thread::sleep(seconds_to_sleep);
+
+                eprintln!();
             }
+
             self.commands.exec_command(command)?;
         }
 
