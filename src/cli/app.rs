@@ -4,17 +4,18 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
 pub fn build_app() -> Command<'static> {
-    let app = Command::new(PKG_NAME)
+    Command::new(PKG_NAME)
         .version(VERSION)
         .color(ColorChoice::Auto)
         .setting(AppSettings::DeriveDisplayOrder)
         .dont_collapse_args_in_usage(true)
         .args_conflicts_with_subcommands(true)
         .propagate_version(true)
+        .about("Group your commands and aliases in an organized and human readable place.")
         .subcommand(
             Command::new("exec")
                 .visible_aliases(&["X", "x"])
-                .about("Execute a command by alias")
+                .about("Run your commands via CLI")
                 .arg(
                     Arg::new("alias")
                         .value_name("ALIAS")
@@ -24,7 +25,11 @@ pub fn build_app() -> Command<'static> {
                 .arg(
                     Arg::new("args")
                         .value_name("ARGS")
-                        .help("The args (args with dash should be escaped with '\\' (e.g: cl <exec some_alias> '\\--help'))")
+                        .help(
+                            "The args of the alias command to be executed\n\
+                                Flags should be escaped with '\\' and surrounded by quotes\n   \
+                                e.g: cl exec <some-alias> '\\--flag'",
+                        )
                         .takes_value(true)
                         .multiple_values(true)
                         .requires("alias"),
@@ -33,19 +38,23 @@ pub fn build_app() -> Command<'static> {
                     Arg::new("namespace")
                         .short('n')
                         .long("namespace")
-                        .help("The alias' namespace in case of duplicated command")
+                        .help("The namespace in case of duplicated aliases")
                         .value_name("NAMESPACE")
                         .requires("alias"),
                 )
-                .arg(Arg::new("named")
-                .value_name("NAMED PARAMETERS")
-                .help("The command named parameters. Should be used after all args. \
-                        E.g: cl exec <some-alias> -- --named_parameter1=1 --named_parameter2 2")
-                .last(true)
-                .takes_value(true)
-                .multiple_values(true))
-        );
-    app
+                .arg(
+                    Arg::new("named")
+                        .value_name("NAMED PARAMETERS")
+                        .help(
+                            "The command named parameters. Should be used after all args\n   \
+                                e.g: cl exec <some-alias> -- --named-parameter value",
+                        )
+                        .last(true)
+                        .takes_value(true)
+                        .multiple_values(true)
+                        .requires("alias"),
+                ),
+        )
 }
 
 #[cfg(test)]
