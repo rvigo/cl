@@ -269,7 +269,7 @@ pub fn handle_main(key_event: KeyEvent, state: &mut State) {
                 state.query_box.toggle_focus()
             }
             KeyEvent {
-                code: KeyCode::Char('q'),
+                code: KeyCode::Char('q') | KeyCode::Esc,
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
