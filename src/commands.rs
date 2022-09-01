@@ -96,7 +96,7 @@ impl Commands {
 
     pub fn exec_command(&self, command_item: &Command) -> Result<()> {
         let shell = env::var("SHELL").unwrap_or_else(|_| String::from("sh"));
-        println!("{} {}", shell, command_item.command);
+        eprintln!("{} {}", shell, command_item.command);
         let command = std::process::Command::new(shell)
             .arg("-c")
             .arg(&command_item.command)
