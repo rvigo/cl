@@ -160,7 +160,7 @@ impl State {
                 eprintln!(
                     "Warning: This command appears to contains one or more named parameters placeholders. \
                     It may not run correctly using the interface.\n\
-                If you want to use these parameters, please use the CLI option (cl X --help)"
+                If you want to use these parameters, please use the CLI option (cl exec --help)"
                 );
 
                 let seconds_to_sleep = Duration::from_secs(3);

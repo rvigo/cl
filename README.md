@@ -30,14 +30,14 @@ $ cl
 
 Using the application's CLI to executed stored commands:
 ```bash
-$ cl X <your command alias>
+$ cl exec <your command alias>
 ```
 
 You can also set `variables` in your command and pass them as `named arguments`:
 ```bash
 # the stored command is `echo "hello #{name}, #{greetings}` and the alias is `echo`
 # the arguments names should match the variables names in your command
-$ cl X echo -- --name="John Doe" --grettings "welcome!" 
+$ cl exec echo -- --name="John Doe" --grettings "welcome!" 
 > "hello John Doe, welcome!"
 ```
 
