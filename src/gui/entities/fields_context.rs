@@ -125,6 +125,7 @@ impl FieldsContext {
                                 .input
                                 .split(',')
                                 .map(|tag| String::from(tag.trim()))
+                                .filter(|tag| !tag.is_empty())
                                 .collect_vec(),
                         ));
                     }
@@ -206,6 +207,7 @@ impl FieldsContext {
                                 .input
                                 .split(',')
                                 .map(|tag| String::from(tag.trim()))
+                                .filter(|tag| !tag.is_empty())
                                 .collect_vec(),
                         );
                     }
