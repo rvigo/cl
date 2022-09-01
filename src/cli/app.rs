@@ -24,7 +24,7 @@ pub fn build_app() -> Command<'static> {
                 .arg(
                     Arg::new("args")
                         .value_name("ARGS")
-                        .help("The args (args with dash should be escaped with '\\' (e.g: cl X some_alias '\\--help'))")
+                        .help("The args (args with dash should be escaped with '\\' (e.g: cl <exec some_alias> '\\--help'))")
                         .takes_value(true)
                         .multiple_values(true)
                         .requires("alias"),
@@ -40,7 +40,7 @@ pub fn build_app() -> Command<'static> {
                 .arg(Arg::new("named")
                 .value_name("NAMED PARAMETERS")
                 .help("The command named parameters. Should be used after all args. \
-                        E.g: cl X <some-alias> -- --named_parameter1=1 --named_parameter2 2")
+                        E.g: cl exec <some-alias> -- --named_parameter1=1 --named_parameter2 2")
                 .last(true)
                 .takes_value(true)
                 .multiple_values(true))
