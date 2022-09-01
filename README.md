@@ -32,6 +32,13 @@ Using the application's CLI to executed stored commands:
 ```bash
 $ cl exec <your command alias>
 ```
+You can pass args and flags to the stored command:
+```bash
+# the stored command is `docker` and the alias is `d`
+$ cl exec d ps # same as `docker ps` 
+# flags need to be escaped with \ and surrounded by quotes
+$ cl exec d ps '\--help' # same as `docker ps --help` 
+```
 
 You can also set `variables` in your command and pass them as `named arguments`:
 ```bash
