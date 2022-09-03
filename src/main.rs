@@ -45,9 +45,10 @@ fn run_command(sub_matches: &ArgMatches) -> Result<()> {
         .unwrap_or_default()
         .map(String::from)
         .collect();
+    let dry_run: bool = sub_matches.is_present("dry-run");
 
     let mut selected_command = commands.find_command(alias, namespace)?;
     selected_command.command =
         cli::utils::prepare_command(selected_command.command, named_args, args)?;
-    commands.exec_command(&selected_command)
+    commands.exec_command(&selected_command, dry_run)
 }

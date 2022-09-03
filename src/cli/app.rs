@@ -10,7 +10,7 @@ pub fn build_app() -> Command<'static> {
         .setting(AppSettings::DeriveDisplayOrder)
         .dont_collapse_args_in_usage(true)
         .args_conflicts_with_subcommands(true)
-        .propagate_version(true)
+        .propagate_version(false)
         .about("Group your commands and aliases in an organized and human readable place.")
         .subcommand(
             Command::new("exec")
@@ -21,6 +21,13 @@ pub fn build_app() -> Command<'static> {
                         .value_name("ALIAS")
                         .help("The alias to be executed")
                         .required(true),
+                )
+                .arg(
+                    Arg::new("dry-run")
+                        .short('d')
+                        .long("dry-run")
+                        .help("Dry run mode (Just prints the alias command in the terminal)")
+                        .takes_value(false),
                 )
                 .arg(
                     Arg::new("args")
@@ -38,8 +45,8 @@ pub fn build_app() -> Command<'static> {
                     Arg::new("namespace")
                         .short('n')
                         .long("namespace")
-                        .help("The namespace in case of duplicated aliases")
                         .value_name("NAMESPACE")
+                        .help("The namespace in case of duplicated aliases")
                         .requires("alias"),
                 )
                 .arg(
