@@ -46,7 +46,8 @@ impl Commands {
 
         ensure!(
             !commands.is_empty(),
-            "There are no commands to show for namespace \"{namespace}\"."
+            "There are no commands to show for namespace \"{}\".",
+            namespace
         );
 
         commands.sort_by_key(|command| command.alias.clone());
@@ -94,31 +95,36 @@ impl Commands {
         Ok(&self.items)
     }
 
-    pub fn exec_command(&self, command_item: &Command) -> Result<()> {
+    pub fn exec_command(&self, command_item: &Command, dry_run: bool) -> Result<()> {
         let shell = env::var("SHELL").unwrap_or_else(|_| String::from("sh"));
-        eprintln!("{} {}", shell, command_item.command);
-        let command = std::process::Command::new(shell)
-            .arg("-c")
-            .arg(&command_item.command)
-            .spawn();
+        if dry_run {
+            println!("{}", command_item.command);
+            Ok(())
+        } else {
+            eprintln!("{} {}", shell, command_item.command);
+            let command = std::process::Command::new(shell)
+                .arg("-c")
+                .arg(&command_item.command)
+                .spawn();
 
-        match command?.wait() {
-            Ok(exit_status) => {
-                if exit_status.success() {
-                    Ok(())
-                } else {
+            match command?.wait() {
+                Ok(exit_status) => {
+                    if exit_status.success() {
+                        Ok(())
+                    } else {
+                        bail!(
+                            "The command exited with status code {:?}",
+                            exit_status.code().unwrap()
+                        )
+                    }
+                }
+                Err(error) => {
                     bail!(
-                        "The command exited with status code {:?}",
-                        exit_status.code().unwrap()
+                        "Cannot run the command with alias {}: {}",
+                        command_item.alias,
+                        error
                     )
                 }
-            }
-            Err(error) => {
-                bail!(
-                    "Cannot run the command with alias {}: {}",
-                    command_item.alias,
-                    error
-                )
             }
         }
     }
@@ -336,7 +342,7 @@ mod test {
     }
 
     #[test]
-    fn should_add_an_edited_command() -> Result<()> {
+    fn should_add_an_edited_command() {
         let mut commands = build_commands();
         let new_command = command_factory(
             "alias2",
@@ -363,16 +369,14 @@ mod test {
             assert!(items.contains(&edited_command));
             assert!(!items.contains(&new_command));
         }
-
-        Ok(())
     }
 
     #[test]
-    fn should_return_an_error_when_edit_a_duplicated_alias_command() -> Result<()> {
+    fn should_return_an_error_when_edit_a_duplicated_alias_command() {
         let mut commands = build_commands();
         let current_command = Command::default();
 
-        commands.add_command(&current_command)?;
+        commands.add_command(&current_command).unwrap();
 
         assert_eq!(
             3,
@@ -398,6 +402,5 @@ mod test {
                 error.to_string()
             )
         }
-        Ok(())
     }
 }
