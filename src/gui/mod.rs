@@ -1,3 +1,3 @@
 pub(super) mod entities;
-mod key_handler;
+mod key_handlers;
 mod layouts;

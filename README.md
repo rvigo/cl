@@ -21,6 +21,8 @@ You must have `Rust` and `Cargo` installed ([please follow the official Rust sit
   $ cargo install --path .
   ```
 
+Please do not build from `HEAD`, you may face incomplete work/broken commits
+
 ## usage
 
 Using the application interface to add, edit, and run commands:
