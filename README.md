@@ -30,6 +30,8 @@ Using the application interface to add, edit, and run commands:
 $ cl
 ```
 
+![Overview Gif](.github/media/cl_overview.gif)
+
 Using the application's CLI to executed stored commands:
 ```bash
 $ cl exec <your command alias>
