@@ -1,6 +1,6 @@
 use crate::{
     commands::Commands,
-    gui::{entities::state::State, key_handler, layouts::selector::select_ui},
+    gui::{entities::state::State, key_handlers, layouts::selector::select_ui},
     resources::file_service,
 };
 use anyhow::Result;
@@ -42,7 +42,7 @@ impl AppContext {
             self.terminal
                 .draw(|frame| select_ui(frame, &mut self.state))?;
             if let Event::Key(key) = event::read()? {
-                key_handler::handle(key, &mut self.state);
+                key_handlers::handle(key, &mut self.state);
                 if self.state.should_quit {
                     return Ok(());
                 }
