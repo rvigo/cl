@@ -169,7 +169,7 @@ impl State {
                 eprintln!();
             }
 
-            self.commands.exec_command(command, false)?;
+            self.commands.exec_command(command, false, false)?;
         }
 
         Ok(())

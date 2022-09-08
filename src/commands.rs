@@ -95,18 +95,38 @@ impl Commands {
         Ok(&self.items)
     }
 
-    pub fn exec_command(&self, command_item: &Command, dry_run: bool) -> Result<()> {
-        let shell = env::var("SHELL").unwrap_or_else(|_| String::from("sh"));
+    pub fn exec_command(
+        &self,
+        command_item: &Command,
+        dry_run: bool,
+        quiet_mode: bool,
+    ) -> Result<()> {
+        const MAX_LINE_LENGTH: usize = 120;
+
+        let shell = env::var("SHELL").unwrap_or_else(|_| {
+            eprintln!("Warning: $SHELL not found! Using sh");
+            String::from("sh")
+        });
         if dry_run {
             println!("{}", command_item.command);
             Ok(())
         } else {
-            eprintln!("{} {}", shell, command_item.command);
+            if !quiet_mode {
+                let command_description = if command_item.command.len() > MAX_LINE_LENGTH {
+                    format!(
+                        "{}{}",
+                        &command_item.command.clone()[..MAX_LINE_LENGTH],
+                        "..."
+                    )
+                } else {
+                    command_item.command.clone()
+                };
+                eprintln!("{} --> {}", command_item.alias, command_description);
+            }
             let command = std::process::Command::new(shell)
                 .arg("-c")
                 .arg(&command_item.command)
                 .spawn();
-
             match command?.wait() {
                 Ok(exit_status) => {
                     if exit_status.success() {
