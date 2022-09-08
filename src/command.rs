@@ -2,7 +2,7 @@ use anyhow::{ensure, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialOrd, Ord)]
 pub struct Command {
     pub namespace: String,
     pub command: String,
@@ -96,6 +96,12 @@ impl Default for Command {
                 String::from("separated"),
             ]),
         }
+    }
+}
+
+impl PartialEq for Command {
+    fn eq(&self, other: &Self) -> bool {
+        self.alias.eq(&other.alias) && self.namespace.eq(&other.namespace)
     }
 }
 

@@ -376,10 +376,8 @@ mod test {
             assert_eq!(3, items.len())
         }
 
-        let mut edited_command = commands
-            .find_command(String::from("alias2"), Some(String::from("namespace1")))
-            .unwrap();
-        edited_command.description = Some(String::from("edited description"));
+        let mut edited_command = new_command.clone();
+        edited_command.alias = String::from("edited_alias");
 
         let command_list_with_edited_command =
             commands.add_edited_command(&edited_command, &new_command);
