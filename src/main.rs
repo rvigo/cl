@@ -5,18 +5,17 @@ mod gui;
 mod resources;
 
 use anyhow::Result;
-use clap::ArgMatches;
-use cli::app;
+use clap::Parser;
+use cli::app::{App, Exec, SubCommand};
 use commands::Commands;
 use gui::entities::app::AppContext;
 use resources::file_service;
 
 fn main() -> Result<()> {
-    let app = app::build_app();
-    let matches = app.get_matches();
+    let cli = App::parse();
 
-    match matches.subcommand() {
-        Some(("exec", sub_matches)) => run_command(sub_matches),
+    match cli.subcommand {
+        Some(SubCommand::Exec(exec)) => run_command(exec),
         _ => run_main_app(),
     }
 }
@@ -29,24 +28,16 @@ fn run_main_app() -> Result<()> {
     app_context.callback_command()
 }
 
-fn run_command(sub_matches: &ArgMatches) -> Result<()> {
+fn run_command(exec: Exec) -> Result<()> {
     let command_items = file_service::load_commands_from_file()?;
     let commands = Commands::init(command_items);
 
-    let alias: String = sub_matches.get_one::<String>("alias").unwrap().into();
-    let namespace: Option<String> = sub_matches.get_one::<String>("namespace").map(String::from);
-    let args: Vec<String> = sub_matches
-        .get_many::<String>("args")
-        .unwrap_or_default()
-        .map(String::from)
-        .collect::<Vec<String>>();
-    let named_args: Vec<String> = sub_matches
-        .get_many::<String>("named")
-        .unwrap_or_default()
-        .map(String::from)
-        .collect();
-    let dry_run: bool = sub_matches.is_present("dry-run");
+    let alias: String = exec.alias;
+    let namespace: Option<String> = exec.namespace;
+    let args: Vec<String> = exec.args;
 
+    let named_args: Vec<String> = exec.named_params;
+    let dry_run: bool = exec.dry_run;
     let mut selected_command = commands.find_command(alias, namespace)?;
     selected_command.command =
         cli::utils::prepare_command(selected_command.command, named_args, args)?;

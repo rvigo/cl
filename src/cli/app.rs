@@ -1,99 +1,75 @@
-use clap::{AppSettings, Arg, ColorChoice, Command};
+use clap::{Parser, Subcommand};
 
-const VERSION: &str = env!("CARGO_PKG_VERSION");
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
-pub fn build_app() -> Command<'static> {
-    Command::new(PKG_NAME)
-        .version(VERSION)
-        .color(ColorChoice::Auto)
-        .setting(AppSettings::DeriveDisplayOrder)
-        .dont_collapse_args_in_usage(true)
-        .args_conflicts_with_subcommands(true)
-        .propagate_version(false)
-        .about("Group your commands and aliases in an organized and human readable place.")
-        .subcommand(
-            Command::new("exec")
-                .visible_aliases(&["X", "x"])
-                .about("Run your commands via CLI")
-                .arg(
-                    Arg::new("alias")
-                        .value_name("ALIAS")
-                        .help("The alias to be executed")
-                        .required(true),
-                )
-                .arg(
-                    Arg::new("dry-run")
-                        .short('d')
-                        .long("dry-run")
-                        .help("Dry run mode (Just prints the alias command in the terminal)")
-                        .takes_value(false),
-                )
-                .arg(
-                    Arg::new("args")
-                        .value_name("ARGS")
-                        .help(
-                            "The args of the alias command to be executed\n\
-                                Flags should be escaped with '\\' and surrounded by quotes\n   \
-                                e.g: cl exec <some-alias> '\\--flag'",
-                        )
-                        .takes_value(true)
-                        .multiple_values(true)
-                        .requires("alias"),
-                )
-                .arg(
-                    Arg::new("namespace")
-                        .short('n')
-                        .long("namespace")
-                        .value_name("NAMESPACE")
-                        .help("The namespace in case of duplicated aliases")
-                        .requires("alias"),
-                )
-                .arg(
-                    Arg::new("named")
-                        .value_name("NAMED PARAMETERS")
-                        .help(
-                            "The command named parameters. Should be used after all args\n   \
-                                e.g: cl exec <some-alias> -- --named-parameter value",
-                        )
-                        .last(true)
-                        .takes_value(true)
-                        .multiple_values(true)
-                        .requires("alias"),
-                ),
-        )
+#[derive(Parser, Debug)]
+#[clap(
+    name = PKG_NAME,
+    version,
+    about,
+    long_about = None,
+    propagate_version = false,
+    dont_collapse_args_in_usage = true,
+    args_conflicts_with_subcommands = true
+)]
+pub struct App {
+    #[clap(subcommand)]
+    pub subcommand: Option<SubCommand>,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum SubCommand {
+    #[clap(visible_aliases = &["X", "x"],
+           about="Run your commands via CLI")]
+    Exec(Exec),
+}
+
+#[derive(Parser, Debug)]
+pub struct Exec {
+    #[clap(required = true, help = "The alias to be executed")]
+    pub alias: String,
+    #[clap(
+        required = false,
+        requires = "alias",
+        help = "The args of the alias command to be executed\n\
+        Flags should be escaped with '\\' and surrounded by quotes\n   \
+        e.g: cl exec <some-alias> '\\--flag'"
+    )]
+    pub args: Vec<String>,
+    #[clap(
+        short,
+        long,
+        requires = "alias",
+        required = false,
+        help = "The namespace in case of duplicated aliases"
+    )]
+    pub namespace: Option<String>,
+    #[clap(
+        short,
+        long,
+        action,
+        help = "Dry run mode (Just prints the alias command in the terminal)"
+    )]
+    pub dry_run: bool,
+
+    #[clap(
+        multiple_values = true,
+        last = true,
+        requires = "alias",
+        value_name = "NAMED PARAMETERS",
+        help = "The command named parameters. Should be used after all args\n   \
+            e.g: cl exec <some-alias> -- --named-parameter value"
+    )]
+    pub named_params: Vec<String>,
 }
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    fn get_matches(argv: &[&str]) -> clap::ArgMatches {
-        let app = build_app();
-        app.get_matches_from(argv)
-    }
+    use crate::cli::app::App;
 
     #[test]
-    fn should_run_with_no_subcommand() {
-        let argv = ["cl"];
-        let matches = get_matches(&argv);
-
-        assert_eq!(matches.args_present(), false);
-        assert_eq!(matches.subcommand().is_some(), false);
-    }
-
-    #[test]
-    fn should_run_with_x_subcommand() {
-        let argv = ["cl", "exec", "test_alias", "arg1"];
-        let matches = get_matches(&argv);
-
-        assert_eq!(matches.subcommand().is_some(), true);
-    }
-
-    #[test]
-    fn should_run_with_x_subcommand_and_named_parameters() {
-        let argv = ["cl", "exec", "test_alias", "--", "--named", "value"];
-        let matches = get_matches(&argv);
-
-        assert_eq!(matches.subcommand().is_some(), true);
+    fn verify_cli() {
+        use clap::CommandFactory;
+        App::command().debug_assert()
     }
 }
