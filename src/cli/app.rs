@@ -51,7 +51,13 @@ pub struct Exec {
         help = "Dry run mode (Just prints the alias command in the terminal)"
     )]
     pub dry_run: bool,
-
+    #[clap(
+        short,
+        long,
+        action,
+        help = "Quiet mode (Prints only the command execution)"
+    )]
+    pub quiet: bool,
     #[clap(
         multiple_values = true,
         last = true,
@@ -65,7 +71,7 @@ pub struct Exec {
 
 #[cfg(test)]
 mod test {
-    use crate::cli::app::App;
+    use super::*;
 
     #[test]
     fn verify_cli() {
