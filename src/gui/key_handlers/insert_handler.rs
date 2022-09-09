@@ -92,6 +92,11 @@ pub fn handle(key_event: KeyEvent, state: &mut State) {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('s'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
             } => match state.field_context.build_command() {
                 Ok(command) => match state.commands.add_command(&command) {
                     Ok(commands) => {
