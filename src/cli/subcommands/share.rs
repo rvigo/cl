@@ -27,7 +27,7 @@ pub struct Share {
         short,
         long,
         multiple_values = true,
-        help = "The namespace(s) to be imported from/exported to file. If none, all aliases will be processed"
+        help = "The namespace(s) to be imported from/exported to file\nIf none, all aliases will be processed"
     )]
     pub namespace: Option<Vec<String>>,
 }
