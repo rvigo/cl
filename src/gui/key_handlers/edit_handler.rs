@@ -90,6 +90,11 @@ pub fn handle(key_event: KeyEvent, state: &mut State) {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('s'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
             } => {
                 let context: &mut FieldsContext = &mut state.field_context;
                 let current_command = context.get_current_command().unwrap().clone();
