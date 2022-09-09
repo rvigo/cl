@@ -1,6 +1,10 @@
 pub(super) mod config;
 pub(super) mod file_service;
 
+use anyhow::Result;
+
+use crate::commands::Commands;
+
 mod utils {
     pub fn to_toml<T>(value: &T) -> String
     where
@@ -14,4 +18,9 @@ mod utils {
     {
         toml::from_str(text).expect("Unable to parse file")
     }
+}
+
+pub fn load_commands() -> Result<Commands> {
+    let command_items = file_service::load_commands_from_file()?;
+    Ok(Commands::init(command_items))
 }

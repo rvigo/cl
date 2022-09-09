@@ -46,7 +46,7 @@ impl Commands {
 
         ensure!(
             !commands.is_empty(),
-            "There are no commands to show for namespace \"{}\".",
+            "There are no commands to show for namespace \"{}\"",
             namespace
         );
 
@@ -317,7 +317,7 @@ mod test {
         if let Err(error) = commands_from_namespace {
             assert_eq!(
                 format!(
-                    "There are no commands to show for namespace \"{}\".",
+                    "There are no commands to show for namespace \"{}\"",
                     invalid_namespace
                 ),
                 error.to_string()
