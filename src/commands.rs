@@ -121,7 +121,10 @@ impl Commands {
                 } else {
                     command_item.command.clone()
                 };
-                eprintln!("{} --> {}", command_item.alias, command_description);
+                eprintln!(
+                    "{}.{} --> {}",
+                    command_item.namespace, command_item.alias, command_description
+                );
             }
             let command = std::process::Command::new(shell)
                 .arg("-c")
