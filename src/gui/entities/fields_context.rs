@@ -2,6 +2,7 @@ use super::field::{Field, FieldType};
 use crate::command::{Command, CommandBuilder};
 use anyhow::{bail, Result};
 use itertools::Itertools;
+use std::ops::{Deref, DerefMut};
 use std::vec;
 use tui::widgets::ListState;
 
@@ -22,12 +23,12 @@ impl FieldsContext {
         }
     }
 
-    pub fn fields(&self) -> &Vec<Field> {
-        &self.fields.0
+    pub fn fields(&self) -> &Fields {
+        &self.fields
     }
 
-    pub fn fields_mut(&mut self) -> &mut Vec<Field> {
-        &mut self.fields.0
+    pub fn fields_mut(&mut self) -> &mut Fields {
+        &mut self.fields
     }
 
     pub fn get_current_command(&self) -> Option<&Command> {
@@ -57,7 +58,7 @@ impl FieldsContext {
         self.fields_mut().get_mut(old_idx).unwrap().toggle_focus();
         let idx = match self.focus_state.selected() {
             Some(i) => {
-                if i >= self.fields.0.len() - 1 {
+                if i >= self.fields.len() - 1 {
                     0
                 } else {
                     i + 1
@@ -67,7 +68,7 @@ impl FieldsContext {
         };
 
         self.focus_state.select(Some(idx));
-        self.fields.0.get_mut(idx).unwrap().toggle_focus();
+        self.fields.get_mut(idx).unwrap().toggle_focus();
     }
 
     pub fn previous(&mut self) {
@@ -76,7 +77,7 @@ impl FieldsContext {
         let idx = match self.focus_state.selected() {
             Some(i) => {
                 if i == 0 {
-                    self.fields.0.len() - 1
+                    self.fields.len() - 1
                 } else {
                     i - 1
                 }
@@ -152,7 +153,7 @@ impl FieldsContext {
 
     pub fn set_selected_command_input(&mut self) {
         let current_command = self.current_command.as_mut().unwrap();
-        self.fields.0.iter_mut().for_each(|field| {
+        self.fields.iter_mut().for_each(|field| {
             match field.field_type() {
                 FieldType::Alias => field.input = current_command.alias.clone(),
                 FieldType::Command => field.input = current_command.command.clone(),
@@ -251,5 +252,19 @@ impl Default for Fields {
                 false,
             ),
         ])
+    }
+}
+
+impl Deref for Fields {
+    type Target = Vec<Field>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Fields {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }

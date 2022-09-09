@@ -132,14 +132,14 @@ impl State {
         self.commands_state.select(Some(0));
     }
 
-    pub fn filter_commands(&mut self) -> Vec<Command> {
+    pub fn filter_commands(&mut self) -> Commands {
         if let Ok(commands) = self
             .commands
             .commands(self.current_namespace.clone(), self.query_box.input.clone())
         {
             commands
         } else {
-            vec![]
+            Commands::default()
         }
     }
 

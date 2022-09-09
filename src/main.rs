@@ -18,6 +18,8 @@ use itertools::Itertools;
 use resources::{config::CONFIG, file_service};
 use std::path::PathBuf;
 
+use crate::commands::Commands;
+
 fn main() -> Result<()> {
     let app = App::parse();
 
@@ -83,10 +85,11 @@ fn share_subcommand(share: Share) -> Result<()> {
         }
         Mode::Export => {
             eprintln!("Exporting aliases to: {}", file_location.display());
-            let mut command_list = vec![];
+            let mut command_list = Commands::default();
             if let Some(namespaces) = namespaces {
                 for namespace in namespaces.into_iter() {
-                    command_list.append(&mut commands.commands(namespace, String::default())?);
+                    command_list
+                        .append(&mut commands.commands(namespace, String::default())?.to_vec());
                 }
             } else {
                 command_list = commands.commands(String::from("All"), String::default())?;
