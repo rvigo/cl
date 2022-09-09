@@ -1,7 +1,8 @@
 pub(super) mod app;
+pub mod subcommands;
 
 pub(super) mod utils {
-    use anyhow::{bail, Result};
+    use anyhow::{bail, Context, Result};
     use std::collections::HashMap;
     use strfmt::strfmt;
 
@@ -43,22 +44,17 @@ pub(super) mod utils {
             }
             validate_args(&mapped_args, &command)?;
             command = command.replace('#', "");
-            if let Ok(command) = strfmt(&command, &mapped_args) {
-                Ok(command)
-            } else {
-                bail!(
-                    "Cannot build the command with these arguments: {}\n\n{}",
-                    named_args.join(", "),
-                    DEFAULT_NAMED_PARAMS_ERROR_MESSAGE,
-                );
-            }
-        } else {
-            if !args.is_empty() {
-                command = format!("{} {}", command, &args.join(" "));
-            }
-
-            Ok(command)
+            command = strfmt(&command, &mapped_args).context(format!(
+                "Cannot build the command with these arguments: {}\n\n{}",
+                named_args.join(", "),
+                DEFAULT_NAMED_PARAMS_ERROR_MESSAGE,
+            ))?
         }
+        if !args.is_empty() {
+            command = format!("{} {}", command, &args.join(" "));
+        }
+
+        Ok(command)
     }
 
     fn validate_args(mapped_args: &HashMap<String, String>, command: &str) -> Result<()> {
