@@ -1,5 +1,5 @@
 use super::cursor::set_cursor_positition;
-use crate::gui::entities::{field::Field, state::State};
+use crate::gui::entities::{field::Field, fields_context::FieldsContext, state::State};
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -10,7 +10,7 @@ use tui::{
 
 pub fn render_widget<B: Backend>(frame: &mut Frame<B>, state: &State, area: Rect, field: &Field) {
     let widget = Paragraph::new(state.field_context.get_component_input(field.name()))
-        .style(get_style(state, field.name()))
+        .style(get_style(&state.field_context, field.name()))
         .alignment(Alignment::Left)
         .wrap(Wrap { trim: true })
         .block(
@@ -31,8 +31,8 @@ pub fn render_widget<B: Backend>(frame: &mut Frame<B>, state: &State, area: Rect
     }
 }
 
-fn get_style(state: &State, component_name: &str) -> Style {
-    if state.field_context.is_in_focus(component_name) {
+fn get_style(fields_context: &FieldsContext, component_name: &str) -> Style {
+    if fields_context.is_in_focus(component_name) {
         Style::default()
             .fg(Color::Black)
             .bg(Color::Rgb(201, 165, 249))

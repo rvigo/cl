@@ -145,10 +145,7 @@ impl FieldsContext {
 
         let command = command_builder.build();
         match command.validate() {
-            Ok(_) => {
-                self.clear_inputs();
-                Ok(command)
-            }
+            Ok(_) => Ok(command),
             Err(error) => bail!(error),
         }
     }
@@ -216,8 +213,6 @@ impl FieldsContext {
             });
 
         command.validate()?;
-        self.clear_inputs();
-
         Ok(command)
     }
 }
