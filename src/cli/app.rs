@@ -20,10 +20,11 @@ pub struct App {
 
 #[derive(Subcommand)]
 pub enum SubCommand {
-    #[clap(visible_aliases = &["X", "x"],
+    #[clap(aliases = &["X", "x"],
            about="Run your commands via CLI")]
     Exec(Exec),
-    #[clap(about = "Import/Export aliases")]
+    #[clap(aliases = &["S", "s"],
+    about = "Import/Export aliases")]
     Share(Share),
 }
 
