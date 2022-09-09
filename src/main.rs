@@ -6,18 +6,97 @@ mod resources;
 
 use anyhow::Result;
 use clap::Parser;
-use cli::app::{App, Exec, SubCommand};
-use commands::Commands;
+use cli::{
+    app::{App, SubCommand},
+    subcommands::{
+        exec::Exec,
+        share::{Mode, Share},
+    },
+};
 use gui::entities::app::AppContext;
-use resources::file_service;
+use itertools::Itertools;
+use resources::{config::CONFIG, file_service};
+use std::path::PathBuf;
 
 fn main() -> Result<()> {
     let app = App::parse();
 
     match app.subcommand {
-        Some(SubCommand::Exec(exec)) => run_command(exec),
+        Some(SubCommand::Exec(exec)) => exec_subcommand(exec),
+        Some(SubCommand::Share(share)) => share_subcommand(share),
         _ => run_main_app(),
     }
+}
+
+fn share_subcommand(share: Share) -> Result<()> {
+    let file_location: PathBuf = share.file_location;
+    let namespaces = share.namespace;
+    let commands = resources::load_commands()?;
+    match share.mode {
+        Mode::Import => {
+            let mut stored_commands = commands.commands(String::from("All"), String::default())?;
+            let mut commands_from_file = file_service::convert_from_toml_file(&file_location)?;
+
+            //filter given namespaces
+            if namespaces.is_some() {
+                commands_from_file.retain(|item| {
+                    namespaces
+                        .as_ref()
+                        .unwrap()
+                        .iter()
+                        .contains(&item.namespace)
+                });
+            }
+
+            let reference_commands = commands_from_file.clone();
+
+            //removes duplicated items
+            commands_from_file.retain(|item| !stored_commands.contains(item));
+
+            //get duplicated items using the reference_commands vec
+            let diff: Vec<_> = reference_commands
+                .iter()
+                .filter(|item| !commands_from_file.contains(item))
+                .collect();
+
+            if !diff.is_empty() {
+                eprintln!(
+                    "Warning: Duplicated aliases found! Please adjust them by choosing a new alias/namespace:\n{}",
+                    diff
+                        .clone()
+                        .iter()
+                        .map(|item| format!(" - alias: {}, namespace: {}", item.alias.clone(), item.namespace.clone()))
+                        .collect_vec()
+                        .join(",\n")
+                );
+            }
+            if !commands_from_file.is_empty() {
+                stored_commands.append(&mut commands_from_file);
+                file_service::write_toml_file(&stored_commands, &CONFIG.get_command_file_path())?;
+                println!(
+                    "Done: Successfully imported {} aliases",
+                    commands_from_file.len()
+                )
+            } else {
+                println!("Done: There are no aliases to be imported")
+            }
+        }
+        Mode::Export => {
+            eprintln!("Exporting aliases to: {}", file_location.display());
+            let mut command_list = vec![];
+            if let Some(namespaces) = namespaces {
+                for namespace in namespaces.into_iter() {
+                    command_list.append(&mut commands.commands(namespace, String::default())?);
+                }
+            } else {
+                command_list = commands.commands(String::from("All"), String::default())?;
+            }
+
+            file_service::write_toml_file(&command_list, &file_location)?;
+            println!("Done. Exported {} aliases", command_list.len())
+        }
+    }
+    Ok(())
 }
 
 fn run_main_app() -> Result<()> {
@@ -28,9 +107,8 @@ fn run_main_app() -> Result<()> {
     app_context.callback_command()
 }
 
-fn run_command(exec: Exec) -> Result<()> {
-    let command_items = file_service::load_commands_from_file()?;
-    let commands = Commands::init(command_items);
+fn exec_subcommand(exec: Exec) -> Result<()> {
+    let commands = resources::load_commands()?;
 
     let alias: String = exec.alias;
     let namespace: Option<String> = exec.namespace;

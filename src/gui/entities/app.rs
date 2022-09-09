@@ -1,7 +1,6 @@
 use crate::{
-    commands::Commands,
     gui::{entities::state::State, key_handlers, layouts::selector::select_ui},
-    resources::file_service,
+    resources::load_commands,
 };
 use anyhow::Result;
 use crossterm::{
@@ -27,8 +26,7 @@ impl AppContext {
         let mut terminal = Terminal::new(backend)?;
         terminal.hide_cursor()?;
 
-        let command_items = file_service::load_commands_from_file()?;
-        let commands = Commands::init(command_items);
+        let commands = load_commands()?;
 
         Ok(AppContext {
             terminal,

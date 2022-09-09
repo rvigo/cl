@@ -26,10 +26,8 @@ pub fn open_file(path: &Path) -> Result<String> {
     }
 }
 
-pub fn load_commands_from_file() -> Result<Vec<Command>> {
-    match toml::from_str::<HashMap<String, Vec<Command>>>(&open_file(
-        &CONFIG.get_command_file_path(),
-    )?) {
+pub fn convert_from_toml_file(path: &Path) -> Result<Vec<Command>> {
+    match toml::from_str::<HashMap<String, Vec<Command>>>(&open_file(path)?) {
         Ok(toml) => {
             let mut commands: Vec<Command> = toml
                 .into_iter()
@@ -42,7 +40,11 @@ pub fn load_commands_from_file() -> Result<Vec<Command>> {
     }
 }
 
-pub fn write_to_command_file(commands: &Vec<Command>) -> Result<()> {
+pub fn load_commands_from_file() -> Result<Vec<Command>> {
+    convert_from_toml_file(&CONFIG.get_command_file_path())
+}
+
+fn generate_toml(commands: &Vec<Command>) -> String {
     let mut map: HashMap<String, Vec<Command>> = HashMap::new();
     for command in commands {
         let item = command.to_owned();
@@ -53,7 +55,15 @@ pub fn write_to_command_file(commands: &Vec<Command>) -> Result<()> {
         }
     }
 
-    let toml = to_toml::<HashMap<String, Vec<Command>>>(&map);
+    to_toml::<HashMap<String, Vec<Command>>>(&map)
+}
+
+pub fn write_toml_file(commands: &Vec<Command>, path: &Path) -> Result<()> {
+    let toml = generate_toml(commands);
+    save_file(toml, path)
+}
+
+pub fn write_to_command_file(commands: &Vec<Command>) -> Result<()> {
     let path = &CONFIG.get_command_file_path();
-    save_file(toml, path).context("Error writing the new command")
+    write_toml_file(commands, path).context("Cannot write to the commands file")
 }
