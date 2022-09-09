@@ -3,24 +3,24 @@ use anyhow::{bail, ensure, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::env;
+use std::iter::FromIterator;
+use std::ops::{Deref, DerefMut};
+use std::vec::IntoIter;
 
 #[derive(Serialize, Deserialize, Default, Clone)]
-pub struct Commands {
-    items: Vec<Command>,
-}
+pub struct Commands(Vec<Command>);
 
 impl Commands {
     pub fn init(items: Vec<Command>) -> Commands {
-        Self { items }
+        Commands(items)
     }
 
     pub fn get_command_item_ref(&self, idx: usize) -> Option<&Command> {
-        self.items.get(idx)
+        self.get(idx)
     }
 
     pub fn namespaces(&self) -> Vec<String> {
         let mut namespaces: Vec<String> = self
-            .items
             .iter()
             .map(|command| command.namespace.clone())
             .unique()
@@ -30,12 +30,11 @@ impl Commands {
         namespaces
     }
 
-    pub fn commands(&self, namespace: String, query_string: String) -> Result<Vec<Command>> {
-        if self.items.is_empty() {
-            return Ok(vec![Command::default()]);
+    pub fn commands(&self, namespace: String, query_string: String) -> Result<Commands> {
+        if self.is_empty() {
+            return Ok(Commands(vec![Command::default()]));
         }
-        let mut commands: Vec<Command> = self
-            .items
+        let mut commands: Commands = self
             .iter()
             .filter(|command| self.commands_by_namespace_predicate(namespace.clone(), command))
             .filter(|command| {
@@ -55,7 +54,7 @@ impl Commands {
         Ok(commands)
     }
 
-    pub fn add_command(&mut self, command: &Command) -> Result<&Vec<Command>> {
+    pub fn add_command(&mut self, command: &Command) -> Result<&Commands> {
         ensure!(
             !self.command_already_exists(command),
             "Command with alias \"{}\" already exists in \"{}\" namespace",
@@ -63,17 +62,17 @@ impl Commands {
             command.namespace
         );
 
-        self.items.push(command.clone());
-        Ok(&self.items)
+        self.push(command.clone());
+        Ok(self)
     }
 
     pub fn add_edited_command(
         &mut self,
         edited_command: &Command,
         current_command: &Command,
-    ) -> Result<&Vec<Command>> {
+    ) -> Result<&Commands> {
         ensure!(
-            !self.items.clone().iter().any(|command| {
+            !self.clone().iter().any(|command| {
                 command.alias.eq(&edited_command.alias)
                     && !edited_command.alias.eq(&current_command.alias)
                     && command.namespace.eq(&edited_command.namespace)
@@ -83,16 +82,15 @@ impl Commands {
             edited_command.namespace
         );
 
-        self.items.retain(|command| command != current_command);
+        self.retain(|command| command != current_command);
 
-        self.items.push(edited_command.clone());
-        Ok(&self.items)
+        self.push(edited_command.clone());
+        Ok(self)
     }
 
-    pub fn remove(&mut self, command: &Command) -> Result<&Vec<Command>> {
-        self.items
-            .retain(|c| !c.alias.eq(&command.alias) || !command.namespace.eq(&c.namespace));
-        Ok(&self.items)
+    pub fn remove(&mut self, command: &Command) -> Result<&Commands> {
+        self.retain(|c| !c.alias.eq(&command.alias) || !command.namespace.eq(&c.namespace));
+        Ok(self)
     }
 
     pub fn exec_command(
@@ -154,7 +152,6 @@ impl Commands {
 
     pub fn find_command(&self, alias: String, namespace: Option<String>) -> Result<Command> {
         let commands: Vec<Command> = self
-            .items
             .iter()
             .filter(|command| {
                 namespace.is_none() || command.namespace.eq(namespace.as_ref().unwrap())
@@ -176,7 +173,7 @@ impl Commands {
     }
 
     fn command_already_exists(&self, command_item: &Command) -> bool {
-        self.items.iter().any(|command| {
+        self.iter().any(|command| {
             command.alias == command_item.alias && command.namespace.eq(&command_item.namespace)
         })
     }
@@ -207,6 +204,44 @@ impl Commands {
 
     fn commands_by_namespace_predicate(&self, namespace: String, command: &Command) -> bool {
         namespace.eq(&String::from("All")) || command.namespace.eq(&namespace)
+    }
+}
+
+impl FromIterator<Command> for Commands {
+    fn from_iter<T: IntoIterator<Item = Command>>(iter: T) -> Self {
+        let mut c = Commands::default();
+        iter.into_iter().for_each(|i| c.push(i));
+        c
+    }
+}
+
+impl IntoIterator for Commands {
+    type Item = Command;
+
+    type IntoIter = IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl From<Vec<Command>> for Commands {
+    fn from(command_vec: Vec<Command>) -> Self {
+        Commands(command_vec)
+    }
+}
+
+impl Deref for Commands {
+    type Target = Vec<Command>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Commands {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
