@@ -32,7 +32,7 @@ $ cl
 
 ![Overview Gif](.github/media/cl_overview.gif)
 
-Using the application's CLI to executed stored commands:
+Using the application's CLI to execute stored commands:
 ```bash
 $ cl exec <your command alias>
 ```
@@ -50,6 +50,15 @@ You can also set `variables` in your command and pass them as `named arguments`:
 # the arguments names should match the variables names in your command
 $ cl exec echo -- --name="John Doe" --grettings "welcome!" 
 > "hello John Doe, welcome!"
+```
+
+Importing/exporting your aliases is possible using the `share` subcommand:
+```bash
+# the command bellow will generate the file `shared.toml` in the current working directory by default, with all aliases present in the `git` namespace as provided
+$ cl share export --namespace git 
+# the command bellow will import all aliases from a file in the specified location. 
+# you can also choose which namespace will be imported
+$ cl share import -f `path/to/shared.toml`
 ```
 
 ## disclaimer
