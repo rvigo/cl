@@ -96,6 +96,7 @@ pub fn handle(key_event: KeyEvent, state: &mut State) {
                 Ok(command) => match state.commands.add_command(&command) {
                     Ok(commands) => {
                         if let Ok(()) = file_service::write_to_command_file(commands) {
+                            state.field_context.clear_inputs();
                             state.reload_state();
                             state.view_mode = ViewMode::Main
                         }
