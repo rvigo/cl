@@ -13,7 +13,7 @@ pub struct Share {
     pub mode: Mode,
     #[clap(
         short,
-        long,
+        long = "file_location",
         required = false,
         default_value = "shared.toml",
         hide_default_value = true,
