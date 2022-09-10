@@ -1,4 +1,4 @@
-use super::subcommands::{exec::Exec, share::Share};
+use super::subcommands::{all::All, exec::Exec, share::Share};
 use clap::{Parser, Subcommand};
 
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
@@ -26,6 +26,8 @@ pub enum SubCommand {
     #[clap(aliases = &["S", "s"],
     about = "Import/Export aliases")]
     Share(Share),
+    #[clap(hide = true)]
+    All(All),
 }
 
 #[cfg(test)]

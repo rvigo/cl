@@ -1,0 +1,71 @@
+#compdef _cl cl
+
+# if you use zsh you must ensure that $(brew --prefix)/share/zsh/site-functions is present in $FPATH
+# and this script should be initiated BEFORE the call to .oh-my-zsh.sh
+
+_cl() {
+    local line
+    _arguments -s -S -C \
+    "-h[Show help]" \
+    "1: :_commands" \
+    "*::arg:->args"
+    
+    case $line[1] in
+        exec)
+            _cl_exec
+        ;;
+        share)
+            _cl_share
+        ;;
+    esac
+}
+
+_commands() {
+    local -a commands
+    commands=(
+        'exec:Run your commands via CLI'
+        'share:Import/Export aliases'
+    )
+    
+    _describe 'command' commands
+}
+
+_cl_exec() {
+    _arguments \
+    "-n[The namespace in case of duplicated aliases]" \
+    "-d[Dry run mode]" \
+    "-q[Quiet mode]" \
+    "1: :_cl_output" \
+    "*::arg:->args"
+}
+
+_cl_share() {
+    _arguments \
+    "-n[The namespace(s) to be imported from/exported to file]" \
+    "-f[The location of the file to be imported from/exported to]" \
+    "1: :_cl_share_modes"
+}
+_cl_share_modes() {
+    local -a modes
+    modes=(
+        'import'
+        'export'
+    )
+    
+    _describe 'mode' modes
+}
+
+_cl_output() {
+    local words lines
+    # removes everything until the first dot (including the dot): sed '/\..*/s/^[^.]*\.//'
+    # removes everything after the first colon (including the conlon): sed 's/:.*$//'
+    # removes everything after the --> (including the -->): sed 's/-->.*$//'
+    # trim leading and trailing spaces: sed 's/ *$//g'
+    
+    lines=(${(f)"$(cl all)"})
+    for line in $lines; do
+        words+="$(echo $line | sed -e '/\..*/s/^[^.]*\.//;s/:.*$//;s/-->.*$//;s/ *$//g')"
+    done
+    
+    compadd -l -d lines -a words
+}

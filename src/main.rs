@@ -26,8 +26,26 @@ fn main() -> Result<()> {
     match app.subcommand {
         Some(SubCommand::Exec(exec)) => exec_subcommand(exec),
         Some(SubCommand::Share(share)) => share_subcommand(share),
+        Some(SubCommand::All(_)) => all_subcommand(),
         _ => run_main_app(),
     }
+}
+
+fn all_subcommand() -> Result<()> {
+    let commands = resources::load_commands()?;
+    commands.into_iter().for_each(|c| {
+        let command = if c.command.len() > 50 {
+            format!("{}{}", &c.command[..50], "...")
+        } else {
+            c.command
+        };
+        if let Some(desc) = c.description {
+            println!("{}.{}: {} --> {}", c.namespace, c.alias, desc, &command)
+        } else {
+            println!("{}.{} --> {}", c.namespace, c.alias, &command)
+        }
+    });
+    Ok(())
 }
 
 fn share_subcommand(share: Share) -> Result<()> {
