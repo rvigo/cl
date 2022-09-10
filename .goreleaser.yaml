@@ -16,11 +16,19 @@ builds:
 archives:
   - replacements:
       amd64: x86_64
+    files:
+      - README.md
+      - completions/**/*
 brews:
   - name: cl
     description: |
       cl (Command List) is a way to group all your aliases, once in a while or multiple usages 
       with a lot of args commands in an organized and human readable place
+    caveats: |
+      In order to get cl completion (only available for ZSH shell),
+      be sure that $(brew --prefix)/share/zsh/site-functions is present in $FPATH.
+      If not, add the following line to your ~/.zshrc, BEFORE any call to compinit:
+      FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}
     homepage: https://github.com/rvigo/cl
     tap:
       owner: rvigo
@@ -29,7 +37,9 @@ brews:
       name: goreleaserbot
       email: bot@goreleaser.com
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
-    install: bin.install "cl"
+    install: |-
+      bin.install "cl"
+      zsh_completion.install "completions/zsh/_cl" => "_cl"
 checksum:
   name_template: "checksums.txt"
 release:
