@@ -19,6 +19,11 @@ pub fn handle(key_event: KeyEvent, state: &mut State) {
                 code: KeyCode::Esc,
                 modifiers: KeyModifiers::NONE,
                 ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('c'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
             } => {
                 state.field_context.clear_inputs();
                 state.view_mode = ViewMode::Main;

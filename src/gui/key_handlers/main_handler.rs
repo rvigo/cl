@@ -23,6 +23,11 @@ pub fn handle(key_event: KeyEvent, state: &mut State) {
                 code: KeyCode::Char('q') | KeyCode::Esc,
                 modifiers: KeyModifiers::NONE,
                 ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('c'),
+                modifiers: KeyModifiers::CONTROL,
+                ..
             } => {
                 state.should_quit = true;
             }
