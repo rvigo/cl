@@ -1,3 +1,5 @@
+use std::fmt;
+
 use anyhow::{ensure, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -102,6 +104,20 @@ impl Default for Command {
 impl PartialEq for Command {
     fn eq(&self, other: &Self) -> bool {
         self.alias.eq(&other.alias) && self.namespace.eq(&other.namespace)
+    }
+}
+
+impl fmt::Display for Command {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Alias: {}\nNamespace: {}\nDescription: {}\nTags: {}\nCommand: {}",
+            self.alias,
+            self.namespace,
+            self.description.as_ref().unwrap_or(&String::default()),
+            self.tags_as_string(),
+            self.command,
+        )
     }
 }
 

@@ -4,7 +4,7 @@
 # and this script should be initiated BEFORE the call to .oh-my-zsh.sh
 
 _cl() {
-    local line
+    local -a line
     _arguments -s -S -C \
     "-h[Show help]" \
     "1: :_commands" \
@@ -18,6 +18,13 @@ _cl() {
             _cl_share
         ;;
     esac
+    
+    TRAPEXIT() {
+        #ref https://stackoverflow.com/questions/48055589/widgets-can-only-be-called-when-zle-is-active#:~:text=days%2C%20I%20finally-,managed,-to%20find%20a
+        zle reset-prompt
+    }
+    
+    return 0
 }
 
 _commands() {
@@ -31,12 +38,20 @@ _commands() {
 }
 
 _cl_exec() {
+    
     _arguments \
     "-n[The namespace in case of duplicated aliases]" \
     "-d[Dry run mode]" \
     "-q[Quiet mode]" \
-    "1: :_cl_output" \
-    "*::arg:->args"
+    "1:output:_cl_get_aliases"
+}
+
+_cl_get_aliases(){
+    if [ ! -z "${CL_DISABLE_FZF}" ] || [ ! -x "$(command -v fzf)" ]; then
+        _cl_output
+    else
+        _cl_fzf
+    fi
 }
 
 _cl_share() {
@@ -45,6 +60,7 @@ _cl_share() {
     "-f[The location of the file to be imported from/exported to]" \
     "1: :_cl_share_modes"
 }
+
 _cl_share_modes() {
     local -a modes
     modes=(
@@ -56,16 +72,50 @@ _cl_share_modes() {
 }
 
 _cl_output() {
-    local words lines
+    local -a words lines
     # removes everything until the first dot (including the dot): sed '/\..*/s/^[^.]*\.//'
     # removes everything after the first colon (including the conlon): sed 's/:.*$//'
     # removes everything after the --> (including the -->): sed 's/-->.*$//'
     # trim leading and trailing spaces: sed 's/ *$//g'
     
-    lines=(${(f)"$(cl all)"})
+    lines=(${(f)"$(cl misc)"})
     for line in $lines; do
         words+="$(echo $line | sed -e '/\..*/s/^[^.]*\.//;s/:.*$//;s/-->.*$//;s/ *$//g')"
     done
     
     compadd -l -d lines -a words
 }
+
+_cl_fzf() {
+    local -a cl=(cl misc -f)
+    local -a fzf=(
+        fzf
+        --no-multi
+        --ansi
+        --no-sort
+        --cycle
+        --reverse
+        --exit-0
+        --select-1
+        --height 40%
+        --preview "cl misc -d -a {1}"
+        --preview-window=right:60%:wrap
+    )
+    local -a choice
+    choice=$($cl | $fzf)
+    zle -U "$choice"
+    zle .accept-line
+}
+
+cl-widget(){
+    emulate -LR zsh
+    
+    cl
+    zle .accept-line
+    return 0
+}
+
+zle -N _cl
+zle -N cl-widget
+
+bindkey '^[c^[l' cl-widget
