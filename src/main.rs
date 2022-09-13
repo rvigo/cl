@@ -10,6 +10,7 @@ use cli::{
     app::{App, SubCommand},
     subcommands::{
         exec::Exec,
+        misc::{self, print_colorized_command, Misc},
         share::{Mode, Share},
     },
 };
@@ -26,25 +27,24 @@ fn main() -> Result<()> {
     match app.subcommand {
         Some(SubCommand::Exec(exec)) => exec_subcommand(exec),
         Some(SubCommand::Share(share)) => share_subcommand(share),
-        Some(SubCommand::All(_)) => all_subcommand(),
+        Some(SubCommand::Misc(misc)) => misc_subcommand(misc),
         _ => run_main_app(),
     }
 }
 
-fn all_subcommand() -> Result<()> {
+fn misc_subcommand(misc: Misc) -> Result<()> {
     let commands = resources::load_commands()?;
-    commands.into_iter().for_each(|c| {
-        let command = if c.command.len() > 50 {
-            format!("{}{}", &c.command[..50], "...")
-        } else {
-            c.command
-        };
-        if let Some(desc) = c.description {
-            println!("{}.{}: {} --> {}", c.namespace, c.alias, desc, &command)
-        } else {
-            println!("{}.{} --> {}", c.namespace, c.alias, &command)
-        }
-    });
+    if misc.description {
+        let command = commands.find_command(misc.alias.unwrap(), misc.namespace)?;
+        print_colorized_command(command);
+    } else if misc.fzf {
+        commands.into_iter().for_each(|c| println!("{}", c.alias))
+    } else {
+        commands
+            .into_iter()
+            .for_each(|c| println!("{}", misc::command_to_string(c)));
+    }
+
     Ok(())
 }
 
