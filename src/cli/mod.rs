@@ -1,5 +1,5 @@
 pub(super) mod app;
-pub mod subcommands;
+pub(super) mod subcommands;
 
 pub(super) mod utils {
     use anyhow::{bail, Context, Result};
