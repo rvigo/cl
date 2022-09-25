@@ -1,4 +1,4 @@
-use super::subcommands::{exec::Exec, misc::Misc, share::Share};
+use super::subcommands::{config::Config, exec::Exec, misc::Misc, share::Share};
 use clap::{Parser, Subcommand};
 
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
@@ -26,6 +26,8 @@ pub enum SubCommand {
     #[clap(aliases = &["S", "s"],
     about = "Import/Export aliases")]
     Share(Share),
+    #[clap(about = "Configure your app")]
+    Config(Config),
     #[clap(hide = true)]
     // this subcommand should not be visible
     Misc(Misc),
