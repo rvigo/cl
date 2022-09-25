@@ -1,4 +1,5 @@
 use crate::command::Command;
+use crate::resources::config::CONFIG;
 use anyhow::{bail, ensure, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -107,9 +108,8 @@ impl Commands {
         });
         if dry_run {
             println!("{}", command_item.command);
-            Ok(())
         } else {
-            if !quiet_mode {
+            if !CONFIG.quiet_mode() && !quiet_mode {
                 let command_description = if command_item.command.len() > MAX_LINE_LENGTH {
                     format!(
                         "{}{}",
@@ -124,30 +124,14 @@ impl Commands {
                     command_item.namespace, command_item.alias, command_description
                 );
             }
-            let command = std::process::Command::new(shell)
+            std::process::Command::new(shell)
                 .arg("-c")
                 .arg(&command_item.command)
-                .spawn();
-            match command?.wait() {
-                Ok(exit_status) => {
-                    if exit_status.success() {
-                        Ok(())
-                    } else {
-                        bail!(
-                            "The command exited with status code {:?}",
-                            exit_status.code().unwrap()
-                        )
-                    }
-                }
-                Err(error) => {
-                    bail!(
-                        "Cannot run the command with alias {}: {}",
-                        command_item.alias,
-                        error
-                    )
-                }
-            }
+                .spawn()?
+                .wait()
+                .expect("The command did not run");
         }
+        Ok(())
     }
 
     pub fn find_command(&self, alias: String, namespace: Option<String>) -> Result<Command> {
@@ -210,7 +194,7 @@ impl Commands {
 impl FromIterator<Command> for Commands {
     fn from_iter<T: IntoIterator<Item = Command>>(iter: T) -> Self {
         let mut c = Commands::default();
-        iter.into_iter().for_each(|i| c.push(i));
+        iter.into_iter().sorted().for_each(|i| c.push(i));
         c
     }
 }

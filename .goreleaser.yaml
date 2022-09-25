@@ -22,7 +22,7 @@ archives:
 brews:
   - name: cl
     description: |
-      cl (Command List) is a way to group all your aliases, once in a while or multiple usages 
+      cl is a way to group all your aliases, once in a while or multiple usages 
       with a lot of args commands in an organized and human readable place
     caveats: |
       In order to get cl completion (only available for ZSH shell),

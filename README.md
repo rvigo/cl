@@ -1,6 +1,6 @@
 # cl
 
-cl (**C**ommand **L**ist) is a way to group all your `aliases`, `once in a while` or `multiple usages with a lot of args` commands in an organized and human readable place
+cl (short for **C**ommand **L**ist) is a way to group all your `aliases`, `once in a while` or `multiple usages with a lot of args` commands in an organized and human readable place
 
 ## how to install
 
@@ -22,6 +22,7 @@ You must have `Rust` and `Cargo` installed ([please follow the official Rust sit
   ```
 
 Please do not build from `HEAD`, you may face incomplete work/broken commits
+If you use ZSH, an autocomplete script is installed with the application. For a better usage (and a prettier layout), please install [fzf](https://github.com/junegunn/fzf)
 
 ## usage
 
@@ -60,8 +61,6 @@ $ cl share export --namespace git
 # you can also choose which namespace will be imported
 $ cl share import -f `path/to/shared.toml`
 ```
-
-An autocomplete script is installed with the application. For better usage (and a prettier layout), please, install [fzf](https://github.com/junegunn/fzf)
 
 ## disclaimer
 This project is in early development stage, so if you find some weird behavior, please open an `issue` describing what is happening. Contributions are also welcome

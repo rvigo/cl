@@ -9,6 +9,7 @@ use clap::Parser;
 use cli::{
     app::{App, SubCommand},
     subcommands::{
+        config,
         exec::Exec,
         misc::{self, print_colorized_command, Misc},
         share::{Mode, Share},
@@ -16,6 +17,7 @@ use cli::{
 };
 use gui::entities::app::AppContext;
 use itertools::Itertools;
+use resources::config as resource_config;
 use resources::{config::CONFIG, file_service};
 use std::path::PathBuf;
 
@@ -28,8 +30,16 @@ fn main() -> Result<()> {
         Some(SubCommand::Exec(exec)) => exec_subcommand(exec),
         Some(SubCommand::Share(share)) => share_subcommand(share),
         Some(SubCommand::Misc(misc)) => misc_subcommand(misc),
+        Some(SubCommand::Config(config)) => config_subcommand(config),
         _ => run_main_app(),
     }
+}
+
+fn config_subcommand(config: config::Config) -> Result<()> {
+    if let Some(quiet) = config.default_quiet_mode {
+        resource_config::set_quiet_mode(quiet)?;
+    }
+    Ok(())
 }
 
 fn misc_subcommand(misc: Misc) -> Result<()> {

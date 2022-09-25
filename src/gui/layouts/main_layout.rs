@@ -33,7 +33,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let main_block = Block::default()
         .borders(Borders::ALL)
         .style(Style::default())
-        .title(" Command List ")
+        .title(" cl ")
         .border_type(BorderType::Plain);
 
     let idx = state

@@ -12,17 +12,22 @@ _cl() {
     
     case $line[1] in
         exec)
-            _cl_exec
+            _cl_get_aliases
         ;;
         share)
             _cl_share
         ;;
+        config)
+            _cl_config
+        ;;
     esac
+    
     
     TRAPEXIT() {
         #ref https://stackoverflow.com/questions/48055589/widgets-can-only-be-called-when-zle-is-active#:~:text=days%2C%20I%20finally-,managed,-to%20find%20a
         zle reset-prompt
     }
+    
     
     return 0
 }
@@ -32,13 +37,17 @@ _commands() {
     commands=(
         'exec:Run your commands via CLI'
         'share:Import/Export aliases'
+        'config:Configure your app'
     )
     
     _describe 'command' commands
 }
+_cl_config() {
+    _arguments \
+    "-q[Set the default quiet mode]"
+}
 
 _cl_exec() {
-    
     _arguments \
     "-n[The namespace in case of duplicated aliases]" \
     "-d[Dry run mode]" \
@@ -88,21 +97,23 @@ _cl_output() {
 
 _cl_fzf() {
     local -a cl=(cl misc -f)
-    local -a fzf=(
-        fzf
-        --no-multi
-        --ansi
-        --no-sort
-        --cycle
-        --reverse
-        --exit-0
-        --select-1
-        --height 40%
-        --preview "cl misc -d -a {1}"
+    local fzf=(
+        fzf \
+        --no-multi \
+        --ansi \
+        --no-sort \
+        --cycle \
+        --reverse \
+        --exit-0 \
+        --select-1 \
+        --height 40% \
+        --preview="cl misc -d -a {1}" \
         --preview-window=right:60%:wrap
     )
-    local -a choice
+    
+    local choice
     choice=$($cl | $fzf)
+    
     zle -U "$choice"
     zle .accept-line
 }
@@ -112,6 +123,7 @@ cl-widget(){
     
     cl
     zle .accept-line
+    zle reset-prompt
     return 0
 }
 

@@ -61,6 +61,7 @@ impl Command {
             .as_ref()
             .unwrap_or(&vec![String::from("")])
             .iter()
+            .sorted()
             .join(", ")
     }
 
@@ -87,7 +88,7 @@ impl Default for Command {
             namespace: String::from(""),
             command: String::from("your command string goes here"),
             description: Some(String::from(
-                "This is a demo entry and will be deleted as soon you save your first command.
+                "This is a demo entry and will be removed as soon you save your first command.
                 Also, a nice description of your command goes here (optional)",
             )),
             alias: String::from("your command alias"),
