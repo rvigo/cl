@@ -1,18 +1,18 @@
 #compdef _cl cl
 
-# if you use zsh you must ensure that $(brew --prefix)/share/zsh/site-functions is present in $FPATH
-# and this script should be initiated BEFORE the call to .oh-my-zsh.sh
-
+#you must ensure that $(brew --prefix)/share/zsh/site-functions is present in $FPATH
 _cl() {
-    local -a line
-    _arguments -s -S -C \
+    local line
+    typeset -A opt_args
+    
+    _arguments -C \
     "-h[Show help]" \
-    "1: :_commands" \
-    "*::arg:->args"
+    ":command:_cl_subcommands" \
+    "*::options:->options"
     
     case $line[1] in
         exec)
-            _cl_get_aliases
+            _cl_aliases
         ;;
         share)
             _cl_share
@@ -21,18 +21,9 @@ _cl() {
             _cl_config
         ;;
     esac
-    
-    
-    TRAPEXIT() {
-        #ref https://stackoverflow.com/questions/48055589/widgets-can-only-be-called-when-zle-is-active#:~:text=days%2C%20I%20finally-,managed,-to%20find%20a
-        zle reset-prompt
-    }
-    
-    
-    return 0
 }
 
-_commands() {
+_cl_subcommands() {
     local -a commands
     commands=(
         'exec:Run your commands via CLI'
@@ -42,32 +33,28 @@ _commands() {
     
     _describe 'command' commands
 }
+
 _cl_config() {
-    _arguments \
+    _arguments -C \
     "-q[Set the default quiet mode]"
 }
 
 _cl_exec() {
-    _arguments \
+    _arguments -C  \
     "-n[The namespace in case of duplicated aliases]" \
     "-d[Dry run mode]" \
     "-q[Quiet mode]" \
-    "1:output:_cl_get_aliases"
-}
-
-_cl_get_aliases(){
-    if [ ! -z "${CL_DISABLE_FZF}" ] || [ ! -x "$(command -v fzf)" ]; then
-        _cl_output
-    else
-        _cl_fzf
-    fi
+    ":alias:->_cl_aliases"
 }
 
 _cl_share() {
-    _arguments \
+    local curcontext="$curcontext" line state
+    typeset -A opt_args
+    
+    _arguments -C \
     "-n[The namespace(s) to be imported from/exported to file]" \
     "-f[The location of the file to be imported from/exported to]" \
-    "1: :_cl_share_modes"
+    ":mode:_cl_share_modes"
 }
 
 _cl_share_modes() {
@@ -80,7 +67,7 @@ _cl_share_modes() {
     _describe 'mode' modes
 }
 
-_cl_output() {
+_cl_aliases() {
     local -a words lines
     # removes everything until the first dot (including the dot): sed '/\..*/s/^[^.]*\.//'
     # removes everything after the first colon (including the conlon): sed 's/:.*$//'
@@ -95,7 +82,9 @@ _cl_output() {
     compadd -l -d lines -a words
 }
 
-_cl_fzf() {
+cl-exec-widget() {
+    emulate -LR zsh
+    
     local -a cl=(cl misc -f)
     local fzf=(
         fzf \
@@ -105,29 +94,20 @@ _cl_fzf() {
         --cycle \
         --reverse \
         --exit-0 \
-        --select-1 \
         --height 40% \
         --preview="cl misc -d -a {1}" \
         --preview-window=right:60%:wrap
     )
     
-    local choice
-    choice=$($cl | $fzf)
-    
-    zle -U "$choice"
-    zle .accept-line
-}
-
-cl-widget(){
-    emulate -LR zsh
-    
-    cl
-    zle .accept-line
+    local choice=$($cl | $fzf)
+    if [ ! -z "$choice" ]; then
+        zle -U "cl exec $choice"
+    fi
+    zle accept-line
     zle reset-prompt
-    return 0
 }
 
-zle -N _cl
-zle -N cl-widget
-
-bindkey '^[c^[l' cl-widget
+if [ -x "$(command -v fzf)" ]; then
+    zle -N cl-exec-widget
+    bindkey '^o' cl-exec-widget
+fi
