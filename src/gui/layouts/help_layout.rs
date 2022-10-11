@@ -1,9 +1,12 @@
-use super::{layout_utils::centered_rect, view_mode::ViewMode};
+use super::{
+    layout_utils::{centered_rect, DEFAULT_TEXT_COLOR},
+    view_mode::ViewMode,
+};
 use crate::gui::entities::state::State;
 use tui::{
     backend::Backend,
     layout::Alignment,
-    style::{Color, Style},
+    style::Style,
     widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
     Frame,
 };
@@ -66,7 +69,7 @@ pub fn render_help<B: Backend>(frame: &mut Frame<B>, state: &State) {
         ViewMode::Edit => edit_options(),
         ViewMode::Insert => insert_options(),
     })
-    .style(Style::default().fg(Color::Rgb(229, 229, 229)))
+    .style(Style::default().fg(DEFAULT_TEXT_COLOR))
     .alignment(Alignment::Left)
     .wrap(Wrap { trim: true })
     .block(

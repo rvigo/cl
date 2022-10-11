@@ -1,4 +1,9 @@
-use super::{cursor::set_cursor_positition, help_layout::render_help, popup_layout::render_popup};
+use super::{
+    cursor::set_cursor_positition,
+    help_layout::render_help,
+    layout_utils::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
+    popup_layout::render_popup,
+};
 use crate::{
     command::{Command, CommandBuilder},
     gui::{
@@ -113,13 +118,11 @@ fn create_query_box<B: Backend>(frame: &mut Frame<B>, query_box: &mut Field, are
 
     let query_box = Paragraph::new(query_string)
         .style(if query_box.in_focus() {
-            Style::default()
-                .fg(Color::Black)
-                .bg(Color::Rgb(201, 165, 249))
+            Style::default().fg(Color::Black).bg(DEFAULT_SELECTED_COLOR)
         } else if !query_box.in_focus() && !query_box.input.is_empty() {
-            Style::default().fg(Color::Rgb(201, 165, 249))
+            Style::default().fg(DEFAULT_SELECTED_COLOR)
         } else {
-            Style::default().fg(Color::Rgb(229, 229, 229))
+            Style::default().fg(DEFAULT_TEXT_COLOR)
         })
         .alignment(Alignment::Left)
         .wrap(Wrap { trim: true })
@@ -127,7 +130,7 @@ fn create_query_box<B: Backend>(frame: &mut Frame<B>, query_box: &mut Field, are
             Block::default()
                 .borders(Borders::ALL)
                 .style(if !query_box.in_focus() {
-                    Style::default().fg(Color::Rgb(229, 229, 229))
+                    Style::default().fg(DEFAULT_TEXT_COLOR)
                 } else {
                     Style::default()
                 })
@@ -151,7 +154,7 @@ fn create_tab_menu<'a>(state: &State) -> Tabs<'a> {
         .style(Style::default())
         .highlight_style(
             Style::default()
-                .fg(Color::Rgb(201, 165, 249))
+                .fg(DEFAULT_SELECTED_COLOR)
                 .add_modifier(Modifier::UNDERLINED),
         )
         .divider(Span::raw("|"))
@@ -164,8 +167,7 @@ fn create_command_items<'a>(state: &mut State) -> List<'a> {
         .map(|c| {
             let lines = vec![Spans::from(c.alias)];
 
-            ListItem::new(lines.clone().to_owned())
-                .style(Style::default().fg(Color::Rgb(229, 229, 229)))
+            ListItem::new(lines.clone().to_owned()).style(Style::default().fg(DEFAULT_TEXT_COLOR))
         })
         .collect();
 
@@ -174,7 +176,7 @@ fn create_command_items<'a>(state: &mut State) -> List<'a> {
         .highlight_style(
             Style::default()
                 .fg(Color::Black)
-                .bg(Color::Rgb(201, 165, 249))
+                .bg(DEFAULT_SELECTED_COLOR)
                 .add_modifier(Modifier::BOLD),
         )
         .highlight_symbol("> ")

@@ -8,6 +8,9 @@ use tui::{
     Frame,
 };
 
+pub const DEFAULT_TEXT_COLOR: Color = Color::Rgb(229, 229, 229);
+pub const DEFAULT_SELECTED_COLOR: Color = Color::Rgb(201, 165, 249);
+
 pub fn render_widget<B: Backend>(frame: &mut Frame<B>, state: &State, area: Rect, field: &Field) {
     let widget = Paragraph::new(state.field_context.get_component_input(field.name()))
         .style(get_style(&state.field_context, field.name()))
@@ -33,11 +36,9 @@ pub fn render_widget<B: Backend>(frame: &mut Frame<B>, state: &State, area: Rect
 
 fn get_style(fields_context: &FieldsContext, component_name: &str) -> Style {
     if fields_context.is_in_focus(component_name) {
-        Style::default()
-            .fg(Color::Black)
-            .bg(Color::Rgb(201, 165, 249))
+        Style::default().fg(Color::Black).bg(DEFAULT_SELECTED_COLOR)
     } else {
-        Style::default().fg(Color::Rgb(229, 229, 229))
+        Style::default().fg(DEFAULT_TEXT_COLOR)
     }
 }
 

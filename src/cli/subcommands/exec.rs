@@ -1,9 +1,11 @@
+use crate::{cli, resources};
+use anyhow::Result;
 use clap::Parser;
 
 #[derive(Parser)]
 pub struct Exec {
     #[clap(required = true, help = "The alias to be executed")]
-    pub alias: String,
+    alias: String,
     #[clap(
         required = false,
         requires = "alias",
@@ -11,7 +13,7 @@ pub struct Exec {
         Flags should be escaped with '\\' and surrounded by quotes\n   \
         e.g: cl exec <some-alias> '\\--flag'"
     )]
-    pub args: Vec<String>,
+    args: Vec<String>,
     #[clap(
         short,
         long,
@@ -19,21 +21,21 @@ pub struct Exec {
         required = false,
         help = "The namespace in case of duplicated aliases"
     )]
-    pub namespace: Option<String>,
+    namespace: Option<String>,
     #[clap(
         short,
         long,
         action,
         help = "Dry run mode (Just prints the alias command in the terminal)"
     )]
-    pub dry_run: bool,
+    dry_run: bool,
     #[clap(
         short,
         long,
         action,
         help = "Quiet mode (Prints only the command execution)"
     )]
-    pub quiet: bool,
+    quiet: bool,
     #[clap(
         multiple_values = true,
         last = true,
@@ -42,5 +44,20 @@ pub struct Exec {
         help = "The command named parameters. Should be used after all args\n   \
             e.g: cl exec <some-alias> -- --named-parameter value"
     )]
-    pub named_params: Vec<String>,
+    named_params: Vec<String>,
+}
+
+pub fn exec_subcommand(exec: Exec) -> Result<()> {
+    let commands = resources::load_commands()?;
+
+    let alias: String = exec.alias;
+    let namespace: Option<String> = exec.namespace;
+    let args: Vec<String> = exec.args;
+    let named_args: Vec<String> = exec.named_params;
+    let dry_run: bool = exec.dry_run;
+    let quiet_mode: bool = exec.quiet;
+
+    let mut command_item = commands.find_command(alias, namespace)?;
+    command_item.command = cli::utils::prepare_command(command_item.command, named_args, args)?;
+    commands.exec_command(&command_item, dry_run, quiet_mode)
 }
