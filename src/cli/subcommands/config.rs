@@ -1,3 +1,5 @@
+use crate::resources::config;
+use anyhow::Result;
 use clap::Parser;
 
 #[derive(Parser)]
@@ -9,5 +11,12 @@ pub struct Config {
         takes_value = true,
         help = "Set the default quiet mode"
     )]
-    pub default_quiet_mode: Option<bool>,
+    default_quiet_mode: Option<bool>,
+}
+
+pub fn config_subcommand(config: Config) -> Result<()> {
+    if let Some(quiet) = config.default_quiet_mode {
+        config::set_quiet_mode(quiet)?;
+    }
+    Ok(())
 }

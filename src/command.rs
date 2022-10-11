@@ -1,8 +1,7 @@
-use std::fmt;
-
 use anyhow::{ensure, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialOrd, Ord)]
 pub struct Command {

@@ -1,4 +1,4 @@
-use super::layout_utils::centered_rect;
+use super::layout_utils::{centered_rect, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crate::gui::entities::{
     popup::{Answer, MessageType},
     state::State,
@@ -6,7 +6,7 @@ use crate::gui::entities::{
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::{Span, Spans},
     widgets::{Block, BorderType, Borders, Clear, Paragraph, Tabs, Wrap},
     Frame,
@@ -14,7 +14,7 @@ use tui::{
 
 pub fn render_popup<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let block = Paragraph::new(state.popup.message.clone())
-        .style(Style::default().fg(Color::Rgb(229, 229, 229)))
+        .style(Style::default().fg(DEFAULT_TEXT_COLOR))
         .alignment(Alignment::Left)
         .wrap(Wrap { trim: true })
         .block(
@@ -61,7 +61,7 @@ fn draw_option_buttons<B: Backend>(frame: &mut Frame<B>, area: Rect, state: &mut
         .select(state.popup.options_state.selected().unwrap())
         .highlight_style(
             Style::default()
-                .fg(Color::Rgb(201, 165, 249))
+                .fg(DEFAULT_SELECTED_COLOR)
                 .add_modifier(Modifier::UNDERLINED),
         )
         .divider(Span::raw(""));

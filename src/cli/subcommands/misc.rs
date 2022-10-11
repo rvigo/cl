@@ -1,20 +1,21 @@
-use crate::command::Command;
+use crate::{command::Command, resources};
+use anyhow::Result;
 use clap::Parser;
 use owo_colors::{colors::CustomColor, OwoColorize};
 
 #[derive(Parser)]
 pub struct Misc {
     #[clap(short, action, required = false)]
-    pub description: bool,
+    description: bool,
     #[clap(short, required = false)]
-    pub alias: Option<String>,
+    alias: Option<String>,
     #[clap(short, required = false)]
-    pub namespace: Option<String>,
+    namespace: Option<String>,
     #[clap(short, action, required = false)]
-    pub fzf: bool,
+    fzf: bool,
 }
 
-pub fn command_to_string(command: Command) -> String {
+fn command_to_string(command: Command) -> String {
     if let Some(desc) = command.description {
         format!(
             "{}.{}: {} --> {}",
@@ -42,7 +43,7 @@ fn sanitize_string(command: String) -> String {
     }
 }
 
-pub fn print_colorized_command(command: Command) {
+fn print_colorized_command(command: Command) {
     println!(
         "Alias: {}\nNamespace: {}\nDescription: {}\nTags: {}\nCommand: {}",
         command.alias.fg::<CustomColor<201, 165, 249>>(),
@@ -55,4 +56,20 @@ pub fn print_colorized_command(command: Command) {
         command.tags_as_string().fg::<CustomColor<201, 165, 249>>(),
         command.command.fg::<CustomColor<201, 165, 249>>(),
     )
+}
+
+pub fn misc_subcommand(misc: Misc) -> Result<()> {
+    let commands = resources::load_commands()?;
+    if misc.description {
+        let command = commands.find_command(misc.alias.unwrap(), misc.namespace)?;
+        print_colorized_command(command);
+    } else if misc.fzf {
+        commands.into_iter().for_each(|c| println!("{}", c.alias))
+    } else {
+        commands
+            .into_iter()
+            .for_each(|c| println!("{}", command_to_string(c)));
+    }
+
+    Ok(())
 }
