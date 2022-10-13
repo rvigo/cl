@@ -1,0 +1,33 @@
+#!/usr/bin/env zsh
+
+cl-exec-widget() {
+    TRAPWINCH() {
+        [[ -o zle ]] && zle reset-prompt; zle -R
+    }
+    
+    local -a cl=(cl misc -f)
+    local fzf=(
+        fzf \
+        --no-multi \
+        --ansi \
+        --no-sort \
+        --cycle \
+        --reverse \
+        --exit-0 \
+        --height 40% \
+        --preview="cl misc -d -a {1}" \
+        --preview-window=right:60%:wrap
+    )
+    
+    local choice=$($cl | $fzf)
+    if [[ ! -z "$choice" ]]; then
+        zle -U "cl exec $choice"
+        zle reset-prompt
+    fi
+    zle accept-line
+}
+
+if [[ -x "$(command -v fzf)" ]]; then
+    zle -N cl-exec-widget
+    bindkey ^o cl-exec-widget
+fi
