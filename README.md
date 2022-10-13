@@ -22,7 +22,7 @@ You must have `Rust` and `Cargo` installed ([please follow the official Rust sit
   ```
 
 Please do not build from `HEAD`, you may face incomplete work/broken commits
-If you use ZSH, an autocomplete script is installed with the application. For a better usage (and a prettier layout), please install [fzf](https://github.com/junegunn/fzf)
+If you use ZSH, an autocomplete script is installed with the application.
 
 ## usage
 
@@ -37,6 +37,9 @@ Using the application's CLI to execute stored commands:
 ```bash
 $ cl exec <your command alias>
 ```
+
+If you are using the ZSH shell and [fzf](https://github.com/junegunn/fzf), a widget can be installed with `cl config zsh-widget --install`. After that, you can call the `exec` function (with some cool autocomplete features) pressing CTRL+O  
+  
 You can pass args and flags to the stored command:
 ```bash
 # the stored command is `docker` and the alias is `d`

@@ -7,7 +7,7 @@ _cl() {
     
     _arguments -C \
     "-h[Show help]" \
-    ":command:_cl_subcommands" \
+    "1:command:_cl_subcommands" \
     "*::options:->options"
     
     case $line[1] in
@@ -35,16 +35,40 @@ _cl_subcommands() {
 }
 
 _cl_config() {
+    local line
+    typeset -A opt_args
+    
     _arguments -C \
-    "-q[Set the default quiet mode]"
+    "1:config_subcommand:_cl_config_subcommands" \
+    "*::options:->options" \
+    {-q,--default-quiet-mode}="[Set the default quiet mode]"
+    
+    case $line[1] in
+        zsh-widget)
+            _cl_config_zsh_widget
+        ;;
+    esac
 }
 
+_cl_config_subcommands() {
+    local -a config_subcommands
+    config_subcommands=(
+        'zsh-widget:Zsh widget config'
+    )
+    
+    _describe 'config_subcommand' config_subcommands
+}
+
+_cl_config_zsh_widget(){
+    _arguments -C \
+    {-i,--install}="[Install the zsh widget]"
+}
 _cl_exec() {
-    _arguments -C  \
-    "-n[The namespace in case of duplicated aliases]" \
-    "-d[Dry run mode]" \
-    "-q[Quiet mode]" \
-    ":alias:->_cl_aliases"
+    _arguments -C \
+    {-n,--namespace}="[The namespace in case of duplicated aliases]" \
+    {-d,--dry-run}="[Dry run mode]" \
+    {-q,--quiet}="[Quiet mode]" \
+    "1:alias:_cl_aliases"
 }
 
 _cl_share() {
@@ -81,33 +105,3 @@ _cl_aliases() {
     
     compadd -l -d lines -a words
 }
-
-cl-exec-widget() {
-    emulate -LR zsh
-    
-    local -a cl=(cl misc -f)
-    local fzf=(
-        fzf \
-        --no-multi \
-        --ansi \
-        --no-sort \
-        --cycle \
-        --reverse \
-        --exit-0 \
-        --height 40% \
-        --preview="cl misc -d -a {1}" \
-        --preview-window=right:60%:wrap
-    )
-    
-    local choice=$($cl | $fzf)
-    if [ ! -z "$choice" ]; then
-        zle -U "cl exec $choice"
-    fi
-    zle accept-line
-    zle reset-prompt
-}
-
-if [ -x "$(command -v fzf)" ]; then
-    zle -N cl-exec-widget
-    bindkey '^o' cl-exec-widget
-fi
