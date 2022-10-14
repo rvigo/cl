@@ -9,7 +9,7 @@ pub struct Config {
         long,
         short = 'q',
         required = false,
-        takes_value = true,
+        num_args(1),
         help = "Set the default quiet mode"
     )]
     default_quiet_mode: Option<bool>,

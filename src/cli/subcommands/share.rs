@@ -15,7 +15,7 @@ enum Mode {
 
 #[derive(Parser)]
 pub struct Share {
-    #[clap(value_parser, arg_enum, help = "Export/Import mode")]
+    #[clap(value_parser, help = "Export/Import mode")]
     mode: Mode,
     #[clap(
         short,
@@ -32,7 +32,7 @@ pub struct Share {
     #[clap(
         short,
         long,
-        multiple_values = true,
+        num_args(1..),
         help = "The namespace(s) to be imported from/exported to file\nIf none, all aliases will be processed"
     )]
     namespace: Option<Vec<String>>,
@@ -88,7 +88,7 @@ pub fn share_subcommand(share: Share) -> Result<()> {
                     commands_from_file.len()
                 )
             } else {
-                println!("Done: There are no aliases to be imported")
+                println!("There are no aliases to be imported")
             }
         }
         Mode::Export => {
