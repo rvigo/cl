@@ -37,7 +37,7 @@ pub struct Exec {
     )]
     quiet: bool,
     #[clap(
-        multiple_values = true,
+        num_args(1..),
         last = true,
         requires = "alias",
         value_name = "NAMED PARAMETERS",
