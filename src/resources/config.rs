@@ -5,11 +5,9 @@ use dirs::home_dir;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashMap,
     fs::create_dir_all,
     path::{Path, PathBuf},
 };
-use toml::Value;
 
 const APP_HOME_DIR: &str = ".config/cl";
 const COMMAND_FILE: &str = "commands.toml";
@@ -26,7 +24,7 @@ lazy_static! {
 pub struct Config {
     config_home_path: PathBuf,
     command_file_path: PathBuf,
-    default_quiet_mode: bool,
+    default_quiet_mode: Option<bool>,
 }
 
 impl Config {
@@ -34,7 +32,7 @@ impl Config {
         self.command_file_path.to_path_buf()
     }
     pub fn quiet_mode(&self) -> bool {
-        self.default_quiet_mode
+        self.default_quiet_mode.unwrap_or(false)
     }
 }
 
@@ -51,23 +49,10 @@ pub fn load() -> Result<Config> {
 
     let config_path = app_home_dir.join(APP_CONFIG_FILE);
     if config_path.exists() {
-        let mut should_save_default_quiet_mode_flag = false;
         let data = file_service::open_file(&config_path)?;
 
-        // ensures new parameter in config.toml
-        // should be removed in future versions
-        let mut config_map: HashMap<String, Value> = from_toml(&data);
-        if !config_map.contains_key("default_quiet_mode") {
-            config_map.insert(String::from("default_quiet_mode"), Value::Boolean(false));
-            should_save_default_quiet_mode_flag = true;
-        }
-
-        let config: Config = from_toml(&to_toml(&config_map));
+        let config: Config = from_toml(&data);
         validate_config(&config)?;
-
-        if should_save_default_quiet_mode_flag {
-            update_config(&config)?;
-        }
 
         Ok(config)
     } else {
@@ -80,8 +65,9 @@ pub fn set_quiet_mode(quiet_mode_flag: bool) -> Result<()> {
     println!("Info: setting default_quiet_mode to {}", quiet_mode_flag);
     let mut config: Config = load()?;
 
-    if config.default_quiet_mode != quiet_mode_flag {
-        config.default_quiet_mode = quiet_mode_flag;
+    if config.default_quiet_mode.is_some() && config.default_quiet_mode.unwrap() != quiet_mode_flag
+    {
+        config.default_quiet_mode = Some(quiet_mode_flag);
     }
 
     update_config(&config)?;
@@ -92,7 +78,7 @@ fn new(home_path: &Path) -> Config {
     Config {
         config_home_path: home_path.to_path_buf(),
         command_file_path: home_path.join(COMMAND_FILE),
-        default_quiet_mode: false,
+        default_quiet_mode: Some(false),
     }
 }
 
