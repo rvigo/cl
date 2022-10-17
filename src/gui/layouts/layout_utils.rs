@@ -1,5 +1,7 @@
-use super::cursor::set_cursor_positition;
-use crate::gui::entities::{field::Field, fields_context::FieldsContext, state::State};
+use crate::gui::{
+    entities::{field::Field, fields_context::FieldsContext, state::State},
+    key_handlers::cursor::set_cursor_positition,
+};
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -42,27 +44,27 @@ fn get_style(fields_context: &FieldsContext, component_name: &str) -> Style {
     }
 }
 
-pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Vec<Rect> {
-    let layout = Layout::default()
+pub fn centered_rect(width: u16, height: u16, area: Rect) -> Rect {
+    let new_area = Layout::default()
         .direction(Direction::Vertical)
         .constraints(
             [
-                Constraint::Percentage((100 - percent_y) / 2),
-                Constraint::Percentage(percent_x),
-                Constraint::Percentage((100 - percent_y) / 2),
+                Constraint::Percentage((100 - height) / 2),
+                Constraint::Percentage(height),
+                Constraint::Percentage((100 - height) / 2),
             ]
             .as_ref(),
         )
-        .split(r);
+        .split(area);
     Layout::default()
         .direction(Direction::Horizontal)
         .constraints(
             [
-                Constraint::Percentage((100 - percent_x) / 2),
-                Constraint::Percentage(percent_y),
-                Constraint::Percentage((100 - percent_x) / 2),
+                Constraint::Percentage((100 - width) / 2),
+                Constraint::Percentage(width),
+                Constraint::Percentage((100 - width) / 2),
             ]
             .as_ref(),
         )
-        .split(layout[1])
+        .split(new_area[1])[1]
 }

@@ -1,3 +1,4 @@
+pub(super) mod cursor;
 mod edit_handler;
 mod handler_utils;
 mod insert_handler;

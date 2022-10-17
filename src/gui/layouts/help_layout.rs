@@ -1,18 +1,18 @@
 use super::{
-    layout_utils::{centered_rect, DEFAULT_TEXT_COLOR},
+    layout_utils::{centered_rect, DEFAULT_SELECTED_COLOR},
     view_mode::ViewMode,
 };
 use crate::gui::entities::state::State;
 use tui::{
     backend::Backend,
-    layout::Alignment,
+    layout::{Alignment, Constraint},
     style::Style,
-    widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
+    widgets::{Block, BorderType, Borders, Cell, Clear, Paragraph, Row, Table},
     Frame,
 };
 
-pub fn render_helper_footer() -> Paragraph<'static> {
-    let help_content = "Show help <F1>";
+pub fn render_main_layout_helper_footer() -> Paragraph<'static> {
+    let help_content = "Show help <F1/?>";
     Paragraph::new(help_content)
         .alignment(Alignment::Right)
         .block(
@@ -24,65 +24,133 @@ pub fn render_helper_footer() -> Paragraph<'static> {
                 .border_type(BorderType::Plain),
         )
 }
-
-fn main_options() -> String {
-    String::from(
-        "\n \
-        Quit <q>\n\n \
-        New command <Insert / i>\n\n \
-        Delete <Delete / d>\n\n \
-        Edit command <e>\n\n \
-        Right <Right / Tab / l>\n\n \
-        Left <Left / Shift + Tab / h>\n\n \
-        Up <Up / j>\n\n \
-        Down <Down / k>\n\n \
-        Find Commands <f>\n\n \
-        Help <F1 / ?>",
-    )
+fn get_default_key_color() -> Style {
+    Style::default().fg(DEFAULT_SELECTED_COLOR)
 }
 
-fn insert_options() -> String {
-    String::from(
-        "\n \
-        Return <Esc>\n\n \
-        Next Field <Tab>\n\n \
-        Previous Field <Shift + Tab>\n\n \
-        Create Command <Enter>\n\n \
-        Help <F1>",
-    )
+fn main_options() -> Vec<Vec<Cell<'static>>> {
+    vec![
+        vec![
+            Cell::from("<Q/Esc/Ctrl + C>").style(get_default_key_color()),
+            Cell::from("Quit"),
+        ],
+        vec![
+            Cell::from("<Insert/I>").style(get_default_key_color()),
+            Cell::from("New command"),
+        ],
+        vec![
+            Cell::from("<Delete/D>").style(get_default_key_color()),
+            Cell::from("Delete command"),
+        ],
+        vec![
+            Cell::from("<E>").style(get_default_key_color()),
+            Cell::from("Edit command"),
+        ],
+        vec![
+            Cell::from("<Right/Tab/L>").style(get_default_key_color()),
+            Cell::from("Right"),
+        ],
+        vec![
+            Cell::from("<Left/Shift + Tab/H>").style(get_default_key_color()),
+            Cell::from("Left"),
+        ],
+        vec![
+            Cell::from("<Up/J>").style(get_default_key_color()),
+            Cell::from("Up"),
+        ],
+        vec![
+            Cell::from("<Down/K>").style(get_default_key_color()),
+            Cell::from("Down"),
+        ],
+        vec![
+            Cell::from("<F>").style(get_default_key_color()),
+            Cell::from("Find stored commands"),
+        ],
+        vec![
+            Cell::from("<F1/?>").style(get_default_key_color()),
+            Cell::from("Help"),
+        ],
+    ]
 }
 
-fn edit_options() -> String {
-    String::from(
-        "\n \
-        Return <Esc>\n\n \
-        Next Field <Tab>\n\n \
-        Previous Field <Shift + Tab>\n\n \
-        Update Command <Enter>\n\n \
-        Help <F1>",
-    )
+fn insert_options() -> Vec<Vec<Cell<'static>>> {
+    vec![
+        vec![
+            Cell::from("<Esc/Ctrl + C>").style(get_default_key_color()),
+            Cell::from("Return"),
+        ],
+        vec![
+            Cell::from("<Tab>").style(get_default_key_color()),
+            Cell::from("Next Field"),
+        ],
+        vec![
+            Cell::from("<Shift + Tab>").style(get_default_key_color()),
+            Cell::from("Previous Field"),
+        ],
+        vec![
+            Cell::from("<Enter/ Ctrl + S>").style(get_default_key_color()),
+            Cell::from("Create command"),
+        ],
+        vec![
+            Cell::from("<F1>").style(get_default_key_color()),
+            Cell::from("Help"),
+        ],
+    ]
+}
+
+fn edit_options() -> Vec<Vec<Cell<'static>>> {
+    vec![
+        vec![
+            Cell::from("<Esc/Ctrl + C>").style(get_default_key_color()),
+            Cell::from("Return"),
+        ],
+        vec![
+            Cell::from("<Tab>").style(get_default_key_color()),
+            Cell::from("Next Field"),
+        ],
+        vec![
+            Cell::from("<Shift + Tab>").style(get_default_key_color()),
+            Cell::from("Previous Field"),
+        ],
+        vec![
+            Cell::from("<Enter/ Ctrl + S>").style(get_default_key_color()),
+            Cell::from("Update command"),
+        ],
+        vec![
+            Cell::from("<F1>").style(get_default_key_color()),
+            Cell::from("Help"),
+        ],
+    ]
 }
 
 pub fn render_help<B: Backend>(frame: &mut Frame<B>, state: &State) {
-    let block = Paragraph::new(match state.view_mode {
+    let options = match state.view_mode {
         ViewMode::Main => main_options(),
         ViewMode::Edit => edit_options(),
         ViewMode::Insert => insert_options(),
-    })
-    .style(Style::default().fg(DEFAULT_TEXT_COLOR))
-    .alignment(Alignment::Left)
-    .wrap(Wrap { trim: true })
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .style(Style::default())
-            .title(" Help ")
-            .title_alignment(Alignment::Center)
-            .border_type(BorderType::Plain),
+    };
+
+    let rows = options
+        .clone()
+        .into_iter()
+        .map(|cells| Row::new(cells).bottom_margin(1));
+
+    let table = Table::new(rows)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(" Help ")
+                .title_alignment(Alignment::Center)
+                .border_type(BorderType::Plain),
+        )
+        .widths(&[Constraint::Percentage(50), Constraint::Percentage(50)]);
+
+    let area = centered_rect(
+        50,
+        (100 * (options.len() as u16 * 2)) / frame.size().height, //dynamic size based on options size
+        frame.size(),
     );
 
-    let area = centered_rect(90, 90, frame.size());
-
-    frame.render_widget(Clear, area[1]);
-    frame.render_widget(block, area[1]);
+    frame.render_widget(Clear, area);
+    frame.render_widget(table, area);
 }
