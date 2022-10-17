@@ -26,20 +26,20 @@ pub fn render_popup<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
                 .border_type(BorderType::Plain),
         );
 
-    let area = centered_rect(45, 45, frame.size());
+    let area = centered_rect(45, 40, frame.size());
 
-    frame.render_widget(Clear, area[1]);
-    frame.render_widget(block, area[1]);
+    frame.render_widget(Clear, area);
+    frame.render_widget(block, area);
 
     match state.popup.message_type {
         MessageType::Error => {
             state.popup.options = vec![Answer::Ok];
-            draw_option_buttons(frame, area[1], state)
+            draw_option_buttons(frame, area, state)
         }
 
         MessageType::Delete => {
-            state.popup.options = vec![Answer::Ok, Answer::Cancel];
-            draw_option_buttons(frame, area[1], state)
+            state.popup.options = vec![Answer::Cancel, Answer::Ok];
+            draw_option_buttons(frame, area, state)
         }
         MessageType::None => {}
     }
@@ -76,14 +76,9 @@ fn create_buttom_area(area: Rect, state: &mut State) -> Vec<Rect> {
         .split(create_buttom_layout(area)[4]);
 
     let constraints = if state.popup.options.len() == 2 {
-        vec![Constraint::Percentage(50), Constraint::Percentage(50)]
+        vec![Constraint::Min(50)]
     } else {
-        vec![
-            Constraint::Percentage(25),
-            Constraint::Percentage(25),
-            Constraint::Percentage(25),
-            Constraint::Percentage(25),
-        ]
+        vec![Constraint::Percentage(50), Constraint::Percentage(50)]
     };
     Layout::default()
         .direction(Direction::Horizontal)
@@ -91,6 +86,7 @@ fn create_buttom_area(area: Rect, state: &mut State) -> Vec<Rect> {
         .split(layout[0])
 }
 
+//TODO center buttons in the popup
 // uses the lower right space to render buttons
 fn create_buttom_layout(area: Rect) -> Vec<Rect> {
     let layout = Layout::default()
@@ -115,6 +111,7 @@ fn create_buttom_layout(area: Rect) -> Vec<Rect> {
                 Constraint::Percentage(20),
                 Constraint::Percentage(20),
                 Constraint::Percentage(20),
+                Constraint::Length(3), //keeps the options inside the box
             ]
             .as_ref(),
         )

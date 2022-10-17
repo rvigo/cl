@@ -45,6 +45,9 @@ fn install_zsh_widget() -> Result<()> {
             bail!("Cannot install zsh widget on non zsh shell! Actual $SHELL value is {shell}")
         }
     }
+
+    validate_fzf();
+
     let widget = include_str!("../resources/zsh/cl-exec-widget");
     let dest_location = "~/.config/cl/cl-exec-widget";
     let create_file = format!("echo \'{}\' >> {}", widget, dest_location);
@@ -56,6 +59,18 @@ fn install_zsh_widget() -> Result<()> {
     println!("Done!!! Please restart your terminal and press CTRL+O to access the widget");
 
     Ok(())
+}
+
+fn validate_fzf() {
+    if let Ok(res) = Command::new("zsh")
+        .arg("-c")
+        .arg("$(command -v fzf)")
+        .output()
+    {
+        if !res.status.success() {
+            eprintln!("Please first install fzf and then install de widget")
+        }
+    }
 }
 
 fn run_shell(command: &str) -> Result<()> {
