@@ -8,7 +8,7 @@ use crate::{
     gui::{
         entities::{field::Field, popup::Answer, state::State},
         key_handlers::cursor::set_cursor_positition,
-        layouts::help_layout::render_main_layout_helper_footer,
+        layouts::help_layout::render_helper_footer,
     },
 };
 use std::env;
@@ -100,7 +100,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     frame.render_widget(tags, namespace_and_tags_chunk[1]);
     frame.render_widget(description, chunks[1]);
     create_query_box(frame, &mut state.query_box, last_line[0]);
-    frame.render_widget(render_main_layout_helper_footer(), last_line[1]);
+    frame.render_widget(render_helper_footer(), last_line[1]);
 
     if state.show_help {
         render_help(frame, state)
