@@ -76,7 +76,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
 
     let namespace_and_tags_chunk = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Max(50), Constraint::Max(50)].as_ref())
+        .constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
         .split(command_detail_chunks[1]);
 
     let last_line = Layout::default()
