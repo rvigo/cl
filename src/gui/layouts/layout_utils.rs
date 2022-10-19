@@ -68,3 +68,12 @@ pub fn centered_rect(width: u16, height: u16, area: Rect) -> Rect {
         )
         .split(new_area[1])[1]
 }
+
+pub fn get_main_block() -> Block<'static> {
+    Block::default()
+        .borders(Borders::ALL)
+        .style(Style::default())
+        .title(format!(" cl {} ", env!("CARGO_PKG_VERSION")))
+        .title_alignment(Alignment::Right)
+        .border_type(BorderType::Plain)
+}
