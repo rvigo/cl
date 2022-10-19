@@ -24,9 +24,11 @@ pub fn render_helper_footer() -> Paragraph<'static> {
                 .border_type(BorderType::Plain),
         )
 }
+
 fn key_style() -> Style {
     Style::default().fg(DEFAULT_SELECTED_COLOR)
 }
+
 fn get_cell_style(text: &str, style: Option<Style>) -> Cell {
     if let Some(style) = style {
         Cell::from(text).style(style)

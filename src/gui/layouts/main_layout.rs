@@ -1,6 +1,6 @@
 use super::{
     help_layout::render_help,
-    layout_utils::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
+    layout_utils::{get_main_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
     popup_layout::render_popup,
 };
 use crate::{
@@ -11,7 +11,6 @@ use crate::{
         layouts::help_layout::render_helper_footer,
     },
 };
-use std::env;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -35,13 +34,6 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
             .as_ref(),
         )
         .split(frame.size());
-
-    let main_block = Block::default()
-        .borders(Borders::ALL)
-        .style(Style::default())
-        .title(format!(" cl {} ", env!("CARGO_PKG_VERSION")))
-        .title_alignment(Alignment::Right)
-        .border_type(BorderType::Plain);
 
     let idx = state
         .commands_state
@@ -92,7 +84,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .constraints([Constraint::Min(28), Constraint::Length(18)].as_ref())
         .split(chunks[3]);
 
-    frame.render_widget(main_block, frame.size());
+    frame.render_widget(get_main_block(), frame.size());
     frame.render_widget(tabs, chunks[0]);
     frame.render_stateful_widget(commands, central_chunk[0], &mut state.commands_state);
     frame.render_widget(command, command_detail_chunks[0]);
