@@ -1,5 +1,5 @@
 use super::{
-    help_layout::{render_help, render_main_layout_helper_footer},
+    help_layout::{render_help, render_helper_footer},
     layout_utils::render_widget,
     popup_layout::render_popup,
 };
@@ -62,7 +62,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         }
     }
 
-    frame.render_widget(render_main_layout_helper_footer(), fourth_row[0]);
+    frame.render_widget(render_helper_footer(), fourth_row[0]);
 
     if state.show_help {
         render_help(frame, state)

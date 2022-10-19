@@ -11,7 +11,7 @@ use tui::{
     Frame,
 };
 
-pub fn render_main_layout_helper_footer() -> Paragraph<'static> {
+pub fn render_helper_footer() -> Paragraph<'static> {
     let help_content = "Show help <F1/?>";
     Paragraph::new(help_content)
         .alignment(Alignment::Right)
@@ -24,51 +24,58 @@ pub fn render_main_layout_helper_footer() -> Paragraph<'static> {
                 .border_type(BorderType::Plain),
         )
 }
-fn get_default_key_color() -> Style {
+fn key_style() -> Style {
     Style::default().fg(DEFAULT_SELECTED_COLOR)
+}
+fn get_cell_style(text: &str, style: Option<Style>) -> Cell {
+    if let Some(style) = style {
+        Cell::from(text).style(style)
+    } else {
+        Cell::from(text)
+    }
 }
 
 fn main_options() -> Vec<Vec<Cell<'static>>> {
     vec![
         vec![
-            Cell::from("<Q/Esc/Ctrl + C>").style(get_default_key_color()),
-            Cell::from("Quit"),
+            get_cell_style("<Q/Esc/Ctrl + C>", Some(key_style())),
+            get_cell_style("Quit", None),
         ],
         vec![
-            Cell::from("<Insert/I>").style(get_default_key_color()),
-            Cell::from("New command"),
+            get_cell_style("<I/Insert>", Some(key_style())),
+            get_cell_style("New command", None),
         ],
         vec![
-            Cell::from("<Delete/D>").style(get_default_key_color()),
-            Cell::from("Delete command"),
+            get_cell_style("<D/Delete>", Some(key_style())),
+            get_cell_style("Delete command", None),
         ],
         vec![
-            Cell::from("<E>").style(get_default_key_color()),
-            Cell::from("Edit command"),
+            get_cell_style("<E>", Some(key_style())),
+            get_cell_style("Edit command", None),
         ],
         vec![
-            Cell::from("<Right/Tab/L>").style(get_default_key_color()),
-            Cell::from("Right"),
+            get_cell_style("<L/Right/Tab>", Some(key_style())),
+            get_cell_style("Right", None),
         ],
         vec![
-            Cell::from("<Left/Shift + Tab/H>").style(get_default_key_color()),
-            Cell::from("Left"),
+            get_cell_style("<H/Left/Shift + Tab>", Some(key_style())),
+            get_cell_style("Left", None),
         ],
         vec![
-            Cell::from("<Up/J>").style(get_default_key_color()),
-            Cell::from("Up"),
+            get_cell_style("<J/Up>", Some(key_style())),
+            get_cell_style("Up", None),
         ],
         vec![
-            Cell::from("<Down/K>").style(get_default_key_color()),
-            Cell::from("Down"),
+            get_cell_style("<K/Down>", Some(key_style())),
+            get_cell_style("Down", None),
         ],
         vec![
-            Cell::from("<F>").style(get_default_key_color()),
-            Cell::from("Find stored commands"),
+            get_cell_style("<F>", Some(key_style())),
+            get_cell_style("Find stored commands", None),
         ],
         vec![
-            Cell::from("<F1/?>").style(get_default_key_color()),
-            Cell::from("Help"),
+            get_cell_style("<F1/?>", Some(key_style())),
+            get_cell_style("Help", None),
         ],
     ]
 }
@@ -76,24 +83,24 @@ fn main_options() -> Vec<Vec<Cell<'static>>> {
 fn insert_options() -> Vec<Vec<Cell<'static>>> {
     vec![
         vec![
-            Cell::from("<Esc/Ctrl + C>").style(get_default_key_color()),
-            Cell::from("Return"),
+            get_cell_style("<Esc/Ctrl + C>", Some(key_style())),
+            get_cell_style("Return", None),
         ],
         vec![
-            Cell::from("<Tab>").style(get_default_key_color()),
-            Cell::from("Next Field"),
+            get_cell_style("<Tab>", Some(key_style())),
+            get_cell_style("Next Field", None),
         ],
         vec![
-            Cell::from("<Shift + Tab>").style(get_default_key_color()),
-            Cell::from("Previous Field"),
+            get_cell_style("<Shift + Tab>", Some(key_style())),
+            get_cell_style("Previous Field", None),
         ],
         vec![
-            Cell::from("<Enter/ Ctrl + S>").style(get_default_key_color()),
-            Cell::from("Create command"),
+            get_cell_style("<Enter/ Ctrl + S>", Some(key_style())),
+            get_cell_style("Create command", None),
         ],
         vec![
-            Cell::from("<F1>").style(get_default_key_color()),
-            Cell::from("Help"),
+            get_cell_style("<F1>", Some(key_style())),
+            get_cell_style("Help", None),
         ],
     ]
 }
@@ -101,24 +108,24 @@ fn insert_options() -> Vec<Vec<Cell<'static>>> {
 fn edit_options() -> Vec<Vec<Cell<'static>>> {
     vec![
         vec![
-            Cell::from("<Esc/Ctrl + C>").style(get_default_key_color()),
-            Cell::from("Return"),
+            get_cell_style("<Esc/Ctrl + C>", Some(key_style())),
+            get_cell_style("Return", None),
         ],
         vec![
-            Cell::from("<Tab>").style(get_default_key_color()),
-            Cell::from("Next Field"),
+            get_cell_style("<Tab>", Some(key_style())),
+            get_cell_style("Next Field", None),
         ],
         vec![
-            Cell::from("<Shift + Tab>").style(get_default_key_color()),
-            Cell::from("Previous Field"),
+            get_cell_style("<Shift + Tab>", Some(key_style())),
+            get_cell_style("Previous Field", None),
         ],
         vec![
-            Cell::from("<Enter/ Ctrl + S>").style(get_default_key_color()),
-            Cell::from("Update command"),
+            get_cell_style("<Enter/ Ctrl + S>", Some(key_style())),
+            get_cell_style("Update command", None),
         ],
         vec![
-            Cell::from("<F1>").style(get_default_key_color()),
-            Cell::from("Help"),
+            get_cell_style("<F1>", Some(key_style())),
+            get_cell_style("Help", None),
         ],
     ]
 }
@@ -147,7 +154,7 @@ pub fn render_help<B: Backend>(frame: &mut Frame<B>, state: &State) {
 
     let area = centered_rect(
         50,
-        (100 * (options.len() as u16 * 2)) / frame.size().height, //dynamic size based on options size
+        (100 * (options.len() as u16 * 2)) / frame.size().height, //dynamic height based on options size
         frame.size(),
     );
 
