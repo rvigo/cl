@@ -22,3 +22,6 @@ clap = { version = "4.0.14", features = ["derive"] }
 lazy_static = "1.4.0"
 strfmt = "0.2.2"
 owo-colors = "3.5.0"
+log = "0.4.17"
+log4rs = "1.2.0"
+tui-textarea = "0.2.0"

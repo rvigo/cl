@@ -1,18 +1,15 @@
-use super::handler_utils::{handle_help, handle_popup, handle_query_box};
+use super::Handler;
 use crate::gui::{
-    entities::{popup::MessageType, state::State},
-    layouts::view_mode::ViewMode,
+    entities::state::State,
+    layouts::ViewMode,
+    widgets::popup::{MessageType, Popup},
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-pub fn handle(key_event: KeyEvent, state: &mut State) {
-    if state.popup.show_popup {
-        handle_popup(key_event, state)
-    } else if state.show_help {
-        handle_help(state)
-    } else if state.query_box.in_focus() {
-        handle_query_box(key_event, state)
-    } else {
+pub struct MainHandler;
+
+impl Handler for MainHandler {
+    fn handle(&self, key_event: KeyEvent, state: &mut State) {
         match key_event {
             KeyEvent {
                 code: KeyCode::Char('f'),
@@ -74,6 +71,7 @@ pub fn handle(key_event: KeyEvent, state: &mut State) {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
+                state.form_fields_context.reset_fields();
                 state.view_mode = ViewMode::Insert;
             }
             KeyEvent {
@@ -81,14 +79,10 @@ pub fn handle(key_event: KeyEvent, state: &mut State) {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                if !state
-                    .field_context
-                    .get_current_command()
-                    .unwrap()
-                    .is_empty()
-                {
+                if state.form_fields_context.selected_command().is_some() {
+                    state.form_fields_context.reset_fields();
+                    state.form_fields_context.set_selected_command_input();
                     state.view_mode = ViewMode::Edit;
-                    state.field_context.set_selected_command_input();
                 }
             }
 
@@ -98,15 +92,17 @@ pub fn handle(key_event: KeyEvent, state: &mut State) {
                 ..
             } => {
                 if !state
-                    .field_context
-                    .get_current_command()
+                    .form_fields_context
+                    .selected_command()
                     .unwrap()
                     .is_empty()
                 {
-                    state.popup.message =
-                        String::from("Are you sure you want to delete the command?");
-                    state.popup.show_popup = true;
-                    state.popup.message_type = MessageType::Delete;
+                    let popup = Popup::new(
+                        "Are you sure you want to delete the command?",
+                        "Delete",
+                        Some(MessageType::Delete),
+                    );
+                    state.popup_context.popup = Some(popup);
                 }
             }
             KeyEvent {
@@ -115,8 +111,8 @@ pub fn handle(key_event: KeyEvent, state: &mut State) {
                 ..
             } => {
                 if !state
-                    .field_context
-                    .get_current_command()
+                    .form_fields_context
+                    .selected_command()
                     .unwrap()
                     .is_empty()
                 {
