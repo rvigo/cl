@@ -1,9 +1,7 @@
-use super::{
-    help_layout::{render_help, render_helper_footer},
-    layout_utils::{get_main_block, render_widget},
-    popup_layout::render_popup,
+use crate::gui::{
+    entities::state::State,
+    widgets::{base_widget::BaseWidget, field::FieldType, help_popup::HelpPopup},
 };
-use crate::gui::entities::{field::FieldType, state::State};
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
@@ -54,31 +52,31 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
         .split(form_chunks[2]);
-    let fourth_row = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Length(3)].as_ref())
-        .split(chunks[1]);
 
-    frame.render_widget(get_main_block(), frame.size());
+    frame.render_widget(BaseWidget::new(None), frame.size());
     frame.render_widget(form_block, chunks[0]);
 
-    for field in state.field_context.fields().iter() {
-        match field.field_type() {
-            FieldType::Alias => render_widget(frame, state, first_row[0], field),
-            FieldType::Namespace => render_widget(frame, state, first_row[1], field),
-            FieldType::Command => render_widget(frame, state, second_row[0], field),
-            FieldType::Description => render_widget(frame, state, third_row[0], field),
-            FieldType::Tags => render_widget(frame, state, third_row[1], field),
-            _ => {}
+    for field in state.form_fields_context.fields.clone().into_iter() {
+        match field.field_type {
+            FieldType::Alias => frame.render_widget(field, first_row[0]),
+            FieldType::Namespace => frame.render_widget(field, first_row[1]),
+            FieldType::Command => frame.render_widget(field, second_row[0]),
+            FieldType::Description => frame.render_widget(field, third_row[0]),
+            FieldType::Tags => frame.render_widget(field, third_row[1]),
         }
     }
 
-    frame.render_widget(render_helper_footer(), fourth_row[0]);
-
     if state.show_help {
-        render_help(frame, state)
+        frame.render_widget(HelpPopup::new(state.view_mode.clone()), frame.size());
     }
-    if state.popup.show_popup {
-        render_popup(frame, state);
+    if state.popup_context.popup.is_some() && state.popup_context.answer.is_none() {
+        if let Some(popup) = &state.popup_context.popup {
+            let popup = popup.clone();
+            frame.render_stateful_widget(
+                popup,
+                frame.size(),
+                &mut state.popup_context.choices_state,
+            );
+        }
     }
 }

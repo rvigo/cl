@@ -1,15 +1,20 @@
-use super::{
-    field::{Field, FieldType},
-    fields_context::FieldsContext,
-    popup::PopUp,
+use crate::{
+    command::Command,
+    commands::Commands,
+    gui::{
+        layouts::ViewMode,
+        widgets::{
+            contexts::{field_context::FieldContext, popup_context::PopupContext},
+            query_box::QueryBox,
+        },
+    },
 };
-use crate::{command::Command, commands::Commands, gui::layouts::view_mode::ViewMode};
 use anyhow::Result;
 use itertools::Itertools;
 use std::{thread, time::Duration};
 use tui::widgets::ListState;
 
-pub struct State {
+pub struct State<'a> {
     pub should_quit: bool,
     pub commands_state: ListState,
     pub namespace_state: ListState,
@@ -17,15 +22,15 @@ pub struct State {
     pub namespaces: Vec<String>,
     pub current_namespace: String,
     pub view_mode: ViewMode,
-    pub field_context: FieldsContext,
-    pub popup: PopUp,
+    pub form_fields_context: FieldContext<'a>,
+    pub popup_context: PopupContext<'a>,
     pub show_help: bool,
     pub to_be_executed: Option<Command>,
-    pub query_box: Field,
+    pub query_box: QueryBox<'a>,
 }
 
-impl State {
-    pub fn init(commands: Commands) -> State {
+impl<'a> State<'a> {
+    pub fn init(commands: Commands) -> State<'a> {
         let mut state = State {
             should_quit: false,
             commands_state: ListState::default(),
@@ -33,27 +38,24 @@ impl State {
             commands: commands.clone(),
             namespaces: Default::default(),
             current_namespace: String::from("All"),
-            view_mode: ViewMode::Main,
-            field_context: FieldsContext::new(),
-            popup: PopUp::init(),
+            view_mode: ViewMode::default(),
+            form_fields_context: FieldContext::default(),
+            popup_context: PopupContext::default(),
             show_help: false,
             to_be_executed: None,
-            query_box: Field::new(
-                String::from("query_box"),
-                String::from(" Find "),
-                FieldType::QueryBox,
-                false,
-            ),
+            query_box: QueryBox::default(),
         };
 
         state.load_namespaces();
         state.commands_state.select(Some(0));
         state.namespace_state.select(Some(0));
-        state.field_context.focus_state.select(Some(0));
-        state.field_context.current_command = commands
-            .get_command_item_ref(0)
-            .map(|value| value.to_owned());
-        state.popup.options_state.select(Some(0));
+        state.form_fields_context.focus_state.select(Some(0));
+        state.form_fields_context.select_command(
+            commands
+                .get_command_item_ref(0)
+                .map(|value| value.to_owned()),
+        );
+        state.popup_context.choices_state.select(Some(0));
 
         state
     }
@@ -133,9 +135,11 @@ impl State {
     }
 
     pub fn filter_commands(&mut self) -> Commands {
+        let query_string = self.query_box.get_input();
+
         if let Ok(commands) = self
             .commands
-            .commands(self.current_namespace.clone(), self.query_box.input.clone())
+            .commands(self.current_namespace.clone(), query_string)
         {
             commands
         } else {

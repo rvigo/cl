@@ -1,19 +1,18 @@
-use super::handler_utils::{handle_help, handle_popup};
+use super::Handler;
 use crate::{
     gui::{
-        entities::{popup::MessageType, state::State},
-        layouts::view_mode::ViewMode,
+        entities::state::State,
+        layouts::ViewMode,
+        widgets::popup::{MessageType, Popup},
     },
     resources::file_service,
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-pub fn handle(key_event: KeyEvent, state: &mut State) {
-    if state.popup.show_popup {
-        handle_popup(key_event, state)
-    } else if state.show_help {
-        handle_help(state)
-    } else {
+pub struct InsertHandler;
+
+impl Handler for InsertHandler {
+    fn handle<'a>(&self, key_event: KeyEvent, state: &mut State<'a>) {
         match key_event {
             KeyEvent {
                 code: KeyCode::Esc,
@@ -25,102 +24,43 @@ pub fn handle(key_event: KeyEvent, state: &mut State) {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
-                state.field_context.clear_inputs();
+                state.form_fields_context.clear_fields_input();
                 state.view_mode = ViewMode::Main;
             }
             KeyEvent {
                 code: KeyCode::Tab,
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => {
-                state.field_context.next();
-            }
+            } => state.form_fields_context.next_field(),
+
             KeyEvent {
                 code: KeyCode::BackTab,
                 modifiers: KeyModifiers::SHIFT,
                 ..
-            } => {
-                state.field_context.previous();
-            }
+            } => state.form_fields_context.previous_field(),
+
             KeyEvent {
-                code: KeyCode::Char(c),
-                modifiers: KeyModifiers::NONE | KeyModifiers::SHIFT,
-                ..
-            } => state
-                .field_context
-                .get_current_in_focus_mut()
-                .unwrap()
-                .on_char(c),
-            KeyEvent {
-                code: KeyCode::Backspace,
-                modifiers: KeyModifiers::NONE,
-                ..
-            } => {
-                state
-                    .field_context
-                    .get_current_in_focus_mut()
-                    .unwrap()
-                    .on_backspace();
-            }
-            KeyEvent {
-                code: KeyCode::Left,
-                modifiers: KeyModifiers::NONE,
-                ..
-            } => {
-                state
-                    .field_context
-                    .get_current_in_focus_mut()
-                    .unwrap()
-                    .move_cursor_backward();
-            }
-            KeyEvent {
-                code: KeyCode::Right,
-                modifiers: KeyModifiers::NONE,
-                ..
-            } => {
-                state
-                    .field_context
-                    .get_current_in_focus_mut()
-                    .unwrap()
-                    .move_cursor_foward();
-            }
-            KeyEvent {
-                code: KeyCode::Delete,
-                modifiers: KeyModifiers::NONE,
-                ..
-            } => state
-                .field_context
-                .get_current_in_focus_mut()
-                .unwrap()
-                .on_delete_key(),
-            KeyEvent {
-                code: KeyCode::Enter,
-                modifiers: KeyModifiers::NONE,
-                ..
-            }
-            | KeyEvent {
                 code: KeyCode::Char('s'),
                 modifiers: KeyModifiers::CONTROL,
                 ..
-            } => match state.field_context.build_command() {
+            } => match state.form_fields_context.build_new_command() {
                 Ok(command) => match state.commands.add_command(&command) {
                     Ok(commands) => {
                         if let Ok(()) = file_service::write_to_command_file(commands) {
-                            state.field_context.clear_inputs();
+                            state.form_fields_context.clear_fields_input();
                             state.reload_state();
                             state.view_mode = ViewMode::Main
                         }
                     }
                     Err(error) => {
-                        state.popup.message_type = MessageType::Error;
-                        state.popup.message = error.to_string();
-                        state.popup.show_popup = true
+                        let popup =
+                            Popup::new(error.to_string(), "Error", Some(MessageType::Error));
+                        state.popup_context.popup = Some(popup);
                     }
                 },
                 Err(error) => {
-                    state.popup.message_type = MessageType::Error;
-                    state.popup.message = error.to_string();
-                    state.popup.show_popup = true
+                    let popup = Popup::new(error.to_string(), "Error", Some(MessageType::Error));
+                    state.popup_context.popup = Some(popup);
                 }
             },
             KeyEvent {
@@ -128,7 +68,11 @@ pub fn handle(key_event: KeyEvent, state: &mut State) {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => state.show_help = true,
-            _ => {}
+            input => state
+                .form_fields_context
+                .selected_mut_field()
+                .unwrap()
+                .on_input(input),
         }
     }
 }

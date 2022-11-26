@@ -1,24 +1,20 @@
-use super::{
-    help_layout::render_help,
-    layout_utils::{get_main_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
-    popup_layout::render_popup,
-};
 use crate::{
     command::{Command, CommandBuilder},
     gui::{
-        entities::{field::Field, popup::Answer, state::State},
-        key_handlers::cursor::set_cursor_positition,
-        layouts::help_layout::render_helper_footer,
+        entities::state::State,
+        widgets::{base_widget::BaseWidget, display::DisplayWidget, help_popup::HelpPopup},
     },
 };
 use tui::{
     backend::Backend,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, BorderType, Borders, List, ListItem, Paragraph, Tabs, Wrap},
+    widgets::{Block, Borders, List, ListItem, Tabs},
     Frame,
 };
+
+use super::{get_default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 
 pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let chunks = Layout::default()
@@ -40,16 +36,18 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .selected()
         .expect("Error retrieving the selected command");
 
-    let selected_command: Command = if state.filter_commands().is_empty() {
-        //creates an empty command
-        CommandBuilder::default().build()
-    } else {
-        state.filter_commands().get(idx).unwrap().to_owned()
-    };
+    log::debug!("idx: {idx}");
+    let selected_command: Command =
+        if state.filter_commands().is_empty() || state.filter_commands().get(idx).is_none() {
+            //creates an empty command
+            CommandBuilder::default().build()
+        } else {
+            state.filter_commands().get(idx).unwrap().to_owned()
+        };
 
     state
-        .field_context
-        .set_current_command(Some(selected_command.clone()));
+        .form_fields_context
+        .select_command(Some(selected_command.clone()));
 
     let tags_str = selected_command.tags_as_string();
 
@@ -57,12 +55,12 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let description_str: String = selected_command
         .description
         .unwrap_or_else(|| String::from(""));
-    let command = create_command_details_box(command_str);
-    let tabs = create_tab_menu_box(state);
-    let tags = create_tags_menu_box(tags_str);
-    let namespace = create_namespace_box(selected_command.namespace);
-    let description = create_command_description_box(description_str);
-    let commands = create_command_items_box(state);
+    let command = create_command_details_widget(command_str);
+    let tabs = create_tab_menu_widget(state);
+    let tags = create_tags_menu_widget(tags_str);
+    let namespace = create_namespace_widget(selected_command.namespace);
+    let description = create_command_description_widget(description_str);
+    let commands = create_command_items_widget(state);
 
     let central_chunk = Layout::default()
         .direction(Direction::Horizontal)
@@ -79,70 +77,32 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
         .split(command_detail_chunks[1]);
 
-    let last_line = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Min(28), Constraint::Length(18)].as_ref())
-        .split(chunks[3]);
-
-    frame.render_widget(get_main_block(), frame.size());
+    let query_box = &mut state.query_box;
+    frame.render_widget(BaseWidget::new(Some(query_box)), frame.size());
     frame.render_widget(tabs, chunks[0]);
     frame.render_stateful_widget(commands, central_chunk[0], &mut state.commands_state);
     frame.render_widget(command, command_detail_chunks[0]);
     frame.render_widget(namespace, namespace_and_tags_chunk[0]);
     frame.render_widget(tags, namespace_and_tags_chunk[1]);
     frame.render_widget(description, chunks[1]);
-    create_query_box(frame, &mut state.query_box, last_line[0]);
-    frame.render_widget(render_helper_footer(), last_line[1]);
 
     if state.show_help {
-        render_help(frame, state)
+        frame.render_widget(HelpPopup::new(state.view_mode.clone()), frame.size());
     }
-    if state.popup.show_popup {
-        if let Answer::None = state.popup.answer {
-            render_popup(frame, state)
+
+    if state.popup_context.popup.is_some() && state.popup_context.answer.is_none() {
+        if let Some(popup) = &state.popup_context.popup {
+            let popup = popup.clone();
+            frame.render_stateful_widget(
+                popup,
+                frame.size(),
+                &mut state.popup_context.choices_state,
+            );
         }
     }
 }
 
-fn create_query_box<B: Backend>(frame: &mut Frame<B>, query_box: &mut Field, area: Rect) {
-    let mut query_string;
-    if !query_box.in_focus() && query_box.input.is_empty() {
-        query_string = String::from("Press <F> to find commands")
-    } else {
-        query_string = query_box.input.clone()
-    }
-
-    if query_box.in_focus() {
-        query_string = query_box.input.clone();
-        set_cursor_positition(frame, query_box, area);
-    }
-
-    let query_box = Paragraph::new(query_string)
-        .style(if query_box.in_focus() {
-            Style::default().fg(Color::Black).bg(DEFAULT_SELECTED_COLOR)
-        } else if !query_box.in_focus() && !query_box.input.is_empty() {
-            Style::default().fg(DEFAULT_SELECTED_COLOR)
-        } else {
-            Style::default().fg(DEFAULT_TEXT_COLOR)
-        })
-        .alignment(Alignment::Left)
-        .wrap(Wrap { trim: true })
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .style(if !query_box.in_focus() {
-                    Style::default().fg(DEFAULT_TEXT_COLOR)
-                } else {
-                    Style::default()
-                })
-                .title(query_box.title())
-                .border_type(BorderType::Plain),
-        );
-
-    frame.render_widget(query_box, area);
-}
-
-fn create_tab_menu_box<'a>(state: &State) -> Tabs<'a> {
+fn create_tab_menu_widget<'a>(state: &State) -> Tabs<'a> {
     let tab_menu: Vec<Spans> = state
         .namespaces
         .clone()
@@ -161,7 +121,7 @@ fn create_tab_menu_box<'a>(state: &State) -> Tabs<'a> {
         .divider(Span::raw("|"))
 }
 
-fn create_command_items_box<'a>(state: &mut State) -> List<'a> {
+fn create_command_items_widget<'a>(state: &mut State) -> List<'a> {
     let list_items: Vec<ListItem> = state
         .filter_commands()
         .into_iter()
@@ -183,58 +143,31 @@ fn create_command_items_box<'a>(state: &mut State) -> List<'a> {
         .highlight_symbol("> ")
 }
 
-fn create_command_details_box<'a>(command: String) -> Paragraph<'a> {
-    Paragraph::new(command)
-        .style(Style::default())
-        .alignment(Alignment::Left)
-        .wrap(Wrap { trim: true })
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .style(Style::default())
-                .title(" Command ")
-                .border_type(BorderType::Plain),
-        )
+//TODO Create a factory
+fn create_command_details_widget<'a>(command: String) -> DisplayWidget<'a> {
+    let title = "Command".to_string();
+    DisplayWidget::new(command, true)
+        .title(title.clone())
+        .block(get_default_block(title))
 }
 
-fn create_command_description_box<'a>(description: String) -> Paragraph<'a> {
-    Paragraph::new(description)
-        .style(Style::default())
-        .alignment(Alignment::Left)
-        .wrap(Wrap { trim: true })
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .style(Style::default())
-                .title(" Description ")
-                .border_type(BorderType::Plain),
-        )
+fn create_command_description_widget<'a>(description: String) -> DisplayWidget<'a> {
+    let title = "Description".to_string();
+    DisplayWidget::new(description, true)
+        .title(title.clone())
+        .block(get_default_block(title))
 }
 
-fn create_tags_menu_box<'a>(tags: String) -> Paragraph<'a> {
-    Paragraph::new(tags)
-        .style(Style::default())
-        .alignment(Alignment::Left)
-        .wrap(Wrap { trim: true })
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .style(Style::default())
-                .title(" Tags ")
-                .border_type(BorderType::Plain),
-        )
+fn create_tags_menu_widget<'a>(tags: String) -> DisplayWidget<'a> {
+    let title = "Tags".to_string();
+    DisplayWidget::new(tags, true)
+        .title(title.clone())
+        .block(get_default_block(title))
 }
 
-fn create_namespace_box<'a>(namespace: String) -> Paragraph<'a> {
-    Paragraph::new(namespace)
-        .style(Style::default())
-        .alignment(Alignment::Left)
-        .wrap(Wrap { trim: true })
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .style(Style::default())
-                .title(" Namespace ")
-                .border_type(BorderType::Plain),
-        )
+fn create_namespace_widget<'a>(namespace: String) -> DisplayWidget<'a> {
+    let title = "Namespace".to_string();
+    DisplayWidget::new(namespace, true)
+        .title(title.clone())
+        .block(get_default_block(title))
 }
