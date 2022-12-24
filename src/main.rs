@@ -4,6 +4,7 @@ mod commands;
 mod gui;
 mod resources;
 
+use ::log::info;
 use anyhow::Result;
 use clap::Parser;
 use cli::{
@@ -14,32 +15,14 @@ use cli::{
     },
 };
 use gui::entities::app::AppContext;
-use log::LevelFilter;
-use log4rs::{
-    append::file::FileAppender,
-    config::{Appender, Root},
-    encode::pattern::PatternEncoder,
-    Config,
-};
+use resources::log;
 
 fn main() -> Result<()> {
-    let logfile = FileAppender::builder()
-        .encoder(Box::new(PatternEncoder::new(
-            "{d(%Y-%m-%d %H:%M:%S)} | {({l}):5.5} | {f}:{L} — {m}{n}",
-        )))
-        .build("log/output.log")?;
+    log::init()?;
 
-    let config = Config::builder()
-        .appender(Appender::builder().build("logfile", Box::new(logfile)))
-        .build(
-            Root::builder()
-                .appender("logfile")
-                .build(LevelFilter::Debug),
-        )?;
+    info!("ola");
 
-    log4rs::init_config(config)?;
     let app = App::parse();
-
     match app.subcommand {
         Some(SubCommand::Exec(exec)) => exec_subcommand(exec),
         Some(SubCommand::Share(share)) => share_subcommand(share),
