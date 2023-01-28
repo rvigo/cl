@@ -3,10 +3,13 @@ use crate::resources::config::CONFIG;
 use anyhow::{bail, ensure, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use std::env;
-use std::iter::FromIterator;
-use std::ops::{Deref, DerefMut};
-use std::vec::IntoIter;
+use std::{
+    collections::HashSet,
+    env,
+    iter::FromIterator,
+    ops::{Deref, DerefMut},
+    vec::IntoIter,
+};
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Commands(Vec<Command>);
@@ -21,13 +24,14 @@ impl Commands {
     }
 
     pub fn namespaces(&self) -> Vec<String> {
-        let mut namespaces: Vec<String> = self
+        let namespaces_set: HashSet<String> = self
             .iter()
-            .map(|command| command.namespace.clone())
-            .unique()
+            .map(|command: &Command| command.namespace.clone())
             .collect();
-        namespaces.insert(0, String::from("All"));
+
+        let mut namespaces: Vec<String> = namespaces_set.into_iter().collect();
         namespaces.sort();
+        namespaces.insert(0, String::from("All"));
         namespaces
     }
 
@@ -50,7 +54,7 @@ impl Commands {
             namespace
         );
 
-        commands.sort_by_key(|command| command.alias.clone());
+        commands.sort_by_key(|command| command.alias.to_lowercase());
 
         Ok(commands)
     }
@@ -315,7 +319,7 @@ mod test {
             .command(String::from("command"));
 
         let already_exists = commands.command_already_exists(&duplicated_command.build());
-        assert_eq!(true, already_exists)
+        assert!(already_exists)
     }
 
     #[test]
