@@ -12,7 +12,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 pub struct InsertHandler;
 
 impl Handler for InsertHandler {
-    fn handle<'a>(&self, key_event: KeyEvent, state: &mut State<'a>) {
+    fn handle(&self, key_event: KeyEvent, state: &mut State) {
         match key_event {
             KeyEvent {
                 code: KeyCode::Esc,
