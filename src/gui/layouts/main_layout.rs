@@ -78,6 +78,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .split(command_detail_chunks[1]);
 
     let query_box = &mut state.query_box;
+
     frame.render_widget(BaseWidget::new(Some(query_box)), frame.size());
     frame.render_widget(tabs, chunks[0]);
     frame.render_stateful_widget(commands, central_chunk[0], &mut state.commands_state);

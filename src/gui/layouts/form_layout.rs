@@ -53,7 +53,8 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
         .split(form_chunks[2]);
 
-    frame.render_widget(BaseWidget::new(None), frame.size());
+    let base_widget = BaseWidget::new(None);
+    frame.render_widget(base_widget, frame.size());
     frame.render_widget(form_block, chunks[0]);
 
     for field in state.form_fields_context.fields.clone().into_iter() {

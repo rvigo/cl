@@ -4,7 +4,7 @@ use tui::{
     style::{Color, Modifier, Style},
     widgets::{Block, BorderType, Borders, Widget},
 };
-use tui_textarea::{CursorMove, TextArea};
+use tui_textarea::TextArea;
 
 #[derive(Clone)]
 pub struct QueryBox<'a> {
@@ -64,15 +64,15 @@ impl<'a> Widget for QueryBox<'a> {
 
         if self.buffer.is_empty() && !self.on_focus {
             self.text_area = TextArea::from(vec!["Press <F> to find commands"])
-        } else {
-            self.text_area = TextArea::from(vec![self.buffer])
         }
 
         if self.on_focus {
             self.text_area.set_cursor_line_style(Style::default());
-            self.text_area
-                .set_cursor_style(Style::default().add_modifier(Modifier::REVERSED));
-            self.text_area.move_cursor(CursorMove::End);
+            self.text_area.set_cursor_style(
+                Style::default()
+                    .fg(DEFAULT_TEXT_COLOR)
+                    .add_modifier(Modifier::REVERSED),
+            );
         } else {
             self.text_area.set_cursor_line_style(Style::default());
             self.text_area.set_cursor_style(Style::default());
