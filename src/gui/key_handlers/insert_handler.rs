@@ -25,6 +25,7 @@ impl Handler for InsertHandler {
                 ..
             } => {
                 state.form_fields_context.clear_fields_input();
+                state.form_fields_context.focus_state.select(Some(0));
                 state.view_mode = ViewMode::Main;
             }
             KeyEvent {

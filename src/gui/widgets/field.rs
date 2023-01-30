@@ -1,5 +1,5 @@
 use crate::gui::layouts::{get_default_block, get_style, DEFAULT_TEXT_COLOR};
-use crossterm::event::KeyEvent;
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::hash::Hash;
 use tui::{
     layout::Alignment,
@@ -65,7 +65,26 @@ impl<'a> Field<'a> {
     }
 
     pub fn on_input(&mut self, input: KeyEvent) {
-        self.text_area.input(input);
+        if self.multiline {
+            self.text_area.input(input);
+        } else {
+            // should avoid new lines
+            match input {
+                KeyEvent {
+                    code: KeyCode::Enter,
+                    modifiers: KeyModifiers::NONE,
+                    ..
+                }
+                | KeyEvent {
+                    code: KeyCode::Char('m'),
+                    modifiers: KeyModifiers::CONTROL,
+                    ..
+                } => {}
+                input => {
+                    self.text_area.input(input);
+                }
+            }
+        }
     }
 
     pub fn clear_input(&mut self) {
