@@ -1,6 +1,5 @@
-use crate::gui::layouts::get_style;
-
 use super::field::{Field, FieldType};
+use crate::gui::layouts::get_style;
 use std::ops::{Deref, DerefMut};
 use tui::{
     style::Style,
@@ -53,7 +52,7 @@ fn forms_widget_factory(
         Block::default()
             .borders(Borders::ALL)
             .style(Style::default())
-            .title(format!(" {} ", title))
+            .title(format!(" {title} ",))
             .border_type(BorderType::Plain),
     );
     field.style(get_style(in_focus));

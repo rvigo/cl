@@ -76,7 +76,7 @@ pub fn get_default_block<'a>(title: String) -> Block<'a> {
     Block::default()
         .borders(Borders::ALL)
         .style(Style::default())
-        .title(format!(" {} ", title))
+        .title(format!(" {title} "))
         .title_alignment(Alignment::Left)
         .border_type(BorderType::Plain)
 }

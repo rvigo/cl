@@ -91,18 +91,15 @@ impl Handler for MainHandler {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                if !state
-                    .form_fields_context
-                    .selected_command()
-                    .unwrap()
-                    .is_empty()
-                {
-                    let popup = Popup::new(
-                        "Are you sure you want to delete the command?",
-                        "Delete",
-                        Some(MessageType::Delete),
-                    );
-                    state.popup_context.popup = Some(popup);
+                if let Some(selected_command) = state.form_fields_context.selected_command() {
+                    if !selected_command.is_empty() {
+                        let popup = Popup::new(
+                            "Are you sure you want to delete the command?",
+                            "Delete",
+                            Some(MessageType::Delete),
+                        );
+                        state.popup_context.popup = Some(popup);
+                    }
                 }
             }
             KeyEvent {
@@ -110,17 +107,15 @@ impl Handler for MainHandler {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                if !state
-                    .form_fields_context
-                    .selected_command()
-                    .unwrap()
-                    .is_empty()
-                {
-                    state.to_be_executed = state
-                        .filter_commands()
-                        .get(state.commands_state.selected().unwrap())
-                        .cloned();
-                    state.should_quit = true
+                if let Some(selected_command) = state.form_fields_context.selected_command() {
+                    if !selected_command.is_empty() {
+                        let filtered_commands = state.filter_commands();
+                        let selected_index = state.commands_state.selected();
+                        if let Some(index) = selected_index {
+                            state.to_be_executed = filtered_commands.get(index).cloned();
+                            state.should_quit = true
+                        }
+                    }
                 }
             }
             KeyEvent {

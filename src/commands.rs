@@ -142,21 +142,23 @@ impl Commands {
         let commands: Vec<Command> = self
             .iter()
             .filter(|command| {
-                namespace.is_none() || command.namespace.eq(namespace.as_ref().unwrap())
+                namespace
+                    .as_ref()
+                    .map_or(true, |ns| command.namespace.eq(ns))
             })
             .filter(|command| command.alias.eq(&alias))
             .map(|command| command.to_owned())
             .collect();
 
-        if commands.len() > 1 {
+        if commands.is_empty() {
+            bail!("The alias \'{alias}\' was not found!")
+        } else if commands.len() == 1 {
+            Ok(commands[0].to_owned())
+        } else {
             bail!(
                 "There are commands with the alias \'{alias}\' in multiples namespaces. \
-            Please use the \'--namespace\' flag"
+                        Please use the \'--namespace\' flag"
             )
-        } else if commands.is_empty() {
-            bail!("The alias \'{alias}\' was not found!")
-        } else {
-            Ok(commands.first().unwrap().to_owned())
         }
     }
 
@@ -171,8 +173,8 @@ impl Commands {
         mut query_string: String,
         command: &Command,
     ) -> bool {
+        query_string = query_string.to_lowercase();
         query_string.is_empty() || {
-            query_string = query_string.to_lowercase();
             command.namespace.to_lowercase().contains(&query_string)
                 || command.alias.to_lowercase().contains(&query_string)
                 || command.command.to_lowercase().contains(&query_string)
@@ -180,13 +182,10 @@ impl Commands {
                     .tags_as_string()
                     .to_lowercase()
                     .contains(&query_string)
-                || (command.description.is_some()
-                    && command
-                        .description
-                        .as_ref()
-                        .unwrap()
-                        .to_lowercase()
-                        .contains(&query_string))
+                || command
+                    .description
+                    .as_ref()
+                    .map_or(false, |d| d.to_lowercase().contains(&query_string))
         }
     }
 

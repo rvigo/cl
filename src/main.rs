@@ -4,7 +4,6 @@ mod commands;
 mod gui;
 mod resources;
 
-use ::log::info;
 use anyhow::Result;
 use clap::Parser;
 use cli::{
@@ -20,9 +19,8 @@ use resources::log;
 fn main() -> Result<()> {
     log::init()?;
 
-    info!("ola");
-
     let app = App::parse();
+
     match app.subcommand {
         Some(SubCommand::Exec(exec)) => exec_subcommand(exec),
         Some(SubCommand::Share(share)) => share_subcommand(share),

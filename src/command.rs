@@ -26,18 +26,22 @@ impl CommandBuilder {
         self.namespace = namespace.trim().to_string();
         self
     }
+
     pub fn alias(&mut self, alias: String) -> &mut CommandBuilder {
         self.alias = alias.trim().to_string();
         self
     }
+
     pub fn command(&mut self, command: String) -> &mut CommandBuilder {
         self.command = command;
         self
     }
+
     pub fn description(&mut self, description: Option<String>) -> &mut CommandBuilder {
         self.description = description;
         self
     }
+
     pub fn tags(&mut self, tags: Option<Vec<String>>) -> &mut CommandBuilder {
         self.tags = tags;
         self

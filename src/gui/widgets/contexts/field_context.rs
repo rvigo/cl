@@ -219,7 +219,7 @@ impl<'a> FieldContext<'a> {
 }
 
 #[cfg(test)]
-mod tests {
+mod test {
     use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
     use super::*;
