@@ -48,14 +48,8 @@ pub fn share_subcommand(share: Share) -> Result<()> {
             let mut commands_from_file = file_service::convert_from_toml_file(&file_location)?;
 
             //filter given namespaces
-            if namespaces.is_some() {
-                commands_from_file.retain(|item| {
-                    namespaces
-                        .as_ref()
-                        .unwrap()
-                        .iter()
-                        .contains(&item.namespace)
-                });
+            if let Some(namespaces) = namespaces {
+                commands_from_file.retain(|item| namespaces.contains(&item.namespace));
             }
 
             let reference_commands = commands_from_file.clone();
@@ -73,7 +67,6 @@ pub fn share_subcommand(share: Share) -> Result<()> {
                 eprintln!(
                     "Warning: Duplicated aliases found! Please adjust them by choosing a new alias/namespace:\n{}",
                     diff
-                        .clone()
                         .iter()
                         .map(|item| format!(" - alias: {}, namespace: {}", item.alias.clone(), item.namespace.clone()))
                         .collect_vec()
@@ -84,7 +77,7 @@ pub fn share_subcommand(share: Share) -> Result<()> {
                 stored_commands.append(&mut commands_from_file);
                 file_service::write_toml_file(&stored_commands, &CONFIG.get_command_file_path())?;
                 println!(
-                    "Done: Successfully imported {} aliases",
+                    "Info: Successfully imported {} aliases",
                     commands_from_file.len()
                 )
             } else {
@@ -95,7 +88,7 @@ pub fn share_subcommand(share: Share) -> Result<()> {
             eprintln!("Exporting aliases to: {}", file_location.display());
             let mut command_list = Commands::default();
             if let Some(namespaces) = namespaces {
-                for namespace in namespaces.into_iter() {
+                for namespace in namespaces {
                     command_list
                         .append(&mut commands.commands(namespace, String::default())?.to_vec());
                 }
@@ -104,7 +97,7 @@ pub fn share_subcommand(share: Share) -> Result<()> {
             }
 
             file_service::write_toml_file(&command_list, &file_location)?;
-            println!("Done. Exported {} aliases", command_list.len())
+            println!("Info: Exported {} aliases", command_list.len())
         }
     }
     Ok(())

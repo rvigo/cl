@@ -48,10 +48,10 @@ $ cl exec d ps # same as `docker ps`
 $ cl exec d ps '\--help' # same as `docker ps --help` 
 ```
 
-You can also set `variables` in your command and pass them as `named arguments`:
+You can also set `variables` in your command and pass them as `named parameters`:
 ```bash
-# the stored command is `echo "hello #{name}, #{greetings}` and the alias is `echo`
-# the arguments names should match the variables names in your command
+# the stored command is `echo "hello #{name}, #{greetings}"` and the alias is `echo`
+# the parameters names should match the variables names in your command
 $ cl exec echo -- --name="John Doe" --grettings "welcome!" 
 > "hello John Doe, welcome!"
 ```

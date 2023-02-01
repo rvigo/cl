@@ -47,19 +47,18 @@ impl Handler for EditHandler {
             } => {
                 let field_context = &mut state.form_fields_context;
                 let edited_command = field_context.edit_command();
-
-                match edited_command {
-                    Ok(command) => match state.commands.add_edited_command(
-                        &command,
+                if let Ok(edited) = edited_command {
+                    match state.commands.add_edited_command(
+                        &edited,
                         field_context
                             .selected_command()
                             .expect("A command should always be selected"),
                     ) {
                         Ok(commands) => {
-                            if let Ok(()) = file_service::write_to_command_file(commands) {
+                            if file_service::write_to_command_file(commands).is_ok() {
                                 state.form_fields_context.clear_fields_input();
                                 state.reload_state();
-                                state.view_mode = ViewMode::Main
+                                state.view_mode = ViewMode::Main;
                             }
                         }
                         Err(error) => {
@@ -67,11 +66,6 @@ impl Handler for EditHandler {
                                 Popup::new(error.to_string(), "Error", Some(MessageType::Error));
                             state.popup_context.popup = Some(popup);
                         }
-                    },
-                    Err(error) => {
-                        let popup =
-                            Popup::new(error.to_string(), "Error", Some(MessageType::Error));
-                        state.popup_context.popup = Some(popup);
                     }
                 }
             }
@@ -80,11 +74,11 @@ impl Handler for EditHandler {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => state.show_help = true,
-            input => state
-                .form_fields_context
-                .selected_mut_field()
-                .unwrap()
-                .on_input(input),
+            input => {
+                if let Some(selected_field) = state.form_fields_context.selected_mut_field() {
+                    selected_field.on_input(input)
+                }
+            }
         }
     }
 }

@@ -11,6 +11,30 @@ use tui::{
 };
 
 pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
+    render_base_widget(frame);
+    render_form(frame, state);
+
+    if state.show_help {
+        frame.render_widget(HelpPopup::new(state.view_mode.clone()), frame.size());
+    }
+    if state.popup_context.popup.is_some() && state.popup_context.answer.is_none() {
+        if let Some(popup) = &state.popup_context.popup {
+            let popup = popup.clone();
+            frame.render_stateful_widget(
+                popup,
+                frame.size(),
+                &mut state.popup_context.choices_state,
+            );
+        }
+    }
+}
+
+fn render_base_widget<B: Backend>(frame: &mut Frame<B>) {
+    let base_widget = BaseWidget::new(None);
+    frame.render_widget(base_widget, frame.size());
+}
+
+fn render_form<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -53,8 +77,6 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
         .split(form_chunks[2]);
 
-    let base_widget = BaseWidget::new(None);
-    frame.render_widget(base_widget, frame.size());
     frame.render_widget(form_block, chunks[0]);
 
     for field in state.form_fields_context.fields.clone().into_iter() {
@@ -64,20 +86,6 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
             FieldType::Command => frame.render_widget(field, second_row[0]),
             FieldType::Description => frame.render_widget(field, third_row[0]),
             FieldType::Tags => frame.render_widget(field, third_row[1]),
-        }
-    }
-
-    if state.show_help {
-        frame.render_widget(HelpPopup::new(state.view_mode.clone()), frame.size());
-    }
-    if state.popup_context.popup.is_some() && state.popup_context.answer.is_none() {
-        if let Some(popup) = &state.popup_context.popup {
-            let popup = popup.clone();
-            frame.render_stateful_widget(
-                popup,
-                frame.size(),
-                &mut state.popup_context.choices_state,
-            );
         }
     }
 }

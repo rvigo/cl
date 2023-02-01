@@ -48,8 +48,8 @@ impl<'a> AppContext<'a> {
 
     fn handle_panic(&self) {
         panic::set_hook(Box::new(|e| {
-            eprintln!("{}", e);
-            log::error!("{}", e)
+            eprintln!("{e}");
+            log::error!("{e}")
         }));
     }
 

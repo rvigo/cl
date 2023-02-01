@@ -1,4 +1,4 @@
-use crate::resources::config;
+use crate::resources::config::{self, CONFIG};
 use anyhow::{bail, Result};
 use clap::{Parser, Subcommand};
 use std::{env, process::Command};
@@ -23,7 +23,6 @@ pub enum ConfigSubcommand {
 }
 
 #[derive(Parser)]
-
 pub struct Widget {
     #[clap(short, long, action, required = true, help = "Install the cl widget")]
     install: bool,
@@ -49,9 +48,10 @@ fn install_zsh_widget() -> Result<()> {
     validate_fzf();
 
     let widget = include_str!("../resources/zsh/cl-exec-widget");
-    let dest_location = "~/.config/cl/cl-exec-widget";
-    let create_file = format!("echo \'{}\' >> {}", widget, dest_location);
-    let source_file = format!("echo \"source {}\" >> ~/.zshrc", dest_location);
+    let app_home_dir = &CONFIG.get_app_home_dir();
+    let dest_location = format!("{}/cl-exec-widget", app_home_dir.display());
+    let create_file = format!("echo \'{widget}\' >> {dest_location}");
+    let source_file = format!("echo \"source {dest_location}\" >> ~/.zshrc");
 
     run_shell(&create_file)?;
     run_shell(&source_file)?;

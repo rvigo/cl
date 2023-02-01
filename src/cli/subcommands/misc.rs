@@ -15,6 +15,24 @@ pub struct Misc {
     fzf: bool,
 }
 
+pub fn misc_subcommand(misc: Misc) -> Result<()> {
+    let commands = resources::load_commands()?;
+    if misc.description {
+        if let Some(alias) = misc.alias {
+            let command = commands.find_command(alias, misc.namespace)?;
+            print_colorized_command(command);
+        }
+    } else if misc.fzf {
+        commands.into_iter().for_each(|c| println!("{}", c.alias))
+    } else {
+        commands
+            .into_iter()
+            .for_each(|c| println!("{}", command_to_string(c)));
+    }
+
+    Ok(())
+}
+
 fn command_to_string(command: Command) -> String {
     if let Some(desc) = command.description {
         format!(
@@ -35,7 +53,12 @@ fn command_to_string(command: Command) -> String {
 }
 
 fn sanitize_string(command: String) -> String {
-    if command.len() > 50 {
+    let max_lenght_command: String = command.chars().take(50).collect();
+    if max_lenght_command.contains('\n') {
+        let idx = command.find('\n').unwrap_or(51);
+        let short_command = format!("{}{}", &command[..(idx)], "...");
+        short_command
+    } else if max_lenght_command.len() == 50 {
         let short_command = format!("{}{}", &command[..50], "...");
         short_command
     } else {
@@ -58,18 +81,49 @@ fn print_colorized_command(command: Command) {
     )
 }
 
-pub fn misc_subcommand(misc: Misc) -> Result<()> {
-    let commands = resources::load_commands()?;
-    if misc.description {
-        let command = commands.find_command(misc.alias.unwrap(), misc.namespace)?;
-        print_colorized_command(command);
-    } else if misc.fzf {
-        commands.into_iter().for_each(|c| println!("{}", c.alias))
-    } else {
-        commands
-            .into_iter()
-            .for_each(|c| println!("{}", command_to_string(c)));
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn should_format_a_command_with_description_to_string() {
+        let command = Command {
+            namespace: "namespace".to_string(),
+            command: "command".to_string(),
+            description: Some("description".to_string()),
+            alias: "alias".to_string(),
+            tags: None,
+        };
+        let expected_output = "namespace.alias: description --> command".to_string();
+        assert_eq!(command_to_string(command), expected_output);
     }
 
-    Ok(())
+    #[test]
+    fn should_format_a_command_without_description_to_string() {
+        let command = Command {
+            namespace: "namespace".to_string(),
+            command: "command".to_string(),
+            description: None,
+            alias: "alias".to_string(),
+            tags: None,
+        };
+        let expected_output = "namespace.alias --> command".to_string();
+        assert_eq!(command_to_string(command), expected_output);
+    }
+
+    #[test]
+    fn should_sanitize_a_long_command_string() {
+        let long_command = "a".repeat(60);
+        let short_command = "a".repeat(40);
+
+        assert_eq!(sanitize_string(long_command), "a".repeat(50) + "...");
+        assert_eq!(sanitize_string(short_command.clone()), short_command);
+    }
+
+    #[test]
+    fn should_sanitize_a_command_string_with_newline() {
+        let input = "multiline command\n".to_string();
+        let expected_output = "multiline command...".to_string();
+        assert_eq!(sanitize_string(input), expected_output);
+    }
 }

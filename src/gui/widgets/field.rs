@@ -2,7 +2,8 @@ use crate::gui::layouts::{get_default_block, get_style, DEFAULT_TEXT_COLOR};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::hash::Hash;
 use tui::{
-    layout::Alignment,
+    buffer::Buffer,
+    layout::{Alignment, Rect},
     style::{Modifier, Style},
     widgets::{Block, Widget},
 };
@@ -99,13 +100,12 @@ impl<'a> Field<'a> {
                 .fg(DEFAULT_TEXT_COLOR)
                 .add_modifier(Modifier::REVERSED),
         );
-
         text_area
     }
 }
 
 impl<'a> Widget for Field<'a> {
-    fn render(mut self, area: tui::layout::Rect, buf: &mut tui::buffer::Buffer) {
+    fn render(mut self, area: Rect, buf: &mut Buffer) {
         if self.in_focus() {
             self.text_area.set_cursor_style(
                 Style::default()
@@ -115,12 +115,12 @@ impl<'a> Widget for Field<'a> {
         } else {
             self.text_area.set_cursor_style(Style::default());
         };
-
         self.text_area.set_block(if let Some(block) = self.block {
             block
         } else {
             get_default_block(self.title)
         });
+
         self.text_area.set_cursor_line_style(Style::default());
         self.text_area.set_alignment(self.alignment);
         self.text_area.set_style(get_style(self.in_focus));

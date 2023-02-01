@@ -9,11 +9,7 @@ use std::{
 
 pub fn save_file(contents: String, path: &Path) -> Result<()> {
     if let Err(error) = write(path, contents) {
-        bail!(
-            "Error writing to file {}: {}",
-            path.to_str().unwrap(),
-            error
-        )
+        bail!("Error writing to file {}: {}", path.display(), error)
     }
     Ok(())
 }
@@ -22,7 +18,7 @@ pub fn open_file(path: &Path) -> Result<String> {
     let path_str = path.to_str().unwrap();
     match read_to_string(path_str) {
         Ok(file) => Ok(file),
-        Err(error) => bail!("Cannot read {}: {}", path_str, error),
+        Err(error) => bail!("Cannot read {path_str}: {error}"),
     }
 }
 

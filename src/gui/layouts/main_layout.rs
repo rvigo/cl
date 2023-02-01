@@ -2,7 +2,10 @@ use crate::{
     command::{Command, CommandBuilder},
     gui::{
         entities::state::State,
-        widgets::{base_widget::BaseWidget, display::DisplayWidget, help_popup::HelpPopup},
+        widgets::{
+            base_widget::BaseWidget, display::DisplayWidget, help_popup::HelpPopup,
+            query_box::QueryBox,
+        },
     },
 };
 use tui::{
@@ -10,13 +13,38 @@ use tui::{
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, List, ListItem, Tabs},
+    widgets::{List, ListItem, Tabs},
     Frame,
 };
 
 use super::{get_default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 
 pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
+    let query_box = &mut state.query_box;
+    render_base_widget(frame, query_box);
+    render_form(frame, state);
+
+    if state.show_help {
+        frame.render_widget(HelpPopup::new(state.view_mode.clone()), frame.size());
+    }
+
+    if state.popup_context.popup.is_some() && state.popup_context.answer.is_none() {
+        if let Some(popup) = &state.popup_context.popup {
+            let popup = popup.clone();
+            frame.render_stateful_widget(
+                popup,
+                frame.size(),
+                &mut state.popup_context.choices_state,
+            );
+        }
+    }
+}
+
+fn render_base_widget<B: Backend>(frame: &mut Frame<B>, query_box: &QueryBox) {
+    frame.render_widget(BaseWidget::new(Some(query_box)), frame.size());
+}
+
+fn render_form<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -36,7 +64,6 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .selected()
         .expect("Error retrieving the selected command");
 
-    log::debug!("idx: {idx}");
     let selected_command: Command =
         if state.filter_commands().is_empty() || state.filter_commands().get(idx).is_none() {
             //creates an empty command
@@ -77,30 +104,18 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
         .constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
         .split(command_detail_chunks[1]);
 
-    let query_box = &mut state.query_box;
-
-    frame.render_widget(BaseWidget::new(Some(query_box)), frame.size());
     frame.render_widget(tabs, chunks[0]);
     frame.render_stateful_widget(commands, central_chunk[0], &mut state.commands_state);
     frame.render_widget(command, command_detail_chunks[0]);
     frame.render_widget(namespace, namespace_and_tags_chunk[0]);
     frame.render_widget(tags, namespace_and_tags_chunk[1]);
     frame.render_widget(description, chunks[1]);
+}
 
-    if state.show_help {
-        frame.render_widget(HelpPopup::new(state.view_mode.clone()), frame.size());
-    }
-
-    if state.popup_context.popup.is_some() && state.popup_context.answer.is_none() {
-        if let Some(popup) = &state.popup_context.popup {
-            let popup = popup.clone();
-            frame.render_stateful_widget(
-                popup,
-                frame.size(),
-                &mut state.popup_context.choices_state,
-            );
-        }
-    }
+fn create_display_widget<'a>(title: String, content: String) -> DisplayWidget<'a> {
+    DisplayWidget::new(content, true)
+        .title(title.clone())
+        .block(get_default_block(title))
 }
 
 fn create_tab_menu_widget<'a>(state: &State) -> Tabs<'a> {
@@ -112,7 +127,7 @@ fn create_tab_menu_widget<'a>(state: &State) -> Tabs<'a> {
         .collect();
     Tabs::new(tab_menu)
         .select(state.namespace_state.selected().unwrap())
-        .block(Block::default().title(" Namespaces ").borders(Borders::ALL))
+        .block(get_default_block("Namespaces".to_string()))
         .style(Style::default())
         .highlight_style(
             Style::default()
@@ -134,7 +149,7 @@ fn create_command_items_widget<'a>(state: &mut State) -> List<'a> {
         .collect();
 
     List::new(list_items)
-        .block(Block::default().borders(Borders::ALL).title(" Aliases "))
+        .block(get_default_block("Aliases".to_string()))
         .highlight_style(
             Style::default()
                 .fg(Color::Black)
@@ -144,31 +159,18 @@ fn create_command_items_widget<'a>(state: &mut State) -> List<'a> {
         .highlight_symbol("> ")
 }
 
-//TODO Create a factory
 fn create_command_details_widget<'a>(command: String) -> DisplayWidget<'a> {
-    let title = "Command".to_string();
-    DisplayWidget::new(command, true)
-        .title(title.clone())
-        .block(get_default_block(title))
+    create_display_widget("Command".to_string(), command)
 }
 
 fn create_command_description_widget<'a>(description: String) -> DisplayWidget<'a> {
-    let title = "Description".to_string();
-    DisplayWidget::new(description, true)
-        .title(title.clone())
-        .block(get_default_block(title))
+    create_display_widget("Description".to_string(), description)
 }
 
 fn create_tags_menu_widget<'a>(tags: String) -> DisplayWidget<'a> {
-    let title = "Tags".to_string();
-    DisplayWidget::new(tags, true)
-        .title(title.clone())
-        .block(get_default_block(title))
+    create_display_widget("Tags".to_string(), tags)
 }
 
 fn create_namespace_widget<'a>(namespace: String) -> DisplayWidget<'a> {
-    let title = "Namespace".to_string();
-    DisplayWidget::new(namespace, true)
-        .title(title.clone())
-        .block(get_default_block(title))
+    create_display_widget("Namespace".to_string(), namespace)
 }

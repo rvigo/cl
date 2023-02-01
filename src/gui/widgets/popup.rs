@@ -7,13 +7,14 @@ use tui::{
     widgets::Tabs,
 };
 
-use crate::gui::layouts::{centered_rect, DEFAULT_TEXT_COLOR};
+use crate::gui::layouts::{centered_rect, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 
 #[derive(Clone, Debug)]
 pub enum MessageType {
     Error,
     Delete,
 }
+
 impl fmt::Display for MessageType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -59,13 +60,10 @@ impl<'a> Popup<'a> {
         Popup {
             message: message.into(),
             message_type: message_type.clone(),
-            choices: if let Some(msg_type) = message_type {
-                match msg_type {
-                    MessageType::Error => vec![Answer::Ok],
-                    MessageType::Delete => vec![Answer::Cancel, Answer::Ok],
-                }
-            } else {
-                vec![]
+            choices: match message_type {
+                Some(MessageType::Error) => vec![Answer::Ok],
+                Some(MessageType::Delete) => vec![Answer::Cancel, Answer::Ok],
+                _ => vec![],
             },
             block: Some(
                 Block::default()
@@ -153,31 +151,15 @@ impl ChoicesState {
     }
 
     pub fn next(&mut self, choices: Vec<Answer>) {
-        let i = match self.selected() {
-            Some(i) => {
-                if i >= choices.len() - 1 {
-                    0
-                } else {
-                    i + 1
-                }
-            }
-            None => 0,
-        };
+        let mut i = self.selected().unwrap_or(0);
+        i = if i >= choices.len() - 1 { 0 } else { i + 1 };
 
         self.select(Some(i));
     }
 
     pub fn previous(&mut self, choices: Vec<Answer>) {
-        let i = match self.selected() {
-            Some(i) => {
-                if i == 0 {
-                    choices.len() - 1
-                } else {
-                    i - 1
-                }
-            }
-            None => 0,
-        };
+        let mut i = self.selected().unwrap_or(0);
+        i = if i == 0 { choices.len() - 1 } else { i - 1 };
 
         self.select(Some(i));
     }
@@ -217,7 +199,7 @@ impl<'a> StatefulWidget for Popup<'a> {
             .select(state.selected().unwrap_or(0))
             .highlight_style(
                 Style::default()
-                    .fg(DEFAULT_TEXT_COLOR)
+                    .fg(DEFAULT_SELECTED_COLOR)
                     .add_modifier(Modifier::UNDERLINED),
             )
             .divider(Span::raw(""));
