@@ -8,7 +8,10 @@ use crate::{
 use anyhow::{bail, Result};
 use itertools::Itertools;
 use tui::widgets::ListState;
-use tui_textarea::TextArea;
+use tui_textarea::{
+    CursorMove::{Bottom, End},
+    TextArea,
+};
 
 #[derive(Default)]
 pub struct FieldContext<'a> {
@@ -19,38 +22,41 @@ pub struct FieldContext<'a> {
 
 impl<'a> FieldContext<'a> {
     pub fn next_field(&mut self) {
-        let old_idx = self.focus_state.selected().unwrap();
-        self.fields.get_mut(old_idx).unwrap().toggle_focus();
-        let idx = match self.focus_state.selected() {
-            Some(i) => {
-                if i >= self.fields.len() - 1 {
-                    0
-                } else {
-                    i + 1
-                }
-            }
-            None => 0,
+        let old_idx = self.focus_state.selected().unwrap_or(0);
+        if let Some(old_field) = self.fields.get_mut(old_idx) {
+            old_field.toggle_focus()
+        };
+
+        let mut idx = self.focus_state.selected().unwrap_or(0);
+        idx = if idx >= self.fields.len() - 1 {
+            0
+        } else {
+            idx + 1
         };
 
         self.focus_state.select(Some(idx));
-        self.fields.get_mut(idx).unwrap().toggle_focus();
+        if let Some(new_field) = self.fields.get_mut(idx) {
+            new_field.toggle_focus()
+        };
     }
 
     pub fn previous_field(&mut self) {
-        let old_idx = self.focus_state.selected().unwrap();
-        self.fields.get_mut(old_idx).unwrap().toggle_focus();
-        let idx = match self.focus_state.selected() {
-            Some(i) => {
-                if i == 0 {
-                    self.fields.len() - 1
-                } else {
-                    i - 1
-                }
-            }
-            None => 0,
+        let old_idx = self.focus_state.selected().unwrap_or(0);
+        if let Some(old_field) = self.fields.get_mut(old_idx) {
+            old_field.toggle_focus()
         };
+
+        let mut idx = self.focus_state.selected().unwrap_or(0);
+        idx = if idx == 0 {
+            self.fields.len() - 1
+        } else {
+            idx - 1
+        };
+
         self.focus_state.select(Some(idx));
-        self.fields.get_mut(idx).unwrap().toggle_focus();
+        if let Some(new_field) = self.fields.get_mut(idx) {
+            new_field.toggle_focus()
+        };
     }
 
     pub fn selected_mut_field(&mut self) -> Option<&mut Field<'a>> {
@@ -157,45 +163,58 @@ impl<'a> FieldContext<'a> {
     }
 
     pub fn set_selected_command_input(&mut self) {
-        let current_command = self.selected_command.as_mut().unwrap();
-        self.fields.iter_mut().for_each(|field| {
-            match field.field_type {
-                FieldType::Alias => {
-                    field.text_area = TextArea::from(vec![current_command.alias.clone()])
-                }
-                FieldType::Command => {
-                    field.text_area = current_command
-                        .command
-                        .clone()
-                        .lines()
-                        .map(String::from)
-                        .collect()
-                }
+        if let Some(current_command) = self.selected_command.as_mut() {
+            self.fields.iter_mut().for_each(|field| {
+                match field.field_type {
+                    FieldType::Alias => {
+                        field.text_area = TextArea::from(vec![current_command.alias.clone()]);
+                        field.text_area.move_cursor(Bottom);
+                        field.text_area.move_cursor(End);
+                    }
+                    FieldType::Command => {
+                        field.text_area = TextArea::from(
+                            current_command
+                                .command
+                                .clone()
+                                .lines()
+                                .map(String::from)
+                                .collect::<Vec<String>>(),
+                        );
+                        field.text_area.move_cursor(Bottom);
+                        field.text_area.move_cursor(End);
+                    }
 
-                FieldType::Namespace => {
-                    field.text_area = TextArea::from(vec![current_command.namespace.clone()])
-                }
-                FieldType::Description => {
-                    field.text_area = TextArea::from(
-                        current_command
-                            .description
+                    FieldType::Namespace => {
+                        field.text_area = TextArea::from(vec![current_command.namespace.clone()]);
+                        field.text_area.move_cursor(Bottom);
+                        field.text_area.move_cursor(End);
+                    }
+                    FieldType::Description => {
+                        field.text_area = TextArea::from(
+                            current_command
+                                .description
+                                .as_ref()
+                                .unwrap_or(&String::from(""))
+                                .clone()
+                                .lines()
+                                .map(String::from)
+                                .collect::<Vec<String>>(),
+                        );
+                        field.text_area.move_cursor(Bottom);
+                        field.text_area.move_cursor(End);
+                    }
+                    FieldType::Tags => {
+                        field.text_area = TextArea::from(vec![current_command
+                            .tags
                             .as_ref()
-                            .unwrap_or(&String::from(""))
-                            .clone()
-                            .lines()
-                            .map(String::from)
-                            .collect::<Vec<String>>(),
-                    );
-                }
-                FieldType::Tags => {
-                    field.text_area = TextArea::from(vec![current_command
-                        .tags
-                        .as_ref()
-                        .unwrap_or(&vec![String::from("")])
-                        .join(", ")])
-                }
-            };
-        });
+                            .unwrap_or(&vec![String::from("")])
+                            .join(", ")]);
+                        field.text_area.move_cursor(Bottom);
+                        field.text_area.move_cursor(End);
+                    }
+                };
+            });
+        }
     }
 }
 
