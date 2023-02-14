@@ -64,10 +64,6 @@ impl<'a> FieldContext<'a> {
         self.fields.get_mut(idx)
     }
 
-    pub fn clear_fields_input(&mut self) {
-        self.fields.iter_mut().for_each(|field| field.clear_input());
-    }
-
     pub fn build_new_command(&mut self) -> Result<Command> {
         let mut command_builder = CommandBuilder::default();
         self.fields
@@ -314,7 +310,7 @@ mod test {
         field_context.fields.push(field1);
         field_context.fields.push(field2);
 
-        field_context.clear_fields_input();
+        field_context.fields.clear_fields_input();
         assert_eq!(field_context.fields[0].input_as_string(), "")
     }
     #[test]

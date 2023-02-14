@@ -1,5 +1,9 @@
 use crate::{
-    gui::{entities::state::State, key_handlers, layouts::select_ui},
+    gui::{
+        entities::application_context::ApplicationContext,
+        key_handlers,
+        layouts::{get_terminal_size, select_ui},
+    },
     resources::load_commands,
 };
 use anyhow::Result;
@@ -11,13 +15,13 @@ use crossterm::{
 use std::{io, panic};
 use tui::{backend::CrosstermBackend, Terminal};
 
-pub struct AppContext<'a> {
+pub struct TuiApplication<'a> {
     pub terminal: Terminal<CrosstermBackend<std::io::Stdout>>,
-    pub state: State<'a>,
+    pub state: ApplicationContext<'a>,
 }
 
-impl<'a> AppContext<'a> {
-    pub fn create() -> Result<AppContext<'a>> {
+impl<'a> TuiApplication<'a> {
+    pub fn create() -> Result<TuiApplication<'a>> {
         // setup terminal
         enable_raw_mode()?;
         let mut stdout = io::stdout();
@@ -26,10 +30,16 @@ impl<'a> AppContext<'a> {
         let mut terminal = Terminal::new(backend)?;
         terminal.hide_cursor()?;
 
-        let commands = load_commands()?;
-        let state = State::init(commands);
+        // TODO inject this size at the ApplicationContext and handle this as a global info
+        let size = get_terminal_size(&terminal.get_frame());
 
-        Ok(AppContext { terminal, state })
+        let commands = load_commands()?;
+        let application_context = ApplicationContext::init(commands, size);
+
+        Ok(TuiApplication {
+            terminal,
+            state: application_context,
+        })
     }
 
     pub fn render(&mut self) -> Result<()> {
@@ -39,7 +49,7 @@ impl<'a> AppContext<'a> {
                 .draw(|frame| select_ui(frame, &mut self.state))?;
             if let Event::Key(key) = event::read()? {
                 key_handlers::handle(key, &mut self.state);
-                if self.state.should_quit {
+                if self.state.should_quit() {
                     return Ok(());
                 }
             }

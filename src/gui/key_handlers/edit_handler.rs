@@ -1,9 +1,7 @@
-use super::Handler;
+use super::KeyHandler;
 use crate::{
     gui::{
-        entities::state::State,
-        layouts::ViewMode,
-        widgets::popup::{MessageType, Popup},
+        entities::application_context::ApplicationContext, layouts::ViewMode, widgets::popup::Popup,
     },
     resources::file_service,
 };
@@ -11,8 +9,8 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub struct EditHandler;
 
-impl Handler for EditHandler {
-    fn handle(&self, key_event: KeyEvent, state: &mut State) {
+impl KeyHandler for EditHandler {
+    fn handle(&self, key_event: KeyEvent, application_context: &mut ApplicationContext) {
         match key_event {
             KeyEvent {
                 code: KeyCode::Esc,
@@ -24,58 +22,99 @@ impl Handler for EditHandler {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
-                state.form_fields_context.clear_fields_input();
-                state.form_fields_context.focus_state.select(Some(0));
-                state.view_mode = ViewMode::Main;
+                application_context
+                    .ui_context
+                    .form_fields_context
+                    .fields
+                    .clear_fields_input();
+                application_context
+                    .ui_context
+                    .form_fields_context
+                    .focus_state
+                    .select(Some(0));
+                application_context.ui_context.set_view_mode(ViewMode::Main);
             }
             KeyEvent {
                 code: KeyCode::Tab,
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => state.form_fields_context.next_field(),
+            } => application_context
+                .ui_context
+                .form_fields_context
+                .next_field(),
 
             KeyEvent {
                 code: KeyCode::BackTab,
                 modifiers: KeyModifiers::SHIFT,
                 ..
-            } => state.form_fields_context.previous_field(),
+            } => application_context
+                .ui_context
+                .form_fields_context
+                .previous_field(),
 
             KeyEvent {
                 code: KeyCode::Char('s'),
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
-                let field_context = &mut state.form_fields_context;
-                let edited_command = field_context.edit_command();
-                if let Ok(edited) = edited_command {
-                    match state.commands.add_edited_command(
-                        &edited,
-                        field_context
-                            .selected_command()
-                            .expect("A command should always be selected"),
-                    ) {
-                        Ok(commands) => {
-                            if file_service::write_to_command_file(commands).is_ok() {
-                                state.form_fields_context.clear_fields_input();
-                                state.reload_state();
-                                state.view_mode = ViewMode::Main;
-                            }
-                        }
-                        Err(error) => {
-                            let popup =
-                                Popup::new(error.to_string(), "Error", Some(MessageType::Error));
-                            state.popup_context.popup = Some(popup);
-                        }
+                let edited_command = match application_context
+                    .ui_context
+                    .form_fields_context
+                    .edit_command()
+                {
+                    Ok(command) => command,
+                    Err(error) => {
+                        let popup = Popup::from_error(error.to_string());
+                        application_context.ui_context.popup_context.popup = Some(popup);
+                        return;
                     }
+                };
+
+                let current_command = match application_context
+                    .ui_context
+                    .form_fields_context
+                    .selected_command()
+                {
+                    Some(command) => command,
+                    None => {
+                        let popup = Popup::from_error("No selected command to edit");
+                        application_context.ui_context.popup_context.popup = Some(popup);
+                        return;
+                    }
+                };
+
+                if let Ok(commands) = application_context
+                    .commands
+                    .add_edited_command(&edited_command, current_command)
+                {
+                    if file_service::write_to_command_file(commands).is_ok() {
+                        application_context
+                            .ui_context
+                            .form_fields_context
+                            .fields
+                            .clear_fields_input();
+                        application_context.reload_state();
+                        application_context.ui_context.set_view_mode(ViewMode::Main);
+                    } else {
+                        let popup = Popup::from_error("Failed to write to command file");
+                        application_context.ui_context.popup_context.popup = Some(popup);
+                    }
+                } else {
+                    let popup = Popup::from_error("Failed to add the edited command");
+                    application_context.ui_context.popup_context.popup = Some(popup);
                 }
             }
             KeyEvent {
                 code: KeyCode::F(1),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => state.show_help = true,
+            } => application_context.set_show_help(true),
             input => {
-                if let Some(selected_field) = state.form_fields_context.selected_mut_field() {
+                if let Some(selected_field) = application_context
+                    .ui_context
+                    .form_fields_context
+                    .selected_mut_field()
+                {
                     selected_field.on_input(input)
                 }
             }

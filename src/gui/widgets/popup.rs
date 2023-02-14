@@ -1,85 +1,65 @@
+use crate::gui::layouts::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use std::fmt;
-use tui::widgets::{Block, BorderType, Borders, Clear, Paragraph, StatefulWidget, Widget, Wrap};
 use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Modifier, Style},
     text::{Span, Spans},
-    widgets::Tabs,
+    widgets::{Block, BorderType, Borders, Clear, Paragraph, StatefulWidget, Tabs, Widget, Wrap},
 };
-
-use crate::gui::layouts::{centered_rect, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
-
-#[derive(Clone, Debug)]
-pub enum MessageType {
-    Error,
-    Delete,
-}
-
-impl fmt::Display for MessageType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            MessageType::Error => write!(f, " Error "),
-            MessageType::Delete => write!(f, " Warning "),
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum Answer {
-    Ok,
-    Cancel,
-}
-
-impl fmt::Display for Answer {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Answer::Ok => write!(f, "Ok"),
-            Answer::Cancel => write!(f, "Cancel"),
-        }
-    }
-}
 
 #[derive(Clone, Debug)]
 pub struct Popup<'a> {
     message: String,
-    pub message_type: Option<MessageType>,
-    pub choices: Vec<Answer>,
+    message_type: Option<MessageType>,
+    choices: Vec<Answer>,
     block: Option<Block<'a>>,
 }
 
 impl<'a> Popup<'a> {
-    pub fn new<MESSAGE, TITLE>(
-        message: MESSAGE,
-        title: TITLE,
-        message_type: Option<MessageType>,
-    ) -> Popup<'a>
+    pub fn from_error<T>(message: T) -> Popup<'a>
     where
-        MESSAGE: Into<String>,
-        TITLE: Into<String>,
+        T: Into<String>,
     {
         Popup {
             message: message.into(),
-            message_type: message_type.clone(),
-            choices: match message_type {
-                Some(MessageType::Error) => vec![Answer::Ok],
-                Some(MessageType::Delete) => vec![Answer::Cancel, Answer::Ok],
-                _ => vec![],
-            },
+            message_type: Some(MessageType::Error),
+            choices: vec![Answer::Ok],
             block: Some(
                 Block::default()
                     .borders(Borders::ALL)
                     .style(Style::default())
-                    .title(format!(" {} ", title.into()))
+                    .title(" Error ".to_string())
                     .title_alignment(Alignment::Left)
                     .border_type(BorderType::Plain),
             ),
         }
     }
 
-    pub fn clear(&mut self) {
-        self.message.clear();
-        self.message_type = None;
-        self.choices = vec![];
+    pub fn from_warning<T>(message: T) -> Popup<'a>
+    where
+        T: Into<String>,
+    {
+        Popup {
+            message: message.into(),
+            message_type: Some(MessageType::Warning),
+            choices: vec![Answer::Cancel, Answer::Ok],
+            block: Some(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .style(Style::default())
+                    .title(" Warning ".to_string())
+                    .title_alignment(Alignment::Left)
+                    .border_type(BorderType::Plain),
+            ),
+        }
+    }
+
+    pub fn choices(&self) -> Vec<Answer> {
+        self.choices.clone()
+    }
+
+    pub fn message_type(&self) -> Option<MessageType> {
+        self.message_type.clone()
     }
 
     fn create_buttom_area(&self, area: Rect) -> Vec<Rect> {
@@ -132,39 +112,6 @@ impl<'a> Popup<'a> {
     }
 }
 
-#[derive(Default)]
-pub struct ChoicesState {
-    offset: usize,
-    selected: Option<usize>,
-}
-
-impl ChoicesState {
-    pub fn selected(&self) -> Option<usize> {
-        self.selected
-    }
-
-    pub fn select(&mut self, index: Option<usize>) {
-        self.selected = index;
-        if index.is_none() {
-            self.offset = 0;
-        }
-    }
-
-    pub fn next(&mut self, choices: Vec<Answer>) {
-        let mut i = self.selected().unwrap_or(0);
-        i = if i >= choices.len() - 1 { 0 } else { i + 1 };
-
-        self.select(Some(i));
-    }
-
-    pub fn previous(&mut self, choices: Vec<Answer>) {
-        let mut i = self.selected().unwrap_or(0);
-        i = if i == 0 { choices.len() - 1 } else { i - 1 };
-
-        self.select(Some(i));
-    }
-}
-
 impl<'a> StatefulWidget for Popup<'a> {
     type State = ChoicesState;
 
@@ -181,7 +128,6 @@ impl<'a> StatefulWidget for Popup<'a> {
             .wrap(Wrap { trim: true })
             .block(block.to_owned());
 
-        let area = centered_rect(45, 40, area);
         let buttom_area = self.create_buttom_area(area);
         Clear::render(Clear, area, buf);
 
@@ -204,5 +150,72 @@ impl<'a> StatefulWidget for Popup<'a> {
             )
             .divider(Span::raw(""));
         tabs.render(buttom_area[buttom_area.len() - 1], buf);
+    }
+}
+
+impl<'a> Drop for Popup<'a> {
+    fn drop(&mut self) {
+        self.message.clear();
+        self.message_type = None;
+        self.choices = vec![];
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct ChoicesState {
+    selected: Option<usize>,
+}
+
+impl ChoicesState {
+    pub fn selected(&self) -> Option<usize> {
+        self.selected
+    }
+
+    pub fn select(&mut self, index: Option<usize>) {
+        self.selected = index;
+    }
+
+    pub fn next(&mut self, choices: Vec<Answer>) {
+        let mut i = self.selected().unwrap_or(0);
+        i = if i >= choices.len() - 1 { 0 } else { i + 1 };
+
+        self.select(Some(i));
+    }
+
+    pub fn previous(&mut self, choices: Vec<Answer>) {
+        let mut i = self.selected().unwrap_or(0);
+        i = if i == 0 { choices.len() - 1 } else { i - 1 };
+
+        self.select(Some(i));
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum MessageType {
+    Error,
+    Warning,
+}
+
+impl fmt::Display for MessageType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            MessageType::Error => write!(f, " Error "),
+            MessageType::Warning => write!(f, " Warning "),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum Answer {
+    Ok,
+    Cancel,
+}
+
+impl fmt::Display for Answer {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Answer::Ok => write!(f, "Ok"),
+            Answer::Cancel => write!(f, "Cancel"),
+        }
     }
 }

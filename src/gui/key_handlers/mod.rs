@@ -7,24 +7,24 @@ use self::{
     edit_handler::EditHandler, insert_handler::InsertHandler, main_handler::MainHandler,
     popup_handler::PopupHandler,
 };
-use super::layouts::ViewMode;
-use crate::gui::entities::state::State;
+use super::{entities::application_context::ApplicationContext, layouts::ViewMode};
 use crossterm::event::KeyEvent;
 
-pub fn handle(key_event: KeyEvent, state: &mut State) {
-    if state.popup_context.popup.is_some() {
-        PopupHandler::default().handle(key_event, state);
-    } else if state.show_help {
-        handle_help(state)
-    } else if state.query_box.is_on_focus() {
-        state.query_box.handle(key_event)
+pub fn handle(key_event: KeyEvent, application_context: &mut ApplicationContext) {
+    if application_context.ui_context.popup_context.popup.is_some() {
+        PopupHandler::default().handle(key_event, application_context);
+    } else if application_context.show_help() {
+        handle_help(application_context)
+    } else if application_context.ui_context.query_box.is_on_focus() {
+        application_context.ui_context.query_box.handle(key_event);
+        application_context.filter_commands();
     } else {
-        let handler = get_handler(state.view_mode.clone());
-        handler.handle(key_event, state);
+        let handler = get_handler(application_context.ui_context.view_mode());
+        handler.handle(key_event, application_context);
     }
 }
 
-fn get_handler(view_mode: ViewMode) -> Box<dyn Handler> {
+fn get_handler(view_mode: &ViewMode) -> Box<dyn KeyHandler> {
     match view_mode {
         ViewMode::Main => Box::new(MainHandler),
         ViewMode::Insert => Box::new(InsertHandler),
@@ -32,10 +32,10 @@ fn get_handler(view_mode: ViewMode) -> Box<dyn Handler> {
     }
 }
 
-pub trait Handler {
-    fn handle(&self, key_event: KeyEvent, state: &mut State);
+pub trait KeyHandler {
+    fn handle(&self, key_event: KeyEvent, application_context: &mut ApplicationContext);
 }
 
-fn handle_help(state: &mut State) {
-    state.show_help = false;
+fn handle_help(application_context: &mut ApplicationContext) {
+    application_context.set_show_help(false);
 }
