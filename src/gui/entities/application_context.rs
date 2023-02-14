@@ -1,69 +1,77 @@
-use crate::{
-    command::Command,
-    commands::Commands,
-    gui::{
-        layouts::ViewMode,
-        widgets::{
-            contexts::{field_context::FieldContext, popup_context::PopupContext},
-            query_box::QueryBox,
-        },
-    },
-};
+use super::ui_context::UIContext;
+use crate::{command::Command, commands::Commands, gui::layouts::TerminalSize};
 use anyhow::Result;
 use itertools::Itertools;
 use std::{thread, time::Duration};
 use tui::widgets::ListState;
 
-pub struct State<'a> {
-    pub should_quit: bool,
-    pub commands_state: ListState,
-    pub namespace_state: ListState,
-    pub commands: Commands,
+pub struct ApplicationContext<'a> {
+    should_quit: bool,
+    show_help: bool,
+
     pub namespaces: Vec<String>,
+    pub namespace_state: ListState,
     pub current_namespace: String,
-    pub view_mode: ViewMode,
-    pub form_fields_context: FieldContext<'a>,
-    pub popup_context: PopupContext<'a>,
-    pub show_help: bool,
+
+    pub commands: Commands,
+    pub commands_state: ListState,
     pub to_be_executed: Option<Command>,
-    pub query_box: QueryBox<'a>,
+
+    pub ui_context: UIContext<'a>,
 }
 
-impl<'a> State<'a> {
-    pub fn init(commands: Commands) -> State<'a> {
-        let mut state = State {
+impl<'a> ApplicationContext<'a> {
+    pub fn init(commands: Commands, terminal_size: TerminalSize) -> ApplicationContext<'a> {
+        let mut state = ApplicationContext {
             should_quit: false,
-            commands_state: ListState::default(),
-            namespace_state: ListState::default(),
-            commands: commands.clone(),
-            namespaces: Default::default(),
-            current_namespace: String::from("All"),
-            view_mode: ViewMode::default(),
-            form_fields_context: FieldContext::default(),
-            popup_context: PopupContext::default(),
             show_help: false,
+            namespaces: Default::default(),
+            namespace_state: ListState::default(),
+            current_namespace: String::from("All"),
+            commands: commands.clone(),
+            commands_state: ListState::default(),
             to_be_executed: None,
-            query_box: QueryBox::default(),
+            ui_context: UIContext::new(terminal_size),
         };
 
         state.load_namespaces();
         state.commands_state.select(Some(0));
         state.namespace_state.select(Some(0));
-        state.form_fields_context.focus_state.select(Some(0));
-        state.form_fields_context.select_command(
+        state
+            .ui_context
+            .form_fields_context
+            .focus_state
+            .select(Some(0));
+        state.ui_context.form_fields_context.select_command(
             commands
                 .get_command_item_ref(0)
                 .map(|value| value.to_owned()),
         );
-        state.popup_context.choices_state.select(Some(0));
+        state.ui_context.popup_context.choices_state.select(Some(0));
 
         state
+    }
+
+    pub fn should_quit(&self) -> bool {
+        self.should_quit
+    }
+
+    pub fn quit(&mut self) {
+        self.should_quit = true
+    }
+
+    pub fn show_help(&self) -> bool {
+        self.show_help
+    }
+
+    pub fn set_show_help(&mut self, show_help: bool) {
+        self.show_help = show_help
     }
 
     pub fn load_namespaces(&mut self) {
         self.namespace_state.select(Some(0));
         self.namespaces = self.commands.namespaces();
-        self.current_namespace = self.namespaces[0].clone();
+        self.current_namespace = self.namespaces[0].to_owned();
         self.filter_namespaces()
     }
 
@@ -131,11 +139,10 @@ impl<'a> State<'a> {
     }
 
     pub fn filter_commands(&mut self) -> Commands {
-        let query_string = self.query_box.get_input();
-
+        let query_string = self.ui_context.query_box.get_input();
         if let Ok(commands) = self
             .commands
-            .commands(self.current_namespace.clone(), query_string)
+            .commands(self.current_namespace.to_owned(), query_string)
         {
             commands
         } else {
@@ -195,9 +202,9 @@ mod test {
 
         Commands::init(commands)
     }
-    fn state_builder(n_of_commands: usize) -> State<'static> {
+    fn state_builder(n_of_commands: usize) -> ApplicationContext<'static> {
         let commands = commands_builder(n_of_commands);
-        State::init(commands)
+        ApplicationContext::init(commands, TerminalSize::Medium)
     }
 
     #[test]

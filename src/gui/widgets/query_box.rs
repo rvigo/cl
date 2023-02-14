@@ -1,6 +1,8 @@
 use crate::gui::layouts::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crossterm::event::{KeyCode, KeyEvent};
 use tui::{
+    buffer::Buffer,
+    layout::Rect,
     style::{Color, Modifier, Style},
     widgets::{Block, BorderType, Borders, Widget},
 };
@@ -48,12 +50,12 @@ impl<'a> QueryBox<'a> {
     }
 
     pub fn get_input(&self) -> String {
-        self.buffer.clone()
+        self.buffer.to_owned()
     }
 }
 
 impl<'a> Widget for QueryBox<'a> {
-    fn render(mut self, area: tui::layout::Rect, buf: &mut tui::buffer::Buffer) {
+    fn render(mut self, area: Rect, buf: &mut Buffer) {
         let style = if self.on_focus {
             Style::default().fg(Color::Black).bg(DEFAULT_SELECTED_COLOR)
         } else if !self.on_focus && !self.text_area.is_empty() {
