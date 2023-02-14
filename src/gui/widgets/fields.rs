@@ -21,9 +21,12 @@ impl<'a> Fields<'a> {
             false,
             true,
         );
-
         let tags = forms_widget_factory("Tags".to_string(), FieldType::Tags, false, false);
+
         Fields(vec![alias, namespace, command, description, tags])
+    }
+    pub fn clear_fields_input(&mut self) {
+        self.iter_mut().for_each(|field| field.clear_input());
     }
 }
 
@@ -38,6 +41,12 @@ impl<'a> Deref for Fields<'a> {
 impl DerefMut for Fields<'_> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
+    }
+}
+
+impl<'a> Drop for Fields<'a> {
+    fn drop(&mut self) {
+        self.clear_fields_input()
     }
 }
 

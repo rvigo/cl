@@ -1,9 +1,7 @@
-use super::Handler;
+use super::KeyHandler;
 use crate::{
     gui::{
-        entities::state::State,
-        layouts::ViewMode,
-        widgets::popup::{MessageType, Popup},
+        entities::application_context::ApplicationContext, layouts::ViewMode, widgets::popup::Popup,
     },
     resources::file_service,
 };
@@ -11,8 +9,8 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub struct InsertHandler;
 
-impl Handler for InsertHandler {
-    fn handle(&self, key_event: KeyEvent, state: &mut State) {
+impl KeyHandler for InsertHandler {
+    fn handle(&self, key_event: KeyEvent, application_context: &mut ApplicationContext) {
         match key_event {
             KeyEvent {
                 code: KeyCode::Esc,
@@ -24,40 +22,61 @@ impl Handler for InsertHandler {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
-                state.form_fields_context.clear_fields_input();
-                state.form_fields_context.focus_state.select(Some(0));
-                state.view_mode = ViewMode::Main;
+                application_context
+                    .ui_context
+                    .form_fields_context
+                    .fields
+                    .clear_fields_input();
+                application_context
+                    .ui_context
+                    .form_fields_context
+                    .focus_state
+                    .select(Some(0));
+                application_context.ui_context.set_view_mode(ViewMode::Main);
             }
             KeyEvent {
                 code: KeyCode::Tab,
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => state.form_fields_context.next_field(),
+            } => application_context
+                .ui_context
+                .form_fields_context
+                .next_field(),
 
             KeyEvent {
                 code: KeyCode::BackTab,
                 modifiers: KeyModifiers::SHIFT,
                 ..
-            } => state.form_fields_context.previous_field(),
+            } => application_context
+                .ui_context
+                .form_fields_context
+                .previous_field(),
 
             KeyEvent {
                 code: KeyCode::Char('s'),
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
-                if let Ok(command) = state.form_fields_context.build_new_command() {
-                    match state.commands.add_command(&command) {
+                if let Ok(command) = application_context
+                    .ui_context
+                    .form_fields_context
+                    .build_new_command()
+                {
+                    match application_context.commands.add_command(&command) {
                         Ok(commands) => {
                             if let Ok(()) = file_service::write_to_command_file(commands) {
-                                state.form_fields_context.clear_fields_input();
-                                state.reload_state();
-                                state.view_mode = ViewMode::Main
+                                application_context
+                                    .ui_context
+                                    .form_fields_context
+                                    .fields
+                                    .clear_fields_input();
+                                application_context.reload_state();
+                                application_context.ui_context.set_view_mode(ViewMode::Main)
                             }
                         }
                         Err(error) => {
-                            let popup =
-                                Popup::new(error.to_string(), "Error", Some(MessageType::Error));
-                            state.popup_context.popup = Some(popup);
+                            let popup = Popup::from_error(error.to_string());
+                            application_context.ui_context.popup_context.popup = Some(popup);
                         }
                     }
                 }
@@ -66,9 +85,13 @@ impl Handler for InsertHandler {
                 code: KeyCode::F(1),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => state.show_help = true,
+            } => application_context.set_show_help(true),
             input => {
-                if let Some(field) = state.form_fields_context.selected_mut_field() {
+                if let Some(field) = application_context
+                    .ui_context
+                    .form_fields_context
+                    .selected_mut_field()
+                {
                     field.on_input(input)
                 }
             }

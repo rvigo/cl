@@ -1,5 +1,6 @@
+use super::{centered_rect, TerminalSize};
 use crate::gui::{
-    entities::state::State,
+    entities::application_context::ApplicationContext,
     widgets::{base_widget::BaseWidget, field::FieldType, help_popup::HelpPopup},
 };
 use tui::{
@@ -10,31 +11,67 @@ use tui::{
     Frame,
 };
 
-pub fn render<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
+pub fn render<B: Backend>(
+    frame: &mut Frame<B>,
+    application_context: &mut ApplicationContext,
+    terminal_size: TerminalSize,
+) {
     render_base_widget(frame);
-    render_form(frame, state);
 
-    if state.show_help {
-        frame.render_widget(HelpPopup::new(state.view_mode.clone()), frame.size());
+    match terminal_size {
+        TerminalSize::Medium => render_medium_form(frame, application_context),
+        TerminalSize::Large => render_medium_form(frame, application_context),
+        TerminalSize::Small => render_small_form(frame, application_context),
     }
-    if state.popup_context.popup.is_some() && state.popup_context.answer.is_none() {
-        if let Some(popup) = &state.popup_context.popup {
-            let popup = popup.clone();
-            frame.render_stateful_widget(
-                popup,
-                frame.size(),
-                &mut state.popup_context.choices_state,
-            );
-        }
+
+    if application_context.show_help() {
+        frame.render_widget(
+            HelpPopup::new(
+                application_context.ui_context.view_mode().clone(),
+                terminal_size.clone(),
+            ),
+            frame.size(),
+        );
+    }
+
+    if application_context.ui_context.popup_context.popup.is_some()
+        && application_context
+            .ui_context
+            .popup_context
+            .answer
+            .is_none()
+    {
+        let popup = &application_context
+            .ui_context
+            .popup_context
+            .popup
+            .as_ref()
+            .unwrap()
+            .clone();
+
+        let area = if terminal_size != TerminalSize::Small {
+            centered_rect(45, 40, frame.size())
+        } else {
+            frame.size()
+        };
+
+        frame.render_stateful_widget(
+            popup.to_owned(),
+            area,
+            &mut application_context.ui_context.popup_context.choices_state,
+        );
     }
 }
 
 fn render_base_widget<B: Backend>(frame: &mut Frame<B>) {
-    let base_widget = BaseWidget::new(None);
+    let base_widget = BaseWidget::new(None, &super::TerminalSize::Medium);
     frame.render_widget(base_widget, frame.size());
 }
 
-fn render_form<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
+fn render_medium_form<B: Backend>(
+    frame: &mut Frame<B>,
+    application_context: &mut ApplicationContext,
+) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -62,7 +99,7 @@ fn render_form<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
     let form_block = Block::default()
         .borders(Borders::ALL)
         .style(Style::default())
-        .title(format!(" {} ", state.view_mode))
+        .title(format!(" {} ", application_context.ui_context.view_mode()))
         .border_type(BorderType::Plain);
     let first_row = Layout::default()
         .direction(Direction::Horizontal)
@@ -79,13 +116,75 @@ fn render_form<B: Backend>(frame: &mut Frame<B>, state: &mut State) {
 
     frame.render_widget(form_block, chunks[0]);
 
-    for field in state.form_fields_context.fields.clone().into_iter() {
-        match field.field_type {
-            FieldType::Alias => frame.render_widget(field, first_row[0]),
-            FieldType::Namespace => frame.render_widget(field, first_row[1]),
-            FieldType::Command => frame.render_widget(field, second_row[0]),
-            FieldType::Description => frame.render_widget(field, third_row[0]),
-            FieldType::Tags => frame.render_widget(field, third_row[1]),
-        }
-    }
+    let fields = application_context
+        .ui_context
+        .form_fields_context
+        .fields
+        .clone();
+
+    fields.iter().for_each(|field| {
+        let area = match field.field_type {
+            FieldType::Alias => first_row[0],
+            FieldType::Namespace => first_row[1],
+            FieldType::Command => second_row[0],
+            FieldType::Description => third_row[0],
+            FieldType::Tags => third_row[1],
+        };
+        frame.render_widget(field.clone(), area);
+    })
+}
+
+fn render_small_form<B: Backend>(
+    frame: &mut Frame<B>,
+    application_context: &mut ApplicationContext,
+) {
+    let form_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .margin(1)
+        .constraints(
+            [
+                Constraint::Length(3), //Alias & Namespace
+                Constraint::Length(3), //Desc & Tags
+                Constraint::Min(7),    //Command,
+            ]
+            .as_ref(),
+        )
+        .split(frame.size());
+
+    let form_block = Block::default()
+        .borders(Borders::ALL)
+        .style(Style::default())
+        .title(format!(" {} ", application_context.ui_context.view_mode()))
+        .border_type(BorderType::Plain);
+    let first_row = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+        .split(form_chunks[0]);
+    let second_row = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+        .split(form_chunks[1]);
+    let third_row = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(100)].as_ref())
+        .split(form_chunks[2]);
+
+    frame.render_widget(form_block, form_chunks[0]);
+
+    let fields = application_context
+        .ui_context
+        .form_fields_context
+        .fields
+        .clone();
+
+    fields.iter().for_each(|field| {
+        let area = match field.field_type {
+            FieldType::Alias => first_row[0],
+            FieldType::Namespace => first_row[1],
+            FieldType::Command => third_row[0],
+            FieldType::Description => second_row[0],
+            FieldType::Tags => second_row[1],
+        };
+        frame.render_widget(field.clone(), area);
+    })
 }
