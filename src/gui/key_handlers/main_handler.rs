@@ -1,21 +1,19 @@
-use super::Handler;
+use super::KeyHandler;
 use crate::gui::{
-    entities::state::State,
-    layouts::ViewMode,
-    widgets::popup::{MessageType, Popup},
+    entities::application_context::ApplicationContext, layouts::ViewMode, widgets::popup::Popup,
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub struct MainHandler;
 
-impl Handler for MainHandler {
-    fn handle(&self, key_event: KeyEvent, state: &mut State) {
+impl KeyHandler for MainHandler {
+    fn handle(&self, key_event: KeyEvent, application_context: &mut ApplicationContext) {
         match key_event {
             KeyEvent {
                 code: KeyCode::Char('f'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => state.query_box.toggle_focus(),
+            } => application_context.ui_context.query_box.toggle_focus(),
             KeyEvent {
                 code: KeyCode::Char('q') | KeyCode::Esc,
                 modifiers: KeyModifiers::NONE,
@@ -26,7 +24,7 @@ impl Handler for MainHandler {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
-                state.should_quit = true;
+                application_context.quit();
             }
             KeyEvent {
                 code: KeyCode::Left | KeyCode::Char('h'),
@@ -38,7 +36,7 @@ impl Handler for MainHandler {
                 modifiers: KeyModifiers::SHIFT,
                 ..
             } => {
-                state.previous_namespace();
+                application_context.previous_namespace();
             }
             KeyEvent {
                 code: KeyCode::Right | KeyCode::Char('l'),
@@ -50,39 +48,55 @@ impl Handler for MainHandler {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                state.next_namespace();
+                application_context.next_namespace();
             }
             KeyEvent {
                 code: KeyCode::Down | KeyCode::Char('k'),
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                state.next_command();
+                application_context.next_command();
             }
             KeyEvent {
                 code: KeyCode::Up | KeyCode::Char('j'),
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                state.previous_command();
+                application_context.previous_command();
             }
             KeyEvent {
                 code: KeyCode::Insert | KeyCode::Char('i'),
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                state.form_fields_context.reset_fields();
-                state.view_mode = ViewMode::Insert;
+                application_context
+                    .ui_context
+                    .form_fields_context
+                    .reset_fields();
+                application_context
+                    .ui_context
+                    .set_view_mode(ViewMode::Insert)
             }
             KeyEvent {
                 code: KeyCode::Char('e'),
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                if state.form_fields_context.selected_command().is_some() {
-                    state.form_fields_context.reset_fields();
-                    state.form_fields_context.set_selected_command_input();
-                    state.view_mode = ViewMode::Edit;
+                if application_context
+                    .ui_context
+                    .form_fields_context
+                    .selected_command()
+                    .is_some()
+                {
+                    application_context
+                        .ui_context
+                        .form_fields_context
+                        .reset_fields();
+                    application_context
+                        .ui_context
+                        .form_fields_context
+                        .set_selected_command_input();
+                    application_context.ui_context.set_view_mode(ViewMode::Edit);
                 }
             }
 
@@ -91,14 +105,15 @@ impl Handler for MainHandler {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                if let Some(selected_command) = state.form_fields_context.selected_command() {
+                if let Some(selected_command) = application_context
+                    .ui_context
+                    .form_fields_context
+                    .selected_command()
+                {
                     if !selected_command.is_empty() {
-                        let popup = Popup::new(
-                            "Are you sure you want to delete the command?",
-                            "Delete",
-                            Some(MessageType::Delete),
-                        );
-                        state.popup_context.popup = Some(popup);
+                        let popup =
+                            Popup::from_warning("Are you sure you want to delete the command?");
+                        application_context.ui_context.popup_context.popup = Some(popup);
                     }
                 }
             }
@@ -107,13 +122,18 @@ impl Handler for MainHandler {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                if let Some(selected_command) = state.form_fields_context.selected_command() {
+                if let Some(selected_command) = application_context
+                    .ui_context
+                    .form_fields_context
+                    .selected_command()
+                {
                     if !selected_command.is_empty() {
-                        let filtered_commands = state.filter_commands();
-                        let selected_index = state.commands_state.selected();
+                        let filtered_commands = application_context.filter_commands();
+                        let selected_index = application_context.commands_state.selected();
                         if let Some(index) = selected_index {
-                            state.to_be_executed = filtered_commands.get(index).cloned();
-                            state.should_quit = true
+                            application_context.to_be_executed =
+                                filtered_commands.get(index).cloned();
+                            application_context.quit()
                         }
                     }
                 }
@@ -122,7 +142,7 @@ impl Handler for MainHandler {
                 code: KeyCode::F(1) | KeyCode::Char('?'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => state.show_help = true,
+            } => application_context.set_show_help(true),
             _ => {}
         }
     }

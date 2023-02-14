@@ -1,27 +1,32 @@
-use crate::gui::layouts::{centered_rect, ViewMode, DEFAULT_SELECTED_COLOR};
+use crate::gui::layouts::{centered_rect, TerminalSize, ViewMode, DEFAULT_SELECTED_COLOR};
 use tui::{
-    layout::{Alignment, Constraint},
+    buffer::Buffer,
+    layout::{Alignment, Constraint, Rect},
     style::Style,
     widgets::{Block, BorderType, Borders, Cell, Clear, Row, Table, Widget},
 };
 
 pub struct HelpPopup<'a> {
     content: Vec<Vec<Cell<'a>>>,
+    terminal_size: TerminalSize,
 }
 
 impl<'a> HelpPopup<'a> {
-    pub fn new(view_mode: ViewMode) -> HelpPopup<'a> {
+    pub fn new(view_mode: ViewMode, terminal_size: TerminalSize) -> HelpPopup<'a> {
         let content = match view_mode {
             ViewMode::Main => main_options(),
             ViewMode::Edit => edit_options(),
             ViewMode::Insert => insert_options(),
         };
-        HelpPopup { content }
+        HelpPopup {
+            content,
+            terminal_size,
+        }
     }
 }
 
 impl<'a> Widget for HelpPopup<'a> {
-    fn render(self, area: tui::layout::Rect, buf: &mut tui::buffer::Buffer) {
+    fn render(self, area: Rect, buf: &mut Buffer) {
         let rows = self
             .content
             .clone()
@@ -38,11 +43,15 @@ impl<'a> Widget for HelpPopup<'a> {
             )
             .widths(&[Constraint::Percentage(50), Constraint::Percentage(50)]);
 
-        let centered_rect = centered_rect(
-            50,
-            (100 * (self.content.len() as u16 * 2)) / area.height, //dynamic height based on options size
-            area,
-        );
+        let width = if self.terminal_size.eq(&TerminalSize::Small) {
+            100
+        } else {
+            50
+        };
+
+        let dynamic_height = (100 * (self.content.len() as u16 * 2)) / area.height;
+        let height = std::cmp::max(dynamic_height, area.height);
+        let centered_rect = centered_rect(width, height, area);
 
         Clear::render(Clear, centered_rect, buf);
         table.render(centered_rect, buf)

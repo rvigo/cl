@@ -1,10 +1,10 @@
 mod form_layout;
 mod main_layout;
 
-use crate::gui::entities::state::State;
+use crate::gui::entities::application_context::ApplicationContext;
 use std::{fmt, io::Stdout};
 use tui::{
-    backend::CrosstermBackend,
+    backend::{Backend, CrosstermBackend},
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     widgets::{Block, BorderType, Borders},
@@ -14,11 +14,22 @@ use tui::{
 pub const DEFAULT_TEXT_COLOR: Color = Color::Rgb(229, 229, 229);
 pub const DEFAULT_SELECTED_COLOR: Color = Color::Rgb(201, 165, 249);
 
-pub fn select_ui(frame: &mut Frame<CrosstermBackend<Stdout>>, state: &mut State) {
-    match state.view_mode {
-        ViewMode::Main => main_layout::render(frame, state),
-        ViewMode::Insert | ViewMode::Edit => form_layout::render(frame, state),
-    };
+#[derive(Debug, Clone, PartialEq)]
+pub enum TerminalSize {
+    Small,
+    Medium,
+    Large,
+}
+
+pub fn get_terminal_size<B: Backend>(frame: &Frame<B>) -> TerminalSize {
+    let size = frame.size();
+    if size.height <= 20 {
+        TerminalSize::Small
+    } else if size.height <= 30 {
+        TerminalSize::Medium
+    } else {
+        TerminalSize::Large
+    }
 }
 
 #[derive(Clone, Default, PartialEq, Eq)]
@@ -48,6 +59,9 @@ pub fn get_style(in_focus: bool) -> Style {
 }
 
 pub fn centered_rect(width: u16, height: u16, area: Rect) -> Rect {
+    let height = if height > 100 { 100 } else { height };
+    let width = if width > 100 { 100 } else { width };
+
     let new_area = Layout::default()
         .direction(Direction::Vertical)
         .constraints(
@@ -59,6 +73,7 @@ pub fn centered_rect(width: u16, height: u16, area: Rect) -> Rect {
             .as_ref(),
         )
         .split(area);
+
     Layout::default()
         .direction(Direction::Horizontal)
         .constraints(
@@ -79,4 +94,25 @@ pub fn get_default_block<'a>(title: String) -> Block<'a> {
         .title(format!(" {title} "))
         .title_alignment(Alignment::Left)
         .border_type(BorderType::Plain)
+}
+
+pub fn select_ui(
+    frame: &mut Frame<CrosstermBackend<Stdout>>,
+    application_context: &mut ApplicationContext,
+) {
+    application_context
+        .ui_context
+        .update_terminal_size(get_terminal_size(frame));
+    match application_context.ui_context.view_mode() {
+        ViewMode::Main => main_layout::render(
+            frame,
+            application_context,
+            application_context.ui_context.terminal_size(),
+        ),
+        ViewMode::Insert | ViewMode::Edit => form_layout::render(
+            frame,
+            application_context,
+            application_context.ui_context.terminal_size(),
+        ),
+    };
 }

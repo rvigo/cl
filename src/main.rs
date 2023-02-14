@@ -13,7 +13,7 @@ use cli::{
         share::share_subcommand,
     },
 };
-use gui::entities::app::AppContext;
+use gui::entities::tui_application::TuiApplication;
 use resources::log;
 
 fn main() -> Result<()> {
@@ -31,9 +31,9 @@ fn main() -> Result<()> {
 }
 
 fn run_main_app() -> Result<()> {
-    let mut app_context = AppContext::create()?;
-    app_context.render()?;
-    app_context.clear()?;
+    let mut tui = TuiApplication::create()?;
+    tui.render()?;
+    tui.clear()?;
 
-    app_context.callback_command()
+    tui.callback_command()
 }
