@@ -14,12 +14,24 @@ use tui_textarea::{
 
 #[derive(Default)]
 pub struct FieldContext<'a> {
-    pub fields: Fields<'a>,
-    pub focus_state: ListState,
+    fields: Fields<'a>,
+    focus_state: ListState,
     selected_command: Option<Command>,
 }
 
 impl<'a> FieldContext<'a> {
+    pub fn get_fields(&self) -> &Fields {
+        &self.fields
+    }
+
+    pub fn get_fields_mut(&mut self) -> &mut Fields<'a> {
+        &mut self.fields
+    }
+
+    pub fn get_focus_state(&self) -> ListState {
+        self.focus_state.to_owned()
+    }
+
     pub fn next_field(&mut self) {
         let old_idx = self.focus_state.selected().unwrap_or(0);
         if let Some(old_field) = self.fields.get_mut(old_idx) {

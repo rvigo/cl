@@ -13,7 +13,7 @@ pub struct PopupHandler;
 
 impl KeyHandler for PopupHandler {
     fn handle(&self, key_event: KeyEvent, application_context: &mut ApplicationContext) {
-        if let Some(popup) = application_context.ui_context.popup_context.popup.as_mut() {
+        if let Some(popup) = application_context.ui_context.popup().as_mut() {
             if let Some(message_type) = popup.message_type().as_ref() {
                 match message_type {
                     MessageType::Error => handle_error_message_type(key_event, application_context),
@@ -26,34 +26,27 @@ impl KeyHandler for PopupHandler {
                                 ..
                             } => application_context
                                 .ui_context
-                                .popup_context
-                                .choices_state
-                                .next(choices),
+                                .next_choice(choices),
                             KeyEvent {
                                 code: KeyCode::Left,
                                 ..
                             } => application_context
                                 .ui_context
-                                .popup_context
-                                .choices_state
-                                .previous(choices),
+                                .previous_choice(choices),
                             KeyEvent {
                                 code: KeyCode::Enter,
                                 ..
                             } => {
                                 if let Some(selected_choice_idx) = application_context
                                     .ui_context
-                                    .popup_context
-                                    .choices_state
-                                    .selected()
+                                    .get_selected_choice()
                                 {
                                     if let Some(answer) = popup.choices().get(selected_choice_idx) {
                                         match answer {
                                             Answer::Ok => {
                                                 if let Some(command) = application_context
                                                     .ui_context
-                                                    .form_fields_context
-                                                    .selected_command()
+                                                    .get_selected_command()
                                                 {
                                                     match application_context
                                                         .commands_context
@@ -66,18 +59,14 @@ impl KeyHandler for PopupHandler {
                                                                     &commands,
                                                                 )
                                                             {
-                                                                application_context
-                                                                    .ui_context
-                                                                    .popup_context
-                                                                    .clear();
+                                                                application_context.ui_context.clear_popup_context();
+
                                                                 application_context.reload_state();
                                                             }
                                                         }
                                                         Err(error) => {
-                                                            application_context
-                                                                .ui_context
-                                                                .popup_context
-                                                                .clear();
+                                                            application_context.ui_context.clear_popup_context();
+
                                                             log::error!(
                                                                 "Something went wrong: {error}"
                                                             )
@@ -86,10 +75,8 @@ impl KeyHandler for PopupHandler {
                                                 }
                                             }
                                             Answer::Cancel => {
-                                                application_context
-                                                    .ui_context
-                                                    .popup_context
-                                                    .clear();
+                                                application_context.ui_context.clear_popup_context();
+
                                             }
                                         }
                                     }
@@ -114,10 +101,10 @@ fn handle_error_message_type(key_event: KeyEvent, application_context: &mut Appl
         ..
     } = key_event
     {
-        application_context.ui_context.popup_context.clear();
+        application_context.ui_context.clear_popup_context();
     }
 }
 
 fn handle_quit(application_context: &mut ApplicationContext) {
-    application_context.ui_context.popup_context.clear();
+    application_context.ui_context.clear_popup_context();
 }

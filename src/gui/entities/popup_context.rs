@@ -8,6 +8,17 @@ pub struct PopupContext<'a> {
 }
 
 impl<'a> PopupContext<'a> {
+    pub fn new() -> PopupContext<'a> {
+        let mut context = Self {
+            answer: Default::default(),
+            choices_state: Default::default(),
+            popup: None,
+        };
+        context.choices_state.select(Some(0));
+
+        context
+    }
+
     pub fn clear(&mut self) {
         self.answer = None;
         self.popup = None;

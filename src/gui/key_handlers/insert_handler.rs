@@ -19,59 +19,38 @@ impl KeyHandler for InsertHandler {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
-                application_context
-                    .ui_context
-                    .form_fields_context
-                    .fields
-                    .clear_fields_input();
-                application_context
-                    .ui_context
-                    .form_fields_context
-                    .focus_state
-                    .select(Some(0));
+                application_context.ui_context.clear_form_fields_inputs();
+                application_context.ui_context.select_form(Some(0));
                 application_context.ui_context.set_view_mode(ViewMode::Main);
             }
             KeyEvent {
                 code: KeyCode::Tab,
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => application_context
-                .ui_context
-                .form_fields_context
-                .next_field(),
+            } => application_context.ui_context.next_form_field(),
 
             KeyEvent {
                 code: KeyCode::BackTab,
                 modifiers: KeyModifiers::SHIFT,
                 ..
-            } => application_context
-                .ui_context
-                .form_fields_context
-                .previous_field(),
+            } => application_context.ui_context.previous_form_field(),
 
             KeyEvent {
                 code: KeyCode::Char('s'),
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
-                let command = application_context
-                    .ui_context
-                    .form_fields_context
-                    .build_new_command();
+                let command = application_context.ui_context.build_new_command();
 
                 match application_context.commands_context.add_command(&command) {
                     Ok(()) => {
-                        application_context
-                            .ui_context
-                            .form_fields_context
-                            .fields
-                            .clear_fields_input();
+                        application_context.ui_context.clear_form_fields_inputs();
                         application_context.reload_state();
                         application_context.ui_context.set_view_mode(ViewMode::Main)
                     }
                     Err(error) => {
                         let popup = Popup::from_error(error.to_string());
-                        application_context.ui_context.popup_context.popup = Some(popup);
+                        application_context.ui_context.set_popup(Some(popup));
                     }
                 }
             }
@@ -81,11 +60,7 @@ impl KeyHandler for InsertHandler {
                 ..
             } => application_context.set_show_help(true),
             input => {
-                if let Some(field) = application_context
-                    .ui_context
-                    .form_fields_context
-                    .selected_field_mut()
-                {
+                if let Some(field) = application_context.ui_context.get_selected_form_field_mut() {
                     field.on_input(input)
                 }
             }
