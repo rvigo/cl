@@ -1,7 +1,8 @@
+use crate::fuzzy::Fuzzy;
 use anyhow::{ensure, Result};
 use itertools::Itertools;
+use log::info;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialOrd, Ord)]
 pub struct Command {
@@ -10,6 +11,79 @@ pub struct Command {
     pub description: Option<String>,
     pub alias: String,
     pub tags: Option<Vec<String>>,
+}
+
+impl Command {
+    pub fn tags_as_string(&self) -> String {
+        self.tags
+            .as_ref()
+            .unwrap_or(&vec![String::from("")])
+            .iter()
+            .sorted()
+            .join(", ")
+    }
+
+    pub fn is_incomplete(&self) -> bool {
+        self.namespace.trim().is_empty()
+            || self.alias.trim().is_empty()
+            || self.command.trim().is_empty()
+    }
+
+    pub fn validate(&self) -> Result<()> {
+        info!("{:?}", self);
+        ensure!(
+            !self.is_incomplete(),
+            "namespace, command and alias field cannot be empty!"
+        );
+        ensure!(
+            !self.alias.contains(' '),
+         "the alias must not contain whitespace as the application may interpret some words as arguments");
+
+        Ok(())
+    }
+
+    pub fn has_named_parameter(&self) -> bool {
+        self.command.contains("#{")
+    }
+}
+
+impl Default for Command {
+    fn default() -> Self {
+        Command {
+            namespace: String::from(""),
+            command: String::from("your command string goes here"),
+            description: Some(String::from(
+                "This is a demo entry and will be removed as soon you save your first command.
+                Also, a nice description of your command goes here (optional)",
+            )),
+            alias: String::from("your command alias"),
+            tags: Some(vec![
+                String::from("optional"),
+                String::from("tags"),
+                String::from("comma"),
+                String::from("separated"),
+            ]),
+        }
+    }
+}
+
+impl PartialEq for Command {
+    fn eq(&self, other: &Self) -> bool {
+        self.alias.eq(&other.alias) && self.namespace.eq(&other.namespace)
+    }
+}
+
+impl Fuzzy for Command {
+    fn lookup_string(&self) -> String {
+        format!(
+            "{} {} {} {} {}",
+            self.alias,
+            self.namespace,
+            self.description.as_ref().unwrap_or(&String::default()),
+            self.tags_as_string(),
+            self.command,
+        )
+    }
 }
 
 #[derive(Default)]
@@ -55,73 +129,6 @@ impl CommandBuilder {
             alias: self.alias,
             tags: self.tags,
         }
-    }
-}
-
-impl Command {
-    pub fn tags_as_string(&self) -> String {
-        self.tags
-            .as_ref()
-            .unwrap_or(&vec![String::from("")])
-            .iter()
-            .sorted()
-            .join(", ")
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.namespace.is_empty() || self.alias.is_empty() || self.command.is_empty()
-    }
-
-    pub fn validate(&self) -> Result<()> {
-        ensure!(
-            !self.is_empty(),
-            "namespace, command and alias field cannot be empty!"
-        );
-        ensure!(
-            !self.alias.to_lowercase().contains(' '),
-         "the alias must not contain whitespace as the application may interpret some words as arguments");
-
-        Ok(())
-    }
-}
-
-impl Default for Command {
-    fn default() -> Self {
-        Command {
-            namespace: String::from(""),
-            command: String::from("your command string goes here"),
-            description: Some(String::from(
-                "This is a demo entry and will be removed as soon you save your first command.
-                Also, a nice description of your command goes here (optional)",
-            )),
-            alias: String::from("your command alias"),
-            tags: Some(vec![
-                String::from("optional"),
-                String::from("tags"),
-                String::from("comma"),
-                String::from("separated"),
-            ]),
-        }
-    }
-}
-
-impl PartialEq for Command {
-    fn eq(&self, other: &Self) -> bool {
-        self.alias.eq(&other.alias) && self.namespace.eq(&other.namespace)
-    }
-}
-
-impl fmt::Display for Command {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "Alias: {}\nNamespace: {}\nDescription: {}\nTags: {}\nCommand: {}",
-            self.alias,
-            self.namespace,
-            self.description.as_ref().unwrap_or(&String::default()),
-            self.tags_as_string(),
-            self.command,
-        )
     }
 }
 

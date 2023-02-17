@@ -1,9 +1,6 @@
 use super::KeyHandler;
-use crate::{
-    gui::{
-        entities::application_context::ApplicationContext, layouts::ViewMode, widgets::popup::Popup,
-    },
-    resources::file_service,
+use crate::gui::{
+    entities::application_context::ApplicationContext, layouts::ViewMode, widgets::popup::Popup,
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
@@ -57,18 +54,10 @@ impl KeyHandler for EditHandler {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
-                let edited_command = match application_context
+                let edited_command = application_context
                     .ui_context
                     .form_fields_context
-                    .edit_command()
-                {
-                    Ok(command) => command,
-                    Err(error) => {
-                        let popup = Popup::from_error(error.to_string());
-                        application_context.ui_context.popup_context.popup = Some(popup);
-                        return;
-                    }
-                };
+                    .edit_command();
 
                 let current_command = match application_context
                     .ui_context
@@ -83,22 +72,17 @@ impl KeyHandler for EditHandler {
                     }
                 };
 
-                if let Ok(commands) = application_context
-                    .commands
+                if let Ok(()) = application_context
+                    .commands_context
                     .add_edited_command(&edited_command, current_command)
                 {
-                    if file_service::write_to_command_file(commands).is_ok() {
-                        application_context
-                            .ui_context
-                            .form_fields_context
-                            .fields
-                            .clear_fields_input();
-                        application_context.reload_state();
-                        application_context.ui_context.set_view_mode(ViewMode::Main);
-                    } else {
-                        let popup = Popup::from_error("Failed to write to command file");
-                        application_context.ui_context.popup_context.popup = Some(popup);
-                    }
+                    application_context
+                        .ui_context
+                        .form_fields_context
+                        .fields
+                        .clear_fields_input();
+                    application_context.reload_state();
+                    application_context.ui_context.set_view_mode(ViewMode::Main);
                 } else {
                     let popup = Popup::from_error("Failed to add the edited command");
                     application_context.ui_context.popup_context.popup = Some(popup);
@@ -113,7 +97,7 @@ impl KeyHandler for EditHandler {
                 if let Some(selected_field) = application_context
                     .ui_context
                     .form_fields_context
-                    .selected_mut_field()
+                    .selected_field_mut()
                 {
                     selected_field.on_input(input)
                 }

@@ -1,5 +1,4 @@
 use crate::{
-    commands::Commands,
     gui::{
         entities::application_context::ApplicationContext,
         key_handlers,
@@ -31,10 +30,8 @@ impl<'a> TuiApplication<'a> {
         let mut terminal = Terminal::new(backend)?;
         terminal.hide_cursor()?;
 
-        // TODO inject this size at the ApplicationContext and handle this as a global info
         let size = get_terminal_size(&terminal.get_frame());
-
-        let commands = Commands::init(load_commands()?);
+        let commands = load_commands()?;
         let application_context = ApplicationContext::init(commands, size);
 
         Ok(TuiApplication {
@@ -77,7 +74,7 @@ impl<'a> TuiApplication<'a> {
         Ok(())
     }
 
-    pub fn callback_command(&self) -> Result<()> {
-        self.state.execute_callback_command()
+    pub fn callback(&self) -> Result<()> {
+        self.state.commands_context.execute_command()
     }
 }

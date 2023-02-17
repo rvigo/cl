@@ -181,8 +181,6 @@ impl Commands {
 
 #[cfg(test)]
 mod test {
-    use itertools::Itertools;
-
     use super::*;
     use crate::command::CommandBuilder;
 

@@ -1,9 +1,6 @@
 use super::KeyHandler;
-use crate::{
-    gui::{
-        entities::application_context::ApplicationContext, layouts::ViewMode, widgets::popup::Popup,
-    },
-    resources::file_service,
+use crate::gui::{
+    entities::application_context::ApplicationContext, layouts::ViewMode, widgets::popup::Popup,
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
@@ -57,27 +54,24 @@ impl KeyHandler for InsertHandler {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
-                if let Ok(command) = application_context
+                let command = application_context
                     .ui_context
                     .form_fields_context
-                    .build_new_command()
-                {
-                    match application_context.commands.add_command(&command) {
-                        Ok(commands) => {
-                            if let Ok(()) = file_service::write_to_command_file(commands) {
-                                application_context
-                                    .ui_context
-                                    .form_fields_context
-                                    .fields
-                                    .clear_fields_input();
-                                application_context.reload_state();
-                                application_context.ui_context.set_view_mode(ViewMode::Main)
-                            }
-                        }
-                        Err(error) => {
-                            let popup = Popup::from_error(error.to_string());
-                            application_context.ui_context.popup_context.popup = Some(popup);
-                        }
+                    .build_new_command();
+
+                match application_context.commands_context.add_command(&command) {
+                    Ok(()) => {
+                        application_context
+                            .ui_context
+                            .form_fields_context
+                            .fields
+                            .clear_fields_input();
+                        application_context.reload_state();
+                        application_context.ui_context.set_view_mode(ViewMode::Main)
+                    }
+                    Err(error) => {
+                        let popup = Popup::from_error(error.to_string());
+                        application_context.ui_context.popup_context.popup = Some(popup);
                     }
                 }
             }
@@ -90,7 +84,7 @@ impl KeyHandler for InsertHandler {
                 if let Some(field) = application_context
                     .ui_context
                     .form_fields_context
-                    .selected_mut_field()
+                    .selected_field_mut()
                 {
                     field.on_input(input)
                 }

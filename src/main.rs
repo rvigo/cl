@@ -1,6 +1,7 @@
 mod cli;
 mod command;
 mod commands;
+mod fuzzy;
 mod gui;
 mod resources;
 
@@ -35,5 +36,5 @@ fn run_main_app() -> Result<()> {
     tui.render()?;
     tui.clear()?;
 
-    tui.callback_command()
+    tui.callback()
 }

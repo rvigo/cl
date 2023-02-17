@@ -1,8 +1,6 @@
 use super::{commands_context::CommandsContext, ui_context::UIContext};
 use crate::{command::Command, gui::layouts::TerminalSize};
-use anyhow::Result;
 use itertools::Itertools;
-use std::{thread, time::Duration};
 use tui::widgets::ListState;
 
 pub struct ApplicationContext<'a> {
@@ -14,7 +12,6 @@ pub struct ApplicationContext<'a> {
     pub current_namespace: String,
 
     pub commands_context: CommandsContext,
-
     pub ui_context: UIContext<'a>,
 }
 
@@ -144,29 +141,6 @@ impl<'a> ApplicationContext<'a> {
         self.namespaces.sort();
         self.namespaces.insert(0, String::from("All"));
     }
-
-    pub fn execute_callback_command(&self) -> Result<()> {
-        if let Some(command) = &self.commands_context.command_to_be_executed() {
-            if command.command.contains("#{") {
-                eprintln!(
-                    "Warning: This command appears to contains one or more named parameters placeholders. \
-                    It may not run correctly using the interface.\n\
-                If you want to use these parameters, please use the CLI option (cl exec --help)"
-                );
-
-                let seconds_to_sleep = Duration::from_secs(3);
-                thread::sleep(seconds_to_sleep);
-
-                eprintln!();
-            }
-
-            self.commands_context
-                .commands
-                .exec_command(command, false, false)?;
-        }
-
-        Ok(())
-    }
 }
 
 #[cfg(test)]
@@ -228,7 +202,11 @@ mod test {
         assert_eq!(state.namespace_state.selected().unwrap(), 2);
         assert_eq!(state.current_namespace, "namespace2");
         assert_eq!(
-            state.commands_context.commands_state().selected().unwrap(),
+            state
+                .commands_context
+                .commands_list_state()
+                .selected()
+                .unwrap(),
             0
         );
 
@@ -236,7 +214,11 @@ mod test {
         assert_eq!(state.namespace_state.selected().unwrap(), 1);
         assert_eq!(state.current_namespace, "namespace1");
         assert_eq!(
-            state.commands_context.commands_state().selected().unwrap(),
+            state
+                .commands_context
+                .commands_list_state()
+                .selected()
+                .unwrap(),
             0
         );
 
@@ -244,7 +226,11 @@ mod test {
         assert_eq!(state.namespace_state.selected().unwrap(), 0);
         assert_eq!(state.current_namespace, "All");
         assert_eq!(
-            state.commands_context.commands_state().selected().unwrap(),
+            state
+                .commands_context
+                .commands_list_state()
+                .selected()
+                .unwrap(),
             0
         );
     }
@@ -259,7 +245,11 @@ mod test {
         assert_eq!(state.namespace_state.selected().unwrap(), 1);
         assert_eq!(state.current_namespace, "namespace1");
         assert_eq!(
-            state.commands_context.commands_state().selected().unwrap(),
+            state
+                .commands_context
+                .commands_list_state()
+                .selected()
+                .unwrap(),
             0
         );
 
@@ -267,7 +257,11 @@ mod test {
         assert_eq!(state.namespace_state.selected().unwrap(), 2);
         assert_eq!(state.current_namespace, "namespace2");
         assert_eq!(
-            state.commands_context.commands_state().selected().unwrap(),
+            state
+                .commands_context
+                .commands_list_state()
+                .selected()
+                .unwrap(),
             0
         );
 
@@ -275,7 +269,11 @@ mod test {
         assert_eq!(state.namespace_state.selected().unwrap(), 0);
         assert_eq!(state.current_namespace, "All");
         assert_eq!(
-            state.commands_context.commands_state().selected().unwrap(),
+            state
+                .commands_context
+                .commands_list_state()
+                .selected()
+                .unwrap(),
             0
         );
     }
