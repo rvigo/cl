@@ -13,7 +13,7 @@ impl KeyHandler for MainHandler {
                 code: KeyCode::Char('f'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => application_context.ui_context.query_box.toggle_focus(),
+            } => application_context.ui_context.toogle_querybox_focus(),
             KeyEvent {
                 code: KeyCode::Char('q') | KeyCode::Esc,
                 modifiers: KeyModifiers::NONE,
@@ -71,8 +71,7 @@ impl KeyHandler for MainHandler {
             } => {
                 application_context
                     .ui_context
-                    .form_fields_context
-                    .reset_fields();
+                    .reset_form_fields();
                 application_context
                     .ui_context
                     .set_view_mode(ViewMode::Insert)
@@ -84,17 +83,14 @@ impl KeyHandler for MainHandler {
             } => {
                 if application_context
                     .ui_context
-                    .form_fields_context
-                    .selected_command()
+                    .get_selected_command()
                     .is_some()
                 {
                     application_context
                         .ui_context
-                        .form_fields_context
-                        .reset_fields();
+                        .reset_form_fields();
                     application_context
                         .ui_context
-                        .form_fields_context
                         .set_selected_command_input();
                     application_context.ui_context.set_view_mode(ViewMode::Edit);
                 }
@@ -107,14 +103,13 @@ impl KeyHandler for MainHandler {
             } => {
                 if let Some(selected_command) = application_context
                     .ui_context
-                    .form_fields_context
-                    .selected_command()
+                    .get_selected_command()
                 {
                     if !selected_command.is_incomplete() {
                         let popup =
                             Popup::from_warning("Are you sure you want to delete the command?");
-                        application_context.ui_context.popup_context.popup = Some(popup);
-                    }
+                            application_context.ui_context.set_popup(Some(popup));
+                        }
                 }
             }
             KeyEvent {
@@ -124,8 +119,7 @@ impl KeyHandler for MainHandler {
             } => {
                 if let Some(selected_command) = application_context
                     .ui_context
-                    .form_fields_context
-                    .selected_command()
+                    .get_selected_command()
                 {
                     if !selected_command.is_incomplete() {
                         let filtered_commands = application_context.filter_commands();

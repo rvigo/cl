@@ -34,20 +34,10 @@ pub fn render<B: Backend>(
         );
     }
 
-    if application_context.ui_context.popup_context.popup.is_some()
-        && application_context
-            .ui_context
-            .popup_context
-            .answer
-            .is_none()
+    if application_context.ui_context.popup().is_some()
+        && application_context.ui_context.get_popup_answer().is_none()
     {
-        let popup = &application_context
-            .ui_context
-            .popup_context
-            .popup
-            .as_ref()
-            .unwrap()
-            .clone();
+        let popup = &application_context.ui_context.popup().unwrap().clone();
 
         let area = if terminal_size != TerminalSize::Small {
             centered_rect(45, 40, frame.size())
@@ -58,7 +48,7 @@ pub fn render<B: Backend>(
         frame.render_stateful_widget(
             popup.to_owned(),
             area,
-            &mut application_context.ui_context.popup_context.choices_state,
+            application_context.ui_context.get_choices_state_mut(),
         );
     }
 }
@@ -116,11 +106,7 @@ fn render_medium_form<B: Backend>(
 
     frame.render_widget(form_block, chunks[0]);
 
-    let fields = application_context
-        .ui_context
-        .form_fields_context
-        .fields
-        .clone();
+    let fields = &(*application_context.ui_context.get_form_fields()).clone();
 
     fields.iter().for_each(|field| {
         let area = match field.field_type {
@@ -171,11 +157,7 @@ fn render_small_form<B: Backend>(
 
     frame.render_widget(form_block, form_chunks[0]);
 
-    let fields = application_context
-        .ui_context
-        .form_fields_context
-        .fields
-        .clone();
+    let fields = application_context.ui_context.get_form_fields();
 
     fields.iter().for_each(|field| {
         let area = match field.field_type {

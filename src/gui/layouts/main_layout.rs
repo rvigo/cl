@@ -25,7 +25,7 @@ pub fn render<B: Backend>(
     application_context: &mut ApplicationContext,
     terminal_size: TerminalSize,
 ) {
-    let query_box = &mut application_context.ui_context.query_box;
+    let query_box = &mut application_context.ui_context.querybox();
     render_base_widget(frame, query_box, &terminal_size);
 
     match terminal_size {
@@ -44,17 +44,15 @@ pub fn render<B: Backend>(
         );
     }
 
-    if application_context.ui_context.popup_context.popup.is_some()
+    if application_context.ui_context.popup().is_some()
         && application_context
             .ui_context
-            .popup_context
-            .answer
+            .get_popup_answer()
             .is_none()
     {
         let popup = &application_context
             .ui_context
-            .popup_context
-            .popup
+            .popup()
             .as_ref()
             .unwrap()
             .clone();
@@ -69,7 +67,7 @@ pub fn render<B: Backend>(
         frame.render_stateful_widget(
             popup.to_owned(),
             area,
-            &mut application_context.ui_context.popup_context.choices_state,
+            application_context.ui_context.get_choices_state_mut(),
         );
     }
 }
@@ -107,7 +105,6 @@ fn render_form_medium<B: Backend>(
 
     application_context
         .ui_context
-        .form_fields_context
         .select_command(Some(selected_command.clone()));
 
     let tags_str = selected_command.tags_as_string();
@@ -164,7 +161,6 @@ fn render_form_small<B: Backend>(
 
     application_context
         .ui_context
-        .form_fields_context
         .select_command(Some(selected_command.clone()));
 
     let command_str: String = selected_command.command;
@@ -226,7 +222,7 @@ fn create_tab_menu_widget<'a>(application_context: &ApplicationContext) -> Tabs<
         .map(|tab| Spans::from(vec![Span::styled(tab, Style::default())]))
         .collect();
     Tabs::new(tab_menu)
-        .select(application_context.namespace_state.selected().unwrap())
+        .select(application_context.namespaces_context.get_selected_namespace_idx())
         .block(get_default_block("Namespaces".to_string()))
         .style(Style::default())
         .highlight_style(
