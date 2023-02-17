@@ -110,7 +110,7 @@ impl KeyHandler for MainHandler {
                     .form_fields_context
                     .selected_command()
                 {
-                    if !selected_command.is_empty() {
+                    if !selected_command.is_incomplete() {
                         let popup =
                             Popup::from_warning("Are you sure you want to delete the command?");
                         application_context.ui_context.popup_context.popup = Some(popup);
@@ -127,14 +127,16 @@ impl KeyHandler for MainHandler {
                     .form_fields_context
                     .selected_command()
                 {
-                    if !selected_command.is_empty() {
+                    if !selected_command.is_incomplete() {
                         let filtered_commands = application_context.filter_commands();
-                        let selected_index = application_context.commands_state.selected();
-                        if let Some(index) = selected_index {
-                            application_context.to_be_executed =
-                                filtered_commands.get(index).cloned();
-                            application_context.quit()
-                        }
+                        let index = application_context
+                            .commands_context
+                            .get_selected_command_idx();
+
+                        application_context
+                            .commands_context
+                            .set_command_to_be_executed(filtered_commands.get(index).cloned());
+                        application_context.quit()
                     }
                 }
             }

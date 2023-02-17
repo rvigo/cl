@@ -142,7 +142,7 @@ fn render_form_medium<B: Backend>(
     frame.render_stateful_widget(
         commands,
         central_chunk[0],
-        &mut application_context.commands_state,
+        &mut application_context.commands_context.commands_list_state(),
     );
     frame.render_widget(command, command_detail_chunks[0]);
     frame.render_widget(namespace, namespace_and_tags_chunk[0]);
@@ -186,16 +186,15 @@ fn render_form_small<B: Backend>(
     frame.render_stateful_widget(
         commands,
         central_chunk[0],
-        &mut application_context.commands_state,
+        &mut application_context.commands_context.commands_list_state(),
     );
     frame.render_widget(command, command_detail_chunks[0]);
 }
 
 fn get_selected_command(application_context: &mut ApplicationContext) -> Command {
     let idx = application_context
-        .commands_state
-        .selected()
-        .expect("Error retrieving the selected command");
+        .commands_context
+        .get_selected_command_idx();
 
     if application_context.filter_commands().is_empty()
         || application_context.filter_commands().get(idx).is_none()
@@ -219,9 +218,11 @@ fn create_display_widget<'a>(title: String, content: String) -> DisplayWidget<'a
 
 fn create_tab_menu_widget<'a>(application_context: &ApplicationContext) -> Tabs<'a> {
     let tab_menu: Vec<Spans> = application_context
-        .namespaces
-        .clone()
-        .into_iter()
+        .commands_context
+        .commands
+        .namespaces()
+        .iter()
+        .cloned()
         .map(|tab| Spans::from(vec![Span::styled(tab, Style::default())]))
         .collect();
     Tabs::new(tab_menu)

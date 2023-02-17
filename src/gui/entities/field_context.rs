@@ -5,7 +5,6 @@ use crate::{
         fields::Fields,
     },
 };
-use anyhow::{bail, Result};
 use itertools::Itertools;
 use tui::widgets::ListState;
 use tui_textarea::{
@@ -59,12 +58,12 @@ impl<'a> FieldContext<'a> {
         };
     }
 
-    pub fn selected_mut_field(&mut self) -> Option<&mut Field<'a>> {
+    pub fn selected_field_mut(&mut self) -> Option<&mut Field<'a>> {
         let idx = self.focus_state.selected().unwrap_or(0);
         self.fields.get_mut(idx)
     }
 
-    pub fn build_new_command(&mut self) -> Result<Command> {
+    pub fn build_new_command(&mut self) -> Command {
         let mut command_builder = CommandBuilder::default();
         self.fields
             .iter_mut()
@@ -101,14 +100,10 @@ impl<'a> FieldContext<'a> {
                 }
             });
 
-        let command = command_builder.build();
-        match command.validate() {
-            Ok(_) => Ok(command),
-            Err(error) => bail!(error),
-        }
+        command_builder.build()
     }
 
-    pub fn edit_command(&mut self) -> Result<Command> {
+    pub fn edit_command(&mut self) -> Command {
         let mut command = self
             .selected_command()
             .map(|command| command.to_owned())
@@ -142,8 +137,7 @@ impl<'a> FieldContext<'a> {
                 }
             });
 
-        command.validate()?;
-        Ok(command)
+        command
     }
 
     pub fn selected_command(&self) -> Option<&Command> {
@@ -298,7 +292,7 @@ mod test {
         field_context.focus_state.select(Some(0));
 
         field_context.focus_state.select(Some(1));
-        let selected_field = field_context.selected_mut_field();
+        let selected_field = field_context.selected_field_mut();
         assert_eq!(selected_field.unwrap().field_type, FieldType::Command);
     }
 
@@ -318,9 +312,6 @@ mod test {
         let mut field_context = FieldContext::default();
         field_context.fields = create_fields();
         let command = field_context.build_new_command();
-
-        assert!(command.is_ok());
-        let command = command.unwrap();
 
         assert!(command.validate().is_ok());
         assert_eq!(command.alias, "alias");

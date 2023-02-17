@@ -56,13 +56,14 @@ impl KeyHandler for PopupHandler {
                                                     .selected_command()
                                                 {
                                                     match application_context
+                                                        .commands_context
                                                         .commands
                                                         .remove(command)
                                                     {
                                                         Ok(commands) => {
                                                             if let Ok(()) =
                                                                 file_service::write_to_command_file(
-                                                                    commands,
+                                                                    &commands,
                                                                 )
                                                             {
                                                                 application_context
