@@ -26,3 +26,4 @@ tui-textarea = { version = "0.2.0", features = ["crossterm"] }
 flexi_logger = "0.24.2"
 log = "0.4.17"
 regex="1.7.1"
+fuzzy-matcher = "0.3.7"

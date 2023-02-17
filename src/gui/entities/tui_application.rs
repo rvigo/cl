@@ -1,4 +1,5 @@
 use crate::{
+    commands::Commands,
     gui::{
         entities::application_context::ApplicationContext,
         key_handlers,
@@ -33,7 +34,7 @@ impl<'a> TuiApplication<'a> {
         // TODO inject this size at the ApplicationContext and handle this as a global info
         let size = get_terminal_size(&terminal.get_frame());
 
-        let commands = load_commands()?;
+        let commands = Commands::init(load_commands()?);
         let application_context = ApplicationContext::init(commands, size);
 
         Ok(TuiApplication {

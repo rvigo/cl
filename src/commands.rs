@@ -1,52 +1,62 @@
-use crate::command::Command;
-use crate::resources::config::CONFIG;
+use crate::{command::Command, fuzzy::Fuzzy, resources::config::CONFIG};
 use anyhow::{bail, ensure, Result};
-use itertools::Itertools;
-use serde::{Deserialize, Serialize};
-use std::{
-    collections::HashSet,
-    env,
-    iter::FromIterator,
-    ops::{Deref, DerefMut},
-    vec::IntoIter,
-};
+use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
+use std::{collections::HashSet, env};
 
-#[derive(Serialize, Deserialize, Default, Clone)]
-pub struct Commands(Vec<Command>);
+#[derive(Default)]
+pub struct Commands {
+    pub commands: Vec<Command>,
+    namespaces: Vec<String>,
+    matcher: SkimMatcherV2,
+}
 
 impl Commands {
-    pub fn init(items: Vec<Command>) -> Commands {
-        Commands(items)
+    pub fn init(mut items: Vec<Command>) -> Commands {
+        items.sort_by_key(|command| command.alias.to_lowercase());
+        let mut namespaces = items.iter().fold(
+            vec!["All".to_string()]
+                .into_iter()
+                .collect::<HashSet<String>>(),
+            |mut set, command| {
+                set.insert(command.namespace.clone());
+                set
+            },
+        );
+        let mut namespaces: Vec<String> = namespaces.drain().collect();
+        namespaces.sort();
+        Commands {
+            commands: items,
+            namespaces,
+            matcher: SkimMatcherV2::default(),
+        }
     }
 
     pub fn get_command_item_ref(&self, idx: usize) -> Option<&Command> {
-        self.get(idx)
+        self.commands.get(idx)
     }
 
     pub fn namespaces(&self) -> Vec<String> {
-        let namespaces_set: HashSet<String> = self
-            .iter()
-            .map(|command: &Command| command.namespace.clone())
-            .collect();
-
-        let mut namespaces: Vec<String> = namespaces_set.into_iter().collect();
-        namespaces.sort();
-        namespaces.insert(0, String::from("All"));
-        namespaces
+        self.namespaces.to_owned()
     }
 
-    pub fn commands(&self, namespace: String, query_string: String) -> Result<Commands> {
-        if self.is_empty() {
-            return Ok(Commands(vec![Command::default()]));
+    #[inline(always)]
+    pub fn filter_commands(&self, namespace: &str, query_string: &str) -> Result<Vec<Command>> {
+        if self.commands.is_empty() {
+            return Ok(vec![Command::default()]);
         }
-        let mut commands: Commands = self
+
+        let commands = self
+            .commands
             .iter()
-            .filter(|command| self.commands_by_namespace_predicate(namespace.clone(), command))
-            .filter(|command| {
-                self.commands_by_query_string_predicate(query_string.clone(), command)
+            .cloned()
+            .filter(|c| {
+                (namespace.eq("All") || c.namespace.eq(namespace))
+                    && self
+                        .matcher
+                        .fuzzy_match(&c.lookup_string(), query_string)
+                        .is_some()
             })
-            .map(|command| command.to_owned())
-            .collect();
+            .collect::<Vec<Command>>();
 
         ensure!(
             !commands.is_empty(),
@@ -54,12 +64,10 @@ impl Commands {
             namespace
         );
 
-        commands.sort_by_key(|command| command.alias.to_lowercase());
-
         Ok(commands)
     }
 
-    pub fn add_command(&mut self, command: &Command) -> Result<&Commands> {
+    pub fn add_command(&mut self, command: &Command) -> Result<Vec<Command>> {
         ensure!(
             !self.command_already_exists(command),
             "Command with alias \"{}\" already exists in \"{}\" namespace",
@@ -67,17 +75,17 @@ impl Commands {
             command.namespace
         );
 
-        self.push(command.clone());
-        Ok(self)
+        self.commands.push(command.clone());
+        Ok(self.commands.to_owned())
     }
 
     pub fn add_edited_command(
         &mut self,
         edited_command: &Command,
         current_command: &Command,
-    ) -> Result<&Commands> {
+    ) -> Result<Vec<Command>> {
         ensure!(
-            !self.clone().iter().any(|command| {
+            !self.commands.clone().iter().any(|command| {
                 command.alias.eq(&edited_command.alias)
                     && !edited_command.alias.eq(&current_command.alias)
                     && command.namespace.eq(&edited_command.namespace)
@@ -87,15 +95,16 @@ impl Commands {
             edited_command.namespace
         );
 
-        self.retain(|command| command != current_command);
+        self.commands.retain(|command| command != current_command);
 
-        self.push(edited_command.clone());
-        Ok(self)
+        self.commands.push(edited_command.clone());
+        Ok(self.commands.to_owned())
     }
 
-    pub fn remove(&mut self, command: &Command) -> Result<&Commands> {
-        self.retain(|c| !c.alias.eq(&command.alias) || !command.namespace.eq(&c.namespace));
-        Ok(self)
+    pub fn remove(&mut self, command: &Command) -> Result<Vec<Command>> {
+        self.commands
+            .retain(|c| !c.alias.eq(&command.alias) || !command.namespace.eq(&c.namespace));
+        Ok(self.commands.to_owned())
     }
 
     pub fn exec_command(
@@ -140,14 +149,15 @@ impl Commands {
 
     pub fn find_command(&self, alias: String, namespace: Option<String>) -> Result<Command> {
         let commands: Vec<Command> = self
+            .commands
             .iter()
+            .cloned()
             .filter(|command| {
                 namespace
                     .as_ref()
                     .map_or(true, |ns| command.namespace.eq(ns))
+                    && command.alias.eq(&alias)
             })
-            .filter(|command| command.alias.eq(&alias))
-            .map(|command| command.to_owned())
             .collect();
 
         if commands.is_empty() {
@@ -163,77 +173,16 @@ impl Commands {
     }
 
     fn command_already_exists(&self, command_item: &Command) -> bool {
-        self.iter().any(|command| {
+        self.commands.iter().any(|command| {
             command.alias == command_item.alias && command.namespace.eq(&command_item.namespace)
         })
-    }
-
-    fn commands_by_query_string_predicate(
-        &self,
-        mut query_string: String,
-        command: &Command,
-    ) -> bool {
-        query_string = query_string.to_lowercase();
-        query_string.is_empty() || {
-            command.namespace.to_lowercase().contains(&query_string)
-                || command.alias.to_lowercase().contains(&query_string)
-                || command.command.to_lowercase().contains(&query_string)
-                || command
-                    .tags_as_string()
-                    .to_lowercase()
-                    .contains(&query_string)
-                || command
-                    .description
-                    .as_ref()
-                    .map_or(false, |d| d.to_lowercase().contains(&query_string))
-        }
-    }
-
-    fn commands_by_namespace_predicate(&self, namespace: String, command: &Command) -> bool {
-        namespace.eq(&String::from("All")) || command.namespace.eq(&namespace)
-    }
-}
-
-impl FromIterator<Command> for Commands {
-    fn from_iter<T: IntoIterator<Item = Command>>(iter: T) -> Self {
-        let mut c = Commands::default();
-        iter.into_iter().sorted().for_each(|i| c.push(i));
-        c
-    }
-}
-
-impl IntoIterator for Commands {
-    type Item = Command;
-
-    type IntoIter = IntoIter<Self::Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
-    }
-}
-
-impl From<Vec<Command>> for Commands {
-    fn from(command_vec: Vec<Command>) -> Self {
-        Commands(command_vec)
-    }
-}
-
-impl Deref for Commands {
-    type Target = Vec<Command>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for Commands {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
     }
 }
 
 #[cfg(test)]
 mod test {
+    use itertools::Itertools;
+
     use super::*;
     use crate::command::CommandBuilder;
 
@@ -250,7 +199,7 @@ mod test {
             .namespace(String::from(namespace))
             .command(String::from(command))
             .description(description.map(String::from))
-            .tags(tags.map(|v| v.into_iter().map(String::from).collect_vec()));
+            .tags(tags.map(|v| v.into_iter().map(String::from).collect()));
         builder.build()
     }
     fn build_commands() -> Commands {
@@ -290,16 +239,14 @@ mod test {
     #[test]
     fn should_return_all_commands() {
         let commands = build_commands();
-        let all_command_items = commands.commands(String::from("All"), String::from(""));
+        let all_command_items = commands.filter_commands("All", "");
         assert_eq!(2, all_command_items.unwrap().len())
     }
 
     #[test]
     fn should_return_welcome_command_when_there_is_no_saved_command() {
         let commands = Commands::init(Vec::default());
-        let all_command_items = commands
-            .commands(String::from("All"), String::from(""))
-            .unwrap();
+        let all_command_items = commands.filter_commands("All", "").unwrap();
         let default_command_item = Command::default();
         assert_eq!(all_command_items.len(), 1);
         assert_eq!(
@@ -324,8 +271,7 @@ mod test {
     #[test]
     fn should_return_all_commands_from_namespace() {
         let commands = build_commands();
-        let commands_from_namespace =
-            commands.commands(String::from("namespace2"), String::from(""));
+        let commands_from_namespace = commands.filter_commands("namespace2", "");
 
         if let Ok(items) = commands_from_namespace {
             assert_eq!(1, items.len())
@@ -335,9 +281,8 @@ mod test {
     #[test]
     fn should_return_an_error_when_there_are_no_commands_from_namespace() {
         let commands = build_commands();
-        let invalid_namespace = String::from("invalid");
-        let commands_from_namespace =
-            commands.commands(invalid_namespace.clone(), String::from(""));
+        let invalid_namespace = "invalid";
+        let commands_from_namespace = commands.filter_commands(invalid_namespace, "");
 
         if let Err(error) = commands_from_namespace {
             assert_eq!(
@@ -353,9 +298,7 @@ mod test {
     #[test]
     fn should_remove_a_command() {
         let mut commands = build_commands();
-        let all_commands = commands
-            .commands(String::from("All"), String::from(""))
-            .unwrap();
+        let all_commands = commands.filter_commands("All", "").unwrap();
 
         assert_eq!(2, all_commands.len());
 
@@ -371,9 +314,7 @@ mod test {
     #[test]
     fn should_add_a_command() {
         let mut commands = build_commands();
-        let all_commands = commands
-            .commands(String::from("All"), String::from(""))
-            .unwrap();
+        let all_commands = commands.filter_commands("All", "").unwrap();
 
         assert_eq!(2, all_commands.len());
 
@@ -421,13 +362,7 @@ mod test {
 
         commands.add_command(&current_command).unwrap();
 
-        assert_eq!(
-            3,
-            commands
-                .commands(String::from("All"), String::from(""))
-                .unwrap()
-                .len()
-        );
+        assert_eq!(3, commands.filter_commands("All", "").unwrap().len());
 
         let mut edited_command = current_command.clone();
         edited_command.description = Some(String::from("edited command"));

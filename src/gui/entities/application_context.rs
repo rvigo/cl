@@ -1,5 +1,5 @@
-use super::ui_context::UIContext;
-use crate::{command::Command, commands::Commands, gui::layouts::TerminalSize};
+use super::{commands_context::CommandsContext, ui_context::UIContext};
+use crate::{command::Command, gui::layouts::TerminalSize};
 use anyhow::Result;
 use itertools::Itertools;
 use std::{thread, time::Duration};
@@ -13,40 +13,34 @@ pub struct ApplicationContext<'a> {
     pub namespace_state: ListState,
     pub current_namespace: String,
 
-    pub commands: Commands,
-    pub commands_state: ListState,
-    pub to_be_executed: Option<Command>,
+    pub commands_context: CommandsContext,
 
     pub ui_context: UIContext<'a>,
 }
 
 impl<'a> ApplicationContext<'a> {
-    pub fn init(commands: Commands, terminal_size: TerminalSize) -> ApplicationContext<'a> {
+    pub fn init(commands: Vec<Command>, terminal_size: TerminalSize) -> ApplicationContext<'a> {
         let mut state = ApplicationContext {
             should_quit: false,
             show_help: false,
             namespaces: Default::default(),
             namespace_state: ListState::default(),
             current_namespace: String::from("All"),
-            commands: commands.clone(),
-            commands_state: ListState::default(),
-            to_be_executed: None,
+            commands_context: CommandsContext::new(commands),
             ui_context: UIContext::new(terminal_size),
         };
 
         state.load_namespaces();
-        state.commands_state.select(Some(0));
         state.namespace_state.select(Some(0));
         state
             .ui_context
             .form_fields_context
             .focus_state
             .select(Some(0));
-        state.ui_context.form_fields_context.select_command(
-            commands
-                .get_command_item_ref(0)
-                .map(|value| value.to_owned()),
-        );
+        state
+            .ui_context
+            .form_fields_context
+            .select_command(state.commands_context.get_command_from_idx(0));
         state.ui_context.popup_context.choices_state.select(Some(0));
 
         state
@@ -70,39 +64,26 @@ impl<'a> ApplicationContext<'a> {
 
     pub fn load_namespaces(&mut self) {
         self.namespace_state.select(Some(0));
-        self.namespaces = self.commands.namespaces();
+        self.namespaces = self.commands_context.get_namespaces();
         self.current_namespace = self.namespaces[0].to_owned();
         self.filter_namespaces()
     }
 
     pub fn reload_state(&mut self) {
         self.load_namespaces();
-        self.commands_state.select(Some(0));
+        self.commands_context.select_command(0);
     }
 
     pub fn next_command(&mut self) {
-        let mut i = self.commands_state.selected().unwrap_or(0);
-        if !self.filter_commands().is_empty() {
-            i = if i >= self.filter_commands().len() - 1 {
-                0
-            } else {
-                i + 1
-            };
-        }
-        self.commands_state.select(Some(i));
+        let query_string = self.ui_context.query_box.get_input();
+        self.commands_context
+            .next_command(&self.current_namespace, &query_string);
     }
 
     pub fn previous_command(&mut self) {
-        let mut i = self.commands_state.selected().unwrap_or(0);
-        if !self.filter_commands().is_empty() {
-            i = if i == 0 {
-                self.filter_commands().len() - 1
-            } else {
-                i - 1
-            };
-        };
-
-        self.commands_state.select(Some(i));
+        let query_string = self.ui_context.query_box.get_input();
+        self.commands_context
+            .previous_command(&self.current_namespace, &query_string);
     }
 
     pub fn next_namespace(&mut self) {
@@ -118,7 +99,7 @@ impl<'a> ApplicationContext<'a> {
             .get(i)
             .unwrap_or(&String::from("All"))
             .to_owned();
-        self.commands_state.select(Some(0));
+        self.commands_context.select_command(0);
     }
 
     pub fn previous_namespace(&mut self) {
@@ -135,18 +116,19 @@ impl<'a> ApplicationContext<'a> {
             .get(i)
             .unwrap_or(&String::from("All"))
             .to_owned();
-        self.commands_state.select(Some(0));
+        self.commands_context.select_command(0);
     }
 
-    pub fn filter_commands(&mut self) -> Commands {
+    pub fn filter_commands(&mut self) -> Vec<Command> {
         let query_string = self.ui_context.query_box.get_input();
         if let Ok(commands) = self
+            .commands_context
             .commands
-            .commands(self.current_namespace.to_owned(), query_string)
+            .filter_commands(&self.current_namespace, &query_string)
         {
             commands
         } else {
-            Commands::default()
+            Vec::default()
         }
     }
 
@@ -164,7 +146,7 @@ impl<'a> ApplicationContext<'a> {
     }
 
     pub fn execute_callback_command(&self) -> Result<()> {
-        if let Some(command) = &self.to_be_executed {
+        if let Some(command) = &self.commands_context.command_to_be_executed() {
             if command.command.contains("#{") {
                 eprintln!(
                     "Warning: This command appears to contains one or more named parameters placeholders. \
@@ -178,7 +160,9 @@ impl<'a> ApplicationContext<'a> {
                 eprintln!();
             }
 
-            self.commands.exec_command(command, false, false)?;
+            self.commands_context
+                .commands
+                .exec_command(command, false, false)?;
         }
 
         Ok(())
@@ -188,7 +172,7 @@ impl<'a> ApplicationContext<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
-    fn commands_builder(n_of_commands: usize) -> Commands {
+    fn commands_builder(n_of_commands: usize) -> Vec<Command> {
         let mut commands = vec![];
         for i in 0..n_of_commands {
             commands.push(Command {
@@ -200,7 +184,7 @@ mod test {
             })
         }
 
-        Commands::init(commands)
+        commands
     }
     fn state_builder(n_of_commands: usize) -> ApplicationContext<'static> {
         let commands = commands_builder(n_of_commands);
@@ -226,9 +210,12 @@ mod test {
         assert_eq!(state.namespace_state.selected().unwrap(), 0);
         assert_eq!(
             state.current_namespace,
-            state.commands.namespaces()[0].clone()
+            state.commands_context.commands.namespaces()[0].clone()
         );
-        assert_eq!(state.namespaces, state.commands.namespaces());
+        assert_eq!(
+            state.namespaces,
+            state.commands_context.commands.namespaces()
+        );
     }
 
     #[test]
@@ -240,17 +227,26 @@ mod test {
         state.previous_namespace();
         assert_eq!(state.namespace_state.selected().unwrap(), 2);
         assert_eq!(state.current_namespace, "namespace2");
-        assert_eq!(state.commands_state.selected().unwrap(), 0);
+        assert_eq!(
+            state.commands_context.commands_state().selected().unwrap(),
+            0
+        );
 
         state.previous_namespace();
         assert_eq!(state.namespace_state.selected().unwrap(), 1);
         assert_eq!(state.current_namespace, "namespace1");
-        assert_eq!(state.commands_state.selected().unwrap(), 0);
+        assert_eq!(
+            state.commands_context.commands_state().selected().unwrap(),
+            0
+        );
 
         state.previous_namespace();
         assert_eq!(state.namespace_state.selected().unwrap(), 0);
         assert_eq!(state.current_namespace, "All");
-        assert_eq!(state.commands_state.selected().unwrap(), 0);
+        assert_eq!(
+            state.commands_context.commands_state().selected().unwrap(),
+            0
+        );
     }
 
     #[test]
@@ -262,44 +258,25 @@ mod test {
         state.next_namespace();
         assert_eq!(state.namespace_state.selected().unwrap(), 1);
         assert_eq!(state.current_namespace, "namespace1");
-        assert_eq!(state.commands_state.selected().unwrap(), 0);
+        assert_eq!(
+            state.commands_context.commands_state().selected().unwrap(),
+            0
+        );
 
         state.next_namespace();
         assert_eq!(state.namespace_state.selected().unwrap(), 2);
         assert_eq!(state.current_namespace, "namespace2");
-        assert_eq!(state.commands_state.selected().unwrap(), 0);
+        assert_eq!(
+            state.commands_context.commands_state().selected().unwrap(),
+            0
+        );
 
         state.next_namespace();
         assert_eq!(state.namespace_state.selected().unwrap(), 0);
         assert_eq!(state.current_namespace, "All");
-        assert_eq!(state.commands_state.selected().unwrap(), 0);
-    }
-
-    #[test]
-    fn should_go_to_next_command() {
-        let mut state = state_builder(3);
-
-        assert_eq!(state.commands_state.selected(), Some(0));
-
-        state.next_command();
-        assert_eq!(state.commands_state.selected(), Some(1));
-
-        state.next_command();
-        assert_eq!(state.commands_state.selected(), Some(2));
-
-        state.next_command();
-        assert_eq!(state.commands_state.selected(), Some(0));
-    }
-    #[test]
-    fn should_go_to_previous_command() {
-        let mut state = state_builder(3);
-
-        assert_eq!(state.commands_state.selected(), Some(0));
-
-        state.previous_command();
-        assert_eq!(state.commands_state.selected(), Some(2));
-
-        state.previous_command();
-        assert_eq!(state.commands_state.selected(), Some(1));
+        assert_eq!(
+            state.commands_context.commands_state().selected().unwrap(),
+            0
+        );
     }
 }
