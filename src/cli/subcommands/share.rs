@@ -41,10 +41,11 @@ pub struct Share {
 pub fn share_subcommand(share: Share) -> Result<()> {
     let file_location: PathBuf = share.file_location;
     let namespaces = share.namespace;
-    let commands = resources::load_commands()?;
+    let commands = Commands::init(resources::load_commands()?);
+
     match share.mode {
         Mode::Import => {
-            let mut stored_commands = commands.commands(String::from("All"), String::default())?;
+            let mut stored_commands = commands.filter_commands("All", "")?;
             let mut commands_from_file = file_service::convert_from_toml_file(&file_location)?;
 
             //filter given namespaces
@@ -86,14 +87,13 @@ pub fn share_subcommand(share: Share) -> Result<()> {
         }
         Mode::Export => {
             eprintln!("Exporting aliases to: {}", file_location.display());
-            let mut command_list = Commands::default();
+            let mut command_list = Vec::default();
             if let Some(namespaces) = namespaces {
-                for namespace in namespaces {
-                    command_list
-                        .append(&mut commands.commands(namespace, String::default())?.to_vec());
+                for namespace in namespaces.iter() {
+                    command_list.append(&mut commands.filter_commands(namespace, "")?.to_vec());
                 }
             } else {
-                command_list = commands.commands(String::from("All"), String::default())?;
+                command_list = commands.filter_commands("All", "")?;
             }
 
             file_service::write_toml_file(&command_list, &file_location)?;

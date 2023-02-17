@@ -1,4 +1,4 @@
-use crate::{command::Command, resources};
+use crate::{command::Command, commands::Commands, resources};
 use anyhow::Result;
 use clap::Parser;
 use owo_colors::{colors::CustomColor, OwoColorize};
@@ -16,16 +16,20 @@ pub struct Misc {
 }
 
 pub fn misc_subcommand(misc: Misc) -> Result<()> {
-    let commands = resources::load_commands()?;
+    let commands = Commands::init(resources::load_commands()?);
     if misc.description {
         if let Some(alias) = misc.alias {
             let command = commands.find_command(alias, misc.namespace)?;
             print_colorized_command(command);
         }
     } else if misc.fzf {
-        commands.into_iter().for_each(|c| println!("{}", c.alias))
+        commands
+            .commands
+            .into_iter()
+            .for_each(|c| println!("{}", c.alias))
     } else {
         commands
+            .commands
             .into_iter()
             .for_each(|c| println!("{}", command_to_string(c)));
     }

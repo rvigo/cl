@@ -2,9 +2,8 @@ pub(super) mod config;
 pub(super) mod file_service;
 pub mod log;
 
+use crate::command::Command;
 use anyhow::Result;
-
-use crate::commands::Commands;
 
 mod utils {
     pub fn to_toml<T>(value: &T) -> String
@@ -21,7 +20,6 @@ mod utils {
     }
 }
 
-pub fn load_commands() -> Result<Commands> {
-    let command_items = file_service::load_commands_from_file()?;
-    Ok(Commands::init(command_items))
+pub fn load_commands() -> Result<Vec<Command>> {
+    file_service::load_commands_from_file()
 }

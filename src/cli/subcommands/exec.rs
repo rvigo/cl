@@ -1,4 +1,4 @@
-use crate::{command::Command, resources};
+use crate::{command::Command, commands::Commands, resources};
 use anyhow::{anyhow, bail, Result};
 use clap::Parser;
 use log::debug;
@@ -142,7 +142,7 @@ impl From<Vec<String>> for CommandArgs {
 }
 
 pub fn exec_subcommand(exec: Exec) -> Result<()> {
-    let commands = resources::load_commands()?;
+    let commands = Commands::init(resources::load_commands()?);
 
     let alias: String = exec.alias;
     let namespace: Option<String> = exec.namespace;
