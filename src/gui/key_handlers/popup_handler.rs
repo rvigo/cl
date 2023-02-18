@@ -1,10 +1,7 @@
 use super::KeyHandler;
-use crate::{
-    gui::{
-        entities::application_context::ApplicationContext,
-        widgets::popup::{Answer, MessageType},
-    },
-    resources::file_service,
+use crate::gui::{
+    entities::application_context::ApplicationContext,
+    widgets::popup::{Answer, MessageType},
 };
 use crossterm::event::{KeyCode, KeyEvent};
 
@@ -43,36 +40,20 @@ impl KeyHandler for PopupHandler {
                                                     .ui_context
                                                     .get_selected_command()
                                                 {
-                                                    match application_context
+                                                    if application_context
                                                         .commands_context
-                                                        .commands
-                                                        .remove(command)
+                                                        .remove_command(command)
+                                                        .is_ok()
                                                     {
-                                                        Ok(commands) => {
-                                                            if let Ok(()) =
-                                                                file_service::write_to_command_file(
-                                                                    &commands,
-                                                                )
-                                                            {
-                                                                application_context
-                                                                    .ui_context
-                                                                    .clear_popup_context();
+                                                        application_context
+                                                            .ui_context
+                                                            .clear_popup_context();
 
-                                                                application_context.reload_state();
-                                                            }
-                                                        }
-                                                        Err(error) => {
-                                                            application_context
-                                                                .ui_context
-                                                                .clear_popup_context();
-
-                                                            log::error!(
-                                                                "Something went wrong: {error}"
-                                                            )
-                                                        }
+                                                        application_context.reload_state();
                                                     }
                                                 }
                                             }
+
                                             Answer::Cancel => {
                                                 application_context
                                                     .ui_context

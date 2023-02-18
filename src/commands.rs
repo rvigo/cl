@@ -1,70 +1,20 @@
-use crate::{command::Command, fuzzy::Fuzzy, resources::config::CONFIG};
+use crate::{command::Command, resources::config::CONFIG};
 use anyhow::{bail, ensure, Result};
-use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
-use std::{collections::HashSet, env};
+use std::env;
 
 #[derive(Default)]
 pub struct Commands {
-    pub commands: Vec<Command>,
-    namespaces: Vec<String>,
-    matcher: SkimMatcherV2,
+    commands: Vec<Command>,
 }
 
 impl Commands {
     pub fn init(mut items: Vec<Command>) -> Commands {
-        items.sort_by_key(|command| command.alias.to_lowercase());
-        let mut namespaces = items.iter().fold(
-            vec!["All".to_string()]
-                .into_iter()
-                .collect::<HashSet<String>>(),
-            |mut set, command| {
-                set.insert(command.namespace.clone());
-                set
-            },
-        );
-        let mut namespaces: Vec<String> = namespaces.drain().collect();
-        namespaces.sort();
-        Commands {
-            commands: items,
-            namespaces,
-            matcher: SkimMatcherV2::default(),
-        }
+        items.sort_by_key(|c| c.alias.to_lowercase());
+        Commands { commands: items }
     }
 
-    pub fn get_command_item_ref(&self, idx: usize) -> Option<&Command> {
-        self.commands.get(idx)
-    }
-
-    pub fn namespaces(&self) -> Vec<String> {
-        self.namespaces.to_owned()
-    }
-
-    #[inline(always)]
-    pub fn filter_commands(&self, namespace: &str, query_string: &str) -> Result<Vec<Command>> {
-        if self.commands.is_empty() {
-            return Ok(vec![Command::default()]);
-        }
-
-        let commands = self
-            .commands
-            .iter()
-            .cloned()
-            .filter(|c| {
-                (namespace.eq("All") || c.namespace.eq(namespace))
-                    && self
-                        .matcher
-                        .fuzzy_match(&c.lookup_string(), query_string)
-                        .is_some()
-            })
-            .collect::<Vec<Command>>();
-
-        ensure!(
-            !commands.is_empty(),
-            "There are no commands to show for namespace \"{}\"",
-            namespace
-        );
-
-        Ok(commands)
+    pub fn command_list(&self) -> &Vec<Command> {
+        &self.commands
     }
 
     pub fn add_command(&mut self, command: &Command) -> Result<Vec<Command>> {
@@ -84,6 +34,10 @@ impl Commands {
         edited_command: &Command,
         current_command: &Command,
     ) -> Result<Vec<Command>> {
+        if edited_command.eq(current_command) {
+            return Ok(self.commands.to_owned());
+        }
+
         ensure!(
             !self.commands.clone().iter().any(|command| {
                 command.alias.eq(&edited_command.alias)
@@ -221,36 +175,10 @@ mod test {
     }
 
     #[test]
-    fn should_return_all_namespaces() {
-        let commands = build_commands();
-        let namespaces = commands.namespaces();
-        assert_eq!(
-            vec![
-                String::from("All"),
-                String::from("namespace1"),
-                String::from("namespace2")
-            ],
-            namespaces
-        )
-    }
-
-    #[test]
     fn should_return_all_commands() {
         let commands = build_commands();
-        let all_command_items = commands.filter_commands("All", "");
-        assert_eq!(2, all_command_items.unwrap().len())
-    }
-
-    #[test]
-    fn should_return_welcome_command_when_there_is_no_saved_command() {
-        let commands = Commands::init(Vec::default());
-        let all_command_items = commands.filter_commands("All", "").unwrap();
-        let default_command_item = Command::default();
-        assert_eq!(all_command_items.len(), 1);
-        assert_eq!(
-            default_command_item,
-            all_command_items.get(0).unwrap().to_owned()
-        );
+        let all_command_items = commands.command_list();
+        assert_eq!(2, all_command_items.len())
     }
 
     #[test]
@@ -267,36 +195,9 @@ mod test {
     }
 
     #[test]
-    fn should_return_all_commands_from_namespace() {
-        let commands = build_commands();
-        let commands_from_namespace = commands.filter_commands("namespace2", "");
-
-        if let Ok(items) = commands_from_namespace {
-            assert_eq!(1, items.len())
-        }
-    }
-
-    #[test]
-    fn should_return_an_error_when_there_are_no_commands_from_namespace() {
-        let commands = build_commands();
-        let invalid_namespace = "invalid";
-        let commands_from_namespace = commands.filter_commands(invalid_namespace, "");
-
-        if let Err(error) = commands_from_namespace {
-            assert_eq!(
-                format!(
-                    "There are no commands to show for namespace \"{}\"",
-                    invalid_namespace
-                ),
-                error.to_string()
-            )
-        }
-    }
-
-    #[test]
     fn should_remove_a_command() {
         let mut commands = build_commands();
-        let all_commands = commands.filter_commands("All", "").unwrap();
+        let all_commands = commands.command_list().to_owned();
 
         assert_eq!(2, all_commands.len());
 
@@ -312,7 +213,7 @@ mod test {
     #[test]
     fn should_add_a_command() {
         let mut commands = build_commands();
-        let all_commands = commands.filter_commands("All", "").unwrap();
+        let all_commands = commands.command_list();
 
         assert_eq!(2, all_commands.len());
 
@@ -336,8 +237,8 @@ mod test {
             Some("description"),
         );
 
-        if let Ok(items) = commands.add_command(&new_command) {
-            assert_eq!(3, items.len())
+        if let Ok(command_list) = commands.add_command(&new_command) {
+            assert_eq!(3, command_list.len())
         }
 
         let mut edited_command = new_command.clone();
@@ -346,10 +247,10 @@ mod test {
         let command_list_with_edited_command =
             commands.add_edited_command(&edited_command, &new_command);
 
-        if let Ok(items) = command_list_with_edited_command {
-            assert_eq!(3, items.len());
-            assert!(items.contains(&edited_command));
-            assert!(!items.contains(&new_command));
+        if let Ok(command_list) = command_list_with_edited_command {
+            assert_eq!(3, command_list.len());
+            assert!(command_list.contains(&edited_command));
+            assert!(!command_list.contains(&new_command));
         }
     }
 
@@ -360,7 +261,7 @@ mod test {
 
         commands.add_command(&current_command).unwrap();
 
-        assert_eq!(3, commands.filter_commands("All", "").unwrap().len());
+        assert_eq!(3, commands.command_list().len());
 
         let mut edited_command = current_command.clone();
         edited_command.description = Some(String::from("edited command"));

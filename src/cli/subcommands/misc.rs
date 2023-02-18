@@ -24,14 +24,14 @@ pub fn misc_subcommand(misc: Misc) -> Result<()> {
         }
     } else if misc.fzf {
         commands
-            .commands
-            .into_iter()
+            .command_list()
+            .iter()
             .for_each(|c| println!("{}", c.alias))
     } else {
         commands
-            .commands
-            .into_iter()
-            .for_each(|c| println!("{}", command_to_string(c)));
+            .command_list()
+            .iter()
+            .for_each(|c| println!("{}", command_to_string(c.to_owned())));
     }
 
     Ok(())

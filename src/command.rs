@@ -1,7 +1,6 @@
 use crate::fuzzy::Fuzzy;
 use anyhow::{ensure, Result};
 use itertools::Itertools;
-use log::info;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialOrd, Ord)]
@@ -30,7 +29,6 @@ impl Command {
     }
 
     pub fn validate(&self) -> Result<()> {
-        info!("{:?}", self);
         ensure!(
             !self.is_incomplete(),
             "namespace, command and alias field cannot be empty!"

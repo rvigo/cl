@@ -28,7 +28,6 @@ impl KeyHandler for EditHandler {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => application_context.ui_context.next_form_field(),
-
             KeyEvent {
                 code: KeyCode::BackTab,
                 modifiers: KeyModifiers::SHIFT,
