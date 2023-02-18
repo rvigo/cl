@@ -123,7 +123,9 @@ impl<'a> UIContext<'a> {
     }
 
     pub fn clear_form_fields_inputs(&mut self) {
-        self.form_fields_context.get_fields_mut().clear_fields_input()
+        self.form_fields_context
+            .get_fields_mut()
+            .clear_fields_input()
     }
 
     pub fn get_selected_form_field_mut(&mut self) -> Option<&mut Field<'a>> {

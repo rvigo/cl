@@ -45,10 +45,7 @@ pub fn render<B: Backend>(
     }
 
     if application_context.ui_context.popup().is_some()
-        && application_context
-            .ui_context
-            .get_popup_answer()
-            .is_none()
+        && application_context.ui_context.get_popup_answer().is_none()
     {
         let popup = &application_context
             .ui_context
@@ -222,7 +219,11 @@ fn create_tab_menu_widget<'a>(application_context: &ApplicationContext) -> Tabs<
         .map(|tab| Spans::from(vec![Span::styled(tab, Style::default())]))
         .collect();
     Tabs::new(tab_menu)
-        .select(application_context.namespaces_context.get_selected_namespace_idx())
+        .select(
+            application_context
+                .namespaces_context
+                .get_selected_namespace_idx(),
+        )
         .block(get_default_block("Namespaces".to_string()))
         .style(Style::default())
         .highlight_style(

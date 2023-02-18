@@ -1,6 +1,6 @@
+use crate::command::Command;
 use itertools::Itertools;
 use tui::widgets::ListState;
-use crate::command::Command;
 
 pub struct NamespacesContext {
     pub namespaces: Vec<String>,

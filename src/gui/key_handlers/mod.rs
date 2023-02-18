@@ -16,7 +16,9 @@ pub fn handle(key_event: KeyEvent, application_context: &mut ApplicationContext)
     } else if application_context.show_help() {
         handle_help(application_context)
     } else if application_context.ui_context.querybox_focus() {
-        application_context.ui_context.handle_querybox_input(key_event);
+        application_context
+            .ui_context
+            .handle_querybox_input(key_event);
         application_context.filter_commands();
     } else {
         let handler = get_handler(application_context.ui_context.view_mode());

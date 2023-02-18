@@ -69,9 +69,7 @@ impl KeyHandler for MainHandler {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                application_context
-                    .ui_context
-                    .reset_form_fields();
+                application_context.ui_context.reset_form_fields();
                 application_context
                     .ui_context
                     .set_view_mode(ViewMode::Insert)
@@ -86,12 +84,8 @@ impl KeyHandler for MainHandler {
                     .get_selected_command()
                     .is_some()
                 {
-                    application_context
-                        .ui_context
-                        .reset_form_fields();
-                    application_context
-                        .ui_context
-                        .set_selected_command_input();
+                    application_context.ui_context.reset_form_fields();
+                    application_context.ui_context.set_selected_command_input();
                     application_context.ui_context.set_view_mode(ViewMode::Edit);
                 }
             }
@@ -101,15 +95,14 @@ impl KeyHandler for MainHandler {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                if let Some(selected_command) = application_context
-                    .ui_context
-                    .get_selected_command()
+                if let Some(selected_command) =
+                    application_context.ui_context.get_selected_command()
                 {
                     if !selected_command.is_incomplete() {
                         let popup =
                             Popup::from_warning("Are you sure you want to delete the command?");
-                            application_context.ui_context.set_popup(Some(popup));
-                        }
+                        application_context.ui_context.set_popup(Some(popup));
+                    }
                 }
             }
             KeyEvent {
@@ -117,9 +110,8 @@ impl KeyHandler for MainHandler {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                if let Some(selected_command) = application_context
-                    .ui_context
-                    .get_selected_command()
+                if let Some(selected_command) =
+                    application_context.ui_context.get_selected_command()
                 {
                     if !selected_command.is_incomplete() {
                         let filtered_commands = application_context.filter_commands();

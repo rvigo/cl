@@ -24,22 +24,17 @@ impl KeyHandler for PopupHandler {
                             KeyEvent {
                                 code: KeyCode::Right,
                                 ..
-                            } => application_context
-                                .ui_context
-                                .next_choice(choices),
+                            } => application_context.ui_context.next_choice(choices),
                             KeyEvent {
                                 code: KeyCode::Left,
                                 ..
-                            } => application_context
-                                .ui_context
-                                .previous_choice(choices),
+                            } => application_context.ui_context.previous_choice(choices),
                             KeyEvent {
                                 code: KeyCode::Enter,
                                 ..
                             } => {
-                                if let Some(selected_choice_idx) = application_context
-                                    .ui_context
-                                    .get_selected_choice()
+                                if let Some(selected_choice_idx) =
+                                    application_context.ui_context.get_selected_choice()
                                 {
                                     if let Some(answer) = popup.choices().get(selected_choice_idx) {
                                         match answer {
@@ -59,13 +54,17 @@ impl KeyHandler for PopupHandler {
                                                                     &commands,
                                                                 )
                                                             {
-                                                                application_context.ui_context.clear_popup_context();
+                                                                application_context
+                                                                    .ui_context
+                                                                    .clear_popup_context();
 
                                                                 application_context.reload_state();
                                                             }
                                                         }
                                                         Err(error) => {
-                                                            application_context.ui_context.clear_popup_context();
+                                                            application_context
+                                                                .ui_context
+                                                                .clear_popup_context();
 
                                                             log::error!(
                                                                 "Something went wrong: {error}"
@@ -75,8 +74,9 @@ impl KeyHandler for PopupHandler {
                                                 }
                                             }
                                             Answer::Cancel => {
-                                                application_context.ui_context.clear_popup_context();
-
+                                                application_context
+                                                    .ui_context
+                                                    .clear_popup_context();
                                             }
                                         }
                                     }
