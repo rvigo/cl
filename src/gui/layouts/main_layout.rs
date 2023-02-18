@@ -4,7 +4,9 @@ use super::{
 use crate::{
     command::{Command, CommandBuilder},
     gui::{
-        entities::application_context::ApplicationContext,
+        entities::{
+            application_context::ApplicationContext, namespaces_context::NamespacesContext,
+        },
         widgets::{
             base_widget::BaseWidget, display::DisplayWidget, help_popup::HelpPopup,
             query_box::QueryBox,
@@ -105,17 +107,16 @@ fn render_form_medium<B: Backend>(
         .select_command(Some(selected_command.clone()));
 
     let tags_str = selected_command.tags_as_string();
-
     let command_str: String = selected_command.command.clone();
     let description_str: String = selected_command
         .description
         .unwrap_or_else(|| String::from(""));
     let command = create_command_details_widget(command_str);
-    let tabs = create_tab_menu_widget(application_context);
+    let tabs = create_tab_menu_widget(application_context.namespaces_context());
     let tags = create_tags_menu_widget(tags_str);
     let namespace = create_namespace_widget(selected_command.namespace);
     let description = create_command_description_widget(description_str);
-    let commands = create_command_items_widget(application_context);
+    let commands = create_command_items_widget(application_context.filter_commands());
 
     let central_chunk = Layout::default()
         .direction(Direction::Horizontal)
@@ -136,7 +137,7 @@ fn render_form_medium<B: Backend>(
     frame.render_stateful_widget(
         commands,
         central_chunk[0],
-        &mut application_context.commands_context.commands_list_state(),
+        &mut application_context.commands_context.state(),
     );
     frame.render_widget(command, command_detail_chunks[0]);
     frame.render_widget(namespace, namespace_and_tags_chunk[0]);
@@ -162,8 +163,8 @@ fn render_form_small<B: Backend>(
 
     let command_str: String = selected_command.command;
     let command = create_command_details_widget(command_str);
-    let tabs = create_tab_menu_widget(application_context);
-    let commands = create_command_items_widget(application_context);
+    let tabs = create_tab_menu_widget(application_context.namespaces_context());
+    let commands = create_command_items_widget(application_context.filter_commands());
 
     let central_chunk = Layout::default()
         .direction(Direction::Horizontal)
@@ -179,7 +180,7 @@ fn render_form_small<B: Backend>(
     frame.render_stateful_widget(
         commands,
         central_chunk[0],
-        &mut application_context.commands_context.commands_list_state(),
+        &mut application_context.commands_context.state(),
     );
     frame.render_widget(command, command_detail_chunks[0]);
 }
@@ -188,18 +189,12 @@ fn get_selected_command(application_context: &mut ApplicationContext) -> Command
     let idx = application_context
         .commands_context
         .get_selected_command_idx();
-
-    if application_context.filter_commands().is_empty()
-        || application_context.filter_commands().get(idx).is_none()
-    {
+    let filtered_commands = application_context.filter_commands();
+    if filtered_commands.is_empty() || filtered_commands.get(idx).is_none() {
         //creates an empty command
         CommandBuilder::default().build()
     } else {
-        application_context
-            .filter_commands()
-            .get(idx)
-            .unwrap()
-            .to_owned()
+        filtered_commands.get(idx).unwrap().to_owned()
     }
 }
 
@@ -209,21 +204,15 @@ fn create_display_widget<'a>(title: String, content: String) -> DisplayWidget<'a
         .block(get_default_block(title))
 }
 
-fn create_tab_menu_widget<'a>(application_context: &ApplicationContext) -> Tabs<'a> {
-    let tab_menu: Vec<Spans> = application_context
-        .commands_context
-        .commands
-        .namespaces()
+fn create_tab_menu_widget<'a>(namespaces_context: &NamespacesContext) -> Tabs<'a> {
+    let namespaces = namespaces_context.namespaces();
+    let tab_menu: Vec<Spans> = namespaces
         .iter()
         .cloned()
         .map(|tab| Spans::from(vec![Span::styled(tab, Style::default())]))
         .collect();
     Tabs::new(tab_menu)
-        .select(
-            application_context
-                .namespaces_context
-                .get_selected_namespace_idx(),
-        )
+        .select(namespaces_context.get_selected_namespace_idx())
         .block(get_default_block("Namespaces".to_string()))
         .style(Style::default())
         .highlight_style(
@@ -234,9 +223,8 @@ fn create_tab_menu_widget<'a>(application_context: &ApplicationContext) -> Tabs<
         .divider(Span::raw("|"))
 }
 
-fn create_command_items_widget<'a>(application_context: &mut ApplicationContext) -> List<'a> {
-    let list_items: Vec<ListItem> = application_context
-        .filter_commands()
+fn create_command_items_widget<'a>(commands: Vec<Command>) -> List<'a> {
+    let list_items: Vec<ListItem> = commands
         .into_iter()
         .map(|c| {
             let lines = vec![Spans::from(c.alias)];

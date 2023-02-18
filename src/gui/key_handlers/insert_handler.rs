@@ -34,14 +34,12 @@ impl KeyHandler for InsertHandler {
                 modifiers: KeyModifiers::SHIFT,
                 ..
             } => application_context.ui_context.previous_form_field(),
-
             KeyEvent {
                 code: KeyCode::Char('s'),
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
                 let command = application_context.ui_context.build_new_command();
-
                 match application_context.commands_context.add_command(&command) {
                     Ok(()) => {
                         application_context.ui_context.clear_form_fields_inputs();

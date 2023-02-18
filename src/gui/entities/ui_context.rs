@@ -1,5 +1,3 @@
-use crossterm::event::KeyEvent;
-
 use super::{field_context::FieldContext, popup_context::PopupContext};
 use crate::{
     command::Command,
@@ -13,6 +11,7 @@ use crate::{
         },
     },
 };
+use crossterm::event::KeyEvent;
 
 pub struct UIContext<'a> {
     form_fields_context: FieldContext<'a>,
@@ -23,14 +22,17 @@ pub struct UIContext<'a> {
 }
 
 impl<'a> UIContext<'a> {
-    pub fn new(terminal_size: TerminalSize) -> UIContext<'a> {
-        UIContext {
+    pub fn new(terminal_size: TerminalSize, initial_command: Option<Command>) -> UIContext<'a> {
+        let mut context = UIContext {
             form_fields_context: FieldContext::default(),
             popup_context: PopupContext::new(),
             query_box: QueryBox::default(),
             terminal_size,
             view_mode: ViewMode::Main,
-        }
+        };
+        context.select_form(Some(0));
+        context.select_command(initial_command);
+        context
     }
 
     pub fn view_mode(&self) -> &ViewMode {
@@ -165,7 +167,7 @@ impl<'a> UIContext<'a> {
     }
 
     pub fn set_popup(&mut self, popup: Option<Popup<'a>>) {
-        self.popup_context.popup = popup
+        self.popup_context.popup = popup;
     }
 
     pub fn get_popup_answer(&self) -> Option<Answer> {
@@ -177,18 +179,18 @@ impl<'a> UIContext<'a> {
     }
 
     pub fn next_choice(&mut self, choices: Vec<Answer>) {
-        self.popup_context.choices_state.next(choices)
+        self.popup_context.state_mut().next(choices)
     }
 
     pub fn previous_choice(&mut self, choices: Vec<Answer>) {
-        self.popup_context.choices_state.previous(choices)
+        self.popup_context.state_mut().previous(choices)
     }
 
     pub fn get_selected_choice(&self) -> Option<usize> {
-        self.popup_context.choices_state.selected()
+        self.popup_context.state().selected()
     }
 
     pub fn get_choices_state_mut(&mut self) -> &mut ChoicesState {
-        &mut self.popup_context.choices_state
+        self.popup_context.state_mut()
     }
 }

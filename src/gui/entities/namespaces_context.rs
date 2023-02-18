@@ -1,16 +1,15 @@
-use crate::command::Command;
-use itertools::Itertools;
+use std::collections::HashSet;
 use tui::widgets::ListState;
 
 pub struct NamespacesContext {
-    pub namespaces: Vec<String>,
-    pub namespace_state: ListState,
-    pub current_namespace: String,
+    namespaces: Vec<String>,
+    namespace_state: ListState,
+    current_namespace: String,
 }
 
 impl NamespacesContext {
-    pub fn new(mut namespaces: Vec<String>) -> NamespacesContext {
-        namespaces.insert(0, "All".to_string());
+    pub fn new(namespaces: Vec<String>) -> NamespacesContext {
+        let namespaces = Self::filter_namespaces(namespaces);
         let mut context = Self {
             namespaces: namespaces.clone(),
             namespace_state: ListState::default(),
@@ -22,17 +21,22 @@ impl NamespacesContext {
         context
     }
 
-    //TODO improve this function
-    pub fn filter_namespaces(&mut self, filtered_commands: Vec<Command>) {
-        let unique_namespaces = filtered_commands
-            .iter()
-            .map(|command| &command.namespace)
-            .unique()
-            .cloned()
-            .collect();
-        self.namespaces = unique_namespaces;
-        self.namespaces.sort();
-        self.namespaces.insert(0, String::from("All"));
+    pub fn namespaces(&self) -> &Vec<String> {
+        &self.namespaces
+    }
+
+    pub fn current_namespace(&self) -> String {
+        self.current_namespace.to_owned()
+    }
+
+    pub fn reset_namespaces_state(&mut self) {
+        self.select_namespace(Some(0));
+        self.set_current_namespace(self.namespaces()[0].to_owned());
+    }
+
+    pub fn update_namespaces(&mut self, new_namespaces: Vec<String>) {
+        let namespaces = Self::filter_namespaces(new_namespaces);
+        self.namespaces = namespaces
     }
 
     pub fn get_selected_namespace_idx(&self) -> usize {
@@ -69,10 +73,36 @@ impl NamespacesContext {
             .unwrap_or(&String::from("All"))
             .to_owned();
     }
+
+    fn select_namespace(&mut self, idx: Option<usize>) {
+        self.namespace_state.select(idx)
+    }
+
+    fn set_current_namespace(&mut self, new_namespace: String) {
+        self.current_namespace = new_namespace
+    }
+
+    fn filter_namespaces(namespaces: Vec<String>) -> Vec<String> {
+        let mut namespaces = namespaces.iter().fold(
+            vec!["All".to_string()]
+                .into_iter()
+                .collect::<HashSet<String>>(),
+            |mut set, ns| {
+                set.insert(ns.to_owned());
+                set
+            },
+        );
+        let mut namespaces: Vec<String> = namespaces.drain().collect();
+        namespaces.sort();
+
+        namespaces
+    }
 }
 
 #[cfg(test)]
 mod test {
+    use crate::command::Command;
+
     use super::*;
     fn commands_builder(n_of_commands: usize) -> Vec<Command> {
         let mut commands = vec![];

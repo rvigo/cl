@@ -45,7 +45,7 @@ pub fn share_subcommand(share: Share) -> Result<()> {
 
     match share.mode {
         Mode::Import => {
-            let mut stored_commands = commands.filter_commands("All", "")?;
+            let mut stored_commands = commands.command_list().to_owned();
             let mut commands_from_file = file_service::convert_from_toml_file(&file_location)?;
 
             //filter given namespaces
@@ -90,10 +90,17 @@ pub fn share_subcommand(share: Share) -> Result<()> {
             let mut command_list = Vec::default();
             if let Some(namespaces) = namespaces {
                 for namespace in namespaces.iter() {
-                    command_list.append(&mut commands.filter_commands(namespace, "")?.to_vec());
+                    command_list.append(
+                        &mut commands
+                            .command_list()
+                            .iter()
+                            .filter(|c| c.namespace.eq(namespace))
+                            .map(|c| c.to_owned())
+                            .collect(),
+                    );
                 }
             } else {
-                command_list = commands.filter_commands("All", "")?;
+                command_list = commands.command_list().to_owned();
             }
 
             file_service::write_toml_file(&command_list, &file_location)?;
