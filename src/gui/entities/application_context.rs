@@ -1,4 +1,6 @@
-use super::{commands_context::CommandsContext, ui_context::UIContext, namespaces_context::NamespacesContext};
+use super::{
+    commands_context::CommandsContext, namespaces_context::NamespacesContext, ui_context::UIContext,
+};
 use crate::{command::Command, gui::layouts::TerminalSize};
 
 pub struct ApplicationContext<'a> {
@@ -16,15 +18,15 @@ impl<'a> ApplicationContext<'a> {
         let mut state = ApplicationContext {
             should_quit: false,
             show_help: false,
-            namespaces_context: NamespacesContext::new(commands.iter().map(|c|c.namespace.to_owned()).collect()),
+            namespaces_context: NamespacesContext::new(
+                commands.iter().map(|c| c.namespace.to_owned()).collect(),
+            ),
             commands_context: CommandsContext::new(commands),
             ui_context: UIContext::new(terminal_size),
         };
 
         state.load_namespaces();
-        state
-            .ui_context
-            .select_form(Some(0));
+        state.ui_context.select_form(Some(0));
         state
             .ui_context
             .select_command(state.commands_context.get_command_from_idx(0));
@@ -51,7 +53,8 @@ impl<'a> ApplicationContext<'a> {
     pub fn load_namespaces(&mut self) {
         self.namespaces_context.namespace_state.select(Some(0));
         self.namespaces_context.namespaces = self.commands_context.get_namespaces();
-        self.namespaces_context.current_namespace = self.namespaces_context.namespaces[0].to_owned();
+        self.namespaces_context.current_namespace =
+            self.namespaces_context.namespaces[0].to_owned();
         self.filter_namespaces()
     }
 
@@ -78,7 +81,7 @@ impl<'a> ApplicationContext<'a> {
     }
 
     pub fn previous_namespace(&mut self) {
-      self.namespaces_context.previous_namespace();
+        self.namespaces_context.previous_namespace();
         self.commands_context.select_command(0);
     }
 
@@ -100,4 +103,3 @@ impl<'a> ApplicationContext<'a> {
         self.namespaces_context.filter_namespaces(filtered_commands)
     }
 }
-
