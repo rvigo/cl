@@ -2,7 +2,6 @@ use crate::resources::config::Config as AppConfig;
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
 use lazy_static::lazy_static;
-use log::info;
 use std::{env, process::Command, sync::Mutex};
 
 lazy_static! {
@@ -43,7 +42,6 @@ pub fn config_subcommand(config: Config) -> Result<()> {
         install_zsh_widget()?
     }
     if let Some(quiet) = config.default_quiet_mode {
-        info!("setting quiet mode to: {quiet}");
         APP_CONFIG.lock().unwrap().set_default_quiet_mode(quiet)?
     }
     Ok(())
