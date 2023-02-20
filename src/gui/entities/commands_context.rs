@@ -235,9 +235,9 @@ impl CommandsContext {
         if let Some(command) = &self.command_to_be_executed() {
             if command.has_named_parameter() {
                 eprintln!(
-                    "Warning: This command appears to contains one or more named parameters placeholders. \
+                    "Warning: This command appears to contain one or more named parameters placeholders. \
                     It may not run correctly using the interface.\n\
-                If you want to use these parameters, please use the CLI option (cl exec --help)"
+                If you want to use these parameters, please use the CLI (cl exec --help)"
                 );
 
                 let seconds_to_sleep = Duration::from_secs(3);
