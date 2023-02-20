@@ -1,7 +1,21 @@
-use crate::{command::Command, commands::Commands, resources};
-use anyhow::Result;
+use crate::{
+    command::Command,
+    commands::Commands,
+    resources::{config::Config, file_service::FileService},
+};
+use anyhow::{Context, Result};
 use clap::Parser;
+use lazy_static::lazy_static;
 use owo_colors::{colors::CustomColor, OwoColorize};
+use std::sync::Mutex;
+
+lazy_static! {
+    static ref APP_CONFIG: Mutex<Config> = Mutex::new(
+        Config::load()
+            .context("Cannot properly load the app configs")
+            .unwrap()
+    );
+}
 
 #[derive(Parser)]
 pub struct Misc {
@@ -16,7 +30,10 @@ pub struct Misc {
 }
 
 pub fn misc_subcommand(misc: Misc) -> Result<()> {
-    let commands = Commands::init(resources::load_commands()?);
+    let config = APP_CONFIG.lock().unwrap();
+    let command_list =
+        FileService::new(config.get_command_file_path()?).load_commands_from_file()?;
+    let commands = Commands::init(command_list);
     if misc.description {
         if let Some(alias) = misc.alias {
             let command = commands.find_command(alias, misc.namespace)?;

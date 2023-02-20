@@ -1,7 +1,17 @@
-use crate::resources::config::{self, CONFIG};
-use anyhow::{bail, Result};
+use crate::resources::config::Config as AppConfig;
+use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
-use std::{env, process::Command};
+use lazy_static::lazy_static;
+use log::info;
+use std::{env, process::Command, sync::Mutex};
+
+lazy_static! {
+    static ref APP_CONFIG: Mutex<AppConfig> = Mutex::new(
+        AppConfig::load()
+            .context("Cannot properly load the app configs")
+            .unwrap()
+    );
+}
 
 #[derive(Parser)]
 pub struct Config {
@@ -33,7 +43,8 @@ pub fn config_subcommand(config: Config) -> Result<()> {
         install_zsh_widget()?
     }
     if let Some(quiet) = config.default_quiet_mode {
-        config::set_quiet_mode(quiet)?;
+        info!("setting quiet mode to: {quiet}");
+        APP_CONFIG.lock().unwrap().set_default_quiet_mode(quiet)?
     }
     Ok(())
 }
@@ -48,7 +59,7 @@ fn install_zsh_widget() -> Result<()> {
     validate_fzf();
 
     let widget = include_str!("../resources/zsh/cl-exec-widget");
-    let app_home_dir = &CONFIG.get_app_home_dir();
+    let app_home_dir = APP_CONFIG.lock().unwrap().get_app_home_dir();
     let dest_location = format!("{}/cl-exec-widget", app_home_dir.display());
     let create_file = format!("echo \'{widget}\' >> {dest_location}");
     let source_file = format!("echo \"source {dest_location}\" >> ~/.zshrc");

@@ -13,31 +13,26 @@ use tui::{
 
 pub fn render<B: Backend>(
     frame: &mut Frame<B>,
-    application_context: &mut ApplicationContext,
+    context: &mut ApplicationContext,
     terminal_size: TerminalSize,
 ) {
     render_base_widget(frame);
 
     match terminal_size {
-        TerminalSize::Medium => render_medium_form(frame, application_context),
-        TerminalSize::Large => render_medium_form(frame, application_context),
-        TerminalSize::Small => render_small_form(frame, application_context),
+        TerminalSize::Medium => render_medium_form(frame, context),
+        TerminalSize::Large => render_medium_form(frame, context),
+        TerminalSize::Small => render_small_form(frame, context),
     }
 
-    if application_context.show_help() {
+    if context.show_help() {
         frame.render_widget(
-            HelpPopup::new(
-                application_context.ui_context.view_mode().clone(),
-                terminal_size.clone(),
-            ),
+            HelpPopup::new(context.view_mode().clone(), terminal_size.clone()),
             frame.size(),
         );
     }
 
-    if application_context.ui_context.popup().is_some()
-        && application_context.ui_context.get_popup_answer().is_none()
-    {
-        let popup = &application_context.ui_context.popup().unwrap().clone();
+    if context.popup().is_some() && context.get_popup_answer().is_none() {
+        let popup = &context.popup().unwrap().clone();
 
         let area = if terminal_size != TerminalSize::Small {
             centered_rect(45, 40, frame.size())
@@ -45,11 +40,7 @@ pub fn render<B: Backend>(
             frame.size()
         };
 
-        frame.render_stateful_widget(
-            popup.to_owned(),
-            area,
-            application_context.ui_context.get_choices_state_mut(),
-        );
+        frame.render_stateful_widget(popup.to_owned(), area, context.get_choices_state_mut());
     }
 }
 
@@ -58,10 +49,7 @@ fn render_base_widget<B: Backend>(frame: &mut Frame<B>) {
     frame.render_widget(base_widget, frame.size());
 }
 
-fn render_medium_form<B: Backend>(
-    frame: &mut Frame<B>,
-    application_context: &mut ApplicationContext,
-) {
+fn render_medium_form<B: Backend>(frame: &mut Frame<B>, context: &mut ApplicationContext) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -89,7 +77,7 @@ fn render_medium_form<B: Backend>(
     let form_block = Block::default()
         .borders(Borders::ALL)
         .style(Style::default())
-        .title(format!(" {} ", application_context.ui_context.view_mode()))
+        .title(format!(" {} ", context.view_mode()))
         .border_type(BorderType::Plain);
     let first_row = Layout::default()
         .direction(Direction::Horizontal)
@@ -106,7 +94,7 @@ fn render_medium_form<B: Backend>(
 
     frame.render_widget(form_block, chunks[0]);
 
-    let fields = &(*application_context.ui_context.get_form_fields()).clone();
+    let fields = &(*context.get_form_fields()).clone();
 
     fields.iter().for_each(|field| {
         let area = match field.field_type {
@@ -140,7 +128,7 @@ fn render_small_form<B: Backend>(
     let form_block = Block::default()
         .borders(Borders::ALL)
         .style(Style::default())
-        .title(format!(" {} ", application_context.ui_context.view_mode()))
+        .title(format!(" {} ", application_context.view_mode()))
         .border_type(BorderType::Plain);
     let first_row = Layout::default()
         .direction(Direction::Horizontal)
@@ -157,7 +145,7 @@ fn render_small_form<B: Backend>(
 
     frame.render_widget(form_block, form_chunks[0]);
 
-    let fields = application_context.ui_context.get_form_fields();
+    let fields = application_context.get_form_fields();
 
     fields.iter().for_each(|field| {
         let area = match field.field_type {

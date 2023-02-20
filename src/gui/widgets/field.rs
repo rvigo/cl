@@ -32,9 +32,12 @@ pub struct Field<'a> {
 }
 
 impl<'a> Field<'a> {
-    pub fn new(title: String, field_type: FieldType, in_focus: bool, multiline: bool) -> Field<'a> {
+    pub fn new<T>(title: T, field_type: FieldType, in_focus: bool, multiline: bool) -> Field<'a>
+    where
+        T: Into<String>,
+    {
         Field {
-            title,
+            title: title.into(),
             field_type,
             in_focus,
             block: None,

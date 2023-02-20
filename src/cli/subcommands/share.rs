@@ -1,11 +1,21 @@
 use crate::{
+    command::Command,
     commands::Commands,
-    resources::{self, config::CONFIG, file_service},
+    resources::{config::Config, file_service::FileService},
 };
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
 use itertools::Itertools;
-use std::path::PathBuf;
+use lazy_static::lazy_static;
+use std::{path::PathBuf, sync::Mutex};
+
+lazy_static! {
+    static ref APP_CONFIG: Mutex<Config> = Mutex::new(
+        Config::load()
+            .context("Cannot properly load the app configs")
+            .unwrap()
+    );
+}
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 enum Mode {
@@ -41,12 +51,16 @@ pub struct Share {
 pub fn share_subcommand(share: Share) -> Result<()> {
     let file_location: PathBuf = share.file_location;
     let namespaces = share.namespace;
-    let commands = Commands::init(resources::load_commands()?);
+    let config = APP_CONFIG.lock().unwrap();
+
+    let file_service = FileService::new(config.get_command_file_path()?);
+    let command_list = file_service.load_commands_from_file()?;
+    let commands = Commands::init(command_list);
 
     match share.mode {
         Mode::Import => {
             let mut stored_commands = commands.command_list().to_owned();
-            let mut commands_from_file = file_service::convert_from_toml_file(&file_location)?;
+            let mut commands_from_file: Vec<Command> = vec![];
 
             //filter given namespaces
             if let Some(namespaces) = namespaces {
@@ -76,7 +90,7 @@ pub fn share_subcommand(share: Share) -> Result<()> {
             }
             if !commands_from_file.is_empty() {
                 stored_commands.append(&mut commands_from_file);
-                file_service::write_toml_file(&stored_commands, &CONFIG.get_command_file_path())?;
+                file_service.write_toml_file(&stored_commands, &config.get_command_file_path()?)?;
                 println!(
                     "Info: Successfully imported {} aliases",
                     commands_from_file.len()
@@ -103,7 +117,7 @@ pub fn share_subcommand(share: Share) -> Result<()> {
                 command_list = commands.command_list().to_owned();
             }
 
-            file_service::write_toml_file(&command_list, &file_location)?;
+            file_service.write_toml_file(&command_list, &file_location)?;
             println!("Info: Exported {} aliases", command_list.len())
         }
     }

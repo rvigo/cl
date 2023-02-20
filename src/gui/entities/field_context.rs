@@ -77,6 +77,7 @@ impl<'a> FieldContext<'a> {
 
     pub fn build_new_command(&mut self) -> Command {
         let mut command_builder = CommandBuilder::default();
+
         self.fields
             .iter_mut()
             .for_each(|field| match field.field_type {
@@ -88,7 +89,7 @@ impl<'a> FieldContext<'a> {
                 }
                 FieldType::Tags => {
                     if field.text_area.is_empty() {
-                        command_builder.tags(None);
+                        command_builder.tags(None::<Vec<&str>>);
                     } else {
                         command_builder.tags(Some(
                             field
@@ -102,7 +103,7 @@ impl<'a> FieldContext<'a> {
                 }
                 FieldType::Description => {
                     if field.text_area.is_empty() {
-                        command_builder.description(None);
+                        command_builder.description(None::<&str>);
                     } else {
                         command_builder.description(Some(field.input_as_string()));
                     }
@@ -165,7 +166,9 @@ impl<'a> FieldContext<'a> {
     }
 
     pub fn set_selected_command_input(&mut self) {
-        if let Some(current_command) = self.selected_command.as_mut() {
+        let selected_command = self.selected_command.as_mut();
+
+        if let Some(current_command) = selected_command {
             self.fields.iter_mut().for_each(|field| {
                 match field.field_type {
                     FieldType::Alias => {
@@ -216,6 +219,8 @@ impl<'a> FieldContext<'a> {
                     }
                 };
             });
+        } else {
+            println!("fields cannot be set")
         }
     }
 }

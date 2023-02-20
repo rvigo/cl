@@ -1,19 +1,17 @@
 use super::KeyHandler;
-use crate::gui::{
-    entities::application_context::ApplicationContext, layouts::ViewMode, widgets::popup::Popup,
-};
+use crate::gui::entities::application_context::ApplicationContext;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub struct MainHandler;
 
 impl KeyHandler for MainHandler {
-    fn handle(&self, key_event: KeyEvent, application_context: &mut ApplicationContext) {
+    fn handle(&self, key_event: KeyEvent, context: &mut ApplicationContext) {
         match key_event {
             KeyEvent {
                 code: KeyCode::Char('f'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => application_context.ui_context.toogle_querybox_focus(),
+            } => context.toogle_querybox_focus(),
             KeyEvent {
                 code: KeyCode::Char('q') | KeyCode::Esc,
                 modifiers: KeyModifiers::NONE,
@@ -24,7 +22,7 @@ impl KeyHandler for MainHandler {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
-                application_context.quit();
+                context.quit();
             }
             KeyEvent {
                 code: KeyCode::Left | KeyCode::Char('h'),
@@ -36,7 +34,7 @@ impl KeyHandler for MainHandler {
                 modifiers: KeyModifiers::SHIFT,
                 ..
             } => {
-                application_context.previous_namespace();
+                context.previous_namespace();
             }
             KeyEvent {
                 code: KeyCode::Right | KeyCode::Char('l'),
@@ -48,89 +46,48 @@ impl KeyHandler for MainHandler {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                application_context.next_namespace();
+                context.next_namespace();
             }
             KeyEvent {
                 code: KeyCode::Down | KeyCode::Char('k'),
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                application_context.next_command();
+                context.next_command();
             }
             KeyEvent {
                 code: KeyCode::Up | KeyCode::Char('j'),
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                application_context.previous_command();
+                context.previous_command();
             }
             KeyEvent {
                 code: KeyCode::Insert | KeyCode::Char('i'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => {
-                application_context.ui_context.reset_form_fields();
-                application_context
-                    .ui_context
-                    .set_view_mode(ViewMode::Insert)
-            }
+            } => context.enter_insert_mode(),
             KeyEvent {
                 code: KeyCode::Char('e'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => {
-                if application_context
-                    .ui_context
-                    .get_selected_command()
-                    .is_some()
-                {
-                    application_context.ui_context.reset_form_fields();
-                    application_context.ui_context.set_selected_command_input();
-                    application_context.ui_context.set_view_mode(ViewMode::Edit);
-                }
-            }
+            } => context.enter_edit_mode(),
 
             KeyEvent {
                 code: KeyCode::Char('d') | KeyCode::Delete,
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => {
-                if let Some(selected_command) =
-                    application_context.ui_context.get_selected_command()
-                {
-                    if !selected_command.is_incomplete() {
-                        let popup =
-                            Popup::from_warning("Are you sure you want to delete the command?");
-                        application_context.ui_context.set_popup(Some(popup));
-                    }
-                }
-            }
+            } => context.show_delete_popup(),
             KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => {
-                if let Some(selected_command) =
-                    application_context.ui_context.get_selected_command()
-                {
-                    if !selected_command.is_incomplete() {
-                        let filtered_commands = application_context.filter_commands();
-                        let index = application_context
-                            .commands_context
-                            .get_selected_command_idx();
-
-                        application_context
-                            .commands_context
-                            .set_command_to_be_executed(filtered_commands.get(index).cloned());
-                        application_context.quit()
-                    }
-                }
-            }
+            } => context.exec_command(),
             KeyEvent {
                 code: KeyCode::F(1) | KeyCode::Char('?'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => application_context.set_show_help(true),
+            } => context.set_show_help(true),
             _ => {}
         }
     }

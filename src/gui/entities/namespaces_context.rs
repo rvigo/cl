@@ -7,6 +7,8 @@ pub struct NamespacesContext {
     current_namespace: String,
 }
 
+const DEFAULT_NAMESPACE: &str = "All";
+
 impl NamespacesContext {
     pub fn new(namespaces: Vec<String>) -> NamespacesContext {
         let namespaces = Self::filter_namespaces(namespaces);
@@ -54,7 +56,7 @@ impl NamespacesContext {
         self.current_namespace = self
             .namespaces
             .get(i)
-            .unwrap_or(&String::from("All"))
+            .unwrap_or(&String::from(DEFAULT_NAMESPACE))
             .to_owned();
     }
 
@@ -70,7 +72,7 @@ impl NamespacesContext {
         self.current_namespace = self
             .namespaces
             .get(i)
-            .unwrap_or(&String::from("All"))
+            .unwrap_or(&String::from(DEFAULT_NAMESPACE))
             .to_owned();
     }
 
@@ -84,7 +86,7 @@ impl NamespacesContext {
 
     fn filter_namespaces(namespaces: Vec<String>) -> Vec<String> {
         let mut namespaces = namespaces.iter().fold(
-            vec!["All".to_string()]
+            vec![DEFAULT_NAMESPACE.to_string()]
                 .into_iter()
                 .collect::<HashSet<String>>(),
             |mut set, ns| {
@@ -101,41 +103,44 @@ impl NamespacesContext {
 
 #[cfg(test)]
 mod test {
-    use crate::command::Command;
-
     use super::*;
-    fn commands_builder(n_of_commands: usize) -> Vec<Command> {
-        let mut commands = vec![];
-        for i in 0..n_of_commands {
-            commands.push(Command {
-                namespace: format!("namespace{}", (i + 1)),
-                command: "command".to_string(),
-                description: None,
-                alias: "alias".to_string(),
-                tags: None,
-            })
+
+    fn namespace_builder(n_of_namespaces: usize) -> Vec<String> {
+        let mut namespaces = vec![];
+        for i in 0..n_of_namespaces {
+            namespaces.push(format!("namespace{}", (i + 1)))
         }
 
-        commands
+        namespaces
     }
     fn context_builder(n_of_commands: usize) -> NamespacesContext {
-        let commands = commands_builder(n_of_commands);
-        NamespacesContext::new(commands.iter().cloned().map(|c| c.namespace).collect())
+        let namespaces = namespace_builder(n_of_commands);
+        NamespacesContext::new(namespaces)
     }
 
     #[test]
     fn should_filter_namespaces() {
-        let context = context_builder(1);
+        let expected = vec![DEFAULT_NAMESPACE.to_string(), "namespace1".to_string()];
+        let context = NamespacesContext::new(vec!["namespace1".to_string()]);
+        assert_eq!(context.namespaces(), &expected);
 
-        let expected = vec!["All".to_string(), "namespace1".to_string()];
-        assert_eq!(context.namespaces, expected);
+        let namespaces = vec![
+            "namespace1".to_string(),
+            "namespace1".to_string(),
+            "namespace1".to_string(),
+        ];
+
+        let expected = vec![DEFAULT_NAMESPACE.to_string(), "namespace1".to_string()];
+
+        let context = NamespacesContext::new(namespaces);
+        assert_eq!(context.namespaces(), &expected);
     }
 
     #[test]
     fn should_go_to_previous_namespace() {
         let mut context = context_builder(2);
 
-        assert_eq!(context.current_namespace, "All");
+        assert_eq!(context.current_namespace, DEFAULT_NAMESPACE);
 
         context.previous_namespace();
         assert_eq!(context.namespace_state.selected().unwrap(), 2);
@@ -147,14 +152,14 @@ mod test {
 
         context.previous_namespace();
         assert_eq!(context.namespace_state.selected().unwrap(), 0);
-        assert_eq!(context.current_namespace, "All");
+        assert_eq!(context.current_namespace, DEFAULT_NAMESPACE);
     }
 
     #[test]
     fn should_go_to_next_namespace() {
         let mut context = context_builder(2);
 
-        assert_eq!(context.current_namespace, "All");
+        assert_eq!(context.current_namespace, DEFAULT_NAMESPACE);
 
         context.next_namespace();
         assert_eq!(context.namespace_state.selected().unwrap(), 1);
@@ -166,6 +171,6 @@ mod test {
 
         context.next_namespace();
         assert_eq!(context.namespace_state.selected().unwrap(), 0);
-        assert_eq!(context.current_namespace, "All");
+        assert_eq!(context.current_namespace, DEFAULT_NAMESPACE);
     }
 }
