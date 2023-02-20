@@ -7,6 +7,7 @@ use log::debug;
 use std::{collections::HashMap, thread, time::Duration};
 use tui::widgets::ListState;
 
+/// Caches a `Command` list using the namespace as a key for faster search
 #[derive(Default)]
 struct CacheInfo {
     cache: HashMap<String, Vec<Command>>,
@@ -77,6 +78,7 @@ impl CacheInfo {
     }
 }
 
+/// Groups all `Command`'s related stuff
 pub struct CommandsContext {
     commands: Commands,
     state: ListState,
@@ -101,6 +103,7 @@ impl CommandsContext {
         context
     }
 
+    /// Returns a `ListState`, representing the state of the command list in the app
     pub fn state(&self) -> ListState {
         self.state.to_owned()
     }
@@ -109,11 +112,13 @@ impl CommandsContext {
         self.to_be_executed.to_owned()
     }
 
+    /// Selects the given command to be executed at the end of the app execution
     pub fn set_command_to_be_executed(&mut self, command: Option<Command>) {
         self.to_be_executed = command
     }
 
-    pub fn select_command(&mut self, idx: usize) {
+    /// Selects the command index in the current command list
+    pub fn select_command_idx(&mut self, idx: usize) {
         self.state.select(Some(idx))
     }
 
@@ -121,6 +126,16 @@ impl CommandsContext {
         self.state.selected().unwrap_or(0)
     }
 
+    /// Filters the commands based on a query and a namespace
+    ///
+    /// First loads all namespaces from the `CacheInfo` (if available) and then filters them.   
+    ///  
+    /// If the chache is empty for the current namespace, searchs for all commands and then updates the cache
+    ///
+    /// ## Arguments
+    /// * `current_namespace` - A &str representing the app current namespace
+    /// * `query_string` - A &str representing the user's query string
+    ///
     pub fn filter_commands(&mut self, current_namespace: &str, query_string: &str) -> Vec<Command> {
         let commands = if !current_namespace.is_empty() && current_namespace != "All" {
             debug!("getting cached entries for namespace `{current_namespace}`");
@@ -177,7 +192,7 @@ impl CommandsContext {
                 i + 1
             };
         }
-        self.select_command(i);
+        self.select_command_idx(i);
     }
 
     pub fn previous_command(&mut self, current_namespace: &str, query_string: &str) {
@@ -191,9 +206,10 @@ impl CommandsContext {
             };
         };
 
-        self.select_command(i);
+        self.select_command_idx(i);
     }
 
+    /// Adds a new command and then saves the updated `commands.toml` file
     pub fn add_command(&mut self, new_command: &Command) -> Result<()> {
         new_command.validate()?;
         if let Ok(commands) = self.commands.add_command(new_command) {
@@ -204,6 +220,7 @@ impl CommandsContext {
         }
     }
 
+    /// Adds an edited command, deletes the older one and then saves the updated `commands.toml` file
     pub fn add_edited_command(
         &mut self,
         edited_command: &Command,
@@ -222,6 +239,7 @@ impl CommandsContext {
         }
     }
 
+    /// Removes a command and then saves the updated `commands.toml` file
     pub fn remove_command(&mut self, command: &Command) -> Result<()> {
         if let Ok(commands) = self.commands.remove(command) {
             self.commands_cache.remove_entry(command);
@@ -231,6 +249,9 @@ impl CommandsContext {
         }
     }
 
+    /// Runs a previously selected command
+    ///
+    /// If the command has any `named parameters`, will show a warning message
     pub fn execute_command(&self) -> Result<()> {
         if let Some(command) = &self.command_to_be_executed() {
             if command.has_named_parameter() {

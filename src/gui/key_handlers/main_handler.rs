@@ -82,7 +82,7 @@ impl KeyHandler for MainHandler {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => context.exec_command(),
+            } => context.set_callback_command(),
             KeyEvent {
                 code: KeyCode::F(1) | KeyCode::Char('?'),
                 modifiers: KeyModifiers::NONE,

@@ -54,12 +54,12 @@ impl<'a> ApplicationContext<'a> {
 
     pub fn next_namespace(&mut self) {
         self.namespaces_context.next_namespace();
-        self.commands_context.select_command(0);
+        self.commands_context.select_command_idx(0);
     }
 
     pub fn previous_namespace(&mut self) {
         self.namespaces_context.previous_namespace();
-        self.commands_context.select_command(0);
+        self.commands_context.select_command_idx(0);
     }
 
     // UI context
@@ -242,19 +242,18 @@ impl<'a> ApplicationContext<'a> {
         }
     }
 
-    pub fn exec_command(&mut self) {
+    /// Sets the current selected command to be executed at the end of the app execution and then tells the app to quit
+    pub fn set_callback_command(&mut self) {
         if let Some(selected_command) = self.ui_context.get_selected_command() {
             if !selected_command.is_incomplete() {
-                let filtered_commands = self.filter_commands();
-                let index = self.commands_context.get_selected_command_idx();
-
                 self.commands_context
-                    .set_command_to_be_executed(filtered_commands.get(index).cloned());
+                    .set_command_to_be_executed(Some(selected_command.to_owned()));
                 self.quit()
             }
         }
     }
 
+    /// Executes the callback command
     pub fn execute_callback_command(&self) -> Result<()> {
         self.commands_context.execute_command()
     }
@@ -272,6 +271,7 @@ impl<'a> ApplicationContext<'a> {
         self.should_quit
     }
 
+    /// Tells the app to quit its execution
     pub fn quit(&mut self) {
         self.should_quit = true
     }
@@ -284,6 +284,7 @@ impl<'a> ApplicationContext<'a> {
         self.show_help = show_help
     }
 
+    /// Filters the command list using the querybox input as query
     pub fn filter_commands(&mut self) -> Vec<Command> {
         let query_string = self.ui_context.get_querybox_input();
         let current_namespace = self.namespaces_context.current_namespace();
@@ -291,6 +292,7 @@ impl<'a> ApplicationContext<'a> {
             .filter_commands(&current_namespace, &query_string)
     }
 
+    /// Filters the namespaces based on a filtered command list
     pub fn filter_namespaces(&mut self) {
         let filtered_namespaces: Vec<String> = self
             .filter_commands()
@@ -301,12 +303,14 @@ impl<'a> ApplicationContext<'a> {
             .update_namespaces(filtered_namespaces);
     }
 
+    /// Changes the app main state to load the main screen in the next render tick
     pub fn enter_main_mode(&mut self) {
         self.ui_context.clear_form_fields_inputs();
         self.ui_context.select_form(Some(0));
         self.ui_context.set_view_mode(ViewMode::Main);
     }
 
+    /// Changes the app main state to load the edit screen in the next render tick
     pub fn enter_edit_mode(&mut self) {
         if self.ui_context.get_selected_command().is_some() {
             self.reset_form_fields();
@@ -315,6 +319,7 @@ impl<'a> ApplicationContext<'a> {
         }
     }
 
+    /// Changes the app main state to load the insert screen in the next render tick
     pub fn enter_insert_mode(&mut self) {
         self.reset_form_fields();
         self.set_view_mode(ViewMode::Insert)
