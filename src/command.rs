@@ -5,10 +5,15 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialOrd, Ord)]
 pub struct Command {
-    pub namespace: String,
-    pub command: String,
-    pub description: Option<String>,
+    /// The command's alias. Is a `required` field and should not have empty spaces in it
     pub alias: String,
+    /// The command's namespace. Is a `required` field and should not have empty spaces in it
+    pub namespace: String,
+    /// The command itself. Is a `required` field and can have multiple lines
+    pub command: String,
+    /// The command's description. Not a required field
+    pub description: Option<String>,
+    /// The command's tags. Not a required field
     pub tags: Option<Vec<String>>,
 }
 

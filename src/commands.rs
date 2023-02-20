@@ -61,6 +61,14 @@ impl Commands {
         Ok(self.commands.to_owned())
     }
 
+    /// Executes a command
+    ///
+    /// If no `$SHELL` is set, defaults to `sh`
+    ///
+    /// ## Arguments
+    /// * `command_item` - The command entity itself
+    /// * `dry_run` - A boolean flag representing if the command should be actually executed or just printed in the `stdout`
+    /// * `quiet_mode` - A boolean flag representing if the command string should be shown before the command output
     pub fn exec_command(
         &self,
         command_item: &Command,

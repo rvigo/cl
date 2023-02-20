@@ -57,7 +57,7 @@ impl Options {
 
 #[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
 pub struct Config {
-    // temporally using the app_home_dir as an Option
+    /// the location of the config file. Defaults to `$HOME/.config/cl`
     app_home_dir: Option<PathBuf>,
     config_home_path: Option<PathBuf>,
     command_file_path: Option<PathBuf>,
@@ -138,6 +138,9 @@ impl Config {
         Ok(())
     }
 
+    /// Loads the config file. Name defaults to `config.toml`
+    ///
+    /// Creates a new one if the config data is empty or is missing
     pub fn load() -> Result<Self> {
         let home = home_dir().expect("Could not find home directory");
         let config_file_path = home.join(APP_HOME_DIR).join(APP_CONFIG_FILE);
@@ -147,14 +150,17 @@ impl Config {
                 config.validate()?;
                 Ok(config)
             } else {
-                Ok(Self::default())
+                Self::new()
             }
         } else {
             Self::new()
         }
     }
 
-    pub fn validate(&mut self) -> Result<()> {
+    /// Validates the config properties
+    ///
+    /// If some property is missing, ensures a default value and then saves the file
+    fn validate(&mut self) -> Result<()> {
         let mut should_save = false;
 
         if self.app_home_dir.is_none() {
@@ -181,6 +187,7 @@ impl Config {
             should_save = true;
             self.options.as_mut().unwrap().log_level = Some(LogLevel::default());
         }
+
         if should_save {
             self.save()
         } else {
