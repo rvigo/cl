@@ -133,8 +133,7 @@ impl Config {
         }
         let config_file_path = app_home_dir.join(self.get_config_file_path()?);
         debug!("saving file to: {config_file_path:?}");
-        let mut config_data = toml::to_string(self)?;
-        config_data.push('\n');
+        let config_data = toml::to_string(self)?;
         write(&config_file_path, config_data)?;
         Ok(())
     }
