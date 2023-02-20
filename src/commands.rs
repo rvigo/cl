@@ -1,4 +1,4 @@
-use crate::{command::Command, resources::config::CONFIG};
+use crate::command::Command;
 use anyhow::{bail, ensure, Result};
 use std::env;
 
@@ -50,8 +50,8 @@ impl Commands {
         );
 
         self.commands.retain(|command| command != current_command);
-
         self.commands.push(edited_command.clone());
+
         Ok(self.commands.to_owned())
     }
 
@@ -76,7 +76,7 @@ impl Commands {
         if dry_run {
             println!("{}", command_item.command);
         } else {
-            if !CONFIG.quiet_mode() && !quiet_mode {
+            if !quiet_mode {
                 let command_description = if command_item.command.len() > MAX_LINE_LENGTH {
                     format!(
                         "{}{}",
@@ -151,7 +151,7 @@ mod test {
             .namespace(String::from(namespace))
             .command(String::from(command))
             .description(description.map(String::from))
-            .tags(tags.map(|v| v.into_iter().map(String::from).collect()));
+            .tags(tags.map(|v| v.into_iter().map(String::from).collect::<Vec<String>>()));
         builder.build()
     }
     fn build_commands() -> Commands {

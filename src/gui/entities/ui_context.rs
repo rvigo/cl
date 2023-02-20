@@ -101,7 +101,7 @@ impl<'a> UIContext<'a> {
     }
 
     pub fn set_selected_command_input(&mut self) {
-        self.form_fields_context.set_selected_command_input()
+        self.form_fields_context.set_selected_command_input();
     }
 
     pub fn select_command(&mut self, selected_command: Option<Command>) {

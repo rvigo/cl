@@ -87,11 +87,14 @@ pub fn centered_rect(width: u16, height: u16, area: Rect) -> Rect {
         .split(new_area[1])[1]
 }
 
-pub fn get_default_block<'a>(title: String) -> Block<'a> {
+pub fn get_default_block<'a, T>(title: T) -> Block<'a>
+where
+    T: Into<String>,
+{
     Block::default()
         .borders(Borders::ALL)
         .style(Style::default())
-        .title(format!(" {title} "))
+        .title(format!(" {} ", title.into()))
         .title_alignment(Alignment::Left)
         .border_type(BorderType::Plain)
 }
@@ -100,19 +103,17 @@ pub fn select_ui(
     frame: &mut Frame<CrosstermBackend<Stdout>>,
     application_context: &mut ApplicationContext,
 ) {
-    application_context
-        .ui_context
-        .update_terminal_size(get_terminal_size(frame));
-    match application_context.ui_context.view_mode() {
+    application_context.update_terminal_size(get_terminal_size(frame));
+    match application_context.view_mode() {
         ViewMode::Main => main_layout::render(
             frame,
             application_context,
-            application_context.ui_context.terminal_size(),
+            application_context.terminal_size(),
         ),
         ViewMode::Insert | ViewMode::Edit => form_layout::render(
             frame,
             application_context,
-            application_context.ui_context.terminal_size(),
+            application_context.terminal_size(),
         ),
     };
 }

@@ -1,15 +1,28 @@
-use crate::{command::Command, commands::Commands, resources};
-use anyhow::{anyhow, bail, Result};
+use crate::{
+    command::Command,
+    commands::Commands,
+    resources::{config::Config, file_service::FileService},
+};
+use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
+use lazy_static::lazy_static;
 use log::debug;
 use regex::Regex;
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Mutex};
 use strfmt::strfmt;
 
 const DEFAULT_NAMED_PARAMS_ERROR_MESSAGE: &str = "This command has named parameters! \
 You should provide them exactly as in the command";
 const INVALID_NAMED_PARAMS_ERROR_MESSAGE: &str = "Invalid named arguments! \
     You should provide them exactly as in the command";
+
+lazy_static! {
+    static ref APP_CONFIG: Mutex<Config> = Mutex::new(
+        Config::load()
+            .context("Cannot properly load the app configs")
+            .unwrap()
+    );
+}
 
 #[derive(Parser)]
 pub struct Exec {
@@ -142,13 +155,16 @@ impl From<Vec<String>> for CommandArgs {
 }
 
 pub fn exec_subcommand(exec: Exec) -> Result<()> {
-    let commands = Commands::init(resources::load_commands()?);
+    let config = APP_CONFIG.lock().unwrap();
+    let command_list =
+        FileService::new(config.get_command_file_path()?).load_commands_from_file()?;
+    let commands = Commands::init(command_list);
 
     let alias: String = exec.alias;
     let namespace: Option<String> = exec.namespace;
     let args: Vec<String> = exec.command_args;
     let dry_run: bool = exec.dry_run;
-    let quiet_mode: bool = exec.quiet;
+    let quiet_mode: bool = exec.quiet || config.get_default_quiet_mode();
     let mut command_item: Command = commands.find_command(alias, namespace)?;
 
     command_item.command = prepare_command(command_item.command, args)?;

@@ -22,6 +22,13 @@ impl Command {
             .join(", ")
     }
 
+    pub fn description(&self) -> String {
+        self.description
+            .as_ref()
+            .unwrap_or(&String::from(""))
+            .to_string()
+    }
+
     pub fn is_incomplete(&self) -> bool {
         self.namespace.trim().is_empty()
             || self.alias.trim().is_empty()
@@ -36,7 +43,6 @@ impl Command {
         ensure!(
             !self.alias.contains(' '),
          "the alias must not contain whitespace as the application may interpret some words as arguments");
-
         Ok(())
     }
 
@@ -94,28 +100,45 @@ pub struct CommandBuilder {
 }
 
 impl CommandBuilder {
-    pub fn namespace(&mut self, namespace: String) -> &mut CommandBuilder {
-        self.namespace = namespace.trim().to_string();
+    pub fn namespace<T>(&mut self, namespace: T) -> &mut CommandBuilder
+    where
+        T: Into<String>,
+    {
+        self.namespace = namespace.into().trim().to_string();
         self
     }
 
-    pub fn alias(&mut self, alias: String) -> &mut CommandBuilder {
-        self.alias = alias.trim().to_string();
+    pub fn alias<T>(&mut self, alias: T) -> &mut CommandBuilder
+    where
+        T: Into<String>,
+    {
+        self.alias = alias.into().trim().to_string();
         self
     }
 
-    pub fn command(&mut self, command: String) -> &mut CommandBuilder {
-        self.command = command;
+    pub fn command<T>(&mut self, command: T) -> &mut CommandBuilder
+    where
+        T: Into<String>,
+    {
+        self.command = command.into();
         self
     }
 
-    pub fn description(&mut self, description: Option<String>) -> &mut CommandBuilder {
-        self.description = description;
+    pub fn description<T>(&mut self, description: Option<T>) -> &mut CommandBuilder
+    where
+        T: Into<String>,
+    {
+        self.description = description.map(|d| d.into());
         self
     }
 
-    pub fn tags(&mut self, tags: Option<Vec<String>>) -> &mut CommandBuilder {
-        self.tags = tags;
+    pub fn tags<T, S, I>(&mut self, tags: Option<T>) -> &mut CommandBuilder
+    where
+        T: IntoIterator<Item = S, IntoIter = I>,
+        S: Into<String>,
+        I: Iterator<Item = S>,
+    {
+        self.tags = tags.map(|v| v.into_iter().map(|t| t.into()).collect());
         self
     }
 
@@ -137,11 +160,11 @@ mod test {
     fn build_default_command() -> Command {
         let mut command = CommandBuilder::default();
         command
-            .tags(Some(vec![String::from("tag1")]))
-            .alias(String::from("alias"))
-            .namespace(String::from("namespace"))
-            .description(Some(String::from("description")))
-            .command(String::from("command"));
+            .tags(Some(vec!["tag1"]))
+            .alias("alias")
+            .namespace("namespace")
+            .description(Some("description"))
+            .command("command");
 
         command.build()
     }
@@ -164,11 +187,11 @@ mod test {
     fn should_not_validate_the_command_with_invalid_alias() {
         let mut invalid_command = CommandBuilder::default();
         invalid_command
-            .tags(Some(vec![String::from("tag1")]))
-            .alias(String::from("invalid alias"))
-            .namespace(String::from("namespace"))
-            .description(Some(String::from("description")))
-            .command(String::from("command"));
+            .tags(Some(vec!["tag1"]))
+            .alias("invalid lias")
+            .namespace("namespace")
+            .description(Some("description"))
+            .command("command");
 
         let invalid_command = invalid_command.build();
 
@@ -185,10 +208,10 @@ mod test {
     fn should_not_validate_the_command_with_missing_mandatory_field() {
         let mut invalid_command = CommandBuilder::default();
         invalid_command
-            .tags(Some(vec![String::from("tag1")]))
-            .alias(String::from("alias"))
-            .description(Some(String::from("description")))
-            .command(String::from("command"));
+            .tags(Some(vec!["tag1"]))
+            .alias("alias")
+            .description(Some("description"))
+            .command("command");
 
         let invalid_command = invalid_command.build();
 

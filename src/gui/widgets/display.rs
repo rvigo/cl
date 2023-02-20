@@ -29,8 +29,11 @@ impl<'a> DisplayWidget<'a> {
         }
     }
 
-    pub fn title(mut self, title: String) -> DisplayWidget<'a> {
-        self.title = title;
+    pub fn title<T>(mut self, title: T) -> DisplayWidget<'a>
+    where
+        T: Into<String>,
+    {
+        self.title = title.into();
         self
     }
 

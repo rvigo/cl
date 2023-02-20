@@ -27,7 +27,7 @@ pub fn render<B: Backend>(
     application_context: &mut ApplicationContext,
     terminal_size: TerminalSize,
 ) {
-    let query_box = &mut application_context.ui_context.querybox();
+    let query_box = &mut application_context.query_box();
     render_base_widget(frame, query_box, &terminal_size);
 
     match terminal_size {
@@ -39,22 +39,15 @@ pub fn render<B: Backend>(
     if application_context.show_help() {
         frame.render_widget(
             HelpPopup::new(
-                application_context.ui_context.view_mode().clone(),
+                application_context.view_mode().to_owned(),
                 terminal_size.clone(),
             ),
             frame.size(),
         );
     }
 
-    if application_context.ui_context.popup().is_some()
-        && application_context.ui_context.get_popup_answer().is_none()
-    {
-        let popup = &application_context
-            .ui_context
-            .popup()
-            .as_ref()
-            .unwrap()
-            .clone();
+    if application_context.popup().is_some() && application_context.get_popup_answer().is_none() {
+        let popup = &application_context.popup().as_ref().unwrap().to_owned();
 
         //TODO move this to another place
         let area = if terminal_size != TerminalSize::Small {
@@ -66,7 +59,7 @@ pub fn render<B: Backend>(
         frame.render_stateful_widget(
             popup.to_owned(),
             area,
-            application_context.ui_context.get_choices_state_mut(),
+            application_context.get_choices_state_mut(),
         );
     }
 }
@@ -86,35 +79,29 @@ fn render_form_medium<B: Backend>(
     frame: &mut Frame<B>,
     application_context: &mut ApplicationContext,
 ) {
+    let constraints = [
+        Constraint::Length(3),
+        Constraint::Length(5),
+        Constraint::Min(10),
+        Constraint::Length(3),
+    ];
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
-        .constraints(
-            [
-                Constraint::Length(3),
-                Constraint::Length(5),
-                Constraint::Min(10),
-                Constraint::Length(3),
-            ]
-            .as_ref(),
-        )
+        .constraints(constraints)
         .split(frame.size());
 
     let selected_command: Command = get_selected_command(application_context);
 
-    application_context
-        .ui_context
-        .select_command(Some(selected_command.clone()));
+    application_context.select_command(Some(selected_command.to_owned()));
 
-    let tags_str = selected_command.tags_as_string();
-    let command_str: String = selected_command.command.clone();
-    let description_str: String = selected_command
-        .description
-        .unwrap_or_else(|| String::from(""));
+    let tags_str = &selected_command.tags_as_string();
+    let command_str = &selected_command.command;
+    let description_str = &selected_command.description();
     let command = create_command_details_widget(command_str);
     let tabs = create_tab_menu_widget(application_context.namespaces_context());
     let tags = create_tags_menu_widget(tags_str);
-    let namespace = create_namespace_widget(selected_command.namespace);
+    let namespace = create_namespace_widget(&selected_command.namespace);
     let description = create_command_description_widget(description_str);
     let commands = create_command_items_widget(application_context.filter_commands());
 
@@ -137,7 +124,7 @@ fn render_form_medium<B: Backend>(
     frame.render_stateful_widget(
         commands,
         central_chunk[0],
-        &mut application_context.commands_context.state(),
+        &mut application_context.get_commands_state(),
     );
     frame.render_widget(command, command_detail_chunks[0]);
     frame.render_widget(namespace, namespace_and_tags_chunk[0]);
@@ -149,19 +136,18 @@ fn render_form_small<B: Backend>(
     frame: &mut Frame<B>,
     application_context: &mut ApplicationContext,
 ) {
+    let constraints = [Constraint::Length(3), Constraint::Min(5)];
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
-        .constraints([Constraint::Length(3), Constraint::Min(5)].as_ref())
+        .constraints(constraints)
         .split(frame.size());
 
     let selected_command: Command = get_selected_command(application_context);
 
-    application_context
-        .ui_context
-        .select_command(Some(selected_command.clone()));
+    application_context.select_command(Some(selected_command.clone()));
 
-    let command_str: String = selected_command.command;
+    let command_str = &selected_command.command;
     let command = create_command_details_widget(command_str);
     let tabs = create_tab_menu_widget(application_context.namespaces_context());
     let commands = create_command_items_widget(application_context.filter_commands());
@@ -180,15 +166,13 @@ fn render_form_small<B: Backend>(
     frame.render_stateful_widget(
         commands,
         central_chunk[0],
-        &mut application_context.commands_context.state(),
+        &mut application_context.get_commands_state(),
     );
     frame.render_widget(command, command_detail_chunks[0]);
 }
 
 fn get_selected_command(application_context: &mut ApplicationContext) -> Command {
-    let idx = application_context
-        .commands_context
-        .get_selected_command_idx();
+    let idx = application_context.get_selected_command_idx();
     let filtered_commands = application_context.filter_commands();
     if filtered_commands.is_empty() || filtered_commands.get(idx).is_none() {
         //creates an empty command
@@ -198,9 +182,9 @@ fn get_selected_command(application_context: &mut ApplicationContext) -> Command
     }
 }
 
-fn create_display_widget<'a>(title: String, content: String) -> DisplayWidget<'a> {
+fn create_display_widget<'a>(title: &str, content: &'a str) -> DisplayWidget<'a> {
     DisplayWidget::new(content, true)
-        .title(title.clone())
+        .title(title)
         .block(get_default_block(title))
 }
 
@@ -244,18 +228,18 @@ fn create_command_items_widget<'a>(commands: Vec<Command>) -> List<'a> {
         .highlight_symbol("> ")
 }
 
-fn create_command_details_widget<'a>(command: String) -> DisplayWidget<'a> {
-    create_display_widget("Command".to_string(), command)
+fn create_command_details_widget(command: &str) -> DisplayWidget {
+    create_display_widget("Command", command)
 }
 
-fn create_command_description_widget<'a>(description: String) -> DisplayWidget<'a> {
-    create_display_widget("Description".to_string(), description)
+fn create_command_description_widget(description: &str) -> DisplayWidget {
+    create_display_widget("Description", description)
 }
 
-fn create_tags_menu_widget<'a>(tags: String) -> DisplayWidget<'a> {
-    create_display_widget("Tags".to_string(), tags)
+fn create_tags_menu_widget(tags: &str) -> DisplayWidget {
+    create_display_widget("Tags", tags)
 }
 
-fn create_namespace_widget<'a>(namespace: String) -> DisplayWidget<'a> {
-    create_display_widget("Namespace".to_string(), namespace)
+fn create_namespace_widget(namespace: &str) -> DisplayWidget {
+    create_display_widget("Namespace", namespace)
 }

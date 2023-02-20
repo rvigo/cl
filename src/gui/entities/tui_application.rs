@@ -4,7 +4,7 @@ use crate::{
         key_handlers,
         layouts::{get_terminal_size, select_ui},
     },
-    resources::load_commands,
+    resources::{config::Config, file_service::FileService},
 };
 use anyhow::Result;
 use crossterm::{
@@ -17,7 +17,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 
 pub struct TuiApplication<'a> {
     pub terminal: Terminal<CrosstermBackend<std::io::Stdout>>,
-    pub state: ApplicationContext<'a>,
+    pub context: ApplicationContext<'a>,
 }
 
 impl<'a> TuiApplication<'a> {
@@ -31,23 +31,22 @@ impl<'a> TuiApplication<'a> {
         terminal.hide_cursor()?;
 
         let size = get_terminal_size(&terminal.get_frame());
-        let commands = load_commands()?;
-        let application_context = ApplicationContext::init(commands, size);
+        let config = Config::load()?;
+        let file_service = FileService::new(config.get_command_file_path()?);
+        let commands = file_service.load_commands_from_file()?;
+        let context = ApplicationContext::init(commands, size, file_service);
 
-        Ok(TuiApplication {
-            terminal,
-            state: application_context,
-        })
+        Ok(TuiApplication { terminal, context })
     }
 
     pub fn render(&mut self) -> Result<()> {
         self.handle_panic();
         loop {
             self.terminal
-                .draw(|frame| select_ui(frame, &mut self.state))?;
+                .draw(|frame| select_ui(frame, &mut self.context))?;
             if let Event::Key(key) = event::read()? {
-                key_handlers::handle(key, &mut self.state);
-                if self.state.should_quit() {
+                key_handlers::handle(key, &mut self.context);
+                if self.context.should_quit() {
                     return Ok(());
                 }
             }
@@ -75,6 +74,6 @@ impl<'a> TuiApplication<'a> {
     }
 
     pub fn callback(&self) -> Result<()> {
-        self.state.commands_context.execute_command()
+        self.context.execute_callback_command()
     }
 }

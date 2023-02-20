@@ -1,4 +1,6 @@
-use crate::{command::Command, commands::Commands, fuzzy::Fuzzy, resources::file_service};
+use crate::{
+    command::Command, commands::Commands, fuzzy::Fuzzy, resources::file_service::FileService,
+};
 use anyhow::{bail, Result};
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use log::debug;
@@ -13,7 +15,6 @@ struct CacheInfo {
 impl CacheInfo {
     pub fn new(command_list: Vec<Command>) -> CacheInfo {
         let mut namespace_map: HashMap<String, Vec<Command>> = HashMap::new();
-
         command_list.into_iter().for_each(|c| {
             namespace_map
                 .entry(c.namespace.to_owned())
@@ -36,22 +37,22 @@ impl CacheInfo {
         commands
     }
 
-    pub fn update_entry(&mut self, new_command_item: Command, old_command_item: Command) {
+    pub fn update_entry(&mut self, new_command_item: &Command, old_command_item: &Command) {
         let new_namespace = &new_command_item.namespace;
 
         if let Some(commands) = self.cache.get_mut(new_namespace) {
             debug!("updating {new_namespace} cache entries with the new command");
-            commands.push(new_command_item);
+            commands.push(new_command_item.to_owned());
         }
         self.remove_entry(old_command_item);
 
         self.sort_cached_values()
     }
 
-    fn remove_entry(&mut self, command_item: Command) {
+    fn remove_entry(&mut self, command_item: &Command) {
         let namespace = &command_item.namespace;
         if let Some(commands) = self.cache.get_mut(namespace) {
-            if let Some(index) = commands.iter().position(|c| c.eq(&command_item)) {
+            if let Some(index) = commands.iter().position(|c| c.eq(command_item)) {
                 debug!("removing old cache entry from {namespace}");
                 commands.remove(index);
             }
@@ -82,16 +83,18 @@ pub struct CommandsContext {
     to_be_executed: Option<Command>,
     commands_cache: CacheInfo,
     matcher: SkimMatcherV2,
+    file_service: FileService,
 }
 
 impl CommandsContext {
-    pub fn new(commands: Vec<Command>) -> Self {
+    pub fn new(commands: Vec<Command>, file_service: FileService) -> Self {
         let mut context = Self {
             commands: Commands::init(commands.clone()),
             state: ListState::default(),
             to_be_executed: None,
             commands_cache: CacheInfo::new(commands),
             matcher: SkimMatcherV2::default(),
+            file_service,
         };
         context.state.select(Some(0));
 
@@ -195,7 +198,7 @@ impl CommandsContext {
         new_command.validate()?;
         if let Ok(commands) = self.commands.add_command(new_command) {
             self.commands_cache.insert_entry(new_command.to_owned());
-            file_service::write_to_command_file(&commands)
+            self.file_service.write_to_command_file(&commands)
         } else {
             bail!("Cannot save the new command")
         }
@@ -212,8 +215,8 @@ impl CommandsContext {
             .add_edited_command(edited_command, current_command)
         {
             self.commands_cache
-                .update_entry(edited_command.to_owned(), current_command.to_owned());
-            file_service::write_to_command_file(&commands)
+                .update_entry(edited_command, current_command);
+            self.file_service.write_to_command_file(&commands)
         } else {
             bail!("Cannot save the edited command")
         }
@@ -221,8 +224,8 @@ impl CommandsContext {
 
     pub fn remove_command(&mut self, command: &Command) -> Result<()> {
         if let Ok(commands) = self.commands.remove(command) {
-            self.commands_cache.remove_entry(command.to_owned());
-            file_service::write_to_command_file(&commands)
+            self.commands_cache.remove_entry(command);
+            self.file_service.write_to_command_file(&commands)
         } else {
             bail!("Cannot remove the command")
         }
@@ -252,7 +255,11 @@ impl CommandsContext {
 
 #[cfg(test)]
 mod test {
+    use std::env::temp_dir;
+
     use super::*;
+    use crate::command::CommandBuilder;
+
     fn commands_builder(n_of_commands: usize) -> Vec<Command> {
         let mut commands = vec![];
         for i in 0..n_of_commands {
@@ -267,10 +274,15 @@ mod test {
 
         commands
     }
+
     fn commands_context_builder(n_of_commands: usize) -> CommandsContext {
         let commands = commands_builder(n_of_commands);
-        CommandsContext::new(commands)
+        CommandsContext::new(
+            commands,
+            FileService::new(temp_dir().to_path_buf().join("commands.toml")),
+        )
     }
+
     #[test]
     fn should_go_to_next_command() {
         let mut context = commands_context_builder(3);
@@ -280,26 +292,94 @@ mod test {
         assert_eq!(context.state.selected(), Some(0));
 
         context.next_command(current_namespace, query_string);
-        assert_eq!(context.state.selected(), Some(1));
+        assert_eq!(context.state().selected(), Some(1));
 
         context.next_command(current_namespace, query_string);
-        assert_eq!(context.state.selected(), Some(2));
+        assert_eq!(context.state().selected(), Some(2));
 
         context.next_command(current_namespace, query_string);
-        assert_eq!(context.state.selected(), Some(0));
+        assert_eq!(context.state().selected(), Some(0));
     }
+
     #[test]
     fn should_go_to_previous_command() {
         let mut context = commands_context_builder(3);
         let current_namespace = "All";
         let query_string = "";
 
-        assert_eq!(context.state.selected(), Some(0));
+        assert_eq!(context.state().selected(), Some(0));
 
         context.previous_command(current_namespace, query_string);
-        assert_eq!(context.state.selected(), Some(2));
+        assert_eq!(context.state().selected(), Some(2));
 
         context.previous_command(current_namespace, query_string);
-        assert_eq!(context.state.selected(), Some(1));
+        assert_eq!(context.state().selected(), Some(1));
+    }
+
+    #[test]
+    fn should_add_a_command() {
+        let mut context = commands_context_builder(3);
+
+        // valid command
+        let namespace = "new_namespace";
+        let mut builder = CommandBuilder::default();
+        builder
+            .alias("new_command")
+            .namespace(namespace)
+            .command("command");
+        let new_command = builder.build();
+
+        let result = context.add_command(&new_command);
+        assert!(result.is_ok());
+        assert_eq!(context.commands_cache.get_entry(namespace).len(), 1);
+
+        // invalid command
+        let namespace = "invalid_namespace";
+        let mut builder = CommandBuilder::default();
+        builder.alias("new_command").namespace(namespace);
+        let invalid_command = builder.build();
+
+        let result = context.add_command(&invalid_command);
+        assert!(result.is_err());
+        assert!(context.commands_cache.cache.get(namespace).is_none())
+    }
+
+    #[test]
+    fn should_remove_a_command() {
+        let mut context = commands_context_builder(0);
+
+        let mut builder = CommandBuilder::default();
+        builder
+            .alias("new_command")
+            .namespace("namespace")
+            .command("command");
+        let command = builder.build();
+
+        assert_eq!(context.commands.command_list().len(), 0);
+        assert!(context.add_command(&command).is_ok());
+
+        assert_eq!(context.commands.command_list().len(), 1);
+        assert!(context.remove_command(&command).is_ok());
+
+        assert_eq!(context.commands.command_list().len(), 0);
+    }
+
+    #[test]
+    fn should_add_an_edited_command() {
+        let mut context = commands_context_builder(1);
+
+        let current_command_idx = context.get_selected_command_idx();
+        let mut command_list = context.commands.command_list().to_owned();
+        let current_command = command_list.get_mut(current_command_idx).unwrap();
+        let mut edited_command = current_command.clone();
+        edited_command.alias = "Edited_Alias".to_string();
+
+        assert_eq!(context.commands.command_list().len(), 1);
+        assert!(context
+            .add_edited_command(&edited_command, &current_command)
+            .is_ok());
+        assert_eq!(context.commands.command_list().len(), 1);
+        assert!(context.commands.command_list().contains(&edited_command));
+        assert!(!context.commands.command_list().contains(&current_command))
     }
 }

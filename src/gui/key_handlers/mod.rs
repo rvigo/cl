@@ -11,17 +11,15 @@ use super::{entities::application_context::ApplicationContext, layouts::ViewMode
 use crossterm::event::KeyEvent;
 
 pub fn handle(key_event: KeyEvent, application_context: &mut ApplicationContext) {
-    if application_context.ui_context.popup().is_some() {
+    if application_context.popup().is_some() {
         PopupHandler::default().handle(key_event, application_context);
     } else if application_context.show_help() {
         handle_help(application_context)
-    } else if application_context.ui_context.querybox_focus() {
-        application_context
-            .ui_context
-            .handle_querybox_input(key_event);
+    } else if application_context.querybox_focus() {
+        application_context.handle_querybox_input(key_event);
         application_context.filter_commands();
     } else {
-        let handler = get_handler(application_context.ui_context.view_mode());
+        let handler = get_handler(application_context.view_mode());
         handler.handle(key_event, application_context);
     }
 }
