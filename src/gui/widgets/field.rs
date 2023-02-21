@@ -1,6 +1,6 @@
 use crate::gui::layouts::{get_default_block, get_style, DEFAULT_TEXT_COLOR};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use std::hash::Hash;
+use std::{fmt::Display, hash::Hash};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -17,6 +17,18 @@ pub enum FieldType {
     Command,
     Description,
     Namespace,
+}
+
+impl Display for FieldType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FieldType::Alias => write!(f, "Alias"),
+            FieldType::Tags => write!(f, "Tags"),
+            FieldType::Command => write!(f, "Command"),
+            FieldType::Description => write!(f, "Description"),
+            FieldType::Namespace => write!(f, "Namespace"),
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -107,6 +119,12 @@ impl<'a> Field<'a> {
     }
 }
 
+impl<'a> Drop for Field<'a> {
+    fn drop(&mut self) {
+        self.clear_input()
+    }
+}
+
 impl<'a> Widget for Field<'a> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
         if self.in_focus() {
@@ -118,10 +136,10 @@ impl<'a> Widget for Field<'a> {
         } else {
             self.text_area.set_cursor_style(Style::default());
         };
-        self.text_area.set_block(if let Some(block) = self.block {
-            block
+        self.text_area.set_block(if let Some(block) = &self.block {
+            block.to_owned()
         } else {
-            get_default_block(self.title)
+            get_default_block(&self.title)
         });
 
         self.text_area.set_cursor_line_style(Style::default());

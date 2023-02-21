@@ -55,7 +55,7 @@ impl Options {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
+#[derive(Serialize, Deserialize, Default, PartialEq)]
 pub struct Config {
     /// the location of the config file. Defaults to `$HOME/.config/cl`
     app_home_dir: Option<PathBuf>,

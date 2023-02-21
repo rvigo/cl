@@ -58,7 +58,6 @@ impl FileService {
 
     pub fn write_toml_file(&self, commands: &Vec<Command>, path: &Path) -> Result<()> {
         let toml = self.generate_toml(commands);
-        // debug!("toml file: {toml}");
         self.save_file(&toml, path)
     }
 
@@ -112,6 +111,6 @@ mod test {
 
         assert!(result.is_err());
 
-        fs::remove_file(path).unwrap();
+        fs::remove_file(path).unwrap_or_else(|_| {});
     }
 }
