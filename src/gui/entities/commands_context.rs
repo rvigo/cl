@@ -244,7 +244,7 @@ impl CommandsContext {
     /// Runs a previously selected command
     ///
     /// If the command has any `named parameters`, will show a warning message
-    pub fn execute_command(&self) -> Result<()> {
+    pub fn execute_command(&self, quiet: bool) -> Result<()> {
         if let Some(command) = &self.command_to_be_executed() {
             if command.has_named_parameter() {
                 eprintln!(
@@ -259,7 +259,7 @@ impl CommandsContext {
                 eprintln!();
             }
 
-            self.commands.exec_command(command, false, false)?;
+            self.commands.exec_command(command, false, quiet)?;
         }
 
         Ok(())
