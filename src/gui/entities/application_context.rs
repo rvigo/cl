@@ -80,14 +80,14 @@ impl<'a> ApplicationContext<'a> {
         self.ui_context.get_form_fields()
     }
 
-    pub fn reset_form_fields(&mut self) {
-        self.ui_context.reset_form_fields()
-    }
-
     pub fn handle_form_input(&mut self, input: KeyEvent) {
         if let Some(selected_field) = self.ui_context.get_selected_form_field_mut() {
             selected_field.on_input(input)
         }
+    }
+
+    fn build_form_fields(&mut self) {
+        self.ui_context.build_form_fields()
     }
 
     //// querybox
@@ -207,11 +207,7 @@ impl<'a> ApplicationContext<'a> {
     pub fn add_command(&mut self) {
         let command = self.ui_context.build_new_command();
         match self.commands_context.add_command(&command) {
-            Ok(()) => {
-                self.ui_context.clear_form_fields_inputs();
-                self.reload_namespaces_state();
-                self.ui_context.set_view_mode(ViewMode::Main)
-            }
+            Ok(()) => self.enter_main_mode(),
             Err(error) => {
                 let popup = Popup::from_error(error.to_string());
                 self.ui_context.set_popup(Some(popup));
@@ -305,7 +301,7 @@ impl<'a> ApplicationContext<'a> {
 
     /// Changes the app main state to load the main screen in the next render tick
     pub fn enter_main_mode(&mut self) {
-        self.ui_context.clear_form_fields_inputs();
+        self.reload_namespaces_state();
         self.ui_context.select_form(Some(0));
         self.ui_context.set_view_mode(ViewMode::Main);
     }
@@ -313,7 +309,7 @@ impl<'a> ApplicationContext<'a> {
     /// Changes the app main state to load the edit screen in the next render tick
     pub fn enter_edit_mode(&mut self) {
         if self.ui_context.get_selected_command().is_some() {
-            self.reset_form_fields();
+            self.build_form_fields();
             self.ui_context.set_selected_command_input();
             self.ui_context.set_view_mode(ViewMode::Edit);
         }
@@ -321,7 +317,7 @@ impl<'a> ApplicationContext<'a> {
 
     /// Changes the app main state to load the insert screen in the next render tick
     pub fn enter_insert_mode(&mut self) {
-        self.reset_form_fields();
+        self.build_form_fields();
         self.set_view_mode(ViewMode::Insert)
     }
 }
@@ -385,10 +381,11 @@ mod tests {
             &new_command
         );
 
-        context.ui_context.reset_form_fields(); // FIXME wtf is this?????
+        context.ui_context.build_form_fields();
         context.ui_context.set_selected_command_input();
 
         context.add_command();
+
         let namespaces = vec![
             String::from("All"),
             String::from("namespace1"),

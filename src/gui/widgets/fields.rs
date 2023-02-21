@@ -6,27 +6,17 @@ use tui::{
     widgets::{Block, BorderType, Borders},
 };
 
-#[derive(Default)]
 pub struct Fields<'a>(pub Vec<Field<'a>>);
 
-impl<'a> Fields<'a> {
-    pub fn build_form_fields() -> Fields<'a> {
-        let alias = forms_widget_factory("Alias".to_string(), FieldType::Alias, true, false);
-        let namespace =
-            forms_widget_factory("Namespace".to_string(), FieldType::Namespace, false, false);
-        let command = forms_widget_factory("Command".to_string(), FieldType::Command, false, true);
-        let description = forms_widget_factory(
-            "Description".to_string(),
-            FieldType::Description,
-            false,
-            true,
-        );
-        let tags = forms_widget_factory("Tags".to_string(), FieldType::Tags, false, false);
+impl<'a> Default for Fields<'a> {
+    fn default() -> Self {
+        let alias = forms_widget_factory(FieldType::Alias, true, false);
+        let namespace = forms_widget_factory(FieldType::Namespace, false, false);
+        let command = forms_widget_factory(FieldType::Command, false, true);
+        let description = forms_widget_factory(FieldType::Description, false, true);
+        let tags = forms_widget_factory(FieldType::Tags, false, false);
 
         Fields(vec![alias, namespace, command, description, tags])
-    }
-    pub fn clear_fields_input(&mut self) {
-        self.iter_mut().for_each(|field| field.clear_input());
     }
 }
 
@@ -44,24 +34,14 @@ impl DerefMut for Fields<'_> {
     }
 }
 
-impl<'a> Drop for Fields<'a> {
-    fn drop(&mut self) {
-        self.clear_fields_input()
-    }
-}
-
-fn forms_widget_factory(
-    title: String,
-    field_type: FieldType,
-    in_focus: bool,
-    multiline: bool,
-) -> Field<'static> {
-    let mut field = Field::new(title.clone(), field_type, in_focus, multiline);
+fn forms_widget_factory<'a>(field_type: FieldType, in_focus: bool, multiline: bool) -> Field<'a> {
+    let title = field_type.to_string();
+    let mut field = Field::new(&title, field_type, in_focus, multiline);
     field.block(
         Block::default()
             .borders(Borders::ALL)
             .style(Style::default())
-            .title(format!(" {title} ",))
+            .title(format!(" {} ", &title))
             .border_type(BorderType::Plain),
     );
     field.style(get_style(in_focus));

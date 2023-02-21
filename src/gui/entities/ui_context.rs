@@ -52,48 +52,8 @@ impl<'a> UIContext<'a> {
         self.reorder_fields()
     }
 
-    fn reorder_fields(&mut self) {
-        match &self.terminal_size {
-            TerminalSize::Small => {
-                let order = vec![
-                    FieldType::Alias,
-                    FieldType::Namespace,
-                    FieldType::Description,
-                    FieldType::Tags,
-                    FieldType::Command,
-                ];
-                let fields = &mut self.form_fields_context.get_fields_mut();
-
-                fields.sort_by(|a, b| {
-                    order
-                        .iter()
-                        .position(|x| x.eq(&a.field_type))
-                        .cmp(&order.iter().position(|x| x.eq(&b.field_type)))
-                });
-            }
-
-            TerminalSize::Medium | TerminalSize::Large => {
-                let order = vec![
-                    FieldType::Alias,
-                    FieldType::Namespace,
-                    FieldType::Command,
-                    FieldType::Description,
-                    FieldType::Tags,
-                ];
-                let fields = &mut self.form_fields_context.get_fields_mut();
-
-                fields.sort_by(|a, b| {
-                    order
-                        .iter()
-                        .position(|x| x.eq(&a.field_type))
-                        .cmp(&order.iter().position(|x| x.eq(&b.field_type)))
-                });
-            }
-        }
-    }
-
-    pub fn reset_form_fields(&mut self) {
-        self.form_fields_context.reset_fields()
+    pub fn build_form_fields(&mut self) {
+        self.form_fields_context.build_form_fields()
     }
 
     pub fn get_selected_command(&self) -> Option<&Command> {
@@ -122,12 +82,6 @@ impl<'a> UIContext<'a> {
 
     pub fn build_new_command(&mut self) -> Command {
         self.form_fields_context.build_new_command()
-    }
-
-    pub fn clear_form_fields_inputs(&mut self) {
-        self.form_fields_context
-            .get_fields_mut()
-            .clear_fields_input()
     }
 
     pub fn get_selected_form_field_mut(&mut self) -> Option<&mut Field<'a>> {
@@ -192,5 +146,45 @@ impl<'a> UIContext<'a> {
 
     pub fn get_choices_state_mut(&mut self) -> &mut ChoicesState {
         self.popup_context.state_mut()
+    }
+
+    fn reorder_fields(&mut self) {
+        match &self.terminal_size {
+            TerminalSize::Small => {
+                let order = vec![
+                    FieldType::Alias,
+                    FieldType::Namespace,
+                    FieldType::Description,
+                    FieldType::Tags,
+                    FieldType::Command,
+                ];
+                let fields = &mut self.form_fields_context.get_fields_mut();
+
+                fields.sort_by(|a, b| {
+                    order
+                        .iter()
+                        .position(|x| x.eq(&a.field_type))
+                        .cmp(&order.iter().position(|x| x.eq(&b.field_type)))
+                });
+            }
+
+            TerminalSize::Medium | TerminalSize::Large => {
+                let order = vec![
+                    FieldType::Alias,
+                    FieldType::Namespace,
+                    FieldType::Command,
+                    FieldType::Description,
+                    FieldType::Tags,
+                ];
+                let fields = &mut self.form_fields_context.get_fields_mut();
+
+                fields.sort_by(|a, b| {
+                    order
+                        .iter()
+                        .position(|x| x.eq(&a.field_type))
+                        .cmp(&order.iter().position(|x| x.eq(&b.field_type)))
+                });
+            }
+        }
     }
 }

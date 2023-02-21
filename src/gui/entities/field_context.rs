@@ -161,13 +161,12 @@ impl<'a> FieldContext<'a> {
         self.selected_command = selected_command
     }
 
-    pub fn reset_fields(&mut self) {
-        self.fields = Fields::build_form_fields()
+    pub fn build_form_fields(&mut self) {
+        self.fields = Fields::default()
     }
 
     pub fn set_selected_command_input(&mut self) {
         let selected_command = self.selected_command.as_mut();
-
         if let Some(current_command) = selected_command {
             self.fields.iter_mut().for_each(|field| {
                 match field.field_type {
@@ -219,8 +218,6 @@ impl<'a> FieldContext<'a> {
                     }
                 };
             });
-        } else {
-            println!("fields cannot be set")
         }
     }
 }
@@ -259,13 +256,10 @@ mod test {
 
         return Fields(vec![alias, namespace, command, description, tags]);
     }
+
     #[test]
     fn should_move_to_next_field() {
         let mut field_context = FieldContext::default();
-        let field1 = Field::new(String::from("alias"), FieldType::Alias, true, false);
-        let field2 = Field::new(String::from("command"), FieldType::Command, false, false);
-        field_context.fields.push(field1);
-        field_context.fields.push(field2);
         field_context.focus_state.select(Some(0));
 
         field_context.next_field();
@@ -274,56 +268,36 @@ mod test {
         assert_eq!(field_context.fields[1].in_focus(), true);
 
         field_context.next_field();
-        assert_eq!(field_context.focus_state.selected(), Some(0));
-        assert_eq!(field_context.fields[0].in_focus(), true);
+        assert_eq!(field_context.focus_state.selected(), Some(2));
         assert_eq!(field_context.fields[1].in_focus(), false);
+        assert_eq!(field_context.fields[2].in_focus(), true);
     }
 
     #[test]
     fn should_move_to_previous_field() {
         let mut field_context = FieldContext::default();
-        let field1 = Field::new(String::from("alias"), FieldType::Alias, true, false);
-        let field2 = Field::new(String::from("command"), FieldType::Command, false, false);
-        field_context.fields.push(field1);
-        field_context.fields.push(field2);
         field_context.focus_state.select(Some(0));
 
         field_context.previous_field();
-        assert_eq!(field_context.focus_state.selected(), Some(1));
+        assert_eq!(field_context.focus_state.selected(), Some(4));
         assert_eq!(field_context.fields[0].in_focus(), false);
-        assert_eq!(field_context.fields[1].in_focus(), true);
+        assert_eq!(field_context.fields[4].in_focus(), true);
 
         field_context.previous_field();
-        assert_eq!(field_context.focus_state.selected(), Some(0));
-        assert_eq!(field_context.fields[0].in_focus(), true);
-        assert_eq!(field_context.fields[1].in_focus(), false);
+        assert_eq!(field_context.focus_state.selected(), Some(3));
+        assert_eq!(field_context.fields[4].in_focus(), false);
+        assert_eq!(field_context.fields[3].in_focus(), true);
     }
 
     #[test]
     fn should_return_the_selected_field() {
         let mut field_context = FieldContext::default();
-        let field1 = Field::new(String::from("alias"), FieldType::Alias, true, false);
-        let field2 = Field::new(String::from("command"), FieldType::Command, false, false);
-        field_context.fields.push(field1);
-        field_context.fields.push(field2);
-        field_context.focus_state.select(Some(0));
 
         field_context.focus_state.select(Some(1));
         let selected_field = field_context.selected_field_mut();
-        assert_eq!(selected_field.unwrap().field_type, FieldType::Command);
+        assert_eq!(selected_field.unwrap().field_type, FieldType::Namespace);
     }
 
-    #[test]
-    fn shoud_clear_fields_input() {
-        let mut field_context = FieldContext::default();
-        let field1 = Field::new(String::from("alias"), FieldType::Alias, true, false);
-        let field2 = Field::new(String::from("command"), FieldType::Command, false, false);
-        field_context.fields.push(field1);
-        field_context.fields.push(field2);
-
-        field_context.fields.clear_fields_input();
-        assert_eq!(field_context.fields[0].input_as_string(), "")
-    }
     #[test]
     fn should_build_a_new_command() {
         let mut field_context = FieldContext::default();
@@ -341,7 +315,7 @@ mod test {
     #[test]
     fn should_set_input_based_at_selected_command() {
         let mut field_context = FieldContext::default();
-        field_context.reset_fields();
+        field_context.build_form_fields();
         let selected_command = Command {
             alias: String::from("alias"),
             command: String::from("command"),
@@ -350,7 +324,6 @@ mod test {
             tags: Some(vec![String::from("tag1"), String::from("tag2")]),
         };
         field_context.select_command(Some(selected_command));
-
         field_context.set_selected_command_input();
 
         let command = field_context.selected_command();
