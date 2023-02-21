@@ -1,7 +1,7 @@
 use crate::{
     command::Command, commands::Commands, fuzzy::Fuzzy, resources::file_service::FileService,
 };
-use anyhow::{bail, Result};
+use anyhow::Result;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use log::debug;
 use std::{collections::HashMap, thread, time::Duration};
@@ -212,12 +212,11 @@ impl CommandsContext {
     /// Adds a new command and then saves the updated `commands.toml` file
     pub fn add_command(&mut self, new_command: &Command) -> Result<()> {
         new_command.validate()?;
-        if let Ok(commands) = self.commands.add_command(new_command) {
-            self.commands_cache.insert_entry(new_command.to_owned());
-            self.file_service.write_to_command_file(&commands)
-        } else {
-            bail!("Cannot save the new command")
-        }
+        debug!("new command validated: {new_command:?}");
+        let commands = self.commands.add_command(new_command)?;
+
+        self.commands_cache.insert_entry(new_command.to_owned());
+        self.file_service.write_to_command_file(&commands)
     }
 
     /// Adds an edited command, deletes the older one and then saves the updated `commands.toml` file
@@ -227,26 +226,19 @@ impl CommandsContext {
         current_command: &Command,
     ) -> Result<()> {
         edited_command.validate()?;
-        if let Ok(commands) = self
+        let commands = self
             .commands
-            .add_edited_command(edited_command, current_command)
-        {
-            self.commands_cache
-                .update_entry(edited_command, current_command);
-            self.file_service.write_to_command_file(&commands)
-        } else {
-            bail!("Cannot save the edited command")
-        }
+            .add_edited_command(edited_command, current_command)?;
+        self.commands_cache
+            .update_entry(edited_command, current_command);
+        self.file_service.write_to_command_file(&commands)
     }
 
     /// Removes a command and then saves the updated `commands.toml` file
     pub fn remove_command(&mut self, command: &Command) -> Result<()> {
-        if let Ok(commands) = self.commands.remove(command) {
-            self.commands_cache.remove_entry(command);
-            self.file_service.write_to_command_file(&commands)
-        } else {
-            bail!("Cannot remove the command")
-        }
+        let commands = self.commands.remove(command)?;
+        self.commands_cache.remove_entry(command);
+        self.file_service.write_to_command_file(&commands)
     }
 
     /// Runs a previously selected command

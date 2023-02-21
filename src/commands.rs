@@ -24,8 +24,8 @@ impl Commands {
             command.alias,
             command.namespace
         );
-
-        self.commands.push(command.clone());
+        self.commands.push(command.to_owned());
+        self.commands.sort_by_key(|c| c.alias.to_lowercase());
         Ok(self.commands.to_owned())
     }
 
@@ -34,10 +34,6 @@ impl Commands {
         edited_command: &Command,
         current_command: &Command,
     ) -> Result<Vec<Command>> {
-        if edited_command.eq(current_command) {
-            return Ok(self.commands.to_owned());
-        }
-
         ensure!(
             !self.commands.clone().iter().any(|command| {
                 command.alias.eq(&edited_command.alias)
@@ -51,6 +47,7 @@ impl Commands {
 
         self.commands.retain(|command| command != current_command);
         self.commands.push(edited_command.clone());
+        self.commands.sort_by_key(|c| c.alias.to_lowercase());
 
         Ok(self.commands.to_owned())
     }
