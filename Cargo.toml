@@ -27,3 +27,10 @@ flexi_logger = "0.24.2"
 log = "0.4.17"
 regex="1.7.1"
 fuzzy-matcher = "0.3.7"
+
+
+[profile.release]
+opt-level = 3
+strip = "symbols"
+lto = "thin"
+panic = "abort"
