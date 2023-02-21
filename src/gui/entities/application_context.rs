@@ -250,8 +250,8 @@ impl<'a> ApplicationContext<'a> {
     }
 
     /// Executes the callback command
-    pub fn execute_callback_command(&self) -> Result<()> {
-        self.commands_context.execute_command()
+    pub fn execute_callback_command(&self, quiet: bool) -> Result<()> {
+        self.commands_context.execute_command(quiet)
     }
 
     pub fn get_commands_state(&self) -> ListState {

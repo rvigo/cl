@@ -18,6 +18,7 @@ use tui::{backend::CrosstermBackend, Terminal};
 pub struct TuiApplication<'a> {
     pub terminal: Terminal<CrosstermBackend<std::io::Stdout>>,
     pub context: ApplicationContext<'a>,
+    config: Config,
 }
 
 impl<'a> TuiApplication<'a> {
@@ -36,7 +37,11 @@ impl<'a> TuiApplication<'a> {
         let commands = file_service.load_commands_from_file()?;
         let context = ApplicationContext::init(commands, size, file_service);
 
-        Ok(TuiApplication { terminal, context })
+        Ok(TuiApplication {
+            terminal,
+            context,
+            config,
+        })
     }
 
     pub fn render(&mut self) -> Result<()> {
@@ -74,6 +79,7 @@ impl<'a> TuiApplication<'a> {
     }
 
     pub fn callback(&self) -> Result<()> {
-        self.context.execute_callback_command()
+        self.context
+            .execute_callback_command(self.config.get_default_quiet_mode())
     }
 }
