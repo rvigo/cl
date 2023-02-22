@@ -41,10 +41,10 @@ impl CacheInfo {
     pub fn update_entry(&mut self, new_command_item: &Command, old_command_item: &Command) {
         let new_namespace = &new_command_item.namespace;
 
-        if let Some(commands) = self.cache.get_mut(new_namespace) {
-            debug!("updating {new_namespace} cache entries with the new command");
-            commands.push(new_command_item.to_owned());
-        }
+        debug!("updating {new_namespace} cache entries with the new command");
+        let commands = self.cache.entry(new_namespace.to_owned()).or_insert(vec![]);
+        commands.push(new_command_item.to_owned());
+
         self.remove_entry(old_command_item);
 
         self.sort_cached_values()

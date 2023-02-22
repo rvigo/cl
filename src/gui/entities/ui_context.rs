@@ -30,7 +30,7 @@ impl<'a> UIContext<'a> {
             terminal_size,
             view_mode: ViewMode::Main,
         };
-        context.select_form(Some(0));
+        context.select_form_idx(Some(0));
         context.select_command(initial_command);
         context
     }
@@ -68,8 +68,8 @@ impl<'a> UIContext<'a> {
         self.form_fields_context.select_command(selected_command)
     }
 
-    pub fn select_form(&mut self, idx: Option<usize>) {
-        self.form_fields_context.get_focus_state().select(idx)
+    pub fn select_form_idx(&mut self, idx: Option<usize>) {
+        self.form_fields_context.get_focus_state_mut().select(idx);
     }
 
     pub fn get_form_fields(&self) -> &Fields {
@@ -146,6 +146,11 @@ impl<'a> UIContext<'a> {
 
     pub fn get_choices_state_mut(&mut self) -> &mut ChoicesState {
         self.popup_context.state_mut()
+    }
+
+    pub fn enter_main_mode(&mut self) {
+        self.select_form_idx(Some(0));
+        self.set_view_mode(ViewMode::Main);
     }
 
     fn reorder_fields(&mut self) {

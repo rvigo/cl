@@ -28,8 +28,8 @@ impl<'a> FieldContext<'a> {
         &mut self.fields
     }
 
-    pub fn get_focus_state(&self) -> ListState {
-        self.focus_state.to_owned()
+    pub fn get_focus_state_mut(&mut self) -> &mut ListState {
+        &mut self.focus_state
     }
 
     pub fn next_field(&mut self) {
