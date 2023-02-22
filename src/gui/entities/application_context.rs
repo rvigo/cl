@@ -217,7 +217,6 @@ impl<'a> ApplicationContext<'a> {
 
     pub fn add_edited_command(&mut self) {
         let edited_command = self.ui_context.edit_command();
-
         let current_command = match self.ui_context.get_selected_command() {
             Some(command) => command,
             None => {
@@ -302,8 +301,7 @@ impl<'a> ApplicationContext<'a> {
     /// Changes the app main state to load the main screen in the next render tick
     pub fn enter_main_mode(&mut self) {
         self.reload_namespaces_state();
-        self.ui_context.select_form(Some(0));
-        self.ui_context.set_view_mode(ViewMode::Main);
+        self.ui_context.enter_main_mode();
     }
 
     /// Changes the app main state to load the edit screen in the next render tick
@@ -356,14 +354,17 @@ mod tests {
     #[test]
     fn should_add_a_new_command() -> Result<()> {
         let mut context = application_context_builder(3);
-        let namespaces = vec![
+        let expected_namespaces = vec![
             String::from("All"),
             String::from("namespace1"),
             String::from("namespace2"),
             String::from("namespace3"),
         ];
 
-        assert_eq!(context.namespaces_context.namespaces(), &namespaces);
+        assert_eq!(
+            context.namespaces_context.namespaces(),
+            &expected_namespaces
+        );
 
         let mut builder = CommandBuilder::default();
         builder

@@ -32,12 +32,12 @@ impl Commands {
     pub fn add_edited_command(
         &mut self,
         edited_command: &Command,
-        current_command: &Command,
+        old_command: &Command,
     ) -> Result<Vec<Command>> {
         ensure!(
             !self.commands.clone().iter().any(|command| {
                 command.alias.eq(&edited_command.alias)
-                    && !edited_command.alias.eq(&current_command.alias)
+                    && !edited_command.alias.eq(&old_command.alias)
                     && command.namespace.eq(&edited_command.namespace)
             }),
             "Command with alias \"{}\" already exists in \"{}\" namespace",
@@ -45,8 +45,8 @@ impl Commands {
             edited_command.namespace
         );
 
-        self.commands.retain(|command| command != current_command);
-        self.commands.push(edited_command.clone());
+        self.commands.retain(|command| !command.eq(old_command));
+        self.commands.push(edited_command.to_owned());
         self.commands.sort_by_key(|c| c.alias.to_lowercase());
 
         Ok(self.commands.to_owned())
