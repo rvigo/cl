@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use crate::command::Command;
 
 /// A trait to give a type an optmized string representation to fuzzy searches
 ///
@@ -21,12 +21,17 @@ pub trait Fuzzy {
     /// }
     /// ```
     fn lookup_string(&self) -> String;
+}
 
-    fn filter_duplicates(&self, input: &str) -> String {
-        let words: Vec<&str> = input.split_whitespace().collect();
-        let unique_words: HashSet<&str> = words.iter().cloned().collect();
-        let filtered: Vec<&str> = unique_words.iter().cloned().collect();
-
-        filtered.join(" ")
+impl Fuzzy for Command {
+    fn lookup_string(&self) -> String {
+        format!(
+            "{} {} {} {} {}",
+            self.alias,
+            self.namespace,
+            self.description.as_ref().unwrap_or(&String::default()),
+            self.tags_as_string(),
+            self.command,
+        )
     }
 }

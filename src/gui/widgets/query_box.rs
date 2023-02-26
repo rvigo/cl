@@ -8,6 +8,8 @@ use tui::{
 };
 use tui_textarea::TextArea;
 
+use super::footer::Footer;
+
 #[derive(Clone)]
 pub struct QueryBox<'a> {
     text_area: TextArea<'a>,
@@ -15,7 +17,7 @@ pub struct QueryBox<'a> {
     on_focus: bool,
     buffer: String,
 }
-
+impl<'a> Footer for QueryBox<'a> {}
 impl<'a> Default for QueryBox<'a> {
     fn default() -> Self {
         Self {

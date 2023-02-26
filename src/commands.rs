@@ -8,9 +8,9 @@ pub struct Commands {
 }
 
 impl Commands {
-    pub fn init(mut items: Vec<Command>) -> Commands {
-        items.sort_by_key(|c| c.alias.to_lowercase());
-        Commands { commands: items }
+    pub fn init(mut commands: Vec<Command>) -> Commands {
+        commands.sort_by_key(|c| c.alias.to_lowercase());
+        Commands { commands }
     }
 
     pub fn command_list(&self) -> &Vec<Command> {
