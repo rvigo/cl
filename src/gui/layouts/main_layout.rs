@@ -8,8 +8,8 @@ use crate::{
             application_context::ApplicationContext, namespaces_context::NamespacesContext,
         },
         widgets::{
-            base_widget::BaseWidget, display::DisplayWidget, help_popup::HelpPopup,
-            query_box::QueryBox,
+            base_widget::BaseWidget, display::DisplayWidget, help_footer::HelpFooter,
+            help_popup::HelpPopup, query_box::QueryBox,
         },
     },
 };
@@ -40,7 +40,7 @@ pub fn render<B: Backend>(
         frame.render_widget(
             HelpPopup::new(
                 application_context.view_mode().to_owned(),
-                terminal_size.clone(),
+                terminal_size.to_owned(),
             ),
             frame.size(),
         );
@@ -49,7 +49,7 @@ pub fn render<B: Backend>(
     if application_context.popup().is_some() && application_context.get_popup_answer().is_none() {
         let popup = &application_context.popup().as_ref().unwrap().to_owned();
 
-        //TODO move this to another place
+        //TODO move this to `UiContext`
         let area = if terminal_size != TerminalSize::Small {
             centered_rect(45, 40, frame.size())
         } else {
@@ -70,7 +70,7 @@ fn render_base_widget<B: Backend>(
     terminal_size: &TerminalSize,
 ) {
     frame.render_widget(
-        BaseWidget::new(Some(query_box), terminal_size),
+        BaseWidget::new(terminal_size, Some(query_box), HelpFooter::new()),
         frame.size(),
     );
 }
@@ -91,7 +91,9 @@ fn render_form_medium<B: Backend>(
         .constraints(constraints)
         .split(frame.size());
 
-    let selected_command: Command = get_selected_command(application_context);
+    let filtered_commands = application_context.filter_commands();
+    let selected_idx = application_context.get_selected_command_idx();
+    let selected_command: Command = get_selected_command(selected_idx, &filtered_commands);
 
     application_context.select_command(Some(selected_command.to_owned()));
 
@@ -103,7 +105,7 @@ fn render_form_medium<B: Backend>(
     let tags = create_tags_menu_widget(tags_str);
     let namespace = create_namespace_widget(&selected_command.namespace);
     let description = create_command_description_widget(description_str);
-    let commands = create_command_items_widget(application_context.filter_commands());
+    let commands = create_command_items_widget(filtered_commands);
 
     let central_chunk = Layout::default()
         .direction(Direction::Horizontal)
@@ -143,14 +145,16 @@ fn render_form_small<B: Backend>(
         .constraints(constraints)
         .split(frame.size());
 
-    let selected_command: Command = get_selected_command(application_context);
+    let filtered_commands = application_context.filter_commands();
+    let selected_idx = application_context.get_selected_command_idx();
+    let selected_command: Command = get_selected_command(selected_idx, &filtered_commands);
 
     application_context.select_command(Some(selected_command.clone()));
 
     let command_str = &selected_command.command;
     let command = create_command_details_widget(command_str);
     let tabs = create_tab_menu_widget(application_context.namespaces_context());
-    let commands = create_command_items_widget(application_context.filter_commands());
+    let commands = create_command_items_widget(filtered_commands);
 
     let central_chunk = Layout::default()
         .direction(Direction::Horizontal)
@@ -171,14 +175,18 @@ fn render_form_small<B: Backend>(
     frame.render_widget(command, command_detail_chunks[0]);
 }
 
-fn get_selected_command(application_context: &mut ApplicationContext) -> Command {
-    let idx = application_context.get_selected_command_idx();
-    let filtered_commands = application_context.filter_commands();
-    if filtered_commands.is_empty() || filtered_commands.get(idx).is_none() {
+fn get_selected_command(
+    selected_command_index: usize,
+    filtered_commands: &Vec<Command>,
+) -> Command {
+    if filtered_commands.is_empty() || filtered_commands.get(selected_command_index).is_none() {
         //creates an empty command
         CommandBuilder::default().build()
     } else {
-        filtered_commands.get(idx).unwrap().to_owned()
+        filtered_commands
+            .get(selected_command_index)
+            .unwrap()
+            .to_owned()
     }
 }
 
@@ -197,7 +205,7 @@ fn create_tab_menu_widget<'a>(namespaces_context: &NamespacesContext) -> Tabs<'a
         .collect();
     Tabs::new(tab_menu)
         .select(namespaces_context.get_selected_namespace_idx())
-        .block(get_default_block("Namespaces".to_string()))
+        .block(get_default_block("Namespaces"))
         .style(Style::default())
         .highlight_style(
             Style::default()
@@ -212,13 +220,12 @@ fn create_command_items_widget<'a>(commands: Vec<Command>) -> List<'a> {
         .into_iter()
         .map(|c| {
             let lines = vec![Spans::from(c.alias)];
-
             ListItem::new(lines.clone().to_owned()).style(Style::default().fg(DEFAULT_TEXT_COLOR))
         })
         .collect();
 
     List::new(list_items)
-        .block(get_default_block("Aliases".to_string()))
+        .block(get_default_block("Aliases"))
         .highlight_style(
             Style::default()
                 .fg(Color::Black)

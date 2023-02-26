@@ -1,4 +1,4 @@
-use super::{display::DisplayWidget, query_box::QueryBox};
+use super::footer::Footer;
 use crate::gui::layouts::TerminalSize;
 use tui::{
     buffer::Buffer,
@@ -7,19 +7,30 @@ use tui::{
     widgets::{Block, BorderType, Borders, Widget},
 };
 
-pub struct BaseWidget<'a> {
-    query_box: Option<&'a QueryBox<'a>>,
+pub struct BaseWidget<'a, F, H>
+where
+    F: Footer,
+    H: Footer,
+{
     terminal_size: &'a TerminalSize,
+    footer: Option<&'a F>,
+    help_footer: H, //TODO improve the name of this widget
 }
 
-impl<'a> BaseWidget<'a> {
+impl<'a, F, H> BaseWidget<'a, F, H>
+where
+    F: Footer,
+    H: Footer,
+{
     pub fn new(
-        query_box: Option<&'a QueryBox<'a>>,
         terminal_size: &'a TerminalSize,
-    ) -> BaseWidget<'a> {
+        footer: Option<&'a F>,
+        help_footer: H,
+    ) -> BaseWidget<'a, F, H> {
         BaseWidget {
-            query_box,
             terminal_size,
+            footer,
+            help_footer,
         }
     }
 
@@ -42,19 +53,19 @@ impl<'a> BaseWidget<'a> {
             )
             .split(area);
 
-        if let Some(query_box) = self.query_box.cloned() {
-            let footer = Layout::default()
+        if let Some(footer) = self.footer {
+            let footer_layout = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints([Constraint::Min(28), Constraint::Length(18)].as_ref())
                 .split(chunks[3]);
-            query_box.render(footer[0], buf);
-            self.create_helper_footer().render(footer[1], buf)
+            footer.to_owned().render(footer_layout[0], buf);
+            self.help_footer.to_owned().render(footer_layout[1], buf)
         } else {
-            let footer = Layout::default()
+            let footer_layout = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints([Constraint::Percentage(100)].as_ref())
                 .split(chunks[3]);
-            self.create_helper_footer().render(footer[0], buf)
+            self.help_footer.to_owned().render(footer_layout[0], buf)
         }
 
         self.render_base_block(area, buf);
@@ -62,19 +73,6 @@ impl<'a> BaseWidget<'a> {
 
     fn render_big_terminal(&self, area: Rect, buf: &mut Buffer) {
         self.render_medium_terminal(area, buf)
-    }
-
-    fn create_helper_footer(&self) -> DisplayWidget<'a> {
-        let help_content = "Show help <F1/?>";
-        let block = Block::default()
-            .style(Style::default())
-            .borders(Borders::ALL)
-            .title(" Help ")
-            .title_alignment(Alignment::Right)
-            .border_type(BorderType::Plain);
-        DisplayWidget::new(help_content, true)
-            .alignment(Alignment::Right)
-            .block(block)
     }
 
     fn render_base_block(&self, area: Rect, buf: &mut Buffer) {
@@ -89,7 +87,11 @@ impl<'a> BaseWidget<'a> {
     }
 }
 
-impl<'a> Widget for BaseWidget<'a> {
+impl<'a, F, H> Widget for BaseWidget<'a, F, H>
+where
+    F: Footer,
+    H: Footer,
+{
     fn render(self, area: Rect, buf: &mut Buffer) {
         match self.terminal_size {
             TerminalSize::Small => self.render_small_terminal(area, buf),

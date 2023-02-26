@@ -1,7 +1,10 @@
 use super::{centered_rect, TerminalSize};
 use crate::gui::{
     entities::application_context::ApplicationContext,
-    widgets::{base_widget::BaseWidget, field::FieldType, help_popup::HelpPopup},
+    widgets::{
+        base_widget::BaseWidget, field::FieldType, help_footer::HelpFooter, help_popup::HelpPopup,
+        navigation_footer::NavigationFooter,
+    },
 };
 use tui::{
     backend::Backend,
@@ -45,7 +48,13 @@ pub fn render<B: Backend>(
 }
 
 fn render_base_widget<B: Backend>(frame: &mut Frame<B>) {
-    let base_widget = BaseWidget::new(None, &super::TerminalSize::Medium);
+    let navigation_footer = NavigationFooter::new();
+    let help_footer = HelpFooter::new();
+    let base_widget = BaseWidget::new(
+        &super::TerminalSize::Medium,
+        Some(&navigation_footer),
+        help_footer,
+    );
     frame.render_widget(base_widget, frame.size());
 }
 

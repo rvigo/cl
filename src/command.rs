@@ -1,4 +1,3 @@
-use crate::fuzzy::Fuzzy;
 use anyhow::{ensure, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -81,19 +80,6 @@ impl PartialEq for Command {
         self.alias.eq(&other.alias)
             && self.namespace.eq(&other.namespace)
             && self.command.eq(&other.command)
-    }
-}
-
-impl Fuzzy for Command {
-    fn lookup_string(&self) -> String {
-        format!(
-            "{} {} {} {} {}",
-            self.alias,
-            self.namespace,
-            self.description.as_ref().unwrap_or(&String::default()),
-            self.tags_as_string(),
-            self.command,
-        )
     }
 }
 
