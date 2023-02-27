@@ -28,10 +28,12 @@ impl Fuzzy for Command {
         format!(
             "{} {} {} {} {}",
             self.alias,
-            self.namespace,
-            self.description.as_ref().unwrap_or(&String::default()),
-            self.tags_as_string(),
             self.command,
+            self.namespace,
+            self.tags_as_string(),
+            self.description.as_ref().unwrap_or(&String::default()),
         )
+        .trim()
+        .to_string()
     }
 }

@@ -94,17 +94,18 @@ fn render_form_medium<B: Backend>(
     let filtered_commands = application_context.filter_commands();
     let selected_idx = application_context.get_selected_command_idx();
     let selected_command: Command = get_selected_command(selected_idx, &filtered_commands);
+    let query = application_context.query_box().get_input();
 
     application_context.select_command(Some(selected_command.to_owned()));
 
     let tags_str = &selected_command.tags_as_string();
     let command_str = &selected_command.command;
     let description_str = &selected_command.description();
-    let command = create_command_details_widget(command_str);
+    let command = create_command_details_widget(command_str, &query);
     let tabs = create_tab_menu_widget(application_context.namespaces_context());
-    let tags = create_tags_menu_widget(tags_str);
-    let namespace = create_namespace_widget(&selected_command.namespace);
-    let description = create_command_description_widget(description_str);
+    let tags = create_tags_menu_widget(tags_str, &query);
+    let namespace = create_namespace_widget(&selected_command.namespace, &query);
+    let description = create_command_description_widget(description_str, &query);
     let commands = create_command_items_widget(filtered_commands);
 
     let central_chunk = Layout::default()
@@ -148,11 +149,12 @@ fn render_form_small<B: Backend>(
     let filtered_commands = application_context.filter_commands();
     let selected_idx = application_context.get_selected_command_idx();
     let selected_command: Command = get_selected_command(selected_idx, &filtered_commands);
+    let query = application_context.query_box().get_input();
 
     application_context.select_command(Some(selected_command.clone()));
 
     let command_str = &selected_command.command;
-    let command = create_command_details_widget(command_str);
+    let command = create_command_details_widget(command_str, &query);
     let tabs = create_tab_menu_widget(application_context.namespaces_context());
     let commands = create_command_items_widget(filtered_commands);
 
@@ -235,18 +237,21 @@ fn create_command_items_widget<'a>(commands: Vec<Command>) -> List<'a> {
         .highlight_symbol("> ")
 }
 
-fn create_command_details_widget(command: &str) -> DisplayWidget {
-    create_display_widget("Command", command)
+fn create_command_details_widget<'a>(command: &'a str, query: &'a str) -> DisplayWidget<'a> {
+    create_display_widget("Command", command).highlight(query.into())
 }
 
-fn create_command_description_widget(description: &str) -> DisplayWidget {
-    create_display_widget("Description", description)
+fn create_command_description_widget<'a>(
+    description: &'a str,
+    query: &'a str,
+) -> DisplayWidget<'a> {
+    create_display_widget("Description", description).highlight(query.into())
 }
 
-fn create_tags_menu_widget(tags: &str) -> DisplayWidget {
-    create_display_widget("Tags", tags)
+fn create_tags_menu_widget<'a>(tags: &'a str, query: &'a str) -> DisplayWidget<'a> {
+    create_display_widget("Tags", tags).highlight(query.into())
 }
 
-fn create_namespace_widget(namespace: &str) -> DisplayWidget {
-    create_display_widget("Namespace", namespace)
+fn create_namespace_widget<'a>(namespace: &'a str, query: &'a str) -> DisplayWidget<'a> {
+    create_display_widget("Namespace", namespace).highlight(query.into())
 }
