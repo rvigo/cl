@@ -3,8 +3,9 @@ use crate::{
 };
 use anyhow::Result;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
+use itertools::Itertools;
 use log::debug;
-use std::{collections::HashMap, thread, time::Duration};
+use std::{cmp::Reverse, collections::HashMap, thread, time::Duration};
 use tui::widgets::ListState;
 
 /// Caches a `Command` list using the namespace as a key for faster search
@@ -151,13 +152,16 @@ impl CommandsContext {
             }
         };
 
-        if commands.len() > 1 && !query_string.is_empty() {
+        if !commands.is_empty() && !query_string.is_empty() {
             self.fuzzy_find(current_namespace, query_string, commands)
         } else {
             commands
         }
     }
 
+    /// Does a fuzzy search in the given vec
+    ///
+    /// Tries to return an ordered vec based on the score
     #[inline(always)]
     pub fn fuzzy_find(
         &self,
@@ -169,17 +173,20 @@ impl CommandsContext {
             return commands;
         }
 
-        commands
+        let mut scored_commands: Vec<(i64, Command)> = commands
             .iter()
             .cloned()
-            .filter(|c| {
-                (namespace.eq("All") || c.namespace.eq(namespace))
-                    && self
-                        .matcher
-                        .fuzzy_match(&c.lookup_string(), query_string)
-                        .is_some()
+            .filter(|c| (namespace.eq("All") || c.namespace.eq(namespace)))
+            .filter_map(|c| {
+                self.matcher
+                    .fuzzy_indices(&c.lookup_string(), query_string)
+                    .map(|(score, _)| (score, c))
+                    .filter(|(score, _)| *score > 1)
             })
-            .collect::<Vec<Command>>()
+            .collect();
+
+        scored_commands.sort_by_key(|&(score, _)| Reverse(score));
+        scored_commands.into_iter().map(|(_, c)| c).collect_vec()
     }
 
     pub fn next_command(&mut self, current_namespace: &str, query_string: &str) {
