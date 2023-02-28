@@ -78,6 +78,8 @@ impl Commands {
             eprintln!("Warning: $SHELL not found! Using sh");
             String::from("sh")
         });
+        // let envs = env::vars();
+
         if dry_run {
             println!("{}", command_item.command);
         } else {
@@ -97,7 +99,9 @@ impl Commands {
                 );
             }
             std::process::Command::new(shell)
-                .arg("-c")
+                .env_clear()
+                .envs(env::vars())
+                .arg("-ic")
                 .arg(&command_item.command)
                 .spawn()?
                 .wait()
