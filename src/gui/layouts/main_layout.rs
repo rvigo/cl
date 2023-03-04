@@ -238,20 +238,20 @@ fn create_command_items_widget<'a>(commands: Vec<Command>) -> List<'a> {
 }
 
 fn create_command_details_widget<'a>(command: &'a str, query: &'a str) -> DisplayWidget<'a> {
-    create_display_widget("Command", command).highlight(query.into())
+    create_display_widget("Command", command).highlight(query)
 }
 
 fn create_command_description_widget<'a>(
     description: &'a str,
     query: &'a str,
 ) -> DisplayWidget<'a> {
-    create_display_widget("Description", description).highlight(query.into())
+    create_display_widget("Description", description).highlight(query)
 }
 
 fn create_tags_menu_widget<'a>(tags: &'a str, query: &'a str) -> DisplayWidget<'a> {
-    create_display_widget("Tags", tags).highlight(query.into())
+    create_display_widget("Tags", tags).highlight(query)
 }
 
 fn create_namespace_widget<'a>(namespace: &'a str, query: &'a str) -> DisplayWidget<'a> {
-    create_display_widget("Namespace", namespace).highlight(query.into())
+    create_display_widget("Namespace", namespace).highlight(query)
 }
