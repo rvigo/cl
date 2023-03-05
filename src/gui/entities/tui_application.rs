@@ -12,6 +12,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use log::debug;
 use std::{io, panic};
 use tui::{backend::CrosstermBackend, Terminal};
 
@@ -65,7 +66,8 @@ impl<'a> TuiApplication<'a> {
         }));
     }
 
-    pub fn clear(&mut self) -> Result<()> {
+    fn clear(&mut self) -> Result<()> {
+        debug!("clearing the screen");
         disable_raw_mode()?;
         execute!(
             self.terminal.backend_mut(),
@@ -78,8 +80,18 @@ impl<'a> TuiApplication<'a> {
         Ok(())
     }
 
-    pub fn callback(&self) -> Result<()> {
+    fn callback(&self) -> Result<()> {
+        debug!("executing the callback command");
         self.context
             .execute_callback_command(self.config.get_default_quiet_mode())
+    }
+}
+
+impl<'a> Drop for TuiApplication<'a> {
+    fn drop(&mut self) {
+        self.clear().expect("Cannot clear the the screen");
+        self.callback()
+            .expect("Cannot execute the selected command");
+        debug!("shutting down the app");
     }
 }

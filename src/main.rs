@@ -33,8 +33,5 @@ fn main() -> Result<()> {
 
 fn run_main_app() -> Result<()> {
     let mut tui = TuiApplication::create()?;
-    tui.render()?;
-    tui.clear()?;
-
-    tui.callback()
+    tui.render()
 }
