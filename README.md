@@ -11,18 +11,7 @@ $ brew tap rvigo/cl
 $ brew install cl 
 ```
 
-### from source:
-You must have `Rust` and `Cargo` installed ([please follow the official Rust site instructions](https://www.rust-lang.org/tools/install))
-
-  ``` bash
-  # this will download the lastest tag 
-  $ git clone --depth 1 -b $(git describe --tags --abbrev=0) git@github.com:rvigo/cl.git
-  # and then install the application
-  $ cargo install --path .
-  ```
-
-Please do not build from `HEAD`, you may face incomplete work/broken commits
-If you use ZSH, an autocomplete script is installed with the application.
+If you use ZSH, an autocomplete script will be installed with the application.
 
 ## usage
 
