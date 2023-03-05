@@ -1,8 +1,7 @@
-use crate::gui::layouts::DEFAULT_SELECTED_COLOR;
 use itertools::Itertools;
 use tui::{
     layout::Alignment,
-    style::Style,
+    style::{Modifier, Style},
     text::{Span, Spans, Text},
     widgets::{Block, Paragraph, Widget, Wrap},
 };
@@ -68,9 +67,7 @@ impl<'a> DisplayWidget<'a> {
         if highlight_string.eq(&self.content) {
             let span = Span::styled(
                 highlight_string,
-                Style::default()
-                    .bg(DEFAULT_SELECTED_COLOR)
-                    .fg(tui::style::Color::Black),
+                Style::default().add_modifier(Modifier::UNDERLINED),
             );
             self.highlighted_content = Some(vec![Spans::from(span)]);
             return self;
@@ -85,9 +82,7 @@ impl<'a> DisplayWidget<'a> {
                 sv.iter()
                     .map(|i| {
                         let style = if self.contains_ignore_case(&highlight_string, i) {
-                            Style::default()
-                                .bg(DEFAULT_SELECTED_COLOR)
-                                .fg(tui::style::Color::Black)
+                            Style::default().add_modifier(Modifier::UNDERLINED)
                         } else {
                             Style::default()
                         };
@@ -228,57 +223,17 @@ mod test {
 
         let expected_spans = vec![
             Spans::from(vec![
-                Span::styled(
-                    "s",
-                    Style::default()
-                        .bg(DEFAULT_SELECTED_COLOR)
-                        .fg(tui::style::Color::Black),
-                ),
-                Span::styled(
-                    "a",
-                    Style::default()
-                        .bg(DEFAULT_SELECTED_COLOR)
-                        .fg(tui::style::Color::Black),
-                ),
-                Span::styled(
-                    "n",
-                    Style::default()
-                        .bg(DEFAULT_SELECTED_COLOR)
-                        .fg(tui::style::Color::Black),
-                ),
-                Span::styled(
-                    "d",
-                    Style::default()
-                        .bg(DEFAULT_SELECTED_COLOR)
-                        .fg(tui::style::Color::Black),
-                ),
+                Span::styled("s", Style::default().add_modifier(Modifier::UNDERLINED)),
+                Span::styled("a", Style::default().add_modifier(Modifier::UNDERLINED)),
+                Span::styled("n", Style::default().add_modifier(Modifier::UNDERLINED)),
+                Span::styled("d", Style::default().add_modifier(Modifier::UNDERLINED)),
                 Span::from("box"),
             ]),
             Spans::from(vec![
-                Span::styled(
-                    "s",
-                    Style::default()
-                        .bg(DEFAULT_SELECTED_COLOR)
-                        .fg(tui::style::Color::Black),
-                ),
-                Span::styled(
-                    "a",
-                    Style::default()
-                        .bg(DEFAULT_SELECTED_COLOR)
-                        .fg(tui::style::Color::Black),
-                ),
-                Span::styled(
-                    "n",
-                    Style::default()
-                        .bg(DEFAULT_SELECTED_COLOR)
-                        .fg(tui::style::Color::Black),
-                ),
-                Span::styled(
-                    "d",
-                    Style::default()
-                        .bg(DEFAULT_SELECTED_COLOR)
-                        .fg(tui::style::Color::Black),
-                ),
+                Span::styled("s", Style::default().add_modifier(Modifier::UNDERLINED)),
+                Span::styled("a", Style::default().add_modifier(Modifier::UNDERLINED)),
+                Span::styled("n", Style::default().add_modifier(Modifier::UNDERLINED)),
+                Span::styled("d", Style::default().add_modifier(Modifier::UNDERLINED)),
                 Span::from("box"),
             ]),
         ];
@@ -296,51 +251,16 @@ mod test {
 
         let expected_spans = vec![Spans::from(vec![
             Span::from("thi"),
-            Span::styled(
-                "s",
-                Style::default()
-                    .bg(DEFAULT_SELECTED_COLOR)
-                    .fg(tui::style::Color::Black),
-            ),
+            Span::styled("s", Style::default().add_modifier(Modifier::UNDERLINED)),
             Span::from(" i"),
-            Span::styled(
-                "s",
-                Style::default()
-                    .bg(DEFAULT_SELECTED_COLOR)
-                    .fg(tui::style::Color::Black),
-            ),
+            Span::styled("s", Style::default().add_modifier(Modifier::UNDERLINED)),
             Span::from(" "),
-            Span::styled(
-                "a",
-                Style::default()
-                    .bg(DEFAULT_SELECTED_COLOR)
-                    .fg(tui::style::Color::Black),
-            ),
+            Span::styled("a", Style::default().add_modifier(Modifier::UNDERLINED)),
             Span::from(" "),
-            Span::styled(
-                "s",
-                Style::default()
-                    .bg(DEFAULT_SELECTED_COLOR)
-                    .fg(tui::style::Color::Black),
-            ),
-            Span::styled(
-                "a",
-                Style::default()
-                    .bg(DEFAULT_SELECTED_COLOR)
-                    .fg(tui::style::Color::Black),
-            ),
-            Span::styled(
-                "n",
-                Style::default()
-                    .bg(DEFAULT_SELECTED_COLOR)
-                    .fg(tui::style::Color::Black),
-            ),
-            Span::styled(
-                "d",
-                Style::default()
-                    .bg(DEFAULT_SELECTED_COLOR)
-                    .fg(tui::style::Color::Black),
-            ),
+            Span::styled("s", Style::default().add_modifier(Modifier::UNDERLINED)),
+            Span::styled("a", Style::default().add_modifier(Modifier::UNDERLINED)),
+            Span::styled("n", Style::default().add_modifier(Modifier::UNDERLINED)),
+            Span::styled("d", Style::default().add_modifier(Modifier::UNDERLINED)),
             Span::from("box"),
         ])];
 
@@ -358,26 +278,11 @@ mod test {
         let pattern = "cl";
         let d = DisplayWidget::new(content, false);
         let expected_spans = vec![Spans::from(vec![
-            Span::styled(
-                "c",
-                Style::default()
-                    .bg(DEFAULT_SELECTED_COLOR)
-                    .fg(tui::style::Color::Black),
-            ),
+            Span::styled("c", Style::default().add_modifier(Modifier::UNDERLINED)),
             Span::from("hange "),
-            Span::styled(
-                "l",
-                Style::default()
-                    .bg(DEFAULT_SELECTED_COLOR)
-                    .fg(tui::style::Color::Black),
-            ),
+            Span::styled("l", Style::default().add_modifier(Modifier::UNDERLINED)),
             Span::from("o"),
-            Span::styled(
-                "c",
-                Style::default()
-                    .bg(DEFAULT_SELECTED_COLOR)
-                    .fg(tui::style::Color::Black),
-            ),
+            Span::styled("c", Style::default().add_modifier(Modifier::UNDERLINED)),
             Span::from("ation"),
         ])];
 
