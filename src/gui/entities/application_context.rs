@@ -170,8 +170,8 @@ impl<'a> ApplicationContext<'a> {
                             if let Some(command) = self.ui_context.get_selected_command() {
                                 if self.commands_context.remove_command(command).is_ok() {
                                     self.clear_popup_context();
-
                                     self.reload_namespaces_state();
+                                    self.reset_command_idx()
                                 }
                             }
                         }
@@ -238,6 +238,10 @@ impl<'a> ApplicationContext<'a> {
             let popup = Popup::from_error("Failed to add the edited command");
             self.ui_context.set_popup(Some(popup));
         }
+    }
+
+    fn reset_command_idx(&mut self) {
+        self.commands_context.reset_command_idx();
     }
 
     /// Sets the current selected command to be executed at the end of the app execution and then tells the app to quit
