@@ -1,7 +1,6 @@
 mod cli;
 mod command;
 mod commands;
-mod fuzzy;
 mod gui;
 mod resources;
 

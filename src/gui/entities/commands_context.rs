@@ -1,6 +1,5 @@
-use crate::{
-    command::Command, commands::Commands, fuzzy::Fuzzy, resources::file_service::FileService,
-};
+use super::fuzzy::Fuzzy;
+use crate::{command::Command, commands::Commands, resources::file_service::FileService};
 use anyhow::Result;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
