@@ -141,7 +141,7 @@ impl CommandsContext {
     /// * `current_namespace` - A &str representing the app current namespace
     /// * `query_string` - A &str representing the user's query string
     ///
-    pub fn filter_commands(&mut self, current_namespace: &str, query_string: &str) -> Vec<Command> {
+    pub fn filter(&mut self, current_namespace: &str, query_string: &str) -> Vec<Command> {
         let commands = if !current_namespace.is_empty() && current_namespace != "All" {
             debug!("getting cached entries for namespace `{current_namespace}`");
             self.commands_cache.get_entry(current_namespace)
@@ -195,7 +195,7 @@ impl CommandsContext {
 
     pub fn next_command(&mut self, current_namespace: &str, query_string: &str) {
         let mut i = self.get_selected_command_idx();
-        let filtered_commands = self.filter_commands(current_namespace, query_string);
+        let filtered_commands = self.filter(current_namespace, query_string);
         if !filtered_commands.is_empty() {
             i = if i >= filtered_commands.len() - 1 {
                 0
@@ -208,7 +208,7 @@ impl CommandsContext {
 
     pub fn previous_command(&mut self, current_namespace: &str, query_string: &str) {
         let mut i = self.get_selected_command_idx();
-        let filtered_commands = self.filter_commands(current_namespace, query_string);
+        let filtered_commands = self.filter(current_namespace, query_string);
         if !filtered_commands.is_empty() {
             i = if i == 0 {
                 filtered_commands.len() - 1
