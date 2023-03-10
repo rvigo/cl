@@ -118,13 +118,17 @@ impl CommandsContext {
         self.to_be_executed = command
     }
 
+    pub fn get_selected_command_idx(&self) -> usize {
+        self.state.selected().unwrap_or(0)
+    }
+
     /// Selects the command index in the current command list
     pub fn select_command_idx(&mut self, idx: usize) {
         self.state.select(Some(idx))
     }
 
-    pub fn get_selected_command_idx(&self) -> usize {
-        self.state.selected().unwrap_or(0)
+    pub fn reset_command_idx(&mut self) {
+        self.select_command_idx(0)
     }
 
     /// Filters the commands based on a query and a namespace
