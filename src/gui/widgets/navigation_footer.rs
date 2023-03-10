@@ -22,7 +22,7 @@ impl NavigationFooter {
 impl Widget for NavigationFooter {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let title = "Navigation";
-        let display = DisplayWidget::new(self.content, true)
+        let display = DisplayWidget::new(self.content, true, false)
             .title(title)
             .block(get_default_block(title));
 

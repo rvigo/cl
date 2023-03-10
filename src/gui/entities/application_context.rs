@@ -11,7 +11,7 @@ use crate::{
             query_box::QueryBox,
         },
     },
-    resources::file_service::FileService,
+    resources::{config::Options, file_service::FileService},
 };
 use anyhow::Result;
 use crossterm::event::KeyEvent;
@@ -23,6 +23,7 @@ pub struct ApplicationContext<'a> {
     namespaces_context: NamespacesContext,
     commands_context: CommandsContext,
     ui_context: UIContext<'a>,
+    config_options: Options,
 }
 
 impl<'a> ApplicationContext<'a> {
@@ -30,6 +31,7 @@ impl<'a> ApplicationContext<'a> {
         commands: Vec<Command>,
         terminal_size: TerminalSize,
         file_service: FileService,
+        config_options: Options,
     ) -> ApplicationContext<'a> {
         let initial_command = Some(commands[0].to_owned());
         let namespaces = commands.iter().map(|c| c.namespace.to_owned()).collect();
@@ -39,6 +41,7 @@ impl<'a> ApplicationContext<'a> {
             namespaces_context: NamespacesContext::new(namespaces),
             commands_context: CommandsContext::new(commands, file_service),
             ui_context: UIContext::new(terminal_size, initial_command),
+            config_options,
         }
     }
 
@@ -249,8 +252,9 @@ impl<'a> ApplicationContext<'a> {
     }
 
     /// Executes the callback command
-    pub fn execute_callback_command(&self, quiet: bool) -> Result<()> {
-        self.commands_context.execute_command(quiet)
+    pub fn execute_callback_command(&self) -> Result<()> {
+        self.commands_context
+            .execute_command(self.config_options.get_default_quiet_mode())
     }
 
     pub fn get_commands_state(&self) -> ListState {
@@ -264,6 +268,13 @@ impl<'a> ApplicationContext<'a> {
     // other
     pub fn should_quit(&self) -> bool {
         self.should_quit
+    }
+
+    pub fn should_highligh(&mut self) -> bool {
+        match self.config_options.get_highlight() {
+            Ok(Some(value)) => value,
+            _ => true,
+        }
     }
 
     /// Tells the app to quit its execution
@@ -348,6 +359,7 @@ mod tests {
             commands,
             TerminalSize::Medium,
             FileService::new(temp_dir().join("commands.toml")),
+            Options::default(),
         )
     }
 

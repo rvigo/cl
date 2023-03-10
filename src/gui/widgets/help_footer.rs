@@ -29,7 +29,7 @@ impl Widget for HelpFooter {
             .title(" Help ")
             .title_alignment(Alignment::Right)
             .border_type(BorderType::Plain);
-        let display = DisplayWidget::new(self.content, true)
+        let display = DisplayWidget::new(self.content, true, false)
             .alignment(Alignment::Right)
             .block(block);
 
