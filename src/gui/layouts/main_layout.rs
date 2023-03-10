@@ -97,15 +97,15 @@ fn render_form_medium<B: Backend>(
     let query = application_context.query_box().get_input();
 
     application_context.select_command(Some(selected_command.to_owned()));
-
+    let should_highligh = application_context.should_highligh();
     let tags_str = &selected_command.tags_as_string();
     let command_str = &selected_command.command;
     let description_str = &selected_command.description();
-    let command = create_command_details_widget(command_str, &query);
+    let command = create_command_details_widget(command_str, &query, should_highligh);
     let tabs = create_tab_menu_widget(application_context.namespaces_context());
-    let tags = create_tags_menu_widget(tags_str, &query);
-    let namespace = create_namespace_widget(&selected_command.namespace, &query);
-    let description = create_command_description_widget(description_str, &query);
+    let tags = create_tags_menu_widget(tags_str, &query, should_highligh);
+    let namespace = create_namespace_widget(&selected_command.namespace, &query, should_highligh);
+    let description = create_command_description_widget(description_str, &query, should_highligh);
     let commands = create_command_items_widget(filtered_commands);
 
     let central_chunk = Layout::default()
@@ -152,9 +152,9 @@ fn render_form_small<B: Backend>(
     let query = application_context.query_box().get_input();
 
     application_context.select_command(Some(selected_command.clone()));
-
+    let should_highligh = application_context.should_highligh();
     let command_str = &selected_command.command;
-    let command = create_command_details_widget(command_str, &query);
+    let command = create_command_details_widget(command_str, &query, should_highligh);
     let tabs = create_tab_menu_widget(application_context.namespaces_context());
     let commands = create_command_items_widget(filtered_commands);
 
@@ -192,8 +192,12 @@ fn get_selected_command(
     }
 }
 
-fn create_display_widget<'a>(title: &str, content: &'a str) -> DisplayWidget<'a> {
-    DisplayWidget::new(content, true)
+fn create_display_widget<'a>(
+    title: &str,
+    content: &'a str,
+    should_highligh: bool,
+) -> DisplayWidget<'a> {
+    DisplayWidget::new(content, true, should_highligh)
         .title(title)
         .block(get_default_block(title))
 }
@@ -237,21 +241,34 @@ fn create_command_items_widget<'a>(commands: Vec<Command>) -> List<'a> {
         .highlight_symbol("> ")
 }
 
-fn create_command_details_widget<'a>(command: &'a str, query: &'a str) -> DisplayWidget<'a> {
-    create_display_widget("Command", command).highlight(query)
+fn create_command_details_widget<'a>(
+    command: &'a str,
+    query: &'a str,
+    should_highligh: bool,
+) -> DisplayWidget<'a> {
+    create_display_widget("Command", command, should_highligh).highlight(query)
 }
 
 fn create_command_description_widget<'a>(
     description: &'a str,
     query: &'a str,
+    should_highligh: bool,
 ) -> DisplayWidget<'a> {
-    create_display_widget("Description", description).highlight(query)
+    create_display_widget("Description", description, should_highligh).highlight(query)
 }
 
-fn create_tags_menu_widget<'a>(tags: &'a str, query: &'a str) -> DisplayWidget<'a> {
-    create_display_widget("Tags", tags).highlight(query)
+fn create_tags_menu_widget<'a>(
+    tags: &'a str,
+    query: &'a str,
+    should_highligh: bool,
+) -> DisplayWidget<'a> {
+    create_display_widget("Tags", tags, should_highligh).highlight(query)
 }
 
-fn create_namespace_widget<'a>(namespace: &'a str, query: &'a str) -> DisplayWidget<'a> {
-    create_display_widget("Namespace", namespace).highlight(query)
+fn create_namespace_widget<'a>(
+    namespace: &'a str,
+    query: &'a str,
+    should_highligh: bool,
+) -> DisplayWidget<'a> {
+    create_display_widget("Namespace", namespace, should_highligh).highlight(query)
 }

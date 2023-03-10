@@ -11,7 +11,7 @@ const APP_HOME_DIR: &str = ".config/cl";
 const COMMAND_FILE: &str = "commands.toml";
 const APP_CONFIG_FILE: &str = "config.toml";
 
-#[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default, PartialEq)]
 pub enum LogLevel {
     Debug,
     #[default]
@@ -40,10 +40,11 @@ impl From<&str> for LogLevel {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default, PartialEq)]
 pub struct Options {
     default_quiet_mode: Option<bool>,
     log_level: Option<LogLevel>,
+    highlitght_matches: Option<bool>,
 }
 
 impl Options {
@@ -51,7 +52,32 @@ impl Options {
         Self {
             default_quiet_mode: Some(false),
             log_level: Some(LogLevel::default()),
+            highlitght_matches: Some(true),
         }
+    }
+
+    pub fn get_highlight(&mut self) -> Result<Option<bool>> {
+        Ok(self.highlitght_matches)
+    }
+
+    pub fn set_highlight(&mut self, highlight: bool) {
+        self.highlitght_matches = Some(highlight);
+    }
+
+    pub fn get_log_level(&self) -> Result<Option<&LogLevel>> {
+        Ok(self.log_level.as_ref())
+    }
+
+    pub fn set_log_level(&mut self, log_level: LogLevel) {
+        self.log_level = Some(log_level);
+    }
+
+    pub fn get_default_quiet_mode(&self) -> bool {
+        self.default_quiet_mode.unwrap_or(false)
+    }
+
+    pub fn set_default_quiet_mode(&mut self, quiet_mode: bool) {
+        self.default_quiet_mode = Some(quiet_mode);
     }
 }
 
@@ -65,24 +91,9 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> Result<Self> {
-        let home_dir = home_dir().expect("Could not find home directory");
-
-        let mut config = Self {
-            app_home_dir: Some(home_dir.join(APP_HOME_DIR)),
-            config_home_path: None,
-            command_file_path: None,
-            options: Some(Options::new()),
-        };
-
-        config.validate()?;
-        config.save()?;
-
-        Ok(config)
-    }
-
-    fn get_config_file_path(&self) -> Result<PathBuf> {
-        Ok(self.get_app_home_dir().join(APP_CONFIG_FILE))
+    pub fn get_options(&self) -> Options {
+        // assuming that `Config::load` is the only public entrypoint, the options should never be `None`
+        self.options.to_owned().unwrap()
     }
 
     pub fn get_command_file_path(&self) -> Result<PathBuf> {
@@ -103,17 +114,25 @@ impl Config {
     //     self.save()
     // }
 
-    pub fn get_log_level(&self) -> Result<Option<&LogLevel>> {
-        Ok(self.options.as_ref().unwrap().log_level.as_ref())
+    pub fn set_highlight(&mut self, highlight: bool) -> Result<()> {
+        self.options.as_mut().unwrap().set_highlight(highlight);
+        self.save()
     }
 
-    // pub fn set_log_level(&mut self, log_level: LogLevel) -> Result<()> {
-    //     self.log_level = Some(log_level);
-    //     self.save()
-    // }
+    pub fn get_log_level(&self) -> Result<Option<&LogLevel>> {
+        self.options.as_ref().unwrap().get_log_level()
+    }
+
+    pub fn set_log_level(&mut self, log_level: LogLevel) -> Result<()> {
+        self.options.as_mut().unwrap().set_log_level(log_level);
+        self.save()
+    }
 
     pub fn set_default_quiet_mode(&mut self, quiet_mode: bool) -> Result<()> {
-        self.options.as_mut().unwrap().default_quiet_mode = Some(quiet_mode);
+        self.options
+            .as_mut()
+            .unwrap()
+            .set_default_quiet_mode(quiet_mode);
         self.save()
     }
 
@@ -157,6 +176,26 @@ impl Config {
         }
     }
 
+    fn new() -> Result<Self> {
+        let home_dir = home_dir().expect("Could not find home directory");
+
+        let mut config = Self {
+            app_home_dir: Some(home_dir.join(APP_HOME_DIR)),
+            config_home_path: None,
+            command_file_path: None,
+            options: Some(Options::new()),
+        };
+
+        config.validate()?;
+        config.save()?;
+
+        Ok(config)
+    }
+
+    fn get_config_file_path(&self) -> Result<PathBuf> {
+        Ok(self.get_app_home_dir().join(APP_CONFIG_FILE))
+    }
+
     /// Validates the config properties
     ///
     /// If some property is missing, ensures a default value and then saves the file
@@ -187,6 +226,10 @@ impl Config {
             should_save = true;
             self.options.as_mut().unwrap().log_level = Some(LogLevel::default());
         }
+        if self.options.as_ref().unwrap().highlitght_matches.is_none() {
+            should_save = true;
+            self.options.as_mut().unwrap().highlitght_matches = Some(true);
+        }
 
         if should_save {
             self.save()
@@ -210,6 +253,7 @@ mod test {
             options: Some(Options {
                 default_quiet_mode: None,
                 log_level: None,
+                highlitght_matches: Some(true),
             }),
         };
         config.validate()?;

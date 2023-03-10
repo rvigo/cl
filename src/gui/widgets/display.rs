@@ -8,9 +8,15 @@ use tui::{
 
 #[derive(Clone)]
 pub struct DisplayWidget<'a> {
+    /// the content of the widget
     content: String,
+    /// flag indicanting if the content can be highlighted
+    should_highlight: bool,
+    /// the highlighted content
     highlighted_content: Option<Vec<Spans<'a>>>,
+    /// flag indicating if the content should be trimmed
     trim: bool,
+    /// the title of the widget
     title: String,
     block: Option<Block<'a>>,
     style: Style,
@@ -18,12 +24,13 @@ pub struct DisplayWidget<'a> {
 }
 
 impl<'a> DisplayWidget<'a> {
-    pub fn new<T>(content: T, trim: bool) -> DisplayWidget<'a>
+    pub fn new<T>(content: T, trim: bool, should_highlight: bool) -> DisplayWidget<'a>
     where
         T: Into<String>,
     {
         Self {
             content: content.into(),
+            should_highlight,
             highlighted_content: None,
             trim,
             title: String::default(),
@@ -60,7 +67,7 @@ impl<'a> DisplayWidget<'a> {
         T: Into<String>,
     {
         let highlight_string: String = highlight_string.into();
-        if highlight_string.is_empty() {
+        if !self.should_highlight || highlight_string.is_empty() {
             return self;
         }
 
@@ -215,7 +222,7 @@ mod test {
     fn should_highlight_multiline_input() {
         let content = "sandbox\nsandbox";
         let pattern = "sand";
-        let d = DisplayWidget::new(content, false);
+        let d = DisplayWidget::new(content, false, true);
 
         let result = d.clone().highlight(pattern);
 
@@ -247,7 +254,7 @@ mod test {
         let content = "this is a sandbox";
         let pattern = "sand";
 
-        let d = DisplayWidget::new(content, false);
+        let d = DisplayWidget::new(content, false, true);
 
         let expected_spans = vec![Spans::from(vec![
             Span::from("thi"),
@@ -276,7 +283,7 @@ mod test {
     fn should_highlight_chars_in_content() {
         let content = "change location";
         let pattern = "cl";
-        let d = DisplayWidget::new(content, false);
+        let d = DisplayWidget::new(content, false, true);
         let expected_spans = vec![Spans::from(vec![
             Span::styled("c", Style::default().add_modifier(Modifier::UNDERLINED)),
             Span::from("hange "),
@@ -298,7 +305,7 @@ mod test {
     fn should_group_highlighted_multilne_input() {
         let content = "multiline\ninput";
         let pattern = "in";
-        let d = DisplayWidget::new(content, false);
+        let d = DisplayWidget::new(content, false, true);
         let input = d.split_preserve_chars(content, pattern);
         let expected = vec![vec!["mult", "i", "l", "i", "n", "e"], vec!["i", "n", "put"]];
 
@@ -311,7 +318,7 @@ mod test {
     fn should_group_multilne_input_if_there_is_no_pattern() {
         let content = "multiline\ninput";
         let pattern = "";
-        let d = DisplayWidget::new(content, false);
+        let d = DisplayWidget::new(content, false, true);
         let input = d.split_preserve_chars(content, pattern);
         let expected = vec![vec!["multiline"], vec!["input"]];
 

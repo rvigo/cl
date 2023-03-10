@@ -1,6 +1,6 @@
-use crate::resources::config::Config as AppConfig;
+use crate::resources::config::{Config as AppConfig, LogLevel as ConfigLogLevel};
 use anyhow::{bail, Context, Result};
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use lazy_static::lazy_static;
 use std::{env, process::Command, sync::Mutex};
 
@@ -10,6 +10,23 @@ lazy_static! {
             .context("Cannot properly load the app configs")
             .unwrap()
     );
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+enum LogLevel {
+    Debug,
+    Info,
+    Error,
+}
+
+impl LogLevel {
+    pub fn as_config_enum(&self) -> ConfigLogLevel {
+        match self {
+            LogLevel::Debug => ConfigLogLevel::Debug,
+            LogLevel::Info => ConfigLogLevel::Info,
+            LogLevel::Error => ConfigLogLevel::Error,
+        }
+    }
 }
 
 #[derive(Parser)]
@@ -22,6 +39,23 @@ pub struct Config {
         help = "Set the default quiet mode"
     )]
     default_quiet_mode: Option<bool>,
+    #[clap(
+        value_parser,
+        long,
+        short = 'l',
+        required = false,
+        num_args(1),
+        help = "Set the log level"
+    )]
+    default_log_level: Option<LogLevel>,
+    #[clap(
+        long,
+        short = 'H',
+        required = false,
+        num_args(1),
+        help = "Set the `highlight matches` mode"
+    )]
+    highlitght_matches: Option<bool>,
     #[clap(subcommand)]
     subcommand: Option<ConfigSubcommand>,
 }
@@ -44,6 +78,16 @@ pub fn config_subcommand(config: Config) -> Result<()> {
     if let Some(quiet) = config.default_quiet_mode {
         APP_CONFIG.lock().unwrap().set_default_quiet_mode(quiet)?
     }
+    if let Some(level_log) = config.default_log_level {
+        APP_CONFIG
+            .lock()
+            .unwrap()
+            .set_log_level(level_log.as_config_enum())?
+    }
+    if let Some(highlight) = config.highlitght_matches {
+        APP_CONFIG.lock().unwrap().set_highlight(highlight)?
+    }
+
     Ok(())
 }
 
