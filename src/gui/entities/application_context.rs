@@ -299,7 +299,7 @@ impl<'a> ApplicationContext<'a> {
         let query_string = self.ui_context.get_querybox_input();
         let current_namespace = self.namespaces_context.current_namespace();
         self.commands_context
-            .filter_commands(&current_namespace, &query_string)
+            .filter(&current_namespace, &query_string)
     }
 
     /// Filters the namespaces based on a filtered command list
