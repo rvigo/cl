@@ -13,42 +13,45 @@ jobs:
     name: fmt
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v3
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@1.67.0
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
           components: rustfmt
-
       - name: Check formatting
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: -- --check
+        run: |
+          cargo fmt --all -- --check
   clippy:
     name: clippy
     runs-on: ubuntu-20.04
     steps:
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          components: clippy
-          override: true
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Check the lints
-        uses: actions-rs/cargo@v1
+        uses: actions/checkout@v3
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@1.67.0
         with:
-          command: clippy
-          args: --verbose -- -D warnings
+          components: clippy
+      - name: Check the lints
+        run: |
+          cargo clippy -- -D warnings
+  test:
+    name: test
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@1.67.0
+      - name: Unit Test
+        run: |
+          cargo test
+        env:
+          RUST_BACKTRACE: 1
+
   build:
     name: Build and release
-    needs: [format, clippy]
+    needs: [format, clippy, test]
     runs-on: ${{ matrix.os }}-latest
     strategy:
       matrix:
@@ -70,29 +73,36 @@ jobs:
           - target: aarch64-apple-darwin
             os: macos
     steps:
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
+      - name: Install toolchain for ${{ matrix.target }}
+        uses: dtolnay/rust-toolchain@1.67.0
         with:
-          toolchain: stable
-          default: true
-          target: ${{ matrix.target }}
+          targets: ${{ matrix.target }}
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Test
         run: cargo test
+      # - name: Build
+      #   uses: actions-rs/cargo@v1
+      #   with:
+      #     command: build
+      #     use-cross: ${{ matrix.os == 'ubuntu' }}
+      #     args: --release --bins --target ${{ matrix.target }}
       - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          use-cross: ${{ matrix.os == 'ubuntu' }}
-          args: --release --bins --target ${{ matrix.target }}
+        run: |
+          if [ ${{ matrix.os }} == 'ubuntu' ]; then
+            cargo install cross
+            cross build --release --bins --target ${{ matrix.target }}
+          else
+            cargo build --release --bins --target ${{ matrix.target }}
+          fi
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: cl-${{ matrix.target }}
           path: target/${{ matrix.target }}/release/
+
   release:
     needs: build
     runs-on: ubuntu-latest
