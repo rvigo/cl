@@ -153,7 +153,7 @@ impl<'a> DisplayWidget<'a> {
 
         for item in input {
             if item.contains('\n') {
-                let sub_items: Vec<&str> = item.split('\n').into_iter().collect();
+                let sub_items: Vec<&str> = item.split('\n').collect();
                 sub_vec.push(sub_items[0]);
                 result.push(sub_vec);
                 sub_vec = Vec::new(); // here we finish one sub vec (representing an EOL) and starts a new empty sub vec
@@ -190,13 +190,7 @@ impl<'a> Widget for DisplayWidget<'a> {
         let content = if let Some(styled) = self.highlighted_content {
             Text::from(styled)
         } else {
-            Text::from(
-                self.content
-                    .split('\n')
-                    .into_iter()
-                    .map(Spans::from)
-                    .collect_vec(),
-            )
+            Text::from(self.content.split('\n').map(Spans::from).collect_vec())
         };
 
         let p = Paragraph::new(content)
