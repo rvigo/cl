@@ -13,48 +13,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@1.67.0
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
           components: rustfmt
       - name: Check formatting
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+        run: |
+          cargo fmt --all -- --check
   clippy:
     name: clippy
     runs-on: ubuntu-20.04
     steps:
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          components: clippy
-          override: true
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Check the lints
-        uses: actions-rs/cargo@v1
+        uses: actions/checkout@v3
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@1.67.0
         with:
-          command: clippy
-          args: -- -D warnings
+          components: clippy
+      - name: Check the lints
+        run: |
+          cargo clippy -- -D warnings
   test:
     name: test
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
+        uses: dtolnay/rust-toolchain@1.67.0
+      - name: Unit Test
+        run: |
+          cargo test
+        env:
+          RUST_BACKTRACE: 1
