@@ -83,12 +83,6 @@ jobs:
           fetch-depth: 0
       - name: Test
         run: cargo test
-      # - name: Build
-      #   uses: actions-rs/cargo@v1
-      #   with:
-      #     command: build
-      #     use-cross: ${{ matrix.os == 'ubuntu' }}
-      #     args: --release --bins --target ${{ matrix.target }}
       - name: Build
         run: |
           if [ ${{ matrix.os }} == 'ubuntu' ]; then
