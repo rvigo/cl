@@ -1,6 +1,6 @@
 # cl
 
-cl (short for **C**ommand **L**ist) is a way to group all your `aliases`, `once in a while` or `multiple usages with a lot of args` commands in an organized and human readable place
+cl (short for **C**ommand **L**ist) is a way to group all your `aliases`, `once in a while commands` or `multiple commands with a lot of args` in an organized and human readable place
 
 ## how to install
 
@@ -32,9 +32,8 @@ If you are using the ZSH shell and [fzf](https://github.com/junegunn/fzf), a wid
 You can pass args and flags to the stored command:
 ```bash
 # the stored command is `docker` and the alias is `d`
-$ cl exec d ps # same as `docker ps` 
-# flags need to be escaped with \ and surrounded by quotes
-$ cl exec d ps '\--help' # same as `docker ps --help` 
+$ cl exec d -- ps # same as `docker ps` 
+$ cl exec d -- ps --help # same as `docker ps --help` 
 ```
 
 You can also set `variables` in your command and pass them as `named parameters`:
@@ -43,6 +42,14 @@ You can also set `variables` in your command and pass them as `named parameters`
 # the parameters names should match the variables names in your command
 $ cl exec echo -- --name="John Doe" --grettings "welcome!" 
 > "hello John Doe, welcome!"
+```
+
+
+A more `real world` example: 
+```bash
+# the stored command is `aws-vault exec #{aws_account} -- #{command}` and the alias is `av_exec`
+# note that you can mix the program flags and args with the named parameters
+$ cl exec av_exec -- --aws_account="dev" --command="aws s3 ls" --duration=2h
 ```
 
 Importing/exporting your aliases is possible using the `share` subcommand:
