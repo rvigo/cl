@@ -11,16 +11,34 @@ jobs:
   format:
     name: fmt
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64-apple-darwin, x86_64-unknown-linux-gnu]
+
+        include:
+          - target: x86_64-apple-darwin
+            os: macos
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu
+
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
-      - name: Install toolchain
+      - name: Install toolchain for ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@1.67.0
         with:
+          targets: ${{ matrix.target }}
           components: rustfmt
       - name: Check formatting
         run: |
-          cargo fmt --all -- --check
+          if [ ${{ matrix.os }} == 'ubuntu' ]; then
+            echo "on ubuntu: ${{ matrix.os }}"
+            cargo fmt --all -- --check
+          else
+            echo "on ${{ matrix.os }}"
+            cargo fmt --all -- --check
+          fi
+
   clippy:
     name: clippy
     runs-on: ubuntu-20.04
