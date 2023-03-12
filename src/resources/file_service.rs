@@ -1,5 +1,5 @@
-use crate::command::Command;
-use anyhow::{bail, Context, Result};
+use crate::{command::Command, resources::errors::FileError};
+use anyhow::{Context, Result};
 use log::debug;
 use std::{
     collections::HashMap,
@@ -16,16 +16,20 @@ impl FileService {
         Self { command_file_path }
     }
 
-    pub fn save_file(&self, contents: &str, path: &Path) -> Result<()> {
-        write(path, contents).context(format!("Error writing to file {}", path.display(),))
+    pub fn save_file(&self, contents: &str, path: &Path) -> Result<(), FileError> {
+        write(path, contents).map_err(|cause| FileError::CannotWriteFile {
+            file_path: self.command_file_path.to_path_buf(),
+            cause: cause.into(),
+        })
     }
 
-    pub fn open_file(&self, path: &Path) -> Result<String> {
+    pub fn open_file(&self, path: &Path) -> Result<String, FileError> {
         let path_str = path.to_str().unwrap();
-        match read_to_string(path_str) {
-            Ok(file) => Ok(file),
-            Err(error) => bail!("Cannot read {path_str}: {error}"),
-        }
+
+        read_to_string(path_str).map_err(|cause| FileError::CannotReadFile {
+            file_path: path.to_path_buf(),
+            cause: cause.into(),
+        })
     }
 
     pub fn convert_from_toml_file(&self, path: &Path) -> Result<Vec<Command>> {
@@ -42,7 +46,7 @@ impl FileService {
         self.convert_from_toml_file(&self.command_file_path)
     }
 
-    fn generate_toml(&self, commands: &Vec<Command>) -> String {
+    fn generate_toml(&self, commands: &Vec<Command>) -> Result<String, FileError> {
         let mut map: HashMap<String, Vec<Command>> = HashMap::new();
         for command in commands {
             let item = command.to_owned();
@@ -53,15 +57,15 @@ impl FileService {
             }
         }
 
-        toml::to_string(&map).expect("Unable to convert to toml")
+        toml::to_string(&map).map_err(FileError::from)
     }
 
-    pub fn write_toml_file(&self, commands: &Vec<Command>, path: &Path) -> Result<()> {
-        let toml = self.generate_toml(commands);
+    pub fn write_toml_file(&self, commands: &Vec<Command>, path: &Path) -> Result<(), FileError> {
+        let toml = self.generate_toml(commands)?;
         self.save_file(&toml, path)
     }
 
-    pub fn write_to_command_file(&self, commands: &Vec<Command>) -> Result<()> {
+    pub fn write_to_command_file(&self, commands: &Vec<Command>) -> Result<(), FileError> {
         let path = &self.command_file_path;
         debug!(
             "saving {} commands to {:?}",
@@ -69,7 +73,11 @@ impl FileService {
             self.command_file_path
         );
         self.write_toml_file(commands, path)
-            .context("Cannot write to the commands file")
+            .context("Failed to write to the commands file")
+            .map_err(|cause| FileError::CannotWriteFile {
+                file_path: self.command_file_path.to_owned(),
+                cause,
+            })
     }
 }
 

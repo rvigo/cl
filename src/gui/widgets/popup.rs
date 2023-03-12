@@ -1,4 +1,5 @@
 use crate::gui::layouts::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
+use log::{error, warn};
 use std::fmt;
 use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -16,12 +17,19 @@ pub struct Popup<'a> {
 }
 
 impl<'a> Popup<'a> {
-    pub fn from_error<T>(message: T) -> Popup<'a>
+    pub fn from_error<T>(message: T, additional_info: Option<T>) -> Popup<'a>
     where
         T: Into<String>,
     {
+        let message = if let Some(ai) = additional_info {
+            format!("{}\n\n{}", message.into(), ai.into())
+        } else {
+            message.into()
+        };
+        error!("{message}");
+
         Popup {
-            message: message.into(),
+            message,
             message_type: Some(MessageType::Error),
             choices: vec![Answer::Ok],
             block: Some(
@@ -39,8 +47,11 @@ impl<'a> Popup<'a> {
     where
         T: Into<String>,
     {
+        let message = message.into();
+        warn!("{message}");
+
         Popup {
-            message: message.into(),
+            message,
             message_type: Some(MessageType::Warning),
             choices: vec![Answer::Cancel, Answer::Ok],
             block: Some(

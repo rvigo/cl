@@ -226,7 +226,8 @@ impl CommandsContext {
         let commands = self.commands.add_command(new_command)?;
 
         self.commands_cache.insert_entry(new_command.to_owned());
-        self.file_service.write_to_command_file(&commands)
+        self.file_service.write_to_command_file(&commands)?;
+        Ok(())
     }
 
     /// Adds an edited command, deletes the older one and then saves the updated `commands.toml` file
@@ -241,14 +242,16 @@ impl CommandsContext {
             .add_edited_command(edited_command, current_command)?;
         self.commands_cache
             .update_entry(edited_command, current_command);
-        self.file_service.write_to_command_file(&commands)
+        self.file_service.write_to_command_file(&commands)?;
+        Ok(())
     }
 
     /// Removes a command and then saves the updated `commands.toml` file
     pub fn remove_command(&mut self, command: &Command) -> Result<()> {
         let commands = self.commands.remove(command)?;
         self.commands_cache.remove_entry(command);
-        self.file_service.write_to_command_file(&commands)
+        self.file_service.write_to_command_file(&commands)?;
+        Ok(())
     }
 
     /// Runs a previously selected command
