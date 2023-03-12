@@ -45,7 +45,7 @@ pub struct Config {
         short = 'l',
         required = false,
         num_args(1),
-        help = "Set the log level"
+        help = "Set the default log level"
     )]
     default_log_level: Option<LogLevel>,
     #[clap(
