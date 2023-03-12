@@ -17,7 +17,7 @@ impl FileService {
     }
 
     pub fn save_file(&self, contents: &str, path: &Path) -> Result<(), FileError> {
-        write(path, contents).map_err(|cause| FileError::CannotWriteFile {
+        write(path, contents).map_err(|cause| FileError::WriteFile {
             file_path: self.command_file_path.to_path_buf(),
             cause: cause.into(),
         })
@@ -26,7 +26,7 @@ impl FileService {
     pub fn open_file(&self, path: &Path) -> Result<String, FileError> {
         let path_str = path.to_str().unwrap();
 
-        read_to_string(path_str).map_err(|cause| FileError::CannotReadFile {
+        read_to_string(path_str).map_err(|cause| FileError::ReadFile {
             file_path: path.to_path_buf(),
             cause: cause.into(),
         })
@@ -74,7 +74,7 @@ impl FileService {
         );
         self.write_toml_file(commands, path)
             .context("Failed to write to the commands file")
-            .map_err(|cause| FileError::CannotWriteFile {
+            .map_err(|cause| FileError::WriteFile {
                 file_path: self.command_file_path.to_owned(),
                 cause,
             })
