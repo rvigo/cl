@@ -12,7 +12,7 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use log::debug;
+use log::{debug, error};
 use std::{io, panic};
 use tui::{backend::CrosstermBackend, Terminal};
 
@@ -23,6 +23,7 @@ pub struct TuiApplication<'a> {
 
 impl<'a> TuiApplication<'a> {
     pub fn create() -> Result<TuiApplication<'a>> {
+        Self::handle_panic();
         // setup terminal
         enable_raw_mode()?;
         let mut stdout = io::stdout();
@@ -41,7 +42,6 @@ impl<'a> TuiApplication<'a> {
     }
 
     pub fn render(&mut self) -> Result<()> {
-        self.handle_panic();
         loop {
             self.terminal
                 .draw(|frame| select_ui(frame, &mut self.context))?;
@@ -54,10 +54,10 @@ impl<'a> TuiApplication<'a> {
         }
     }
 
-    fn handle_panic(&self) {
+    fn handle_panic() {
         panic::set_hook(Box::new(|e| {
             eprintln!("{e}");
-            log::error!("{e}")
+            error!("{e}")
         }));
     }
 
