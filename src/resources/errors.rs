@@ -25,15 +25,15 @@ pub enum CommandError {
 #[derive(Error, Debug)]
 pub enum FileError {
     #[error("Cannot create a String of TOML")]
-    CannotCreateTomlFromString(#[from] toml::ser::Error),
+    CreateTomlFromString(#[from] toml::ser::Error),
     #[error("Cannot read {file_path}")]
-    CannotReadFile {
+    ReadFile {
         file_path: PathBuf,
         #[source]
         cause: anyhow::Error,
     },
     #[error("Cannot write {file_path}")]
-    CannotWriteFile {
+    WriteFile {
         file_path: PathBuf,
         #[source]
         cause: anyhow::Error,
