@@ -14,8 +14,8 @@ const APP_CONFIG_FILE: &str = "config.toml";
 #[derive(Clone, Serialize, Deserialize, Debug, Default, PartialEq)]
 pub enum LogLevel {
     Debug,
-    #[default]
     Info,
+    #[default]
     Error,
 }
 
@@ -249,11 +249,10 @@ mod test {
             app_home_dir: Some(temp_dir().to_path_buf()),
             config_home_path: None,
             command_file_path: None,
-
             options: Some(Options {
                 default_quiet_mode: None,
                 log_level: None,
-                highlitght_matches: Some(true),
+                highlitght_matches: None,
             }),
         };
         config.validate()?;
@@ -262,9 +261,9 @@ mod test {
     }
 
     #[test]
-    fn test_new() -> Result<()> {
+    fn should_create_a_new_config() -> Result<()> {
         let config = builder()?;
-        assert_eq!(config.get_log_level()?.unwrap(), &LogLevel::Info);
+        assert_eq!(config.get_log_level()?.unwrap(), &LogLevel::Error);
         assert_eq!(config.get_default_quiet_mode(), false);
         assert!(config.get_command_file_path()?.exists());
         assert!(config.get_config_file_path()?.exists());
@@ -272,10 +271,28 @@ mod test {
     }
 
     #[test]
-    fn test_set_default_quiet_mode() -> Result<()> {
+    fn should_set_default_quiet_mode() -> Result<()> {
         let mut config = builder()?;
+
+        assert_eq!(config.get_default_quiet_mode(), false);
+
         config.set_default_quiet_mode(true)?;
+
         assert_eq!(config.get_default_quiet_mode(), true);
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_set_log_level() -> Result<()> {
+        let mut config = builder()?;
+
+        assert_eq!(config.get_log_level().unwrap(), Some(&LogLevel::Error));
+
+        config.set_log_level(LogLevel::Debug)?;
+
+        assert_eq!(config.get_log_level().unwrap(), Some(&LogLevel::Debug));
+
         Ok(())
     }
 }
