@@ -212,7 +212,8 @@ impl<'a> ApplicationContext<'a> {
         match self.commands_context.add_command(&command) {
             Ok(()) => self.enter_main_mode(),
             Err(error) => {
-                let popup = Popup::from_error(error.to_string());
+                let popup =
+                    Popup::from_error("Failed to add the edited command", Some(&error.to_string()));
                 self.ui_context.set_popup(Some(popup));
             }
         }
@@ -223,20 +224,22 @@ impl<'a> ApplicationContext<'a> {
         let current_command = match self.ui_context.get_selected_command() {
             Some(command) => command,
             None => {
-                let popup = Popup::from_error("No selected command to edit");
+                let popup = Popup::from_error("No selected command to edit", None);
                 self.ui_context.set_popup(Some(popup));
                 return;
             }
         };
 
-        if let Ok(()) = self
+        match self
             .commands_context
             .add_edited_command(&edited_command, current_command)
         {
-            self.enter_main_mode()
-        } else {
-            let popup = Popup::from_error("Failed to add the edited command");
-            self.ui_context.set_popup(Some(popup));
+            Ok(()) => self.enter_main_mode(),
+            Err(error) => {
+                let popup =
+                    Popup::from_error("Failed to add the edited command", Some(&error.to_string()));
+                self.ui_context.set_popup(Some(popup));
+            }
         }
     }
 

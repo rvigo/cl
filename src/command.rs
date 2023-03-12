@@ -1,3 +1,4 @@
+use crate::resources::errors::CommandError;
 use anyhow::{ensure, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -40,13 +41,11 @@ impl Command {
     }
 
     pub fn validate(&self) -> Result<()> {
+        ensure!(!self.is_incomplete(), CommandError::EmptyCommand);
         ensure!(
-            !self.is_incomplete(),
-            "namespace, command and alias field cannot be empty!"
+            !self.alias.trim().contains(' '),
+            CommandError::AliasWithWhitespaces
         );
-        ensure!(
-            !self.alias.contains(' '),
-         "the alias must not contain whitespace as the application may interpret some words as arguments");
         Ok(())
     }
 
@@ -191,10 +190,7 @@ mod test {
         let result = invalid_command.validate();
         assert!(result.is_err());
         let error_msg = result.unwrap_err().to_string();
-        assert_eq!(
-            "the alias must not contain whitespace as the application may interpret some words as arguments",
-            error_msg
-        )
+        assert_eq!(CommandError::AliasWithWhitespaces.to_string(), error_msg)
     }
 
     #[test]
@@ -211,10 +207,7 @@ mod test {
         let result = invalid_command.validate();
         assert!(result.is_err());
         let error_msg = result.unwrap_err().to_string();
-        assert_eq!(
-            "namespace, command and alias field cannot be empty!",
-            error_msg
-        )
+        assert_eq!(CommandError::EmptyCommand.to_string(), error_msg)
     }
 
     #[test]

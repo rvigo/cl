@@ -1,7 +1,7 @@
 use crate::{
     command::Command,
     commands::Commands,
-    resources::{config::Config, file_service::FileService},
+    resources::{config::Config, errors::CommandError, file_service::FileService},
 };
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
@@ -223,15 +223,18 @@ fn clean_named_parameter(arg: String) -> String {
 
 fn validate_named_parameters(mapped_args: &HashMap<String, String>, command: &str) -> Result<()> {
     let mut error_message: &str = "";
+
     if mapped_args.is_empty() {
         error_message = DEFAULT_NAMED_PARAMS_ERROR_MESSAGE;
     } else if mapped_args.iter().any(|(k, _)| k.is_empty()) {
         error_message = INVALID_NAMED_PARAMS_ERROR_MESSAGE;
     }
+
     if !error_message.is_empty() {
-        bail!(format!(
-            "Cannot run the command `{command}`\n\n{error_message}"
-        ))
+        bail!(CommandError::CannotRunCommand {
+            command: command.to_owned(),
+            cause: error_message.to_owned()
+        })
     }
 
     Ok(())
@@ -266,7 +269,11 @@ mod test {
         assert!(result.is_err());
         assert_eq!(
             result.unwrap_err().to_string(),
-            format!("Cannot run the command `{command}`\n\n{DEFAULT_NAMED_PARAMS_ERROR_MESSAGE}"),
+            CommandError::CannotRunCommand {
+                command,
+                cause: DEFAULT_NAMED_PARAMS_ERROR_MESSAGE.to_owned()
+            }
+            .to_string()
         );
     }
 }

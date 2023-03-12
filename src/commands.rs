@@ -1,4 +1,4 @@
-use crate::command::Command;
+use crate::{command::Command, resources::errors::CommandError};
 use anyhow::{bail, ensure, Result};
 use std::env;
 
@@ -20,9 +20,10 @@ impl Commands {
     pub fn add_command(&mut self, command: &Command) -> Result<Vec<Command>> {
         ensure!(
             !self.command_already_exists(command),
-            "Command with alias \"{}\" already exists in \"{}\" namespace",
-            command.alias,
-            command.namespace
+            CommandError::CommandAlreadyExists {
+                alias: command.alias.to_owned(),
+                namespace: command.namespace.to_owned()
+            }
         );
         self.commands.push(command.to_owned());
         self.commands.sort_by_key(|c| c.alias.to_lowercase());
@@ -40,9 +41,10 @@ impl Commands {
                     && !edited_command.alias.eq(&old_command.alias)
                     && command.namespace.eq(&edited_command.namespace)
             }),
-            "Command with alias \"{}\" already exists in \"{}\" namespace",
-            edited_command.alias,
-            edited_command.namespace
+            CommandError::CommandAlreadyExists {
+                alias: edited_command.alias.to_owned(),
+                namespace: edited_command.namespace.to_owned()
+            }
         );
 
         self.commands.retain(|command| !command.eq(old_command));
@@ -124,14 +126,11 @@ impl Commands {
             .collect();
 
         if commands.is_empty() {
-            bail!("The alias \'{alias}\' was not found!")
+            bail!(CommandError::AliasNotFound { alias })
         } else if commands.len() == 1 {
             Ok(commands[0].to_owned())
         } else {
-            bail!(
-                "There are commands with the alias \'{alias}\' in multiples namespaces. \
-                        Please use the \'--namespace\' flag"
-            )
+            bail!(CommandError::CommandPresentInManyNamespaces { alias })
         }
     }
 
@@ -281,10 +280,11 @@ mod test {
 
         if let Err(error) = command_list_with_edited_command {
             assert_eq!(
-                format!(
-                    "Command with alias \"{}\" already exists in \"{}\" namespace",
-                    edited_command.alias, edited_command.namespace
-                ),
+                CommandError::CommandAlreadyExists {
+                    alias: edited_command.alias,
+                    namespace: edited_command.namespace
+                }
+                .to_string(),
                 error.to_string()
             )
         }
