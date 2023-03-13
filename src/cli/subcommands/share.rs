@@ -3,19 +3,10 @@ use crate::{
     commands::Commands,
     resources::{config::Config, file_service::FileService},
 };
-use anyhow::{Context, Result};
+use anyhow::Result;
 use clap::{Parser, ValueEnum};
 use itertools::Itertools;
-use lazy_static::lazy_static;
-use std::{path::PathBuf, sync::Mutex};
-
-lazy_static! {
-    static ref APP_CONFIG: Mutex<Config> = Mutex::new(
-        Config::load()
-            .context("Cannot properly load the app configs")
-            .unwrap()
-    );
-}
+use std::path::PathBuf;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 enum Mode {
@@ -48,10 +39,9 @@ pub struct Share {
     namespace: Option<Vec<String>>,
 }
 
-pub fn share_subcommand(share: Share) -> Result<()> {
+pub fn share_subcommand(share: Share, config: Config) -> Result<()> {
     let file_location: PathBuf = share.file_location;
     let namespaces = share.namespace;
-    let config = APP_CONFIG.lock().unwrap();
 
     let file_service = FileService::new(config.get_command_file_path()?);
     let command_list = file_service.load_commands_from_file()?;

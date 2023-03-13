@@ -19,7 +19,6 @@ dirs = "4.0.0"
 itertools = "0.10.5"
 unicode-width = "0.1"
 clap = { version = "4.0.32", features = ["derive"] }
-lazy_static = "1.4.0"
 strfmt = "0.2.2"
 owo-colors = "3.5.0"
 tui-textarea = { version = "0.2.0", features = ["crossterm"] }

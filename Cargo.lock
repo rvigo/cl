@@ -85,7 +85,6 @@ dependencies = [
  "flexi_logger",
  "fuzzy-matcher",
  "itertools",
- "lazy_static",
  "log",
  "owo-colors",
  "regex",

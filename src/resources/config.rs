@@ -119,8 +119,11 @@ impl Config {
         self.save()
     }
 
-    pub fn get_log_level(&self) -> Result<Option<&LogLevel>> {
-        self.options.as_ref().unwrap().get_log_level()
+    pub fn get_log_level(&self) -> LogLevel {
+        match self.options.as_ref().unwrap().get_log_level() {
+            Ok(Some(log_level)) => log_level.to_owned(),
+            _ => LogLevel::default(),
+        }
     }
 
     pub fn set_log_level(&mut self, log_level: LogLevel) -> Result<()> {
@@ -178,18 +181,22 @@ impl Config {
 
     fn new() -> Result<Self> {
         let home_dir = home_dir().expect("Could not find home directory");
-
         let mut config = Self {
             app_home_dir: Some(home_dir.join(APP_HOME_DIR)),
             config_home_path: None,
             command_file_path: None,
             options: Some(Options::new()),
         };
-
-        config.validate()?;
         config.save()?;
+        config.validate()?;
 
         Ok(config)
+    }
+
+    fn create_empty_command_file(&self, command_file_path: PathBuf) -> Result<()> {
+        debug!("creating empty command file");
+        write(command_file_path, "")?;
+        Ok(())
     }
 
     fn get_config_file_path(&self) -> Result<PathBuf> {
@@ -212,7 +219,9 @@ impl Config {
         }
         if self.command_file_path.is_none() {
             should_save = true;
-            self.command_file_path = Some(self.app_home_dir.as_ref().unwrap().join(COMMAND_FILE));
+            let path = self.app_home_dir.as_ref().unwrap().join(COMMAND_FILE);
+            self.command_file_path = Some(path.clone());
+            self.create_empty_command_file(path)?;
         }
         if self.options.is_none() {
             should_save = true;
@@ -263,10 +272,18 @@ mod test {
     #[test]
     fn should_create_a_new_config() -> Result<()> {
         let config = builder()?;
-        assert_eq!(config.get_log_level()?.unwrap(), &LogLevel::Error);
+        assert_eq!(config.get_log_level(), LogLevel::Error);
         assert_eq!(config.get_default_quiet_mode(), false);
         assert!(config.get_command_file_path()?.exists());
         assert!(config.get_config_file_path()?.exists());
+        Ok(())
+    }
+
+    #[test]
+    fn should_create_a_new_commands_file() -> Result<()> {
+        let config = builder()?;
+        assert!(config.command_file_path.is_some());
+
         Ok(())
     }
 
@@ -287,11 +304,11 @@ mod test {
     fn should_set_log_level() -> Result<()> {
         let mut config = builder()?;
 
-        assert_eq!(config.get_log_level().unwrap(), Some(&LogLevel::Error));
+        assert_eq!(config.get_log_level(), LogLevel::Error);
 
         config.set_log_level(LogLevel::Debug)?;
 
-        assert_eq!(config.get_log_level().unwrap(), Some(&LogLevel::Debug));
+        assert_eq!(config.get_log_level(), LogLevel::Debug);
 
         Ok(())
     }
