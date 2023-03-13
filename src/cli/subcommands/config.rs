@@ -12,7 +12,7 @@ lazy_static! {
     );
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
 enum LogLevel {
     Debug,
     Info,
@@ -76,16 +76,19 @@ pub fn config_subcommand(config: Config) -> Result<()> {
         install_zsh_widget()?
     }
     if let Some(quiet) = config.default_quiet_mode {
-        APP_CONFIG.lock().unwrap().set_default_quiet_mode(quiet)?
+        APP_CONFIG.lock().unwrap().set_default_quiet_mode(quiet)?;
+        println!("quiet mode set to {quiet}")
     }
-    if let Some(level_log) = config.default_log_level {
+    if let Some(log_level) = config.default_log_level {
         APP_CONFIG
             .lock()
             .unwrap()
-            .set_log_level(level_log.as_config_enum())?
+            .set_log_level(log_level.as_config_enum())?;
+        println!("log level set to {log_level:?}")
     }
     if let Some(highlight) = config.highlitght_matches {
-        APP_CONFIG.lock().unwrap().set_highlight(highlight)?
+        APP_CONFIG.lock().unwrap().set_highlight(highlight)?;
+        println!("highlight matches set to {highlight}")
     }
 
     Ok(())
