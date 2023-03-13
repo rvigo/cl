@@ -155,7 +155,7 @@ mod test {
             .tags(Some(vec!["tag1"]))
             .alias("alias")
             .namespace("namespace")
-            .description(Some("description"))
+            .description(Some("multiline\ndescription"))
             .command("command");
 
         command.build()
@@ -166,6 +166,13 @@ mod test {
         let command = build_default_command();
         let tags = command.tags_as_string();
         assert_eq!(String::from("tag1"), tags)
+    }
+
+    #[test]
+    fn should_get_namespace_as_string() {
+        let command = build_default_command();
+        let description = command.description();
+        assert_eq!(description, "multiline\ndescription")
     }
 
     #[test]
@@ -218,5 +225,16 @@ mod test {
         command.namespace = String::from("");
 
         assert!(command.validate().is_err());
+    }
+
+    #[test]
+    fn should_return_a_boolean_based_on_named_parameters() {
+        let mut command = build_default_command();
+        
+        assert!(!command.has_named_parameter());
+
+        command.command = String::from("echo \"hello, #{name}\"");
+
+        assert!(command.has_named_parameter())
     }
 }
