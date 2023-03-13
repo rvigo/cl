@@ -33,14 +33,13 @@ impl<'a> ApplicationContext<'a> {
         file_service: FileService,
         config_options: Options,
     ) -> ApplicationContext<'a> {
-        let initial_command = Some(commands[0].to_owned());
         let namespaces = commands.iter().map(|c| c.namespace.to_owned()).collect();
         ApplicationContext {
             should_quit: false,
             show_help: false,
             namespaces_context: NamespacesContext::new(namespaces),
             commands_context: CommandsContext::new(commands, file_service),
-            ui_context: UIContext::new(terminal_size, initial_command),
+            ui_context: UIContext::new(terminal_size),
             config_options,
         }
     }
