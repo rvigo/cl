@@ -52,6 +52,7 @@ impl<'a> ApplicationContext<'a> {
 
     pub fn reload_namespaces_state(&mut self) {
         self.namespaces_context.reset_namespaces_state();
+        self.commands_context.select_command_idx(0);
         self.filter_namespaces();
     }
 
@@ -302,7 +303,7 @@ impl<'a> ApplicationContext<'a> {
         let query_string = self.ui_context.get_querybox_input();
         let current_namespace = self.namespaces_context.current_namespace();
         self.commands_context
-            .filter(&current_namespace, &query_string)
+            .filter_commands(&current_namespace, &query_string)
     }
 
     /// Filters the namespaces based on a filtered command list

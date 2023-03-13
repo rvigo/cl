@@ -229,7 +229,7 @@ mod test {
     use super::*;
     fn create_fields() -> Fields<'static> {
         let mut alias = Field::new(String::from("alias"), FieldType::Alias, true, false);
-        let mut command = Field::new(String::from("command"), FieldType::Command, false, false);
+        let mut command = Field::new(String::from("command"), FieldType::Command, false, true);
         let mut namespace = Field::new(
             String::from("namespace"),
             FieldType::Namespace,
@@ -240,7 +240,7 @@ mod test {
             String::from("description"),
             FieldType::Description,
             false,
-            false,
+            true,
         );
         let mut tags = Field::new(String::from("tags"), FieldType::Tags, false, false);
 
@@ -251,6 +251,9 @@ mod test {
         alias.on_input(KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE));
         namespace.on_input(KeyEvent::new(KeyCode::Char('n'), KeyModifiers::NONE));
         command.on_input(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::NONE));
+        // multifield description field
+        description.on_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
+        description.on_input(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
         description.on_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
         tags.on_input(KeyEvent::new(KeyCode::Char('t'), KeyModifiers::NONE));
 
@@ -308,7 +311,7 @@ mod test {
         assert_eq!(command.alias, "alias");
         assert_eq!(command.command, "c");
         assert_eq!(command.namespace, "n");
-        assert_eq!(command.description, Some("d".to_string()));
+        assert_eq!(command.description, Some("d\nd".to_string()));
         assert_eq!(command.tags, Some(vec!["t".to_string(),]));
     }
 

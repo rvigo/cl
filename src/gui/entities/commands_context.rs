@@ -38,6 +38,7 @@ impl CacheInfo {
         commands
     }
 
+    #[inline]
     pub fn update_entry(&mut self, new_command_item: &Command, old_command_item: &Command) {
         let new_namespace = &new_command_item.namespace;
 
@@ -50,6 +51,7 @@ impl CacheInfo {
         self.sort_cached_values()
     }
 
+    #[inline]
     fn remove_entry(&mut self, command_item: &Command) {
         let namespace = &command_item.namespace;
         if let Some(commands) = self.cache.get_mut(namespace) {
@@ -60,6 +62,7 @@ impl CacheInfo {
         }
     }
 
+    #[inline]
     pub fn insert_entry(&mut self, command_item: Command) {
         let namespace = &command_item.namespace;
         if let Some(commands) = self.cache.get_mut(namespace) {
@@ -71,6 +74,7 @@ impl CacheInfo {
         self.sort_cached_values()
     }
 
+    #[inline]
     fn sort_cached_values(&mut self) {
         for commands in self.cache.values_mut() {
             commands.sort_by_key(|c| c.alias.to_lowercase());
@@ -130,66 +134,14 @@ impl CommandsContext {
         self.select_command_idx(0)
     }
 
-    /// Filters the commands based on a query and a namespace
-    ///
-    /// First loads all namespaces from the `CacheInfo` (if available) and then filters them.   
-    ///  
-    /// If the chache is empty for the current namespace, searchs for all commands and then updates the cache
-    ///
-    /// ## Arguments
-    /// * `current_namespace` - A &str representing the app current namespace
-    /// * `query_string` - A &str representing the user's query string
-    ///
-    pub fn filter(&mut self, current_namespace: &str, query_string: &str) -> Vec<Command> {
-        let commands = if !current_namespace.is_empty() && current_namespace != "All" {
-            debug!("getting cached entries for namespace `{current_namespace}`");
-            self.commands_cache.get_entry(current_namespace)
-        } else {
-            debug!("loading all entries (namespace `{current_namespace}`, querystring: `{query_string}`)");
-            let command_list = self.commands.command_list().to_owned();
+    pub fn filter_commands(&mut self, current_namespace: &str, query_string: &str) -> Vec<Command> {
+        let commands = self.filter(current_namespace, query_string);
 
-            if command_list.is_empty() {
-                vec![Command::default()]
-            } else {
-                command_list
-            }
-        };
-
-        if !commands.is_empty() && !query_string.is_empty() {
-            self.fuzzy_find(current_namespace, query_string, commands)
-        } else {
-            commands
-        }
-    }
-
-    /// Does a fuzzy search in the given vec
-    ///
-    /// Tries to return an ordered vec based on the score
-    #[inline(always)]
-    pub fn fuzzy_find(
-        &self,
-        namespace: &str,
-        query_string: &str,
-        commands: Vec<Command>,
-    ) -> Vec<Command> {
-        if commands.is_empty() {
-            return commands;
+        if self.get_selected_command_idx() >= commands.len() {
+            self.reset_command_idx()
         }
 
-        let mut scored_commands: Vec<(i64, Command)> = commands
-            .iter()
-            .cloned()
-            .filter(|c| (namespace.eq("All") || c.namespace.eq(namespace)))
-            .filter_map(|c| {
-                self.matcher
-                    .fuzzy_indices(&c.lookup_string(), query_string)
-                    .map(|(score, _)| (score, c))
-                    .filter(|(score, _)| *score > 1)
-            })
-            .collect();
-
-        scored_commands.sort_by_key(|&(score, _)| Reverse(score));
-        scored_commands.into_iter().map(|(_, c)| c).collect_vec()
+        commands
     }
 
     pub fn next_command(&mut self, current_namespace: &str, query_string: &str) {
@@ -276,6 +228,66 @@ impl CommandsContext {
         }
 
         Ok(())
+    }
+
+    /// Filters the commands based on a query and a namespace
+    ///
+    /// First loads all namespaces from the `CacheInfo` (if available) and then filters them.   
+    ///  
+    /// If the chache is empty for the current namespace, searchs for all commands and then updates the cache
+    ///
+    /// ## Arguments
+    /// * `current_namespace` - A &str representing the app current namespace
+    /// * `query_string` - A &str representing the user's query string
+    ///
+    fn filter(&mut self, current_namespace: &str, query_string: &str) -> Vec<Command> {
+        let commands = if !current_namespace.is_empty() && current_namespace != "All" {
+            self.commands_cache.get_entry(current_namespace)
+        } else {
+            let command_list = self.commands.command_list().to_owned();
+
+            if command_list.is_empty() {
+                vec![Command::default()]
+            } else {
+                command_list
+            }
+        };
+
+        if !commands.is_empty() && !query_string.is_empty() {
+            self.fuzzy_find(current_namespace, query_string, commands)
+        } else {
+            commands
+        }
+    }
+
+    /// Does a fuzzy search in the given vec
+    ///
+    /// Tries to return an ordered vec based on the score
+    #[inline(always)]
+    fn fuzzy_find(
+        &self,
+        namespace: &str,
+        query_string: &str,
+        commands: Vec<Command>,
+    ) -> Vec<Command> {
+        if commands.is_empty() {
+            return commands;
+        }
+
+        let mut scored_commands: Vec<(i64, Command)> = commands
+            .iter()
+            .cloned()
+            .filter(|c| (namespace.eq("All") || c.namespace.eq(namespace)))
+            .filter_map(|c| {
+                self.matcher
+                    .fuzzy_indices(&c.lookup_string(), query_string)
+                    .map(|(score, _)| (score, c))
+                    .filter(|(score, _)| *score > 1)
+            })
+            .collect();
+
+        scored_commands.sort_by_key(|&(score, _)| Reverse(score));
+        scored_commands.into_iter().map(|(_, c)| c).collect_vec()
     }
 }
 
@@ -407,5 +419,78 @@ mod test {
         assert_eq!(context.commands.command_list().len(), 1);
         assert!(context.commands.command_list().contains(&edited_command));
         assert!(!context.commands.command_list().contains(&current_command))
+    }
+
+    #[test]
+    fn should_filter_commands() {
+        let mut context = commands_context_builder(4);
+
+        context.next_command("All", "");
+        context.next_command("All", "");
+        assert_eq!(context.get_selected_command_idx(), 2);
+
+        let result = context.filter_commands("All", "4");
+
+        assert_eq!(result.len(), 1);
+        let command = &result[0];
+
+        assert_eq!(command.namespace, "namespace4");
+        assert_eq!(context.get_selected_command_idx(), 0)
+    }
+
+    #[test]
+    fn should_fuzzy_find_commands() {
+        let command1 = Command {
+            namespace: "git".to_owned(),
+            command: "git log --oneline".to_owned(),
+            description: None,
+            alias: "gl".to_owned(),
+            tags: None,
+        };
+        let command2 = Command {
+            namespace: "git".to_owned(),
+            command: "git fetch".to_owned(),
+            description: None,
+            alias: "gf".to_owned(),
+            tags: None,
+        };
+        let command3 = Command {
+            namespace: "cl".to_owned(),
+            command: "cl --version".to_owned(),
+            description: None,
+            alias: "clv".to_owned(),
+            tags: None,
+        };
+        let command4 = Command {
+            namespace: "test".to_owned(),
+            command: "command".to_owned(),
+            description: Some("git mock command".to_owned()),
+            alias: "some_string_with_c_and_l".to_owned(),
+            tags: None,
+        };
+
+        let commands = vec![
+            command1.clone(),
+            command2.clone(),
+            command3.clone(),
+            command4.clone(),
+        ];
+
+        let mut context = CommandsContext::new(
+            commands,
+            FileService::new(temp_dir().to_path_buf().join("commands.toml")),
+        );
+
+        let result = context.filter_commands("All", "git");
+
+        assert_eq!(result.len(), 3);
+        assert!(&result.contains(&command1));
+        assert!(&result.contains(&command2));
+        assert!(&result.contains(&command4));
+
+        let result = context.filter_commands("All", "cl");
+        assert_eq!(result.len(), 2);
+        assert!(&result.contains(&command3));
+        assert!(&result.contains(&command4));
     }
 }
