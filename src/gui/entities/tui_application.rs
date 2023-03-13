@@ -22,7 +22,7 @@ pub struct TuiApplication<'a> {
 }
 
 impl<'a> TuiApplication<'a> {
-    pub fn create() -> Result<TuiApplication<'a>> {
+    pub fn create(config: Config) -> Result<TuiApplication<'a>> {
         Self::handle_panic();
         // setup terminal
         enable_raw_mode()?;
@@ -33,7 +33,6 @@ impl<'a> TuiApplication<'a> {
         terminal.hide_cursor()?;
 
         let size = get_terminal_size(&terminal.get_frame());
-        let config = Config::load()?;
         let file_service = FileService::new(config.get_command_file_path()?);
         let commands = file_service.load_commands_from_file()?;
         let context = ApplicationContext::init(commands, size, file_service, config.get_options());

@@ -3,26 +3,17 @@ use crate::{
     commands::Commands,
     resources::{config::Config, errors::CommandError, file_service::FileService},
 };
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{anyhow, bail, Result};
 use clap::Parser;
-use lazy_static::lazy_static;
 use log::debug;
 use regex::Regex;
-use std::{collections::HashMap, sync::Mutex};
+use std::collections::HashMap;
 use strfmt::strfmt;
 
 const DEFAULT_NAMED_PARAMS_ERROR_MESSAGE: &str = "This command has named parameters! \
 You should provide them exactly as in the command";
 const INVALID_NAMED_PARAMS_ERROR_MESSAGE: &str = "Invalid named arguments! \
     You should provide them exactly as in the command";
-
-lazy_static! {
-    static ref APP_CONFIG: Mutex<Config> = Mutex::new(
-        Config::load()
-            .context("Cannot properly load the app configs")
-            .unwrap()
-    );
-}
 
 #[derive(Parser)]
 pub struct Exec {
@@ -154,8 +145,7 @@ impl From<Vec<String>> for CommandArgs {
     }
 }
 
-pub fn exec_subcommand(exec: Exec) -> Result<()> {
-    let config = APP_CONFIG.lock().unwrap();
+pub fn exec_subcommand(exec: Exec, config: Config) -> Result<()> {
     let command_list =
         FileService::new(config.get_command_file_path()?).load_commands_from_file()?;
     let commands = Commands::init(command_list);

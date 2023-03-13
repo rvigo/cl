@@ -230,7 +230,7 @@ mod test {
     #[test]
     fn should_return_a_boolean_based_on_named_parameters() {
         let mut command = build_default_command();
-        
+
         assert!(!command.has_named_parameter());
 
         command.command = String::from("echo \"hello, #{name}\"");

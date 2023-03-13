@@ -1,26 +1,16 @@
-use crate::resources::config::{Config, LogLevel};
-use anyhow::{Context, Result};
+use crate::resources::config::LogLevel;
+use anyhow::Result;
 use flexi_logger::{Cleanup, Criterion, FileSpec, Logger, Naming};
-use lazy_static::lazy_static;
 use log::debug;
-use std::sync::Mutex;
+use std::path::PathBuf;
 
-lazy_static! {
-    static ref CONFIG: Mutex<Config> = Mutex::new(
-        Config::load()
-            .context("Cannot properly load the app configs")
-            .unwrap()
-    );
-}
-
-pub fn init() -> Result<()> {
-    let config = CONFIG.lock().unwrap();
-    let log_level = String::from(config.get_log_level()?.unwrap_or(&LogLevel::default()));
-    Logger::try_with_str(&log_level)?
+pub fn init(log_level: LogLevel, log_path: PathBuf) -> Result<()> {
+    let log_level_string = String::from(&log_level);
+    Logger::try_with_str(&log_level_string)?
         .log_to_file(
             FileSpec::default()
                 .basename("output")
-                .directory(format!("{}/log", config.get_app_home_dir().display())),
+                .directory(log_path.join("log")),
         )
         .append()
         .rotate(
@@ -31,6 +21,6 @@ pub fn init() -> Result<()> {
         .format_for_files(flexi_logger::detailed_format)
         .start()?;
 
-    debug!("log started ok with log_level `{}`", &log_level);
+    debug!("log started ok with log_level `{}`", &log_level_string);
     Ok(())
 }
