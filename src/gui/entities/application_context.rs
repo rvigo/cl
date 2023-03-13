@@ -52,18 +52,18 @@ impl<'a> ApplicationContext<'a> {
 
     pub fn reload_namespaces_state(&mut self) {
         self.namespaces_context.reset_namespaces_state();
-        self.commands_context.select_command_idx(0);
+        self.commands_context.reset_command_idx();
         self.filter_namespaces();
     }
 
     pub fn next_namespace(&mut self) {
         self.namespaces_context.next_namespace();
-        self.commands_context.select_command_idx(0);
+        self.commands_context.reset_command_idx();
     }
 
     pub fn previous_namespace(&mut self) {
         self.namespaces_context.previous_namespace();
-        self.commands_context.select_command_idx(0);
+        self.commands_context.reset_command_idx();
     }
 
     // UI context
