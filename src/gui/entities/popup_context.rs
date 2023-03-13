@@ -2,7 +2,7 @@ use crate::gui::widgets::popup::{Answer, ChoicesState, Popup};
 
 #[derive(Default)]
 pub struct PopupContext<'a> {
-    pub answer: Option<Answer>,
+    answer: Option<Answer>,
     choices_state: ChoicesState,
     pub popup: Option<Popup<'a>>,
 }
@@ -25,6 +25,10 @@ impl<'a> PopupContext<'a> {
 
     pub fn state_mut(&mut self) -> &mut ChoicesState {
         &mut self.choices_state
+    }
+
+    pub fn answer(&self) -> Option<Answer> {
+        self.answer.to_owned()
     }
 
     pub fn clear(&mut self) {

@@ -125,7 +125,7 @@ impl<'a> UIContext<'a> {
     }
 
     pub fn get_popup_answer(&self) -> Option<Answer> {
-        self.popup_context.answer.to_owned()
+        self.popup_context.answer()
     }
 
     pub fn clear_popup_context(&mut self) {

@@ -112,10 +112,6 @@ impl CommandsContext {
         self.state.to_owned()
     }
 
-    pub fn command_to_be_executed(&self) -> Option<Command> {
-        self.to_be_executed.to_owned()
-    }
-
     /// Selects the given command to be executed at the end of the app execution
     pub fn set_command_to_be_executed(&mut self, command: Option<Command>) {
         self.to_be_executed = command
@@ -125,11 +121,7 @@ impl CommandsContext {
         self.state.selected().unwrap_or(0)
     }
 
-    /// Selects the command index in the current command list
-    pub fn select_command_idx(&mut self, idx: usize) {
-        self.state.select(Some(idx))
-    }
-
+    /// Resets the command index in the current command list
     pub fn reset_command_idx(&mut self) {
         self.select_command_idx(0)
     }
@@ -288,6 +280,15 @@ impl CommandsContext {
 
         scored_commands.sort_by_key(|&(score, _)| Reverse(score));
         scored_commands.into_iter().map(|(_, c)| c).collect_vec()
+    }
+
+    /// Selects the command index in the current command list
+    fn select_command_idx(&mut self, idx: usize) {
+        self.state.select(Some(idx))
+    }
+
+    fn command_to_be_executed(&self) -> Option<Command> {
+        self.to_be_executed.to_owned()
     }
 }
 
