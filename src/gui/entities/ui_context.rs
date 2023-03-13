@@ -22,7 +22,7 @@ pub struct UIContext<'a> {
 }
 
 impl<'a> UIContext<'a> {
-    pub fn new(terminal_size: TerminalSize, initial_command: Option<Command>) -> UIContext<'a> {
+    pub fn new(terminal_size: TerminalSize) -> UIContext<'a> {
         let mut context = UIContext {
             form_fields_context: FieldContext::default(),
             popup_context: PopupContext::new(),
@@ -31,7 +31,7 @@ impl<'a> UIContext<'a> {
             view_mode: ViewMode::Main,
         };
         context.select_form_idx(Some(0));
-        context.select_command(initial_command);
+        context.select_command(None);
         context
     }
 
