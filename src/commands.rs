@@ -190,16 +190,26 @@ mod test {
     }
 
     #[test]
-    fn should_validate_if_command_already_exists() {
-        let commands = build_commands();
-        let mut duplicated_command = CommandBuilder::default();
-        duplicated_command
+    fn should_return_an_error_when_add_a_duplicated_command() {
+        let mut commands = build_commands();
+        let mut duplicated_command_builder = CommandBuilder::default();
+        duplicated_command_builder
             .alias(String::from("alias1"))
             .namespace(String::from("namespace1"))
             .command(String::from("command"));
-
-        let already_exists = commands.command_already_exists(&duplicated_command.build());
-        assert!(already_exists)
+        let duplicated_command = duplicated_command_builder.build();
+        let result = commands.add_command(&duplicated_command);
+        assert!(result.is_err());
+        if let Err(error) = result {
+            assert_eq!(
+                error.to_string(),
+                CommandError::CommandAlreadyExists {
+                    alias: duplicated_command.alias,
+                    namespace: duplicated_command.namespace
+                }
+                .to_string()
+            )
+        }
     }
 
     #[test]
@@ -273,7 +283,7 @@ mod test {
 
         let mut edited_command = current_command.clone();
         edited_command.description = Some(String::from("edited command"));
-        edited_command.namespace = String::from("namespace1");
+        // edited_command.namespace = String::from("namespace1");
 
         let command_list_with_edited_command =
             commands.add_edited_command(&edited_command, &current_command);
@@ -283,6 +293,61 @@ mod test {
                 CommandError::CommandAlreadyExists {
                     alias: edited_command.alias,
                     namespace: edited_command.namespace
+                }
+                .to_string(),
+                error.to_string()
+            )
+        }
+    }
+
+    #[test]
+    fn should_find_a_command() {
+        let commands = build_commands();
+        let first_stored_command = commands.commands[0].clone();
+
+        let result = commands.find_command("alias1".to_string(), None);
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), first_stored_command)
+    }
+
+    #[test]
+    fn should_return_an_error_if_find_more_than_on_command_with_same_alias() {
+        let mut commands = build_commands();
+        let target_alias = "alias1";
+        let mut command_builder = CommandBuilder::default();
+        command_builder
+            .alias(target_alias)
+            .namespace("other_namespace");
+        let new_command = command_builder.build();
+
+        assert!(commands.add_command(&new_command).is_ok());
+
+        let result = commands.find_command(target_alias.to_string(), None);
+
+        assert!(result.is_err());
+        if let Err(error) = result {
+            assert_eq!(
+                CommandError::CommandPresentInManyNamespaces {
+                    alias: target_alias.to_owned()
+                }
+                .to_string(),
+                error.to_string()
+            )
+        }
+    }
+
+    #[test]
+    fn should_return_an_error_if_alias_does_not_exists() {
+        let commands = build_commands();
+
+        let result = commands.find_command("non existent alis".to_owned(), None);
+
+        assert!(result.is_err());
+        if let Err(error) = result {
+            assert_eq!(
+                CommandError::AliasNotFound {
+                    alias: "non existent alis".to_owned()
                 }
                 .to_string(),
                 error.to_string()
