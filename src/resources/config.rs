@@ -57,10 +57,7 @@ impl Options {
     }
 
     pub fn get_highlight(&mut self) -> bool {
-        match self.highlight_matches {
-            Some(value) => value,
-            None => true,
-        }
+        self.highlight_matches.unwrap_or(true)
     }
 
     pub fn set_highlight(&mut self, highlight: bool) {
