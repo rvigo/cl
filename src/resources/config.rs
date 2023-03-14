@@ -44,7 +44,7 @@ impl From<&str> for LogLevel {
 pub struct Options {
     default_quiet_mode: Option<bool>,
     log_level: Option<LogLevel>,
-    highlitght_matches: Option<bool>,
+    highlight_matches: Option<bool>,
 }
 
 impl Options {
@@ -52,16 +52,19 @@ impl Options {
         Self {
             default_quiet_mode: Some(false),
             log_level: Some(LogLevel::default()),
-            highlitght_matches: Some(true),
+            highlight_matches: Some(true),
         }
     }
 
-    pub fn get_highlight(&mut self) -> Result<Option<bool>> {
-        Ok(self.highlitght_matches)
+    pub fn get_highlight(&mut self) -> bool {
+        match self.highlight_matches {
+            Some(value) => value,
+            None => true,
+        }
     }
 
     pub fn set_highlight(&mut self, highlight: bool) {
-        self.highlitght_matches = Some(highlight);
+        self.highlight_matches = Some(highlight);
     }
 
     pub fn get_log_level(&self) -> Result<Option<&LogLevel>> {
@@ -131,20 +134,20 @@ impl Config {
         self.save()
     }
 
-    pub fn set_default_quiet_mode(&mut self, quiet_mode: bool) -> Result<()> {
-        self.options
-            .as_mut()
-            .unwrap()
-            .set_default_quiet_mode(quiet_mode);
-        self.save()
-    }
-
     pub fn get_default_quiet_mode(&self) -> bool {
         self.options
             .as_ref()
             .unwrap()
             .default_quiet_mode
             .unwrap_or(false)
+    }
+
+    pub fn set_default_quiet_mode(&mut self, quiet_mode: bool) -> Result<()> {
+        self.options
+            .as_mut()
+            .unwrap()
+            .set_default_quiet_mode(quiet_mode);
+        self.save()
     }
 
     pub fn save(&self) -> Result<()> {
@@ -235,9 +238,9 @@ impl Config {
             should_save = true;
             self.options.as_mut().unwrap().log_level = Some(LogLevel::default());
         }
-        if self.options.as_ref().unwrap().highlitght_matches.is_none() {
+        if self.options.as_ref().unwrap().highlight_matches.is_none() {
             should_save = true;
-            self.options.as_mut().unwrap().highlitght_matches = Some(true);
+            self.options.as_mut().unwrap().highlight_matches = Some(true);
         }
 
         if should_save {
@@ -251,45 +254,89 @@ impl Config {
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::env::temp_dir;
+    use std::{
+        env::temp_dir,
+        fs,
+        sync::atomic::{AtomicUsize, Ordering},
+    };
 
-    fn builder() -> Result<Config> {
-        let mut config = Config {
-            app_home_dir: Some(temp_dir().to_path_buf()),
+    fn get_id() -> usize {
+        static COUNTER: AtomicUsize = AtomicUsize::new(1);
+        COUNTER.fetch_add(1, Ordering::Relaxed)
+    }
+
+    fn builder() -> Config {
+        let tmp = temp_dir();
+        let config_dir = tmp.join(format!(".config{}", get_id()));
+        Config {
+            app_home_dir: Some(config_dir),
             config_home_path: None,
             command_file_path: None,
             options: Some(Options {
                 default_quiet_mode: None,
                 log_level: None,
-                highlitght_matches: None,
+                highlight_matches: None,
             }),
-        };
-        config.validate()?;
+        }
+    }
 
-        Ok(config)
+    fn tear_down(config: Config) -> Result<()> {
+        if config.command_file_path.as_ref().is_some()
+            && config.command_file_path.as_ref().unwrap().exists()
+        {
+            fs::remove_file(config.command_file_path.as_ref().unwrap())?;
+        }
+        if config.config_home_path.as_ref().is_some()
+            && config.config_home_path.as_ref().unwrap().exists()
+        {
+            fs::remove_file(config.config_home_path.as_ref().unwrap())?;
+        }
+        fs::remove_dir(config.get_app_home_dir()).unwrap();
+
+        Ok(())
     }
 
     #[test]
-    fn should_create_a_new_config() -> Result<()> {
-        let config = builder()?;
-        assert_eq!(config.get_log_level(), LogLevel::Error);
-        assert_eq!(config.get_default_quiet_mode(), false);
-        assert!(config.get_command_file_path()?.exists());
-        assert!(config.get_config_file_path()?.exists());
-        Ok(())
+    fn should_save_a_new_config() -> Result<()> {
+        let mut config = builder();
+
+        assert!(config.app_home_dir.is_some());
+        assert!(config.app_home_dir.as_ref().unwrap().try_exists().is_ok());
+        assert_eq!(
+            config.app_home_dir.as_ref().unwrap().try_exists().unwrap(),
+            false
+        );
+
+        config.save()?;
+        config.validate()?;
+
+        assert!(config.app_home_dir.is_some());
+        assert!(config.app_home_dir.as_ref().unwrap().try_exists().is_ok());
+        assert_eq!(
+            config.app_home_dir.as_ref().unwrap().try_exists().unwrap(),
+            true
+        );
+
+        tear_down(config)
     }
 
     #[test]
     fn should_create_a_new_commands_file() -> Result<()> {
-        let config = builder()?;
-        assert!(config.command_file_path.is_some());
+        let mut config = builder();
+        config.save()?;
+        config.validate()?;
 
-        Ok(())
+        assert!(config.command_file_path.as_ref().is_some());
+        assert!(config.command_file_path.as_ref().unwrap().exists());
+
+        tear_down(config)
     }
 
     #[test]
     fn should_set_default_quiet_mode() -> Result<()> {
-        let mut config = builder()?;
+        let mut config = builder();
+        config.save()?;
+        config.validate()?;
 
         assert_eq!(config.get_default_quiet_mode(), false);
 
@@ -297,12 +344,14 @@ mod test {
 
         assert_eq!(config.get_default_quiet_mode(), true);
 
-        Ok(())
+        tear_down(config)
     }
 
     #[test]
     fn should_set_log_level() -> Result<()> {
-        let mut config = builder()?;
+        let mut config = builder();
+        config.save()?;
+        config.validate()?;
 
         assert_eq!(config.get_log_level(), LogLevel::Error);
 
@@ -310,6 +359,26 @@ mod test {
 
         assert_eq!(config.get_log_level(), LogLevel::Debug);
 
-        Ok(())
+        tear_down(config)
+    }
+
+    #[test]
+    fn should_set_highlight() -> Result<()> {
+        let mut config = builder();
+        config.save()?;
+        config.validate()?;
+
+        assert_eq!(config.get_options().get_highlight(), true);
+
+        config.set_highlight(false)?;
+
+        assert_eq!(config.get_options().get_highlight(), false);
+
+        // get default value in case of None
+        config.options.as_mut().unwrap().highlight_matches = None;
+
+        assert_eq!(config.get_options().get_highlight(), true);
+
+        tear_down(config)
     }
 }

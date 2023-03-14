@@ -46,7 +46,7 @@ pub struct Config {
         num_args(1),
         help = "Set the `highlight matches` mode"
     )]
-    highlitght_matches: Option<bool>,
+    highlight_matches: Option<bool>,
     #[clap(subcommand)]
     subcommand: Option<ConfigSubcommand>,
 }
@@ -74,7 +74,7 @@ pub fn config_subcommand(config: Config, mut app_config: AppConfig) -> Result<()
         app_config.set_log_level(log_level.as_config_enum())?;
         println!("log level set to {log_level:?}")
     }
-    if let Some(highlight) = config.highlitght_matches {
+    if let Some(highlight) = config.highlight_matches {
         app_config.set_highlight(highlight)?;
         println!("highlight matches set to {highlight}")
     }
