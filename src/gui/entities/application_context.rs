@@ -278,10 +278,7 @@ impl<'a> ApplicationContext<'a> {
     }
 
     pub fn should_highligh(&mut self) -> bool {
-        match self.config_options.get_highlight() {
-            Ok(Some(value)) => value,
-            _ => true,
-        }
+        self.config_options.get_highlight()
     }
 
     /// Tells the app to quit its execution

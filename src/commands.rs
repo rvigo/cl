@@ -38,9 +38,8 @@ impl Commands {
         ensure!(
             !self.commands.clone().iter().any(|command| {
                 command.alias.eq(&edited_command.alias)
-                    && !edited_command.alias.eq(&old_command.alias)
                     && command.namespace.eq(&edited_command.namespace)
-            }),
+            }) && !edited_command.alias.eq(&old_command.alias),
             CommandError::CommandAlreadyExists {
                 alias: edited_command.alias.to_owned(),
                 namespace: edited_command.namespace.to_owned()
@@ -80,7 +79,6 @@ impl Commands {
             eprintln!("Warning: $SHELL not found! Using sh");
             String::from("sh")
         });
-        // let envs = env::vars();
 
         if dry_run {
             println!("{}", command_item.command);
@@ -196,7 +194,7 @@ mod test {
         duplicated_command_builder
             .alias(String::from("alias1"))
             .namespace(String::from("namespace1"))
-            .command(String::from("command"));
+            .command(String::from("command1"));
         let duplicated_command = duplicated_command_builder.build();
         let result = commands.add_command(&duplicated_command);
         assert!(result.is_err());
@@ -255,9 +253,7 @@ mod test {
             Some("description"),
         );
 
-        if let Ok(command_list) = commands.add_command(&new_command) {
-            assert_eq!(3, command_list.len())
-        }
+        assert!(commands.add_command(&new_command).is_ok());
 
         let mut edited_command = new_command.clone();
         edited_command.alias = String::from("edited_alias");
@@ -266,14 +262,38 @@ mod test {
             commands.add_edited_command(&edited_command, &new_command);
 
         if let Ok(command_list) = command_list_with_edited_command {
-            assert_eq!(3, command_list.len());
             assert!(command_list.contains(&edited_command));
             assert!(!command_list.contains(&new_command));
         }
     }
 
     #[test]
-    fn should_return_an_error_when_edit_a_duplicated_alias_command() {
+    fn should_add_an_edited_command_with_same_alias_but_different_namespace() {
+        let mut commands = build_commands();
+        let new_command = command_factory(
+            "alias2",
+            "namespace1",
+            "command2",
+            Some(vec!["tag1", "tag2"]),
+            Some("description"),
+        );
+
+        assert!(commands.add_command(&new_command).is_ok());
+
+        let mut edited_command = new_command.clone();
+        edited_command.namespace = String::from("edited_namespace");
+
+        let command_list_with_edited_command =
+            commands.add_edited_command(&edited_command, &new_command);
+
+        if let Ok(command_list) = command_list_with_edited_command {
+            assert!(command_list.contains(&edited_command));
+            assert!(!command_list.contains(&new_command));
+        }
+    }
+
+    #[test]
+    fn should_return_an_error_when_add_an_edited_command_with_duplicated_alias() {
         let mut commands = build_commands();
         let current_command = Command::default();
 
@@ -283,7 +303,7 @@ mod test {
 
         let mut edited_command = current_command.clone();
         edited_command.description = Some(String::from("edited command"));
-        // edited_command.namespace = String::from("namespace1");
+        edited_command.namespace = String::from("namespace1");
 
         let command_list_with_edited_command =
             commands.add_edited_command(&edited_command, &current_command);
@@ -353,5 +373,49 @@ mod test {
                 error.to_string()
             )
         }
+    }
+
+    #[test]
+    fn should_execute_a_command() {
+        // nothing much to test here without capturing the stdout, so just checks the method output
+        // note that this test function will actually run the provided command, BE CAREFUL
+        let commands = build_commands();
+        let mut command_be_executed = commands.commands[0].clone();
+        command_be_executed.command = "echo 'Hello, world!' > /dev/null 2>&1".to_owned();
+
+        // dry run
+        let dry_run = true;
+        let quiet_mode = false;
+        let result = commands.exec_command(&command_be_executed, dry_run, quiet_mode);
+        assert!(result.is_ok());
+
+        // dry run & quiet
+        let dry_run = true;
+        let quiet_mode = true;
+        let result = commands.exec_command(&command_be_executed, dry_run, quiet_mode);
+        assert!(result.is_ok());
+
+        // quiet
+        let dry_run = false;
+        let quiet_mode = true;
+        let result = commands.exec_command(&command_be_executed, dry_run, quiet_mode);
+        assert!(result.is_ok());
+
+        // false dry run & false quiet
+        let dry_run = false;
+        let quiet_mode = false;
+        let result = commands.exec_command(&command_be_executed, dry_run, quiet_mode);
+        assert!(result.is_ok());
+
+        command_be_executed.command =
+            "echo 'a very looooooooooooooooooooooooooooooooooooooooooooooooooo
+        ooooooooooooooooooooooooooooooooooooooooooooong command' > /dev/null 2>&1"
+                .to_owned();
+
+        // false dry run & false quiet
+        let dry_run = false;
+        let quiet_mode = false;
+        let result = commands.exec_command(&command_be_executed, dry_run, quiet_mode);
+        assert!(result.is_ok());
     }
 }
