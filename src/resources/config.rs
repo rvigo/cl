@@ -1,6 +1,5 @@
 use anyhow::Result;
 use dirs::home_dir;
-use log::debug;
 use serde::{Deserialize, Serialize};
 use std::{
     fs::{create_dir_all, read_to_string, write},
@@ -150,11 +149,9 @@ impl Config {
     pub fn save(&self) -> Result<()> {
         let app_home_dir = self.get_app_home_dir();
         if !app_home_dir.exists() {
-            debug!("creating dirs: {app_home_dir:?}");
             create_dir_all(&app_home_dir)?
         }
         let config_file_path = app_home_dir.join(self.get_config_file_path()?);
-        debug!("saving file to: {config_file_path:?}");
         let config_data = toml::to_string(self)?;
         write(&config_file_path, config_data)?;
         Ok(())
@@ -194,7 +191,6 @@ impl Config {
     }
 
     fn create_empty_command_file(&self, command_file_path: PathBuf) -> Result<()> {
-        debug!("creating empty command file");
         write(command_file_path, "")?;
         Ok(())
     }
