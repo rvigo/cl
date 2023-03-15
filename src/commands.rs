@@ -35,11 +35,14 @@ impl Commands {
         edited_command: &Command,
         old_command: &Command,
     ) -> Result<Vec<Command>> {
+        let has_any = self.commands.clone().iter().any(|command| {
+            command.alias.eq(&edited_command.alias)
+                && command.namespace.eq(&edited_command.namespace)
+        });
+        let same_alias = edited_command.alias.eq(&old_command.alias);
+
         ensure!(
-            !self.commands.clone().iter().any(|command| {
-                command.alias.eq(&edited_command.alias)
-                    && command.namespace.eq(&edited_command.namespace)
-            }) && !edited_command.alias.eq(&old_command.alias),
+            !has_any || same_alias,
             CommandError::CommandAlreadyExists {
                 alias: edited_command.alias.to_owned(),
                 namespace: edited_command.namespace.to_owned()
@@ -73,17 +76,11 @@ impl Commands {
         dry_run: bool,
         quiet_mode: bool,
     ) -> Result<()> {
-        const MAX_LINE_LENGTH: usize = 120;
-
-        let shell = env::var("SHELL").unwrap_or_else(|_| {
-            eprintln!("Warning: $SHELL not found! Using sh");
-            String::from("sh")
-        });
-
         if dry_run {
             println!("{}", command_item.command);
         } else {
             if !quiet_mode {
+                const MAX_LINE_LENGTH: usize = 120;
                 let command_description = if command_item.command.len() > MAX_LINE_LENGTH {
                     format!(
                         "{}{}",
@@ -98,6 +95,11 @@ impl Commands {
                     command_item.namespace, command_item.alias, command_description
                 );
             }
+
+            let shell = env::var("SHELL").unwrap_or_else(|_| {
+                eprintln!("Warning: $SHELL not found! Using sh");
+                String::from("sh")
+            });
             std::process::Command::new(shell)
                 .env_clear()
                 .envs(env::vars())
@@ -220,6 +222,7 @@ mod test {
         let to_be_removed = all_commands.get(0).unwrap();
         let command_list_after_remove_command = commands.remove(to_be_removed);
 
+        assert!(command_list_after_remove_command.is_ok());
         if let Ok(items) = command_list_after_remove_command {
             assert_eq!(1, items.len());
             assert!(!items.contains(to_be_removed))
@@ -236,6 +239,7 @@ mod test {
         let new_command = Command::default();
         let new_command_list = commands.add_command(&new_command);
 
+        assert!(new_command_list.is_ok());
         if let Ok(items) = new_command_list {
             assert_eq!(3, items.len());
             assert!(items.contains(&new_command))
@@ -261,6 +265,7 @@ mod test {
         let command_list_with_edited_command =
             commands.add_edited_command(&edited_command, &new_command);
 
+        assert!(command_list_with_edited_command.is_ok());
         if let Ok(command_list) = command_list_with_edited_command {
             assert!(command_list.contains(&edited_command));
             assert!(!command_list.contains(&new_command));
@@ -286,6 +291,7 @@ mod test {
         let command_list_with_edited_command =
             commands.add_edited_command(&edited_command, &new_command);
 
+        assert!(command_list_with_edited_command.is_ok());
         if let Ok(command_list) = command_list_with_edited_command {
             assert!(command_list.contains(&edited_command));
             assert!(!command_list.contains(&new_command));
@@ -293,31 +299,56 @@ mod test {
     }
 
     #[test]
-    fn should_return_an_error_when_add_an_edited_command_with_duplicated_alias() {
+    fn should_return_an_error_when_add_an_edited_command_with_duplicated_alias_in_the_same_namespace(
+    ) {
+        let mut commands = build_commands();
+        let mut current_command = commands.commands[0].clone();
+        current_command.namespace = String::from("namespace2");
+
+        assert_eq!(current_command.alias, "alias1");
+        assert_eq!(current_command.namespace, "namespace2");
+
+        commands.add_command(&current_command).unwrap();
+
+        let mut edited_command = current_command.clone();
+        edited_command.alias = String::from("alias2");
+
+        let command_list_with_edited_command =
+            commands.add_edited_command(&edited_command, &current_command);
+
+        assert!(command_list_with_edited_command.is_err());
+        assert_eq!(
+            CommandError::CommandAlreadyExists {
+                alias: edited_command.alias,
+                namespace: edited_command.namespace
+            }
+            .to_string(),
+            command_list_with_edited_command.unwrap_err().to_string()
+        )
+    }
+
+    #[test]
+    fn should_return_an_error_when_add_an_edited_command_with_duplicated_alias_and_namespace() {
         let mut commands = build_commands();
         let current_command = Command::default();
 
         commands.add_command(&current_command).unwrap();
 
-        assert_eq!(3, commands.command_list().len());
-
         let mut edited_command = current_command.clone();
-        edited_command.description = Some(String::from("edited command"));
+        edited_command.alias = String::from("alias1");
         edited_command.namespace = String::from("namespace1");
-
         let command_list_with_edited_command =
             commands.add_edited_command(&edited_command, &current_command);
 
-        if let Err(error) = command_list_with_edited_command {
-            assert_eq!(
-                CommandError::CommandAlreadyExists {
-                    alias: edited_command.alias,
-                    namespace: edited_command.namespace
-                }
-                .to_string(),
-                error.to_string()
-            )
-        }
+        assert!(command_list_with_edited_command.is_err());
+        assert_eq!(
+            CommandError::CommandAlreadyExists {
+                alias: edited_command.alias,
+                namespace: edited_command.namespace
+            }
+            .to_string(),
+            command_list_with_edited_command.unwrap_err().to_string()
+        )
     }
 
     #[test]
@@ -346,15 +377,13 @@ mod test {
         let result = commands.find_command(target_alias.to_string(), None);
 
         assert!(result.is_err());
-        if let Err(error) = result {
-            assert_eq!(
-                CommandError::CommandPresentInManyNamespaces {
-                    alias: target_alias.to_owned()
-                }
-                .to_string(),
-                error.to_string()
-            )
-        }
+        assert_eq!(
+            CommandError::CommandPresentInManyNamespaces {
+                alias: target_alias.to_owned()
+            }
+            .to_string(),
+            result.unwrap_err().to_string()
+        )
     }
 
     #[test]
