@@ -117,11 +117,11 @@ impl<'a> UIContext<'a> {
     }
 
     pub fn popup(&self) -> Option<Popup<'a>> {
-        self.popup_context.popup.to_owned()
+        self.popup_context.get_popup()
     }
 
     pub fn set_popup(&mut self, popup: Option<Popup<'a>>) {
-        self.popup_context.popup = popup;
+        self.popup_context.set_popup(popup);
     }
 
     pub fn get_popup_answer(&self) -> Option<Answer> {
