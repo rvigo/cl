@@ -34,6 +34,7 @@ pub struct Config {
         value_parser,
         long,
         short = 'l',
+        ignore_case = true,
         required = false,
         num_args(1),
         help = "Set the default log level"
@@ -65,19 +66,17 @@ pub struct Widget {
 pub fn config_subcommand(config: Config, mut app_config: AppConfig) -> Result<()> {
     if let Some(ConfigSubcommand::ZshWidget(_)) = config.subcommand {
         install_zsh_widget(app_config.get_app_home_dir())?
+    } else if let Some(quiet) = config.default_quiet_mode {
+        app_config.set_default_quiet_mode(quiet)?;
+        println!("quiet mode set to {quiet}")
+    } else if let Some(log_level) = config.default_log_level {
+        app_config.set_log_level(log_level.as_config_enum())?;
+        println!("log level set to {log_level:?}")
+    } else if let Some(highlight) = config.highlight_matches {
+        app_config.set_highlight(highlight)?;
+        println!("highlight matches set to {highlight}")
     } else {
-        if let Some(quiet) = config.default_quiet_mode {
-            app_config.set_default_quiet_mode(quiet)?;
-            println!("quiet mode set to {quiet}")
-        }
-        if let Some(log_level) = config.default_log_level {
-            app_config.set_log_level(log_level.as_config_enum())?;
-            println!("log level set to {log_level:?}")
-        }
-        if let Some(highlight) = config.highlight_matches {
-            app_config.set_highlight(highlight)?;
-            println!("highlight matches set to {highlight}")
-        }
+        println!("{}", app_config.printable_string())
     }
 
     Ok(())
