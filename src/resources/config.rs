@@ -199,6 +199,31 @@ impl Config {
         Ok(self.get_app_home_dir().join(APP_CONFIG_FILE))
     }
 
+    pub fn printable_string(&self) -> String {
+        let mut result = String::new();
+        if let Some(path) = &self.app_home_dir {
+            result.push_str(&format!("app home: {path:?}\n"));
+        }
+        if let Some(path) = &self.config_home_path {
+            result.push_str(&format!("config home: {path:?}\n"));
+        }
+        if let Some(path) = &self.command_file_path {
+            result.push_str(&format!("command file location: {path:?}\n"));
+        }
+        if let Some(options) = &self.options {
+            if let Some(val) = &options.default_quiet_mode {
+                result.push_str(&format!("quiet mode: {val}\n"));
+            }
+            if let Some(val) = &options.log_level {
+                result.push_str(&format!("log level: {val:?}\n"));
+            }
+            if let Some(val) = &options.highlight_matches {
+                result.push_str(&format!("highlight matches: {val}\n"));
+            }
+        }
+        result
+    }
+
     /// Validates the config properties
     ///
     /// If some property is missing, ensures a default value and then saves the file
