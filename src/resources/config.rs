@@ -3,7 +3,7 @@ use dirs::home_dir;
 use serde::{Deserialize, Serialize};
 use std::{
     fs::{create_dir_all, read_to_string, write},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 const APP_HOME_DIR: &str = ".config/cl";
@@ -190,7 +190,7 @@ impl Config {
         Ok(config)
     }
 
-    fn create_empty_command_file(&self, command_file_path: PathBuf) -> Result<()> {
+    fn create_empty_command_file<P: AsRef<Path>>(&self, command_file_path: P) -> Result<()> {
         write(command_file_path, "")?;
         Ok(())
     }
@@ -238,12 +238,6 @@ impl Config {
             should_save = true;
             self.config_home_path = Some(self.app_home_dir.as_ref().unwrap().join(APP_CONFIG_FILE));
         }
-        if self.command_file_path.is_none() {
-            should_save = true;
-            let path = self.app_home_dir.as_ref().unwrap().join(COMMAND_FILE);
-            self.command_file_path = Some(path.clone());
-            self.create_empty_command_file(path)?;
-        }
         if self.options.is_none() {
             should_save = true;
             self.options = Some(Options::new())
@@ -261,10 +255,30 @@ impl Config {
             self.options.as_mut().unwrap().highlight_matches = Some(true);
         }
 
+        if self.ensure_command_file()? {
+            should_save = true
+        }
+
         if should_save {
             self.save()
         } else {
             Ok(())
+        }
+    }
+
+    fn ensure_command_file(&mut self) -> Result<bool> {
+        let mut has_changes = false;
+        if let Some(command_file) = &self.command_file_path {
+            if !command_file.exists() {
+                self.create_empty_command_file(command_file)?;
+            }
+            Ok(has_changes)
+        } else {
+            let path = self.app_home_dir.as_ref().unwrap().join(COMMAND_FILE);
+            self.command_file_path = Some(path.clone());
+            self.create_empty_command_file(path)?;
+            has_changes = true;
+            Ok(has_changes)
         }
     }
 }
