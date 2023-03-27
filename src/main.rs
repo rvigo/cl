@@ -14,11 +14,14 @@ use cli::{
     },
 };
 use gui::entities::tui_application::TuiApplication;
-use resources::{config::Config, log};
+use resources::{
+    config::Config,
+    logger::{self, ErrorInterceptor},
+};
 
 fn main() -> Result<()> {
     let config = Config::load()?;
-    log::init(config.get_log_level(), config.get_app_home_dir())?;
+    logger::init(config.get_log_level(), config.get_app_home_dir())?;
 
     let app = App::parse();
 
@@ -31,9 +34,9 @@ fn main() -> Result<()> {
         }
         _ => run_main_app(config),
     }
+    .log_if_error()
 }
 
 fn run_main_app(config: Config) -> Result<()> {
-    let mut tui = TuiApplication::create(config)?;
-    tui.render()
+    TuiApplication::create(config)?.render()
 }
