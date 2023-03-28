@@ -1,14 +1,20 @@
 mod form_layout;
 mod main_layout;
 
-use crate::gui::entities::application_context::ApplicationContext;
-use std::{fmt, io::Stdout};
+use log::debug;
+use parking_lot::Mutex;
+use std::{fmt, io::Stdout, sync::Arc};
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     widgets::{Block, BorderType, Borders},
     Frame,
+};
+
+use super::entities::{
+    application_context::ApplicationContext,
+    ui_state::{UiState, ViewMode},
 };
 
 pub const DEFAULT_TEXT_COLOR: Color = Color::Rgb(229, 229, 229);
@@ -29,24 +35,6 @@ pub fn get_terminal_size<B: Backend>(frame: &Frame<B>) -> TerminalSize {
         TerminalSize::Medium
     } else {
         TerminalSize::Large
-    }
-}
-
-#[derive(Clone, Default, PartialEq, Eq)]
-pub enum ViewMode {
-    #[default]
-    Main,
-    Insert,
-    Edit,
-}
-
-impl fmt::Display for ViewMode {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ViewMode::Main => write!(f, "Main"),
-            ViewMode::Insert => write!(f, "Insert"),
-            ViewMode::Edit => write!(f, "Edit"),
-        }
     }
 }
 
@@ -101,19 +89,17 @@ where
 
 pub fn select_ui(
     frame: &mut Frame<CrosstermBackend<Stdout>>,
-    application_context: &mut ApplicationContext,
+    ui_state: &mut Arc<Mutex<UiState>>,
+    context: &mut Arc<Mutex<ApplicationContext>>,
 ) {
-    application_context.update_terminal_size(get_terminal_size(frame));
-    match application_context.view_mode() {
-        ViewMode::Main => main_layout::render(
-            frame,
-            application_context,
-            application_context.terminal_size(),
-        ),
-        ViewMode::Insert | ViewMode::Edit => form_layout::render(
-            frame,
-            application_context,
-            application_context.terminal_size(),
-        ),
-    };
+    let ui_state = ui_state.lock();
+    match ui_state.view_mode {
+        ViewMode::Main => main_layout::render(frame, context),
+        ViewMode::Edit => form_layout::render(frame, context, &ui_state.size),
+        _ => {
+            //form_layout::render(frame)
+            debug!("Screen not implemented yet");
+            main_layout::render(frame, context)
+        }
+    }
 }
