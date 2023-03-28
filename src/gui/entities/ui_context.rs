@@ -1,8 +1,8 @@
-use super::{field_context::FieldContext, popup_context::PopupContext};
+use super::{field_context::FieldContext, popup_context::PopupContext, ui_state::ViewMode};
 use crate::{
     command::Command,
     gui::{
-        layouts::{TerminalSize, ViewMode},
+        layouts::TerminalSize,
         widgets::{
             field::{Field, FieldType},
             fields::Fields,
@@ -12,6 +12,7 @@ use crate::{
     },
 };
 use crossterm::event::KeyEvent;
+use log::debug;
 
 pub struct UIContext<'a> {
     form_fields_context: FieldContext<'a>,
@@ -150,6 +151,7 @@ impl<'a> UIContext<'a> {
 
     pub fn enter_main_mode(&mut self) {
         self.select_form_idx(Some(0));
+        debug!("selected command: {:?}", self.get_selected_command());
         self.set_view_mode(ViewMode::Main);
     }
 
