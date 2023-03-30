@@ -55,7 +55,6 @@ async fn main() -> Result<()> {
 
 async fn run_main_app(config: Config) -> Result<()> {
     debug!("creating channels");
-    // TODO falta um cara pra ouvir os eventos do app (render, run e quit)
     let (app_sx, app_rx) = tokio::sync::mpsc::channel::<AppEvents>(32);
     let (input_sx, input_rx) = tokio::sync::mpsc::channel::<InputMessages>(32);
 
@@ -66,15 +65,9 @@ async fn run_main_app(config: Config) -> Result<()> {
     debug!("creating context");
     let should_quit: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
 
-    let context = ApplicationContext::init(
-        commands,
-        TerminalSize::Medium,
-        file_service,
-        config.get_options(),
-        should_quit.clone(),
-    );
+    let context = ApplicationContext::init(commands, file_service, config.get_options());
 
-    let ui_state = Arc::new(Mutex::new(UiState::new(context.terminal_size().clone())));
+    let ui_state = Arc::new(Mutex::new(UiState::new(TerminalSize::default())));
     let context = Arc::new(Mutex::new(context));
     debug!("starting components");
     handler_init(input_rx, &app_sx, &ui_state, &should_quit, &context).await;

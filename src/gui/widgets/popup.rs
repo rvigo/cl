@@ -1,4 +1,7 @@
-use crate::gui::layouts::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
+use crate::gui::{
+    entities::events::app_events::PopupCallbackAction,
+    layouts::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
+};
 use log::{error, warn};
 use std::fmt;
 use tui::{
@@ -14,6 +17,7 @@ pub struct Popup<'a> {
     message_type: Option<MessageType>,
     choices: Vec<Answer>,
     block: Option<Block<'a>>,
+    callback_action: PopupCallbackAction,
 }
 
 impl<'a> Popup<'a> {
@@ -40,10 +44,11 @@ impl<'a> Popup<'a> {
                     .title_alignment(Alignment::Left)
                     .border_type(BorderType::Plain),
             ),
+            callback_action: PopupCallbackAction::None,
         }
     }
 
-    pub fn from_warning<T>(message: T) -> Popup<'a>
+    pub fn from_warning<T>(message: T, callback_action: PopupCallbackAction) -> Popup<'a>
     where
         T: Into<String>,
     {
@@ -62,7 +67,11 @@ impl<'a> Popup<'a> {
                     .title_alignment(Alignment::Left)
                     .border_type(BorderType::Plain),
             ),
+            callback_action,
         }
+    }
+    pub fn callback(&self) -> PopupCallbackAction {
+        self.callback_action.to_owned()
     }
 
     pub fn choices(&self) -> Vec<Answer> {

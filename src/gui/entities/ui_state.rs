@@ -1,4 +1,7 @@
-use std::fmt;
+use std::{
+    fmt,
+    sync::{atomic::AtomicBool, Arc},
+};
 
 use crate::gui::layouts::TerminalSize;
 
@@ -24,6 +27,9 @@ impl fmt::Display for ViewMode {
 pub struct UiState {
     pub view_mode: ViewMode,
     pub size: TerminalSize,
+    pub show_popup: Arc<AtomicBool>,
+    pub show_help: Arc<AtomicBool>,
+    pub query_box_active: Arc<AtomicBool>,
 }
 
 impl UiState {
@@ -31,6 +37,9 @@ impl UiState {
         Self {
             view_mode: ViewMode::Main,
             size,
+            show_popup: Arc::new(AtomicBool::new(false)),
+            show_help: Arc::new(AtomicBool::new(false)),
+            query_box_active: Arc::new(AtomicBool::new(false)),
         }
     }
 }

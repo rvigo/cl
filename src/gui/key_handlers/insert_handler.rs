@@ -1,17 +1,10 @@
-use crate::gui::entities::{
-    application_context::ApplicationContext,
-    events::app_events::{AppEvents, CommandEvents, RenderEvents},
+use crate::gui::entities::events::app_events::{
+    AppEvents, CommandEvents, FormScreenEvent, PopupEvent, PopupType, RenderEvents, ScreenEvents,
 };
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use parking_lot::Mutex;
-use std::sync::Arc;
 
-pub fn handle(
-    key_event: KeyEvent,
-    context: &mut Arc<Mutex<ApplicationContext>>,
-) -> Result<Option<AppEvents>> {
-    let mut c = context.lock();
+pub fn handle(key_event: KeyEvent) -> Result<Option<AppEvents>> {
     match key_event {
         KeyEvent {
             code: KeyCode::Esc,
@@ -22,35 +15,34 @@ pub fn handle(
             code: KeyCode::Char('c'),
             modifiers: KeyModifiers::CONTROL,
             ..
-        } => {
-            return Ok(Some(AppEvents::Render(RenderEvents::Main)));
-        }
+        } => Ok(Some(AppEvents::Render(RenderEvents::Main))),
         KeyEvent {
             code: KeyCode::Tab,
             modifiers: KeyModifiers::NONE,
             ..
-        } => c.next_form_field(),
+        } => Ok(Some(AppEvents::Screen(ScreenEvents::Form(
+            FormScreenEvent::NextField,
+        )))),
 
         KeyEvent {
             code: KeyCode::BackTab,
             modifiers: KeyModifiers::SHIFT,
             ..
-        } => c.previous_form_field(),
+        } => Ok(Some(AppEvents::Screen(ScreenEvents::Form(
+            FormScreenEvent::PreviousField,
+        )))),
         KeyEvent {
             code: KeyCode::Char('s'),
             modifiers: KeyModifiers::CONTROL,
             ..
-        } => {
-            let new_command = c.build_new_command();
-            return Ok(Some(AppEvents::Run(CommandEvents::Insert(new_command))));
-        }
+        } => Ok(Some(AppEvents::Run(CommandEvents::Insert))),
         KeyEvent {
             code: KeyCode::F(1),
             modifiers: KeyModifiers::NONE,
             ..
-        } => c.set_show_help(true),
-        input => c.handle_form_input(input),
+        } => Ok(Some(AppEvents::Popup(PopupEvent::Enable(PopupType::Help)))),
+        input => Ok(Some(AppEvents::Screen(ScreenEvents::Form(
+            FormScreenEvent::Input(input),
+        )))),
     }
-
-    Ok(None)
 }

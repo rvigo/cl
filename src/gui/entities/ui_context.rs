@@ -1,4 +1,4 @@
-use super::{field_context::FieldContext, popup_context::PopupContext, ui_state::ViewMode};
+use super::{field_context::FieldContext, popup_context::PopupContext};
 use crate::{
     command::Command,
     gui::{
@@ -18,39 +18,18 @@ pub struct UIContext<'a> {
     form_fields_context: FieldContext<'a>,
     popup_context: PopupContext<'a>,
     query_box: QueryBox<'a>,
-    terminal_size: TerminalSize,
-    view_mode: ViewMode,
 }
 
 impl<'a> UIContext<'a> {
-    pub fn new(terminal_size: TerminalSize) -> UIContext<'a> {
+    pub fn new() -> UIContext<'a> {
         let mut context = UIContext {
             form_fields_context: FieldContext::default(),
             popup_context: PopupContext::new(),
             query_box: QueryBox::default(),
-            terminal_size,
-            view_mode: ViewMode::Main,
         };
         context.select_form_idx(Some(0));
         context.select_command(None);
         context
-    }
-
-    pub fn view_mode(&self) -> &ViewMode {
-        &self.view_mode
-    }
-
-    pub fn set_view_mode(&mut self, view_mode: ViewMode) {
-        self.view_mode = view_mode
-    }
-
-    pub fn terminal_size(&self) -> TerminalSize {
-        self.terminal_size.to_owned()
-    }
-
-    pub fn update_terminal_size(&mut self, new_size: TerminalSize) {
-        self.terminal_size = new_size;
-        self.reorder_fields()
     }
 
     pub fn build_form_fields(&mut self) {
@@ -101,8 +80,12 @@ impl<'a> UIContext<'a> {
         self.query_box.get_input()
     }
 
-    pub fn toogle_querybox_focus(&mut self) {
-        self.query_box.toggle_focus()
+    pub fn activate_focus(&mut self) {
+        self.query_box.activate_focus()
+    }
+
+    pub fn deactivate_focus(&mut self) {
+        self.query_box.deactivate_focus()
     }
 
     pub fn querybox(&self) -> QueryBox {
@@ -111,10 +94,6 @@ impl<'a> UIContext<'a> {
 
     pub fn handle_querybox_input(&mut self, key_event: KeyEvent) {
         self.query_box.handle(key_event)
-    }
-
-    pub fn querybox_focus(&self) -> bool {
-        self.query_box.is_on_focus()
     }
 
     pub fn popup(&self) -> Option<Popup<'a>> {
@@ -141,8 +120,12 @@ impl<'a> UIContext<'a> {
         self.popup_context.state_mut().previous(choices)
     }
 
-    pub fn get_selected_choice(&self) -> Option<usize> {
-        self.popup_context.state().selected()
+    pub fn get_selected_choice(&self) -> Option<Answer> {
+        if let Some(choice) = self.popup_context.state().selected() {
+            self.popup().map(|popup| popup.choices()[choice].clone())
+        } else {
+            None
+        }
     }
 
     pub fn get_choices_state_mut(&mut self) -> &mut ChoicesState {
@@ -152,11 +135,11 @@ impl<'a> UIContext<'a> {
     pub fn enter_main_mode(&mut self) {
         self.select_form_idx(Some(0));
         debug!("selected command: {:?}", self.get_selected_command());
-        self.set_view_mode(ViewMode::Main);
     }
 
-    fn reorder_fields(&mut self) {
-        match &self.terminal_size {
+    pub fn reorder_fields(&mut self, terminal_size: TerminalSize) {
+        debug!("reordering forms to '{terminal_size:?}'");
+        match terminal_size {
             TerminalSize::Small => {
                 let order = vec![
                     FieldType::Alias,

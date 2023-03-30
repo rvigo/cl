@@ -1,6 +1,6 @@
 use super::{
-    commands_context::CommandsContext, namespaces_context::NamespacesContext,
-    ui_context::UIContext, ui_state::ViewMode,
+    commands_context::CommandsContext, events::app_events::PopupCallbackAction,
+    namespaces_context::NamespacesContext, ui_context::UIContext,
 };
 use crate::{
     command::Command,
@@ -17,10 +17,6 @@ use crate::{
 use anyhow::Result;
 use crossterm::event::KeyEvent;
 use log::{debug, trace};
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
-};
 use tui::widgets::ListState;
 
 pub struct ApplicationContext<'a> {
@@ -29,26 +25,21 @@ pub struct ApplicationContext<'a> {
     commands_context: CommandsContext,
     ui_context: UIContext<'a>,
     config_options: Options,
-    should_quit: Arc<AtomicBool>,
 }
 
 impl<'a> ApplicationContext<'a> {
     pub fn init(
         commands: Vec<Command>,
-        terminal_size: TerminalSize,
         file_service: FileService,
         config_options: Options,
-
-        should_quit: Arc<AtomicBool>,
     ) -> ApplicationContext<'a> {
         let namespaces = commands.iter().map(|c| c.namespace.to_owned()).collect();
         ApplicationContext {
             show_help: false,
             namespaces_context: NamespacesContext::new(namespaces),
             commands_context: CommandsContext::new(commands, file_service),
-            ui_context: UIContext::new(terminal_size),
+            ui_context: UIContext::new(),
             config_options,
-            should_quit,
         }
     }
 
@@ -103,29 +94,20 @@ impl<'a> ApplicationContext<'a> {
     }
 
     //// querybox
-    pub fn toogle_querybox_focus(&mut self) {
-        self.ui_context.toogle_querybox_focus()
+    pub fn activate_focus(&mut self) {
+        self.ui_context.activate_focus()
+    }
+
+    pub fn deactivate_focus(&mut self) {
+        self.ui_context.deactivate_focus()
     }
 
     pub fn query_box(&self) -> QueryBox {
         self.ui_context.querybox()
     }
 
-    pub fn querybox_focus(&self) -> bool {
-        self.ui_context.querybox_focus()
-    }
-
     pub fn handle_querybox_input(&mut self, key_event: KeyEvent) {
         self.ui_context.handle_querybox_input(key_event)
-    }
-
-    //// viewmode
-    pub fn view_mode(&self) -> &ViewMode {
-        self.ui_context.view_mode()
-    }
-
-    pub fn set_view_mode(&mut self, view_mode: ViewMode) {
-        self.ui_context.set_view_mode(view_mode)
     }
 
     //// popup
@@ -149,7 +131,7 @@ impl<'a> ApplicationContext<'a> {
         self.ui_context.get_choices_state_mut()
     }
 
-    pub fn get_selected_choice(&self) -> Option<usize> {
+    pub fn get_selected_choice(&self) -> Option<Answer> {
         self.ui_context.get_selected_choice()
     }
 
@@ -161,46 +143,18 @@ impl<'a> ApplicationContext<'a> {
         self.ui_context.popup()
     }
 
-    pub fn show_delete_popup(&mut self) {
-        if let Some(selected_command) = self.ui_context.get_selected_command() {
-            if !selected_command.is_incomplete() {
-                let popup = Popup::from_warning("Are you sure you want to delete the command?");
-                self.ui_context.set_popup(Some(popup));
-            }
-        }
+    pub fn set_dialog_popup(&mut self, message: String, callback_action: PopupCallbackAction) {
+        self.ui_context
+            .set_popup(Some(Popup::from_warning(message, callback_action)))
     }
 
-    pub fn handle_warning_popup(&mut self) {
-        if let Some(popup) = self.popup() {
-            if let Some(selected_choice_idx) = self.get_selected_choice() {
-                if let Some(answer) = popup.choices().get(selected_choice_idx) {
-                    match answer {
-                        Answer::Ok => {
-                            if let Some(command) = self.ui_context.get_selected_command() {
-                                if self.commands_context.remove_command(command).is_ok() {
-                                    self.clear_popup_context();
-                                    self.reload_namespaces_state();
-                                    self.reset_command_idx()
-                                }
-                            }
-                        }
-
-                        Answer::Cancel => {
-                            self.clear_popup_context();
-                        }
-                    }
-                }
-            }
-        }
+    pub fn set_error_popup(&mut self, message: String) {
+        self.ui_context
+            .set_popup(Some(Popup::from_error(message, None)))
     }
 
-    //// terminal size
-    pub fn terminal_size(&self) -> TerminalSize {
-        self.ui_context.terminal_size()
-    }
-
-    pub fn update_terminal_size(&mut self, terminal_size: TerminalSize) {
-        self.ui_context.update_terminal_size(terminal_size)
+    pub fn reorder_fields(&mut self, terminal_size: TerminalSize) {
+        self.ui_context.reorder_fields(terminal_size);
     }
 
     // commands context
@@ -220,57 +174,40 @@ impl<'a> ApplicationContext<'a> {
         self.ui_context.build_new_command()
     }
 
-    pub fn add_command(&mut self, command: Command) {
-        match self.commands_context.add_command(&command) {
-            Ok(()) => self.enter_main_mode(),
-            Err(error) => {
-                let popup =
-                    Popup::from_error("Failed to add the edited command", Some(&error.to_string()));
-                self.ui_context.set_popup(Some(popup));
-            }
-        }
+    pub fn add_command(&mut self, command: Command) -> Result<()> {
+        self.commands_context.add_command(&command)
     }
 
     pub fn edit_command(&mut self) -> Command {
         self.ui_context.edit_command()
     }
 
+    pub fn delete_selected_command(&mut self) -> Result<()> {
+        if let Some(command) = self.ui_context.get_selected_command() {
+            self.commands_context.remove_command(command)?;
+        }
+
+        Ok(())
+    }
+
     pub fn get_selected_command(&self) -> Option<&Command> {
         self.ui_context.get_selected_command()
     }
 
-    pub fn add_edited_command(&mut self, edited_command: Command, old_command: Command) {
-        // let edited_command = self.ui_context.edit_command();
-        // let current_command = match self.ui_context.get_selected_command() {
-        //     Some(command) => command,
-        //     None => {
-        //         let popup = Popup::from_error("No selected command to edit", None);
-        //         self.ui_context.set_popup(Some(popup));
-        //         return;
-        //     }
-        // };
-
-        match self
-            .commands_context
-            .add_edited_command(&edited_command, &old_command)
-        {
-            Ok(()) => self.enter_main_mode(),
-            Err(error) => {
-                let popup =
-                    Popup::from_error("Failed to add the edited command", Some(&error.to_string()));
-                self.ui_context.set_popup(Some(popup));
-            }
+    pub fn add_edited_command(&mut self, edited_command: Command) -> Result<()> {
+        if let Some(old_command) = self.ui_context.get_selected_command() {
+            self.commands_context
+                .add_edited_command(&edited_command, old_command)?
         }
-    }
-
-    fn reset_command_idx(&mut self) {
-        self.commands_context.reset_command_idx();
+        Ok(())
     }
 
     /// Sets the current selected command to be executed at the end of the app execution and then tells the app to quit
-    pub fn set_callback_command(&mut self, command: Command) {
-        self.commands_context
-            .set_command_to_be_executed(Some(command.to_owned()));
+    pub fn set_current_command_as_callback(&mut self) {
+        if let Some(command) = self.get_selected_command() {
+            self.commands_context
+                .set_command_to_be_executed(Some(command.to_owned()));
+        }
     }
 
     /// Executes the callback command
@@ -288,17 +225,8 @@ impl<'a> ApplicationContext<'a> {
     }
 
     // other
-    pub fn should_quit(&self) -> bool {
-        self.should_quit.load(Ordering::SeqCst)
-    }
-
     pub fn should_highligh(&mut self) -> bool {
         self.config_options.get_highlight()
-    }
-
-    /// Tells the app to quit its execution
-    pub fn quit(&mut self) {
-        self.should_quit.store(true, Ordering::SeqCst);
     }
 
     pub fn show_help(&self) -> bool {
@@ -340,14 +268,12 @@ impl<'a> ApplicationContext<'a> {
         if self.ui_context.get_selected_command().is_some() {
             self.build_form_fields();
             self.ui_context.set_selected_command_input();
-            self.ui_context.set_view_mode(ViewMode::Edit);
         }
     }
 
     /// Changes the app main state to load the insert screen in the next render tick
     pub fn enter_insert_mode(&mut self) {
         self.build_form_fields();
-        self.set_view_mode(ViewMode::Insert)
     }
 }
 
