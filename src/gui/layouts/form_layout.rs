@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use super::{centered_rect, TerminalSize};
 use crate::gui::{
-    entities::application_context::ApplicationContext,
+    entities::{application_context::ApplicationContext, ui_state::UiState},
     widgets::{
         base_widget::BaseWidget, field::FieldType, help_footer::HelpFooter, help_popup::HelpPopup,
         navigation_footer::NavigationFooter,
@@ -20,34 +20,42 @@ use tui::{
 pub fn render<B: Backend>(
     frame: &mut Frame<B>,
     application_context: &mut Arc<Mutex<ApplicationContext>>,
-    terminal_size: &TerminalSize,
+    ui_state: &UiState,
 ) {
     render_base_widget(frame);
-    // let mut context = application_context.lock();
-    match terminal_size {
-        TerminalSize::Medium => render_medium_form(frame, application_context),
-        TerminalSize::Large => render_medium_form(frame, application_context),
-        TerminalSize::Small => render_small_form(frame, application_context),
+    match ui_state.size {
+        TerminalSize::Medium => render_medium_form(frame, application_context, ui_state),
+        TerminalSize::Large => render_medium_form(frame, application_context, ui_state),
+        TerminalSize::Small => render_small_form(frame, application_context, ui_state),
     }
 
-    // if context.show_help() {
-    //     frame.render_widget(
-    //         HelpPopup::new(context.view_mode().clone(), terminal_size.clone()),
-    //         frame.size(),
-    //     );
-    // }
+    render_popup(frame, application_context, ui_state)
+}
 
-    // if context.popup().is_some() && context.get_popup_answer().is_none() {
-    //     let popup = &context.popup().unwrap().clone();
+fn render_popup<B: Backend>(
+    frame: &mut Frame<B>,
+    context: &mut Arc<Mutex<ApplicationContext>>,
+    ui_state: &UiState,
+) {
+    let mut context = context.lock();
+    if context.show_help() {
+        frame.render_widget(
+            HelpPopup::new(ui_state.view_mode.clone(), ui_state.size.clone()),
+            frame.size(),
+        );
+    }
 
-    //     let area = if terminal_size != TerminalSize::Small {
-    //         centered_rect(45, 40, frame.size())
-    //     } else {
-    //         frame.size()
-    //     };
+    if context.popup().is_some() && context.get_popup_answer().is_none() {
+        let popup = &context.popup().unwrap().clone();
 
-    //     frame.render_stateful_widget(popup.to_owned(), area, context.get_choices_state_mut());
-    // }
+        let area = if !TerminalSize::Small.eq(&ui_state.size) {
+            centered_rect(45, 40, frame.size())
+        } else {
+            frame.size()
+        };
+
+        frame.render_stateful_widget(popup.to_owned(), area, context.get_choices_state_mut());
+    }
 }
 
 fn render_base_widget<B: Backend>(frame: &mut Frame<B>) {
@@ -64,8 +72,9 @@ fn render_base_widget<B: Backend>(frame: &mut Frame<B>) {
 fn render_medium_form<B: Backend>(
     frame: &mut Frame<B>,
     application_context: &mut Arc<Mutex<ApplicationContext>>,
+    ui_state: &UiState,
 ) {
-    let mut context = application_context.lock();
+    let context = application_context.lock();
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -93,7 +102,7 @@ fn render_medium_form<B: Backend>(
     let form_block = Block::default()
         .borders(Borders::ALL)
         .style(Style::default())
-        .title(format!(" {} ", context.view_mode()))
+        .title(format!(" {} ", ui_state.view_mode))
         .border_type(BorderType::Plain);
     let first_row = Layout::default()
         .direction(Direction::Horizontal)
@@ -127,8 +136,9 @@ fn render_medium_form<B: Backend>(
 fn render_small_form<B: Backend>(
     frame: &mut Frame<B>,
     application_context: &mut Arc<Mutex<ApplicationContext>>,
+    ui_state: &UiState,
 ) {
-    let mut context = application_context.lock();
+    let context = application_context.lock();
 
     let form_chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -146,7 +156,7 @@ fn render_small_form<B: Backend>(
     let form_block = Block::default()
         .borders(Borders::ALL)
         .style(Style::default())
-        .title(format!(" {} ", context.view_mode()))
+        .title(format!(" {} ", ui_state.view_mode))
         .border_type(BorderType::Plain);
     let first_row = Layout::default()
         .direction(Direction::Horizontal)

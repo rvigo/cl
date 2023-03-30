@@ -1,9 +1,8 @@
 mod form_layout;
 mod main_layout;
 
-use log::debug;
 use parking_lot::Mutex;
-use std::{fmt, io::Stdout, sync::Arc};
+use std::{io::Stdout, sync::Arc};
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -20,9 +19,10 @@ use super::entities::{
 pub const DEFAULT_TEXT_COLOR: Color = Color::Rgb(229, 229, 229);
 pub const DEFAULT_SELECTED_COLOR: Color = Color::Rgb(201, 165, 249);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub enum TerminalSize {
     Small,
+    #[default]
     Medium,
     Large,
 }
@@ -92,14 +92,15 @@ pub fn select_ui(
     ui_state: &mut Arc<Mutex<UiState>>,
     context: &mut Arc<Mutex<ApplicationContext>>,
 ) {
-    let ui_state = ui_state.lock();
+    let mut ui_state = ui_state.lock();
+    let current_terminal_size = get_terminal_size(frame);
+    if ui_state.size != current_terminal_size {
+        ui_state.size = current_terminal_size;
+        context.lock().reorder_fields(ui_state.size.to_owned());
+    }
+
     match ui_state.view_mode {
-        ViewMode::Main => main_layout::render(frame, context),
-        ViewMode::Edit => form_layout::render(frame, context, &ui_state.size),
-        _ => {
-            //form_layout::render(frame)
-            debug!("Screen not implemented yet");
-            main_layout::render(frame, context)
-        }
+        ViewMode::Main => main_layout::render(frame, context, &ui_state),
+        ViewMode::Edit | ViewMode::Insert => form_layout::render(frame, context, &ui_state),
     }
 }
