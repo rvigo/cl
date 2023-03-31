@@ -1,9 +1,8 @@
+use crate::gui::layouts::TerminalSize;
 use std::{
     fmt,
     sync::{atomic::AtomicBool, Arc},
 };
-
-use crate::gui::layouts::TerminalSize;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub enum ViewMode {

@@ -1,6 +1,6 @@
 use crate::gui::entities::{
-    application_context::ApplicationContext,
     events::app_events::{AppEvents, QueryboxEvent},
+    ui_context::UIContext,
 };
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};
@@ -9,14 +9,14 @@ use std::sync::Arc;
 
 pub fn handle(
     key_event: KeyEvent,
-    context: &mut Arc<Mutex<ApplicationContext>>,
+    ui_context: &mut Arc<Mutex<UIContext<'static>>>,
 ) -> Result<Option<AppEvents>> {
     match key_event {
         KeyEvent {
             code: KeyCode::Esc | KeyCode::Enter | KeyCode::Down | KeyCode::Up,
             ..
         } => return Ok(Some(AppEvents::QueryBox(QueryboxEvent::Deactive))),
-        input => context.lock().handle_querybox_input(input),
+        input => ui_context.lock().handle_querybox_input(input),
     }
 
     Ok(None)

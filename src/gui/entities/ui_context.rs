@@ -1,11 +1,13 @@
-use super::{field_context::FieldContext, popup_context::PopupContext};
+use super::{
+    events::app_events::PopupCallbackAction, field_context::FieldContext,
+    popup_context::PopupContext, ui_state::UiState,
+};
 use crate::{
     command::Command,
     gui::{
         layouts::TerminalSize,
         widgets::{
-            field::{Field, FieldType},
-            fields::Fields,
+            field::Field,
             popup::{Answer, ChoicesState, Popup},
             query_box::QueryBox,
         },
@@ -17,6 +19,7 @@ use log::debug;
 pub struct UIContext<'a> {
     form_fields_context: FieldContext<'a>,
     popup_context: PopupContext<'a>,
+    pub ui_state: UiState,
     query_box: QueryBox<'a>,
 }
 
@@ -25,6 +28,7 @@ impl<'a> UIContext<'a> {
         let mut context = UIContext {
             form_fields_context: FieldContext::default(),
             popup_context: PopupContext::new(),
+            ui_state: UiState::new(TerminalSize::default()),
             query_box: QueryBox::default(),
         };
         context.select_form_idx(Some(0));
@@ -32,8 +36,13 @@ impl<'a> UIContext<'a> {
         context
     }
 
-    pub fn build_form_fields(&mut self) {
-        self.form_fields_context.build_form_fields()
+    //// popup
+    pub fn set_dialog_popup(&mut self, message: String, callback_action: PopupCallbackAction) {
+        self.set_popup(Some(Popup::from_warning(message, callback_action)))
+    }
+
+    pub fn set_error_popup(&mut self, message: String) {
+        self.set_popup(Some(Popup::from_error(message, None)))
     }
 
     pub fn get_selected_command(&self) -> Option<&Command> {
@@ -52,7 +61,7 @@ impl<'a> UIContext<'a> {
         self.form_fields_context.get_focus_state_mut().select(idx);
     }
 
-    pub fn get_form_fields(&self) -> &Fields {
+    pub fn get_form_fields(&self) -> Vec<Field> {
         self.form_fields_context.get_fields()
     }
 
@@ -64,8 +73,8 @@ impl<'a> UIContext<'a> {
         self.form_fields_context.build_new_command()
     }
 
-    pub fn get_selected_form_field_mut(&mut self) -> Option<&mut Field<'a>> {
-        self.form_fields_context.selected_field_mut()
+    pub fn get_selected_form_field_mut(&mut self) -> Option<Field<'a>> {
+        self.form_fields_context.selected_field()
     }
 
     pub fn next_form_field(&mut self) {
@@ -112,12 +121,16 @@ impl<'a> UIContext<'a> {
         self.popup_context.clear()
     }
 
-    pub fn next_choice(&mut self, choices: Vec<Answer>) {
-        self.popup_context.state_mut().next(choices)
+    pub fn next_choice(&mut self) {
+        if let Some(popup) = self.popup() {
+            self.popup_context.state_mut().next(popup.choices())
+        }
     }
 
-    pub fn previous_choice(&mut self, choices: Vec<Answer>) {
-        self.popup_context.state_mut().previous(choices)
+    pub fn previous_choice(&mut self) {
+        if let Some(popup) = self.popup() {
+            self.popup_context.state_mut().previous(popup.choices())
+        }
     }
 
     pub fn get_selected_choice(&self) -> Option<Answer> {
@@ -132,49 +145,25 @@ impl<'a> UIContext<'a> {
         self.popup_context.state_mut()
     }
 
-    pub fn enter_main_mode(&mut self) {
+    pub fn reset_form_field_selected_idx(&mut self) {
         self.select_form_idx(Some(0));
-        debug!("selected command: {:?}", self.get_selected_command());
     }
 
-    pub fn reorder_fields(&mut self, terminal_size: TerminalSize) {
-        debug!("reordering forms to '{terminal_size:?}'");
-        match terminal_size {
-            TerminalSize::Small => {
-                let order = vec![
-                    FieldType::Alias,
-                    FieldType::Namespace,
-                    FieldType::Description,
-                    FieldType::Tags,
-                    FieldType::Command,
-                ];
-                let fields = &mut self.form_fields_context.get_fields_mut();
-
-                fields.sort_by(|a, b| {
-                    order
-                        .iter()
-                        .position(|x| x.eq(&a.field_type))
-                        .cmp(&order.iter().position(|x| x.eq(&b.field_type)))
-                });
-            }
-
-            TerminalSize::Medium | TerminalSize::Large => {
-                let order = vec![
-                    FieldType::Alias,
-                    FieldType::Namespace,
-                    FieldType::Command,
-                    FieldType::Description,
-                    FieldType::Tags,
-                ];
-                let fields = &mut self.form_fields_context.get_fields_mut();
-
-                fields.sort_by(|a, b| {
-                    order
-                        .iter()
-                        .position(|x| x.eq(&a.field_type))
-                        .cmp(&order.iter().position(|x| x.eq(&b.field_type)))
-                });
-            }
+    pub fn handle_form_input(&mut self, input: KeyEvent) {
+        if let Some(mut selected_field) = self.get_selected_form_field_mut() {
+            selected_field.on_input(input)
         }
+    }
+
+    pub fn resize_to(&mut self, size: TerminalSize) {
+        self.ui_state.size = size.to_owned();
+        self.order_fields();
+        self.reset_form_field_selected_idx()
+    }
+
+    pub fn order_fields(&mut self) {
+        let size = &self.ui_state.size;
+        debug!("ordering fields to '{size:?}' screen");
+        self.form_fields_context.order_field_by_size(size)
     }
 }

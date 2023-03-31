@@ -1,44 +1,27 @@
-use super::{
-    commands_context::CommandsContext, events::app_events::PopupCallbackAction,
-    namespaces_context::NamespacesContext, ui_context::UIContext,
-};
+use super::{commands_context::CommandsContext, namespaces_context::NamespacesContext};
 use crate::{
     command::Command,
-    gui::{
-        layouts::TerminalSize,
-        widgets::{
-            fields::Fields,
-            popup::{Answer, ChoicesState, Popup},
-            query_box::QueryBox,
-        },
-    },
     resources::{config::Options, file_service::FileService},
 };
 use anyhow::Result;
-use crossterm::event::KeyEvent;
-use log::{debug, trace};
 use tui::widgets::ListState;
 
-pub struct ApplicationContext<'a> {
-    show_help: bool,
+pub struct ApplicationContext {
     namespaces_context: NamespacesContext,
     commands_context: CommandsContext,
-    ui_context: UIContext<'a>,
     config_options: Options,
 }
 
-impl<'a> ApplicationContext<'a> {
+impl ApplicationContext {
     pub fn init(
         commands: Vec<Command>,
         file_service: FileService,
         config_options: Options,
-    ) -> ApplicationContext<'a> {
+    ) -> ApplicationContext {
         let namespaces = commands.iter().map(|c| c.namespace.to_owned()).collect();
         ApplicationContext {
-            show_help: false,
             namespaces_context: NamespacesContext::new(namespaces),
             commands_context: CommandsContext::new(commands, file_service),
-            ui_context: UIContext::new(),
             config_options,
         }
     }
@@ -52,7 +35,6 @@ impl<'a> ApplicationContext<'a> {
         self.namespaces_context.reset_namespaces_state();
         self.commands_context.reset_command_idx();
         self.filter_namespaces();
-        trace!("namespaces: {:?}", self.namespaces_context().namespaces())
     }
 
     pub fn next_namespace(&mut self) {
@@ -65,149 +47,38 @@ impl<'a> ApplicationContext<'a> {
         self.commands_context.reset_command_idx();
     }
 
-    // UI context
-    pub fn select_command(&mut self, command: Option<Command>) {
-        self.ui_context.select_command(command)
-    }
-
-    ////forms
-    pub fn next_form_field(&mut self) {
-        self.ui_context.next_form_field()
-    }
-
-    pub fn previous_form_field(&mut self) {
-        self.ui_context.previous_form_field()
-    }
-
-    pub fn get_form_fields(&self) -> &Fields {
-        self.ui_context.get_form_fields()
-    }
-
-    pub fn handle_form_input(&mut self, input: KeyEvent) {
-        if let Some(selected_field) = self.ui_context.get_selected_form_field_mut() {
-            selected_field.on_input(input)
-        }
-    }
-
-    fn build_form_fields(&mut self) {
-        self.ui_context.build_form_fields()
-    }
-
-    //// querybox
-    pub fn activate_focus(&mut self) {
-        self.ui_context.activate_focus()
-    }
-
-    pub fn deactivate_focus(&mut self) {
-        self.ui_context.deactivate_focus()
-    }
-
-    pub fn query_box(&self) -> QueryBox {
-        self.ui_context.querybox()
-    }
-
-    pub fn handle_querybox_input(&mut self, key_event: KeyEvent) {
-        self.ui_context.handle_querybox_input(key_event)
-    }
-
-    //// popup
-    pub fn next_popup_choice(&mut self) {
-        if let Some(popup) = self.ui_context.popup() {
-            self.ui_context.next_choice(popup.choices())
-        }
-    }
-
-    pub fn previous_popup_choice(&mut self) {
-        if let Some(popup) = self.ui_context.popup() {
-            self.ui_context.previous_choice(popup.choices())
-        }
-    }
-
-    pub fn get_popup_answer(&self) -> Option<Answer> {
-        self.ui_context.get_popup_answer()
-    }
-
-    pub fn get_choices_state_mut(&mut self) -> &mut ChoicesState {
-        self.ui_context.get_choices_state_mut()
-    }
-
-    pub fn get_selected_choice(&self) -> Option<Answer> {
-        self.ui_context.get_selected_choice()
-    }
-
-    pub fn clear_popup_context(&mut self) {
-        self.ui_context.clear_popup_context()
-    }
-
-    pub fn popup(&self) -> Option<Popup<'a>> {
-        self.ui_context.popup()
-    }
-
-    pub fn set_dialog_popup(&mut self, message: String, callback_action: PopupCallbackAction) {
-        self.ui_context
-            .set_popup(Some(Popup::from_warning(message, callback_action)))
-    }
-
-    pub fn set_error_popup(&mut self, message: String) {
-        self.ui_context
-            .set_popup(Some(Popup::from_error(message, None)))
-    }
-
-    pub fn reorder_fields(&mut self, terminal_size: TerminalSize) {
-        self.ui_context.reorder_fields(terminal_size);
-    }
-
     // commands context
-    pub fn next_command(&mut self) {
-        let query_string = self.ui_context.get_querybox_input();
+    pub fn next_command(&mut self, query_string: String) {
         self.commands_context
             .next_command(&self.namespaces_context.current_namespace(), &query_string);
     }
 
-    pub fn previous_command(&mut self) {
-        let query_string = self.ui_context.get_querybox_input();
+    pub fn previous_command(&mut self, query_string: String) {
         self.commands_context
             .previous_command(&self.namespaces_context.current_namespace(), &query_string);
-    }
-
-    pub fn build_new_command(&mut self) -> Command {
-        self.ui_context.build_new_command()
     }
 
     pub fn add_command(&mut self, command: Command) -> Result<()> {
         self.commands_context.add_command(&command)
     }
 
-    pub fn edit_command(&mut self) -> Command {
-        self.ui_context.edit_command()
+    pub fn delete_selected_command(&mut self, command: &Command) -> Result<()> {
+        self.commands_context.remove_command(command)
     }
 
-    pub fn delete_selected_command(&mut self) -> Result<()> {
-        if let Some(command) = self.ui_context.get_selected_command() {
-            self.commands_context.remove_command(command)?;
-        }
-
-        Ok(())
-    }
-
-    pub fn get_selected_command(&self) -> Option<&Command> {
-        self.ui_context.get_selected_command()
-    }
-
-    pub fn add_edited_command(&mut self, edited_command: Command) -> Result<()> {
-        if let Some(old_command) = self.ui_context.get_selected_command() {
-            self.commands_context
-                .add_edited_command(&edited_command, old_command)?
-        }
-        Ok(())
+    pub fn add_edited_command(
+        &mut self,
+        edited_command: Command,
+        old_command: &Command,
+    ) -> Result<()> {
+        self.commands_context
+            .add_edited_command(&edited_command, old_command)
     }
 
     /// Sets the current selected command to be executed at the end of the app execution and then tells the app to quit
-    pub fn set_current_command_as_callback(&mut self) {
-        if let Some(command) = self.get_selected_command() {
-            self.commands_context
-                .set_command_to_be_executed(Some(command.to_owned()));
-        }
+    pub fn set_current_command_as_callback(&mut self, command: &Command) {
+        self.commands_context
+            .set_command_to_be_executed(Some(command.to_owned()));
     }
 
     /// Executes the callback command
@@ -229,17 +100,8 @@ impl<'a> ApplicationContext<'a> {
         self.config_options.get_highlight()
     }
 
-    pub fn show_help(&self) -> bool {
-        self.show_help
-    }
-
-    pub fn set_show_help(&mut self, show_help: bool) {
-        self.show_help = show_help
-    }
-
     /// Filters the command list using the querybox input as query
-    pub fn filter_commands(&mut self) -> Vec<Command> {
-        let query_string = self.ui_context.get_querybox_input();
+    pub fn filter_commands(&mut self, query_string: String) -> Vec<Command> {
         let current_namespace = self.namespaces_context.current_namespace();
         self.commands_context
             .filter_commands(&current_namespace, &query_string)
@@ -248,32 +110,13 @@ impl<'a> ApplicationContext<'a> {
     /// Filters the namespaces based on a filtered command list
     pub fn filter_namespaces(&mut self) {
         let filtered_namespaces: Vec<String> = self
-            .filter_commands()
+            .commands_context
+            .filtered_commands()
             .iter()
             .map(|c| c.namespace.to_owned())
             .collect();
         self.namespaces_context
             .update_namespaces(filtered_namespaces);
-    }
-
-    /// Changes the app main state to load the main screen in the next render tick
-    pub fn enter_main_mode(&mut self) {
-        self.reload_namespaces_state();
-        debug!("entering main mode");
-        self.ui_context.enter_main_mode();
-    }
-
-    /// Changes the app main state to load the edit screen in the next render tick
-    pub fn enter_edit_mode(&mut self) {
-        if self.ui_context.get_selected_command().is_some() {
-            self.build_form_fields();
-            self.ui_context.set_selected_command_input();
-        }
-    }
-
-    /// Changes the app main state to load the insert screen in the next render tick
-    pub fn enter_insert_mode(&mut self) {
-        self.build_form_fields();
     }
 }
 

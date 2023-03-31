@@ -32,9 +32,7 @@ impl CacheInfo {
 
     #[inline]
     pub fn get_entry(&mut self, namespace: &str) -> Vec<Command> {
-        debug!("searching for {namespace} entries");
         let commands = self.cache.get(namespace).unwrap().to_owned();
-        debug!("found {} commands in the {namespace} key", commands.len());
         commands
     }
 
@@ -90,6 +88,7 @@ pub struct CommandsContext {
     commands_cache: CacheInfo,
     matcher: SkimMatcherV2,
     file_service: FileService,
+    filtered_commands: Vec<Command>,
 }
 
 impl CommandsContext {
@@ -101,6 +100,7 @@ impl CommandsContext {
             commands_cache: CacheInfo::new(commands),
             matcher: SkimMatcherV2::default(),
             file_service,
+            filtered_commands: vec![],
         };
         context.state.select(Some(0));
 
@@ -133,7 +133,12 @@ impl CommandsContext {
             self.reset_command_idx()
         }
 
-        commands
+        self.filtered_commands = commands;
+        self.filtered_commands.to_owned()
+    }
+
+    pub fn filtered_commands(&self) -> Vec<Command> {
+        self.filtered_commands.to_owned()
     }
 
     pub fn next_command(&mut self, current_namespace: &str, query_string: &str) {
@@ -203,6 +208,7 @@ impl CommandsContext {
     /// If the command has any `named parameters`, will show a warning message
     pub fn execute_command(&self, quiet: bool) -> Result<()> {
         if let Some(command) = &self.command_to_be_executed() {
+            debug!("executing selected command");
             if command.has_named_parameter() {
                 eprintln!(
                     "Warning: This command appears to contain one or more named parameters placeholders. \

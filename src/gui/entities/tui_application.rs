@@ -1,7 +1,8 @@
 use super::{
-    application_context::ApplicationContext, events::input_events::InputMessages, ui_state::UiState,
+    application_context::ApplicationContext, events::input_events::InputMessages,
+    ui_context::UIContext,
 };
-use crate::gui::layouts::select_ui;
+use crate::gui::layouts::{get_terminal_size, select_ui};
 use anyhow::Result;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event},
@@ -16,25 +17,26 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
+    time::Duration,
 };
 use tokio::sync::mpsc::Sender;
 use tui::{backend::CrosstermBackend, Terminal};
 
-pub struct TuiApplication {
+pub struct TuiApplication<'a> {
     pub terminal: Terminal<CrosstermBackend<std::io::Stdout>>,
     pub input_sx: Sender<InputMessages>,
     pub should_quit: Arc<AtomicBool>,
-    pub ui_state: Arc<Mutex<UiState>>,
-    context: Arc<Mutex<ApplicationContext<'static>>>,
+    pub ui_context: Arc<Mutex<UIContext<'a>>>,
+    context: Arc<Mutex<ApplicationContext>>,
 }
 
-impl TuiApplication {
+impl<'a> TuiApplication<'a> {
     pub fn create(
         input_sx: Sender<InputMessages>,
         should_quit: Arc<AtomicBool>,
-        ui_state: Arc<Mutex<UiState>>,
-        context: Arc<Mutex<ApplicationContext<'static>>>,
-    ) -> Result<TuiApplication> {
+        ui_context: Arc<Mutex<UIContext<'a>>>,
+        context: Arc<Mutex<ApplicationContext>>,
+    ) -> Result<TuiApplication<'a>> {
         Self::handle_panic();
         // setup terminal
         enable_raw_mode()?;
@@ -46,10 +48,9 @@ impl TuiApplication {
 
         Ok(TuiApplication {
             terminal,
-
             input_sx,
             should_quit,
-            ui_state,
+            ui_context,
             context,
         })
     }
@@ -57,13 +58,20 @@ impl TuiApplication {
     pub async fn render(&mut self) -> Result<()> {
         while !self.should_quit.load(Ordering::SeqCst) {
             self.terminal
-                .draw(|frame| select_ui(frame, &mut self.ui_state, &mut self.context))?;
-            if crossterm::event::poll(std::time::Duration::from_millis(100)).unwrap_or(false) {
-                if let Event::Key(key) = event::read()? {
-                    self.input_sx.send(InputMessages::KeyPress(key)).await.ok();
+                .draw(|frame| select_ui(frame, &mut self.ui_context, &mut self.context))?;
+            if event::poll(Duration::from_millis(100)).unwrap_or(false) {
+                if let Ok(event) = event::read() {
+                    if let Event::Key(key) = event {
+                        self.input_sx.send(InputMessages::KeyPress(key)).await.ok();
+                    } else if let Event::Resize(_, _) = event {
+                        self.ui_context
+                            .lock()
+                            .resize_to(get_terminal_size(&self.terminal.get_frame()))
+                    }
                 }
             }
         }
+
         debug!("quiting tui app loop");
         Ok(())
     }
@@ -90,13 +98,12 @@ impl TuiApplication {
     }
 
     fn callback(&self) -> Result<()> {
-        debug!("executing the callback command");
         self.context.lock().execute_callback_command()?;
         Ok(())
     }
 }
 
-impl Drop for TuiApplication {
+impl Drop for TuiApplication<'_> {
     fn drop(&mut self) {
         self.clear().expect("Cannot clear the the screen");
         self.callback()
