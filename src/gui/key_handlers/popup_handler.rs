@@ -1,7 +1,7 @@
 use crate::gui::{
     entities::{
-        application_context::ApplicationContext,
         events::app_events::{AppEvents, PopupEvent},
+        ui_context::UIContext,
     },
     widgets::popup::MessageType,
 };
@@ -12,10 +12,10 @@ use std::sync::Arc;
 
 pub fn handle(
     key_event: KeyEvent,
-    context: &mut Arc<Mutex<ApplicationContext>>,
+    ui_context: &mut Arc<Mutex<UIContext<'static>>>,
 ) -> Result<Option<AppEvents>> {
-    let mut c = context.lock();
-    if let Some(popup) = c.popup().as_mut() {
+    let mut ui = ui_context.lock();
+    if let Some(popup) = ui.popup().as_mut() {
         if let Some(message_type) = popup.message_type().as_ref() {
             match message_type {
                 MessageType::Error => return Ok(Some(AppEvents::Popup(PopupEvent::Disable))),
@@ -23,16 +23,16 @@ pub fn handle(
                     KeyEvent {
                         code: KeyCode::Right,
                         ..
-                    } => c.next_popup_choice(),
+                    } => ui.next_choice(),
                     KeyEvent {
                         code: KeyCode::Left,
                         ..
-                    } => c.previous_popup_choice(),
+                    } => ui.previous_choice(),
                     KeyEvent {
                         code: KeyCode::Enter,
                         ..
                     } => {
-                        let answer = c.get_selected_choice();
+                        let answer = ui.get_selected_choice();
                         return Ok(Some(AppEvents::Popup(PopupEvent::Answer(answer))));
                     }
                     KeyEvent {

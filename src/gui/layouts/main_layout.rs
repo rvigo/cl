@@ -6,7 +6,7 @@ use crate::{
     gui::{
         entities::{
             application_context::ApplicationContext, namespaces_context::NamespacesContext,
-            ui_state::UiState,
+            ui_context::UIContext,
         },
         widgets::{
             base_widget::BaseWidget, display::DisplayWidget, help_footer::HelpFooter,
@@ -15,7 +15,7 @@ use crate::{
     },
 };
 use parking_lot::Mutex;
-use std::sync::Arc;
+use std::sync::{atomic::Ordering, Arc};
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
@@ -28,25 +28,25 @@ use tui::{
 pub fn render<B: Backend>(
     frame: &mut Frame<B>,
     application_context: &mut Arc<Mutex<ApplicationContext>>,
-    ui_state: &UiState,
+    ui_context: &mut UIContext,
 ) {
     let mut context = application_context.lock();
-    let filtered_commands = context.filter_commands();
+    let filtered_commands = context.filter_commands(ui_context.get_querybox_input());
 
-    let query_box = context.query_box();
+    let query_box = ui_context.querybox();
 
-    render_base_widget(frame, &query_box, &ui_state.size);
+    render_base_widget(frame, &query_box, &ui_context.ui_state.size);
 
     let selected_idx = context.get_selected_command_idx();
     let selected_command = get_selected_command(selected_idx, &filtered_commands);
-    context.select_command(Some(selected_command.to_owned()));
+    ui_context.select_command(Some(selected_command.to_owned()));
 
     let should_highlight = context.should_highligh();
-    let query = context.query_box().get_input();
+    let query = ui_context.querybox().get_input();
     let namespaces_context = context.namespaces_context();
     let mut command_state = context.get_commands_state();
 
-    match ui_state.size {
+    match ui_context.ui_state.size {
         TerminalSize::Medium => render_form_medium(
             frame,
             &filtered_commands,
@@ -76,24 +76,27 @@ pub fn render<B: Backend>(
         ),
     }
 
-    if context.show_help() {
+    if ui_context.ui_state.show_help.load(Ordering::SeqCst) {
         frame.render_widget(
-            HelpPopup::new(ui_state.view_mode.to_owned(), ui_state.size.to_owned()),
+            HelpPopup::new(
+                ui_context.ui_state.view_mode.to_owned(),
+                ui_context.ui_state.size.to_owned(),
+            ),
             frame.size(),
         );
     }
 
-    if context.popup().is_some() && context.get_popup_answer().is_none() {
-        let popup = &context.popup().as_ref().unwrap().to_owned();
+    if ui_context.popup().is_some() && ui_context.get_popup_answer().is_none() {
+        let popup = &ui_context.popup().as_ref().unwrap().to_owned();
 
         //TODO move this to `UiContext`
-        let area = if ui_state.size != TerminalSize::Small {
+        let area = if ui_context.ui_state.size != TerminalSize::Small {
             centered_rect(45, 40, frame.size())
         } else {
             frame.size()
         };
 
-        frame.render_stateful_widget(popup.to_owned(), area, context.get_choices_state_mut());
+        frame.render_stateful_widget(popup.to_owned(), area, ui_context.get_choices_state_mut());
     }
 }
 
@@ -108,11 +111,11 @@ fn render_base_widget<B: Backend>(
     );
 }
 
-fn render_form_medium<'a, B: Backend>(
+fn render_form_medium<B: Backend>(
     frame: &mut Frame<B>,
     filtered_commands: &Vec<Command>,
     selected_command: Command,
-    query: &'a str,
+    query: &str,
     should_highligh: bool,
     namespaces_context: &NamespacesContext,
     command_state: &mut ListState,
@@ -132,11 +135,11 @@ fn render_form_medium<'a, B: Backend>(
     let tags_str = &selected_command.tags_as_string();
     let command_str = &selected_command.command;
     let description_str = &selected_command.description();
-    let command = create_command_details_widget(command_str, &query, should_highligh);
+    let command = create_command_details_widget(command_str, query, should_highligh);
     let tabs = create_tab_menu_widget(namespaces_context);
-    let tags = create_tags_menu_widget(tags_str, &query, should_highligh);
-    let namespace = create_namespace_widget(&selected_command.namespace, &query, should_highligh);
-    let description = create_command_description_widget(description_str, &query, should_highligh);
+    let tags = create_tags_menu_widget(tags_str, query, should_highligh);
+    let namespace = create_namespace_widget(&selected_command.namespace, query, should_highligh);
+    let description = create_command_description_widget(description_str, query, should_highligh);
     let commands = create_command_items_widget(filtered_commands.to_owned());
 
     let central_chunk = Layout::default()
@@ -162,11 +165,11 @@ fn render_form_medium<'a, B: Backend>(
     frame.render_widget(description, chunks[1]);
 }
 
-fn render_form_small<'a, B: Backend>(
+fn render_form_small<B: Backend>(
     frame: &mut Frame<B>,
     filtered_commands: &Vec<Command>,
     selected_command: Command,
-    query: &'a str,
+    query: &str,
     should_highligh: bool,
     namespaces_context: &NamespacesContext,
     command_state: &mut ListState,
@@ -179,7 +182,7 @@ fn render_form_small<'a, B: Backend>(
         .split(frame.size());
 
     let command_str = &selected_command.command;
-    let command = create_command_details_widget(command_str, &query, should_highligh);
+    let command = create_command_details_widget(command_str, query, should_highligh);
     let tabs = create_tab_menu_widget(namespaces_context);
     let commands = create_command_items_widget(filtered_commands.to_owned());
 

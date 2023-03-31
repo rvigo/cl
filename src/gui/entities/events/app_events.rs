@@ -23,7 +23,7 @@ pub enum CommandEvents {
     Execute,
     Edit,
     Insert,
-    Delete,
+    // Delete,
 }
 
 #[derive(Clone, Debug)]
@@ -39,9 +39,9 @@ pub enum PopupType {
         message: String,
         callback_action: PopupCallbackAction,
     },
-    Error {
-        message: String,
-    },
+    // Error {
+    //     message: String,
+    // },
 }
 
 #[derive(Clone, Debug)]

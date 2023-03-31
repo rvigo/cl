@@ -1,6 +1,10 @@
 mod form_layout;
 mod main_layout;
 
+use super::entities::{
+    application_context::ApplicationContext, ui_context::UIContext, ui_state::ViewMode,
+};
+use log::debug;
 use parking_lot::Mutex;
 use std::{io::Stdout, sync::Arc};
 use tui::{
@@ -9,11 +13,6 @@ use tui::{
     style::{Color, Style},
     widgets::{Block, BorderType, Borders},
     Frame,
-};
-
-use super::entities::{
-    application_context::ApplicationContext,
-    ui_state::{UiState, ViewMode},
 };
 
 pub const DEFAULT_TEXT_COLOR: Color = Color::Rgb(229, 229, 229);
@@ -89,18 +88,20 @@ where
 
 pub fn select_ui(
     frame: &mut Frame<CrosstermBackend<Stdout>>,
-    ui_state: &mut Arc<Mutex<UiState>>,
+    ui_context: &mut Arc<Mutex<UIContext>>,
     context: &mut Arc<Mutex<ApplicationContext>>,
 ) {
-    let mut ui_state = ui_state.lock();
-    let current_terminal_size = get_terminal_size(frame);
-    if ui_state.size != current_terminal_size {
-        ui_state.size = current_terminal_size;
-        context.lock().reorder_fields(ui_state.size.to_owned());
+    let mut ui_context = ui_context.lock();
+    let actual_terminal_size = get_terminal_size(frame);
+    let current_terminal_size = &ui_context.ui_state.size;
+    if !actual_terminal_size.eq(current_terminal_size) {
+        debug!("resizing from {current_terminal_size:?} to {actual_terminal_size:?}");
+        ui_context.ui_state.size = actual_terminal_size;
+        ui_context.order_fields();
     }
 
-    match ui_state.view_mode {
-        ViewMode::Main => main_layout::render(frame, context, &ui_state),
-        ViewMode::Edit | ViewMode::Insert => form_layout::render(frame, context, &ui_state),
+    match ui_context.ui_state.view_mode {
+        ViewMode::Main => main_layout::render(frame, context, &mut ui_context),
+        ViewMode::Edit | ViewMode::Insert => form_layout::render(frame, &mut ui_context),
     }
 }
