@@ -16,7 +16,7 @@ use tui::{
 
 pub fn render<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIContext) {
     render_base_widget(frame);
-    match ui_context.ui_state.size {
+    match ui_context.terminal_size() {
         TerminalSize::Medium => render_medium_form(frame, ui_context),
         TerminalSize::Large => render_medium_form(frame, ui_context),
         TerminalSize::Small => render_small_form(frame, ui_context),
@@ -26,12 +26,9 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIContext) {
 }
 
 fn render_popup<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIContext) {
-    if ui_context.ui_state.show_help {
+    if ui_context.show_help() {
         frame.render_widget(
-            HelpPopup::new(
-                ui_context.ui_state.view_mode.clone(),
-                ui_context.ui_state.size.clone(),
-            ),
+            HelpPopup::new(ui_context.view_mode(), ui_context.terminal_size().clone()),
             frame.size(),
         );
     }
@@ -39,7 +36,7 @@ fn render_popup<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIContext) {
     if ui_context.popup().is_some() && ui_context.get_popup_answer().is_none() {
         let popup = &ui_context.popup().unwrap();
 
-        let area = if !TerminalSize::Small.eq(&ui_context.ui_state.size) {
+        let area = if !TerminalSize::Small.eq(ui_context.terminal_size()) {
             centered_rect(45, 40, frame.size())
         } else {
             frame.size()
@@ -88,7 +85,7 @@ fn render_medium_form<B: Backend>(frame: &mut Frame<B>, ui_context: &UIContext) 
     let form_block = Block::default()
         .borders(Borders::ALL)
         .style(Style::default())
-        .title(format!(" {} ", ui_context.ui_state.view_mode))
+        .title(format!(" {} ", ui_context.view_mode()))
         .border_type(BorderType::Plain);
     let first_row = Layout::default()
         .direction(Direction::Horizontal)
@@ -136,7 +133,7 @@ fn render_small_form<B: Backend>(frame: &mut Frame<B>, ui_context: &UIContext) {
     let form_block = Block::default()
         .borders(Borders::ALL)
         .style(Style::default())
-        .title(format!(" {} ", ui_context.ui_state.view_mode))
+        .title(format!(" {} ", ui_context.view_mode()))
         .border_type(BorderType::Plain);
     let first_row = Layout::default()
         .direction(Direction::Horizontal)

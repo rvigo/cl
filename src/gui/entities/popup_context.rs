@@ -1,6 +1,6 @@
 use crate::gui::widgets::popup::{Answer, ChoicesState, Popup};
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct PopupContext {
     answer: Option<Answer>,
     choices_state: ChoicesState,

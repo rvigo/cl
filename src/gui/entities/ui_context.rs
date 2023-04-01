@@ -1,6 +1,8 @@
 use super::{
-    events::app_events::PopupCallbackAction, field_context::FieldContext,
-    popup_context::PopupContext, ui_state::UiState,
+    events::app_events::PopupCallbackAction,
+    field_context::FieldContext,
+    popup_context::PopupContext,
+    ui_state::{UiState, ViewMode},
 };
 use crate::{
     command::Command,
@@ -15,10 +17,11 @@ use crate::{
 };
 use crossterm::event::KeyEvent;
 
+#[derive(Clone)]
 pub struct UIContext<'a> {
     form_fields_context: FieldContext<'a>,
     popup_context: PopupContext,
-    pub ui_state: UiState,
+    ui_state: UiState,
     query_box: QueryBox<'a>,
 }
 
@@ -157,12 +160,52 @@ impl<'a> UIContext<'a> {
     }
 
     pub fn resize_to(&mut self, size: TerminalSize) {
-        self.ui_state.size = size;
+        self.ui_state.set_terminal_size(size);
         self.order_fields();
     }
 
     pub fn order_fields(&mut self) {
-        let size = &self.ui_state.size;
+        let size = &self.ui_state.terminal_size();
         self.form_fields_context.order_field_by_size(size)
+    }
+
+    pub fn querybox_focus(&self) -> bool {
+        self.ui_state.querybox_focus()
+    }
+
+    pub fn set_querybox_focus(&mut self, focus: bool) {
+        self.ui_state.set_querybox_focus(focus)
+    }
+
+    pub fn view_mode(&self) -> ViewMode {
+        self.ui_state.view_mode()
+    }
+
+    pub fn set_view_mode(&mut self, view_mode: ViewMode) {
+        self.ui_state.set_view_mode(view_mode)
+    }
+
+    pub fn terminal_size(&self) -> &TerminalSize {
+        self.ui_state.terminal_size()
+    }
+
+    pub fn set_terminal_size(&mut self, terminal_size: TerminalSize) {
+        self.ui_state.set_terminal_size(terminal_size)
+    }
+
+    pub fn show_popup(&self) -> bool {
+        self.ui_state.show_popup()
+    }
+
+    pub fn set_show_popup(&mut self, should_show: bool) {
+        self.ui_state.set_show_popup(should_show)
+    }
+
+    pub fn show_help(&self) -> bool {
+        self.ui_state.show_help()
+    }
+
+    pub fn set_show_help(&mut self, should_show: bool) {
+        self.ui_state.set_show_help(should_show)
     }
 }
