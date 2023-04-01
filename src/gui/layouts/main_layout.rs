@@ -35,7 +35,7 @@ pub fn render<B: Backend>(
 
     let query_box = ui_context.querybox();
 
-    render_base_widget(frame, &query_box, &ui_context.ui_state.size);
+    render_base_widget(frame, &query_box, ui_context.terminal_size());
 
     let selected_idx = context.get_selected_command_idx();
     let selected_command = get_selected_command(selected_idx, &filtered_commands);
@@ -46,7 +46,7 @@ pub fn render<B: Backend>(
     let namespaces_context = context.namespaces_context();
     let mut command_state = context.get_commands_state();
 
-    match ui_context.ui_state.size {
+    match ui_context.terminal_size() {
         TerminalSize::Medium => render_form_medium(
             frame,
             &filtered_commands,
@@ -76,11 +76,11 @@ pub fn render<B: Backend>(
         ),
     }
 
-    if ui_context.ui_state.show_help {
+    if ui_context.show_help() {
         frame.render_widget(
             HelpPopup::new(
-                ui_context.ui_state.view_mode.to_owned(),
-                ui_context.ui_state.size.to_owned(),
+                ui_context.view_mode(),
+                ui_context.terminal_size().to_owned(),
             ),
             frame.size(),
         );
@@ -90,7 +90,7 @@ pub fn render<B: Backend>(
         let popup = &ui_context.popup().as_ref().unwrap().to_owned();
 
         //TODO move this to `UiContext`
-        let area = if ui_context.ui_state.size != TerminalSize::Small {
+        let area = if !TerminalSize::Small.eq(ui_context.terminal_size()) {
             centered_rect(45, 40, frame.size())
         } else {
             frame.size()

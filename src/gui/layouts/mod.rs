@@ -4,7 +4,6 @@ mod main_layout;
 use super::entities::{
     application_context::ApplicationContext, ui_context::UIContext, ui_state::ViewMode,
 };
-use log::debug;
 use parking_lot::Mutex;
 use std::{io::Stdout, sync::Arc};
 use tui::{
@@ -93,14 +92,15 @@ pub fn select_ui(
 ) {
     let mut ui_context = ui_context.lock();
     let actual_terminal_size = get_terminal_size(frame);
-    let current_terminal_size = &ui_context.ui_state.size;
+    let current_terminal_size = &ui_context.terminal_size();
+
+    // check size of the terminal
     if !actual_terminal_size.eq(current_terminal_size) {
-        debug!("resizing from {current_terminal_size:?} to {actual_terminal_size:?}");
-        ui_context.ui_state.size = actual_terminal_size;
+        ui_context.set_terminal_size(actual_terminal_size);
         ui_context.order_fields();
     }
 
-    match ui_context.ui_state.view_mode {
+    match ui_context.view_mode() {
         ViewMode::Main => main_layout::render(frame, context, &mut ui_context),
         ViewMode::Edit | ViewMode::Insert => form_layout::render(frame, &mut ui_context),
     }

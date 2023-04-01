@@ -16,18 +16,18 @@ use std::sync::{
 };
 use tokio::sync::mpsc::Receiver;
 
-pub struct EventListener {
+pub struct EventListener<'a> {
     app_rx: Receiver<AppEvents>,
     context: Arc<Mutex<ApplicationContext>>,
-    ui_context: Arc<Mutex<UIContext<'static>>>,
+    ui_context: Arc<Mutex<UIContext<'a>>>,
     should_quit: Arc<AtomicBool>,
 }
 
-impl EventListener {
+impl<'a> EventListener<'a> {
     pub async fn init(
         app_rx: Receiver<AppEvents>,
         context: Arc<Mutex<ApplicationContext>>,
-        ui_state: Arc<Mutex<UIContext<'static>>>,
+        ui_state: Arc<Mutex<UIContext<'a>>>,
         should_quit: Arc<AtomicBool>,
     ) {
         let mut app_router = Self {
@@ -55,9 +55,9 @@ impl EventListener {
                         let mut c = self.context.lock();
                         let command = ui.build_new_command();
                         match c.add_command(command) {
-                            Ok(()) => self.ui_context.lock().ui_state.view_mode = ViewMode::Main,
+                            Ok(()) => self.ui_context.lock().set_view_mode(ViewMode::Main),
                             Err(error) => {
-                                ui.ui_state.show_popup = true;
+                                ui.set_show_popup(true);
                                 ui.set_error_popup(error.to_string());
                             }
                         }
@@ -70,9 +70,9 @@ impl EventListener {
                         let edited_command = ui.edit_command();
                         if let Some(current_command) = ui.get_selected_command() {
                             match c.add_edited_command(edited_command, current_command) {
-                                Ok(()) => ui.ui_state.view_mode = ViewMode::Main,
+                                Ok(()) => ui.set_view_mode(ViewMode::Main),
                                 Err(err) => {
-                                    ui.ui_state.show_popup = true;
+                                    ui.set_show_popup(true);
                                     ui.set_error_popup(err.to_string());
                                 }
                             }
@@ -85,14 +85,14 @@ impl EventListener {
                         let mut ui = self.ui_context.lock();
 
                         if ui.popup().is_none() || ui.get_popup_answer().is_some() {
-                            ui.ui_state.view_mode = ViewMode::Main;
+                            ui.set_view_mode(ViewMode::Main);
                             c.reload_namespaces_state();
                             ui.reset_form_field_selected_idx();
                         }
                     }
                     RenderEvents::Edit => {
                         let mut ui = self.ui_context.lock();
-                        ui.ui_state.view_mode = ViewMode::Edit;
+                        ui.set_view_mode(ViewMode::Edit);
                         if ui.get_selected_command().is_some() {
                             ui.reset_form_field_selected_idx();
                             ui.order_fields();
@@ -101,7 +101,7 @@ impl EventListener {
                     }
                     RenderEvents::Insert => {
                         let mut ui = self.ui_context.lock();
-                        ui.ui_state.view_mode = ViewMode::Insert;
+                        ui.set_view_mode(ViewMode::Insert);
                         ui.reset_form_field_selected_idx();
                         ui.order_fields();
                     }
@@ -112,13 +112,13 @@ impl EventListener {
                         let mut ui = self.ui_context.lock();
                         match popup_type {
                             PopupType::Help => {
-                                ui.ui_state.show_help = true;
+                                ui.set_show_help(true);
                             }
                             PopupType::Dialog {
                                 message,
                                 callback_action,
                             } => {
-                                ui.ui_state.show_popup = true;
+                                ui.set_show_popup(true);
                                 ui.set_dialog_popup(message, callback_action);
                             } // PopupType::Error { message: _ } => todo!(),
                         }
@@ -140,7 +140,7 @@ impl EventListener {
                                                             c.reload_namespaces_state();
                                                         }
                                                         Err(error) => {
-                                                            ui.ui_state.show_popup = true;
+                                                            ui.set_show_popup(true);
                                                             ui.set_error_popup(error.to_string());
                                                         }
                                                     }
@@ -157,15 +157,15 @@ impl EventListener {
                                 }
                             };
                         }
-                        self.ui_context.lock().ui_state.show_popup = false
+                        self.ui_context.lock().set_show_popup(false)
                     }
                     PopupEvent::Disable => {
                         let mut ui = self.ui_context.lock();
-                        if ui.ui_state.show_help {
-                            ui.ui_state.show_help = false
+                        if ui.show_help() {
+                            ui.set_show_help(false)
                         } else {
                             ui.clear_popup_context();
-                            ui.ui_state.show_popup = false
+                            ui.set_show_popup(false)
                         }
                     }
                 },
@@ -173,12 +173,12 @@ impl EventListener {
                     QueryboxEvent::Active => {
                         let mut ui = self.ui_context.lock();
                         ui.activate_focus();
-                        ui.ui_state.query_box_active = true;
+                        ui.set_querybox_focus(true);
                     }
                     QueryboxEvent::Deactive => {
                         let mut ui = self.ui_context.lock();
                         ui.deactivate_focus();
-                        ui.ui_state.query_box_active = false;
+                        ui.set_querybox_focus(false);
                     }
                 },
                 AppEvents::Screen(screen) => match screen {
@@ -213,7 +213,7 @@ impl EventListener {
     }
 }
 
-impl Drop for EventListener {
+impl Drop for EventListener<'_> {
     fn drop(&mut self) {
         debug!("droping event listener")
     }

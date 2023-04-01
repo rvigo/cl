@@ -26,6 +26,7 @@ const ORDER_MEDIUM_SIZE: &[FieldType] = &[
     FieldType::Tags,
 ];
 
+#[derive(Clone)]
 pub struct Fields<'a> {
     items: HashMap<FieldType, Field<'a>>,
     order: Vec<FieldType>,

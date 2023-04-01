@@ -65,10 +65,10 @@ pub mod core {
         ));
     }
 
-    async fn ui_init<'a>(
+    async fn ui_init(
         input_sx: Sender<InputMessages>,
         should_quit: Arc<AtomicBool>,
-        ui_state: Arc<Mutex<UIContext<'static>>>,
+        ui_state: Arc<Mutex<UIContext<'_>>>,
         context: Arc<Mutex<ApplicationContext>>,
     ) -> Result<()> {
         debug!("starting ui");

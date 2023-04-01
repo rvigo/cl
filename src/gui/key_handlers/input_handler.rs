@@ -54,15 +54,15 @@ impl InputHandler {
     }
 
     async fn handle_input(&mut self, key_event: KeyEvent) -> Result<()> {
-        let ui_state = self.ui_context.lock().ui_state.to_owned();
-        let result = if ui_state.show_popup {
+        let ui_context = self.ui_context.lock().to_owned();
+        let result = if ui_context.show_popup() {
             popup_handler::handle(key_event, &mut self.ui_context)?
-        } else if ui_state.show_help {
+        } else if ui_context.show_help() {
             popup_handler::handle_help()?
-        } else if ui_state.query_box_active {
+        } else if ui_context.querybox_focus() {
             query_box_handler::handle(key_event, &mut self.ui_context)?
         } else {
-            match ui_state.view_mode {
+            match ui_context.view_mode() {
                 ViewMode::Main => main_handler::handle(key_event)?,
                 ViewMode::Insert => insert_handler::handle(key_event)?,
                 ViewMode::Edit => edit_handler::handle(key_event)?,

@@ -15,7 +15,7 @@ use tui_textarea::{
     TextArea,
 };
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct FieldContext<'a> {
     fields: Fields<'a>,
     focus_state: FieldState,
