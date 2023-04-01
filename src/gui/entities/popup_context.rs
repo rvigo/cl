@@ -1,17 +1,17 @@
 use crate::gui::widgets::popup::{Answer, ChoicesState, Popup};
 
 #[derive(Default)]
-pub struct PopupContext<'a> {
+pub struct PopupContext {
     answer: Option<Answer>,
     choices_state: ChoicesState,
-    popup: Option<Popup<'a>>,
+    popup: Option<Popup>,
 }
 
-impl<'a> PopupContext<'a> {
-    pub fn new() -> PopupContext<'a> {
+impl PopupContext {
+    pub fn new() -> PopupContext {
         let mut context = Self {
-            answer: Default::default(),
-            choices_state: Default::default(),
+            answer: None,
+            choices_state: ChoicesState::default(),
             popup: None,
         };
         context.choices_state.select(Some(0));
@@ -19,11 +19,11 @@ impl<'a> PopupContext<'a> {
         context
     }
 
-    pub fn get_popup(&self) -> Option<Popup<'a>> {
+    pub fn get_popup(&self) -> Option<Popup> {
         self.popup.to_owned()
     }
 
-    pub fn set_popup(&mut self, popup: Option<Popup<'a>>) {
+    pub fn set_popup(&mut self, popup: Option<Popup>) {
         self.popup = popup
     }
 

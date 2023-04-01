@@ -60,8 +60,12 @@ impl<'a> Field<'a> {
         }
     }
 
-    pub fn toggle_focus(&mut self) {
-        self.in_focus = !self.in_focus
+    pub fn activate_focus(&mut self) {
+        self.in_focus = true
+    }
+
+    pub fn deactivate_focus(&mut self) {
+        self.in_focus = false
     }
 
     pub fn block(&mut self, block: Block<'a>) {
