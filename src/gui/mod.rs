@@ -1,6 +1,6 @@
-pub(super) mod entities;
-pub mod key_handlers;
-pub mod layouts;
+mod entities;
+mod key_handlers;
+mod layouts;
 mod widgets;
 
 pub mod core {
@@ -57,7 +57,6 @@ pub mod core {
         should_quit: &Arc<AtomicBool>,
     ) {
         debug!("starting event listener");
-
         tokio::spawn(EventListener::init(
             app_rx,
             context.clone(),

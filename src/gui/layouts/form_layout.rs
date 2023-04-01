@@ -6,7 +6,6 @@ use crate::gui::{
         navigation_footer::NavigationFooter,
     },
 };
-use std::sync::atomic::Ordering;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
@@ -27,7 +26,7 @@ pub fn render<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIContext) {
 }
 
 fn render_popup<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIContext) {
-    if ui_context.ui_state.show_help.load(Ordering::SeqCst) {
+    if ui_context.ui_state.show_help {
         frame.render_widget(
             HelpPopup::new(
                 ui_context.ui_state.view_mode.clone(),
@@ -38,7 +37,7 @@ fn render_popup<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIContext) {
     }
 
     if ui_context.popup().is_some() && ui_context.get_popup_answer().is_none() {
-        let popup = &ui_context.popup().unwrap().clone();
+        let popup = &ui_context.popup().unwrap();
 
         let area = if !TerminalSize::Small.eq(&ui_context.ui_state.size) {
             centered_rect(45, 40, frame.size())

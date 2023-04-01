@@ -12,16 +12,15 @@ use tui::{
 };
 
 #[derive(Clone, Debug)]
-pub struct Popup<'a> {
+pub struct Popup {
     message: String,
     message_type: Option<MessageType>,
     choices: Vec<Answer>,
-    block: Option<Block<'a>>,
     callback_action: PopupCallbackAction,
 }
 
-impl<'a> Popup<'a> {
-    pub fn from_error<T>(message: T, additional_info: Option<T>) -> Popup<'a>
+impl Popup {
+    pub fn from_error<T>(message: T, additional_info: Option<T>) -> Popup
     where
         T: Into<String>,
     {
@@ -36,19 +35,12 @@ impl<'a> Popup<'a> {
             message,
             message_type: Some(MessageType::Error),
             choices: vec![Answer::Ok],
-            block: Some(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .style(Style::default())
-                    .title(" Error ".to_string())
-                    .title_alignment(Alignment::Left)
-                    .border_type(BorderType::Plain),
-            ),
+
             callback_action: PopupCallbackAction::None,
         }
     }
 
-    pub fn from_warning<T>(message: T, callback_action: PopupCallbackAction) -> Popup<'a>
+    pub fn from_warning<T>(message: T, callback_action: PopupCallbackAction) -> Popup
     where
         T: Into<String>,
     {
@@ -59,14 +51,7 @@ impl<'a> Popup<'a> {
             message,
             message_type: Some(MessageType::Warning),
             choices: vec![Answer::Cancel, Answer::Ok],
-            block: Some(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .style(Style::default())
-                    .title(" Warning ".to_string())
-                    .title_alignment(Alignment::Left)
-                    .border_type(BorderType::Plain),
-            ),
+
             callback_action,
         }
     }
@@ -132,7 +117,7 @@ impl<'a> Popup<'a> {
     }
 }
 
-impl<'a> StatefulWidget for Popup<'a> {
+impl StatefulWidget for Popup {
     type State = ChoicesState;
 
     fn render(
@@ -141,7 +126,12 @@ impl<'a> StatefulWidget for Popup<'a> {
         buf: &mut tui::buffer::Buffer,
         state: &mut Self::State,
     ) {
-        let block = self.block.as_ref().unwrap();
+        let block = Block::default()
+            .borders(Borders::ALL)
+            .style(Style::default())
+            .title(self.message_type.to_owned().unwrap().to_string())
+            .title_alignment(Alignment::Left)
+            .border_type(BorderType::Plain);
         let p = Paragraph::new(self.message.clone())
             .style(Style::default().fg(DEFAULT_TEXT_COLOR))
             .alignment(Alignment::Left)
@@ -173,7 +163,7 @@ impl<'a> StatefulWidget for Popup<'a> {
     }
 }
 
-impl<'a> Drop for Popup<'a> {
+impl Drop for Popup {
     fn drop(&mut self) {
         self.message.clear();
         self.message_type = None;

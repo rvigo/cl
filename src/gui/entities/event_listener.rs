@@ -57,7 +57,7 @@ impl EventListener {
                         match c.add_command(command) {
                             Ok(()) => self.ui_context.lock().ui_state.view_mode = ViewMode::Main,
                             Err(error) => {
-                                ui.ui_state.show_popup.store(true, Ordering::SeqCst);
+                                ui.ui_state.show_popup = true;
                                 ui.set_error_popup(error.to_string());
                             }
                         }
@@ -72,7 +72,7 @@ impl EventListener {
                             match c.add_edited_command(edited_command, current_command) {
                                 Ok(()) => ui.ui_state.view_mode = ViewMode::Main,
                                 Err(err) => {
-                                    ui.ui_state.show_popup.store(true, Ordering::SeqCst);
+                                    ui.ui_state.show_popup = true;
                                     ui.set_error_popup(err.to_string());
                                 }
                             }
@@ -112,13 +112,13 @@ impl EventListener {
                         let mut ui = self.ui_context.lock();
                         match popup_type {
                             PopupType::Help => {
-                                ui.ui_state.show_help.store(true, Ordering::SeqCst);
+                                ui.ui_state.show_help = true;
                             }
                             PopupType::Dialog {
                                 message,
                                 callback_action,
                             } => {
-                                ui.ui_state.show_popup.store(true, Ordering::SeqCst);
+                                ui.ui_state.show_popup = true;
                                 ui.set_dialog_popup(message, callback_action);
                             } // PopupType::Error { message: _ } => todo!(),
                         }
@@ -140,9 +140,7 @@ impl EventListener {
                                                             c.reload_namespaces_state();
                                                         }
                                                         Err(error) => {
-                                                            ui.ui_state
-                                                                .show_popup
-                                                                .store(true, Ordering::SeqCst);
+                                                            ui.ui_state.show_popup = true;
                                                             ui.set_error_popup(error.to_string());
                                                         }
                                                     }
@@ -159,19 +157,15 @@ impl EventListener {
                                 }
                             };
                         }
-                        self.ui_context
-                            .lock()
-                            .ui_state
-                            .show_popup
-                            .store(false, Ordering::SeqCst)
+                        self.ui_context.lock().ui_state.show_popup = false
                     }
                     PopupEvent::Disable => {
                         let mut ui = self.ui_context.lock();
-                        if ui.ui_state.show_help.load(Ordering::SeqCst) {
-                            ui.ui_state.show_help.store(false, Ordering::SeqCst)
+                        if ui.ui_state.show_help {
+                            ui.ui_state.show_help = false
                         } else {
                             ui.clear_popup_context();
-                            ui.ui_state.show_popup.store(false, Ordering::SeqCst)
+                            ui.ui_state.show_popup = false
                         }
                     }
                 },
@@ -179,12 +173,12 @@ impl EventListener {
                     QueryboxEvent::Active => {
                         let mut ui = self.ui_context.lock();
                         ui.activate_focus();
-                        ui.ui_state.query_box_active.store(true, Ordering::SeqCst);
+                        ui.ui_state.query_box_active = true;
                     }
                     QueryboxEvent::Deactive => {
                         let mut ui = self.ui_context.lock();
                         ui.deactivate_focus();
-                        ui.ui_state.query_box_active.store(false, Ordering::SeqCst);
+                        ui.ui_state.query_box_active = false;
                     }
                 },
                 AppEvents::Screen(screen) => match screen {

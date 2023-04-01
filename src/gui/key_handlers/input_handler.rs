@@ -55,11 +55,11 @@ impl InputHandler {
 
     async fn handle_input(&mut self, key_event: KeyEvent) -> Result<()> {
         let ui_state = self.ui_context.lock().ui_state.to_owned();
-        let result = if ui_state.show_popup.load(Ordering::SeqCst) {
+        let result = if ui_state.show_popup {
             popup_handler::handle(key_event, &mut self.ui_context)?
-        } else if ui_state.show_help.load(Ordering::SeqCst) {
+        } else if ui_state.show_help {
             popup_handler::handle_help()?
-        } else if ui_state.query_box_active.load(Ordering::SeqCst) {
+        } else if ui_state.query_box_active {
             query_box_handler::handle(key_event, &mut self.ui_context)?
         } else {
             match ui_state.view_mode {

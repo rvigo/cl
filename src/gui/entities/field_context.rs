@@ -1,3 +1,4 @@
+use super::field_state::FieldState;
 use crate::{
     command::{Command, CommandBuilder},
     gui::{
@@ -9,111 +10,93 @@ use crate::{
     },
 };
 use itertools::Itertools;
-use log::debug;
-use tui::widgets::ListState;
 use tui_textarea::{
     CursorMove::{Bottom, End},
     TextArea,
 };
 
-const ORDER_SMALL_SIZE: &[FieldType] = &[
-    FieldType::Alias,
-    FieldType::Namespace,
-    FieldType::Description,
-    FieldType::Tags,
-    FieldType::Command,
-];
-
-const ORDER_MEDIUM_SIZE: &[FieldType] = &[
-    FieldType::Alias,
-    FieldType::Namespace,
-    FieldType::Command,
-    FieldType::Description,
-    FieldType::Tags,
-];
-
 #[derive(Default)]
 pub struct FieldContext<'a> {
     fields: Fields<'a>,
-    focus_state: ListState,
+    focus_state: FieldState,
     selected_command: Option<Command>,
 }
 
 impl<'a> FieldContext<'a> {
     pub fn order_field_by_size(&mut self, size: &TerminalSize) {
-        let order = match size {
-            TerminalSize::Small => ORDER_SMALL_SIZE,
-            TerminalSize::Medium | TerminalSize::Large => ORDER_MEDIUM_SIZE,
-        };
-
-        self.fields.sort_by(|a, b| {
-            order
-                .iter()
-                .position(|x| x.eq(&a.field_type))
-                .cmp(&order.iter().position(|x| x.eq(&b.field_type)))
-        });
+        self.fields.reorder(size);
     }
 
-    pub fn get_fields(&self) -> Vec<Field> {
-        self.fields.to_owned()
+    pub fn get_fields(&self) -> Vec<Field<'_>> {
+        self.fields.get_fields()
     }
 
-    pub fn get_focus_state_mut(&mut self) -> &mut ListState {
+    pub fn get_focus_state_mut(&mut self) -> &mut FieldState {
         &mut self.focus_state
     }
 
-    // FIXME the selected idx makes the layout go crazy after resize the the form screen
     pub fn next_field(&mut self) {
-        let old_idx = self.focus_state.selected().unwrap_or(0);
-        if let Some(old_field) = self.fields.get_mut(old_idx) {
-            debug!("changing field from '{}'", old_field.field_type);
-            old_field.toggle_focus()
-        };
+        if let Some(current_field_type) = self.focus_state.selected() {
+            if let Some(field) = self.fields.get_field_mut(&current_field_type) {
+                field.deactivate_focus()
+            }
 
-        let mut idx = self.focus_state.selected().unwrap_or(0);
-        idx = if idx >= self.fields.len() - 1 {
-            0
-        } else {
-            idx + 1
-        };
+            let order = self.fields.get_order();
 
-        self.focus_state.select(Some(idx));
-        if let Some(new_field) = self.fields.get_mut(idx) {
-            debug!("to '{}'", new_field.field_type);
-            new_field.toggle_focus()
-        };
+            if let Some(pos) = order.iter().position(|x| current_field_type.eq(x)) {
+                let new_field_idx = if pos >= order.len() - 1 { 0 } else { pos + 1 };
+                let new_field_type = self.fields.get_order()[new_field_idx].to_owned();
+
+                // selects the new field type
+                self.focus_state.select(Some(new_field_type));
+                if let Some(new_field_type) = self.focus_state.selected() {
+                    if let Some(field) = self.fields.get_field_mut(&new_field_type) {
+                        field.activate_focus()
+                    }
+                }
+            };
+        }
     }
 
     pub fn previous_field(&mut self) {
-        let old_idx = self.focus_state.selected().unwrap_or(0);
-        if let Some(old_field) = self.fields.get_mut(old_idx) {
-            old_field.toggle_focus()
-        };
+        if let Some(current_field_type) = self.focus_state.selected() {
+            if let Some(field) = self.fields.get_field_mut(&current_field_type) {
+                field.deactivate_focus()
+            }
 
-        let mut idx = self.focus_state.selected().unwrap_or(0);
-        idx = if idx == 0 {
-            self.fields.len() - 1
-        } else {
-            idx - 1
-        };
+            let order = self.fields.get_order();
+            if let Some(pos) = order.iter().position(|x| current_field_type.eq(x)) {
+                let new_field_idx = if pos == 0 {
+                    self.fields.len() - 1
+                } else {
+                    pos - 1
+                };
+                let new_field_type = self.fields.get_order()[new_field_idx].to_owned();
 
-        self.focus_state.select(Some(idx));
-        if let Some(new_field) = self.fields.get_mut(idx) {
-            new_field.toggle_focus()
-        };
+                // selects the new field type
+                self.focus_state.select(Some(new_field_type));
+                if let Some(new_field_type) = self.focus_state.selected() {
+                    if let Some(field) = self.fields.get_field_mut(&new_field_type) {
+                        field.activate_focus()
+                    }
+                }
+            }
+        }
     }
 
-    pub fn selected_field(&mut self) -> Option<Field<'a>> {
-        let idx = self.focus_state.selected().unwrap_or(0);
-        let selected = self.fields.get_mut(idx);
-        selected.cloned()
+    pub fn selected_field(&mut self) -> Option<&mut Field<'a>> {
+        if let Some(selected) = self.focus_state.selected() {
+            self.fields.get_mut(&selected)
+        } else {
+            None
+        }
     }
 
     pub fn build_new_command(&mut self) -> Command {
         let mut command_builder = CommandBuilder::default();
         self.fields
             .iter_mut()
-            .for_each(|field| match field.field_type {
+            .for_each(|(field_type, field)| match field_type {
                 FieldType::Alias => {
                     command_builder.alias(field.input_as_string());
                 }
@@ -156,7 +139,7 @@ impl<'a> FieldContext<'a> {
             .unwrap();
         self.fields
             .iter_mut()
-            .for_each(|field| match field.field_type {
+            .for_each(|(field_type, field)| match field_type {
                 FieldType::Alias => command.alias = field.input_as_string(),
                 FieldType::Command => command.command = field.input_as_string(),
                 FieldType::Namespace => command.namespace = field.input_as_string(),
@@ -197,8 +180,8 @@ impl<'a> FieldContext<'a> {
     pub fn set_selected_command_input(&mut self) {
         let selected_command = self.selected_command.as_mut();
         if let Some(current_command) = selected_command {
-            self.fields.iter_mut().for_each(|field| {
-                match field.field_type {
+            self.fields.iter_mut().for_each(|(field_type, field)| {
+                match field_type {
                     FieldType::Alias => {
                         field.text_area = TextArea::from(vec![current_command.alias.clone()]);
                         field.text_area.move_cursor(Bottom);

@@ -7,18 +7,17 @@ use crate::{
     gui::{
         layouts::TerminalSize,
         widgets::{
-            field::Field,
+            field::{Field, FieldType},
             popup::{Answer, ChoicesState, Popup},
             query_box::QueryBox,
         },
     },
 };
 use crossterm::event::KeyEvent;
-use log::debug;
 
 pub struct UIContext<'a> {
     form_fields_context: FieldContext<'a>,
-    popup_context: PopupContext<'a>,
+    popup_context: PopupContext,
     pub ui_state: UiState,
     query_box: QueryBox<'a>,
 }
@@ -31,7 +30,7 @@ impl<'a> UIContext<'a> {
             ui_state: UiState::new(TerminalSize::default()),
             query_box: QueryBox::default(),
         };
-        context.select_form_idx(Some(0));
+        context.select_form_field_type(Some(FieldType::default()));
         context.select_command(None);
         context
     }
@@ -57,8 +56,10 @@ impl<'a> UIContext<'a> {
         self.form_fields_context.select_command(selected_command)
     }
 
-    pub fn select_form_idx(&mut self, idx: Option<usize>) {
-        self.form_fields_context.get_focus_state_mut().select(idx);
+    pub fn select_form_field_type(&mut self, field_type: Option<FieldType>) {
+        self.form_fields_context
+            .get_focus_state_mut()
+            .select(field_type);
     }
 
     pub fn get_form_fields(&self) -> Vec<Field> {
@@ -73,7 +74,7 @@ impl<'a> UIContext<'a> {
         self.form_fields_context.build_new_command()
     }
 
-    pub fn get_selected_form_field_mut(&mut self) -> Option<Field<'a>> {
+    pub fn get_selected_form_field_mut(&mut self) -> Option<&mut Field<'a>> {
         self.form_fields_context.selected_field()
     }
 
@@ -105,11 +106,11 @@ impl<'a> UIContext<'a> {
         self.query_box.handle(key_event)
     }
 
-    pub fn popup(&self) -> Option<Popup<'a>> {
+    pub fn popup(&self) -> Option<Popup> {
         self.popup_context.get_popup()
     }
 
-    pub fn set_popup(&mut self, popup: Option<Popup<'a>>) {
+    pub fn set_popup(&mut self, popup: Option<Popup>) {
         self.popup_context.set_popup(popup);
     }
 
@@ -146,24 +147,22 @@ impl<'a> UIContext<'a> {
     }
 
     pub fn reset_form_field_selected_idx(&mut self) {
-        self.select_form_idx(Some(0));
+        self.select_form_field_type(Some(FieldType::default()));
     }
 
     pub fn handle_form_input(&mut self, input: KeyEvent) {
-        if let Some(mut selected_field) = self.get_selected_form_field_mut() {
+        if let Some(selected_field) = self.get_selected_form_field_mut() {
             selected_field.on_input(input)
         }
     }
 
     pub fn resize_to(&mut self, size: TerminalSize) {
-        self.ui_state.size = size.to_owned();
+        self.ui_state.size = size;
         self.order_fields();
-        self.reset_form_field_selected_idx()
     }
 
     pub fn order_fields(&mut self) {
         let size = &self.ui_state.size;
-        debug!("ordering fields to '{size:?}' screen");
         self.form_fields_context.order_field_by_size(size)
     }
 }

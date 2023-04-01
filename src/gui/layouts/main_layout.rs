@@ -15,7 +15,7 @@ use crate::{
     },
 };
 use parking_lot::Mutex;
-use std::sync::{atomic::Ordering, Arc};
+use std::sync::Arc;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
@@ -76,7 +76,7 @@ pub fn render<B: Backend>(
         ),
     }
 
-    if ui_context.ui_state.show_help.load(Ordering::SeqCst) {
+    if ui_context.ui_state.show_help {
         frame.render_widget(
             HelpPopup::new(
                 ui_context.ui_state.view_mode.to_owned(),
