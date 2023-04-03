@@ -1,9 +1,15 @@
-use super::{popup_handler, query_box_handler};
-use crate::gui::entities::events::app_events::AppEvents;
-use crate::gui::entities::events::input_events::InputMessages;
-use crate::gui::{
-    entities::{ui_context::UIContext, ui_state::ViewMode},
-    key_handlers::{edit_handler, insert_handler, main_handler},
+use super::{
+    edit_handler::EditScreenHandler,
+    insert_handler::InsertScreenHandler,
+    main_handler::MainScreenHandler,
+    popup_handler::{self, PopupHandler},
+    query_box_handler::QueryboxHandler,
+    KeyEventHandler, WidgetKeyEventHandler,
+};
+use crate::gui::entities::{
+    events::{app_events::AppEvents, input_events::InputMessages},
+    ui_context::UIContext,
+    ui_state::ViewMode,
 };
 use anyhow::Result;
 use crossterm::event::KeyEvent;
@@ -56,17 +62,14 @@ impl InputHandler {
     async fn handle_input(&mut self, key_event: KeyEvent) -> Result<()> {
         let ui_context = self.ui_context.lock().to_owned();
         let result = if ui_context.show_popup() {
-            popup_handler::handle(key_event, &mut self.ui_context)?
+            PopupHandler.handle(key_event, &mut self.ui_context.lock())?
         } else if ui_context.show_help() {
-            popup_handler::handle_help()?
+            popup_handler::handle_help()? //TODO what should I to do with this help popup?
         } else if ui_context.querybox_focus() {
-            query_box_handler::handle(key_event, &mut self.ui_context)?
+            QueryboxHandler.handle(key_event, &mut self.ui_context.lock())?
         } else {
-            match ui_context.view_mode() {
-                ViewMode::Main => main_handler::handle(key_event)?,
-                ViewMode::Insert => insert_handler::handle(key_event)?,
-                ViewMode::Edit => edit_handler::handle(key_event)?,
-            }
+            let handler = self.get_handler(&ui_context.view_mode());
+            handler.handle(key_event)?
         };
 
         if let Some(event) = result {
@@ -74,5 +77,13 @@ impl InputHandler {
             self.app_sx.send(event).await?;
         }
         Ok(())
+    }
+
+    fn get_handler(&self, view_mode: &ViewMode) -> Box<dyn KeyEventHandler> {
+        match view_mode {
+            ViewMode::Main => Box::new(MainScreenHandler),
+            ViewMode::Insert => Box::new(InsertScreenHandler),
+            ViewMode::Edit => Box::new(EditScreenHandler),
+        }
     }
 }
