@@ -1,5 +1,5 @@
 - [x] handle popups
 - [x] handle screens size
 - [x] clean all unused method
-- [ ] (try to) simplify methods and classes
-- [ ] fix unit tests
+- [x] (try to) simplify methods and classes
+- [x] fix unit tests

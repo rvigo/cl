@@ -16,7 +16,9 @@ pub struct QueryBox<'a> {
     on_focus: bool,
     buffer: String,
 }
+
 impl<'a> Footer for QueryBox<'a> {}
+
 impl<'a> Default for QueryBox<'a> {
     fn default() -> Self {
         Self {
