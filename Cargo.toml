@@ -10,29 +10,26 @@ description  = "Group your commands and aliases in an organized and human readab
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tui = { version = "0.19.0", features = ["crossterm"] }
-crossterm = "0.25.0"
-toml = "0.7.1"
 anyhow = "1.0.68"
-serde = { version = "1.0.152", features = ["derive"] }
-dirs = "4.0.0"
-itertools = "0.10.5"
-unicode-width = "0.1"
 clap = { version = "4.0.32", features = ["derive"] }
-strfmt = "0.2.2"
-owo-colors = "3.5.0"
-tui-textarea = { version = "0.2.0", features = ["crossterm"] }
+crossterm = "0.25.0"
+dirs = "5.0.0"
 flexi_logger = "0.25.1"
-log = "0.4.17"
-regex="1.7.1"
-fuzzy-matcher = "0.3.7"
-thiserror = "1.0.39"
-tokio = {version = "1.26", features=["full"]}
-tracing = "0.1"
-tracing-subscriber ={ version="0.3.16", features=["env-filter"]}
-tracing-appender ={ version="0.2.2"}
 futures-util = "0.3"
+fuzzy-matcher = "0.3.7"
+itertools = "0.10.5"
+log = "0.4.17"
+owo-colors = "3.5.0"
 parking_lot = {version= "0.12"}
+regex="1.7.1"
+serde = { version = "1.0.152", features = ["derive"] }
+strfmt = "0.2.2"
+thiserror = "1.0.39"
+tokio = {version = "1.26", features = ["macros", "rt-multi-thread", "sync"]}
+toml = "0.7.1"
+tui = { version = "0.19.0", features = ["crossterm"] }
+tui-textarea = { version = "0.2.0", features = ["crossterm"] }
+unicode-width = "0.1"
 
 [profile.release]
 opt-level = 3
