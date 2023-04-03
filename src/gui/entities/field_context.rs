@@ -1,86 +1,102 @@
+use super::field_state::FieldState;
 use crate::{
     command::{Command, CommandBuilder},
-    gui::widgets::{
-        field::{Field, FieldType},
-        fields::Fields,
+    gui::{
+        layouts::TerminalSize,
+        widgets::{
+            field::{Field, FieldType},
+            fields::Fields,
+        },
     },
 };
 use itertools::Itertools;
-use tui::widgets::ListState;
 use tui_textarea::{
     CursorMove::{Bottom, End},
     TextArea,
 };
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct FieldContext<'a> {
     fields: Fields<'a>,
-    focus_state: ListState,
+    focus_state: FieldState,
     selected_command: Option<Command>,
 }
 
 impl<'a> FieldContext<'a> {
-    pub fn get_fields(&self) -> &Fields {
-        &self.fields
+    pub fn order_field_by_size(&mut self, size: &TerminalSize) {
+        self.fields.reorder(size);
     }
 
-    pub fn get_fields_mut(&mut self) -> &mut Fields<'a> {
-        &mut self.fields
+    pub fn get_fields(&self) -> Vec<Field<'_>> {
+        self.fields.get_fields()
     }
 
-    pub fn get_focus_state_mut(&mut self) -> &mut ListState {
+    pub fn get_focus_state_mut(&mut self) -> &mut FieldState {
         &mut self.focus_state
     }
 
     pub fn next_field(&mut self) {
-        let old_idx = self.focus_state.selected().unwrap_or(0);
-        if let Some(old_field) = self.fields.get_mut(old_idx) {
-            old_field.toggle_focus()
-        };
+        if let Some(current_field_type) = self.focus_state.selected() {
+            if let Some(field) = self.fields.get_field_mut(&current_field_type) {
+                field.deactivate_focus()
+            }
 
-        let mut idx = self.focus_state.selected().unwrap_or(0);
-        idx = if idx >= self.fields.len() - 1 {
-            0
-        } else {
-            idx + 1
-        };
+            let order = self.fields.get_order();
 
-        self.focus_state.select(Some(idx));
-        if let Some(new_field) = self.fields.get_mut(idx) {
-            new_field.toggle_focus()
-        };
+            if let Some(pos) = order.iter().position(|x| current_field_type.eq(x)) {
+                let new_field_idx = if pos >= order.len() - 1 { 0 } else { pos + 1 };
+                let new_field_type = self.fields.get_order()[new_field_idx].to_owned();
+
+                // selects the new field type
+                self.focus_state.select(Some(new_field_type));
+                if let Some(new_field_type) = self.focus_state.selected() {
+                    if let Some(field) = self.fields.get_field_mut(&new_field_type) {
+                        field.activate_focus()
+                    }
+                }
+            };
+        }
     }
 
     pub fn previous_field(&mut self) {
-        let old_idx = self.focus_state.selected().unwrap_or(0);
-        if let Some(old_field) = self.fields.get_mut(old_idx) {
-            old_field.toggle_focus()
-        };
+        if let Some(current_field_type) = self.focus_state.selected() {
+            if let Some(field) = self.fields.get_field_mut(&current_field_type) {
+                field.deactivate_focus()
+            }
 
-        let mut idx = self.focus_state.selected().unwrap_or(0);
-        idx = if idx == 0 {
-            self.fields.len() - 1
-        } else {
-            idx - 1
-        };
+            let order = self.fields.get_order();
+            if let Some(pos) = order.iter().position(|x| current_field_type.eq(x)) {
+                let new_field_idx = if pos == 0 {
+                    self.fields.len() - 1
+                } else {
+                    pos - 1
+                };
+                let new_field_type = self.fields.get_order()[new_field_idx].to_owned();
 
-        self.focus_state.select(Some(idx));
-        if let Some(new_field) = self.fields.get_mut(idx) {
-            new_field.toggle_focus()
-        };
+                // selects the new field type
+                self.focus_state.select(Some(new_field_type));
+                if let Some(new_field_type) = self.focus_state.selected() {
+                    if let Some(field) = self.fields.get_field_mut(&new_field_type) {
+                        field.activate_focus()
+                    }
+                }
+            }
+        }
     }
 
-    pub fn selected_field_mut(&mut self) -> Option<&mut Field<'a>> {
-        let idx = self.focus_state.selected().unwrap_or(0);
-        self.fields.get_mut(idx)
+    pub fn selected_field(&mut self) -> Option<&mut Field<'a>> {
+        if let Some(selected) = self.focus_state.selected() {
+            self.fields.get_mut(&selected)
+        } else {
+            None
+        }
     }
 
     pub fn build_new_command(&mut self) -> Command {
         let mut command_builder = CommandBuilder::default();
-
         self.fields
             .iter_mut()
-            .for_each(|field| match field.field_type {
+            .for_each(|(field_type, field)| match field_type {
                 FieldType::Alias => {
                     command_builder.alias(field.input_as_string());
                 }
@@ -123,7 +139,7 @@ impl<'a> FieldContext<'a> {
             .unwrap();
         self.fields
             .iter_mut()
-            .for_each(|field| match field.field_type {
+            .for_each(|(field_type, field)| match field_type {
                 FieldType::Alias => command.alias = field.input_as_string(),
                 FieldType::Command => command.command = field.input_as_string(),
                 FieldType::Namespace => command.namespace = field.input_as_string(),
@@ -161,15 +177,11 @@ impl<'a> FieldContext<'a> {
         self.selected_command = selected_command
     }
 
-    pub fn build_form_fields(&mut self) {
-        self.fields = Fields::default()
-    }
-
     pub fn set_selected_command_input(&mut self) {
         let selected_command = self.selected_command.as_mut();
         if let Some(current_command) = selected_command {
-            self.fields.iter_mut().for_each(|field| {
-                match field.field_type {
+            self.fields.iter_mut().for_each(|(field_type, field)| {
+                match field_type {
                     FieldType::Alias => {
                         field.text_area = TextArea::from(vec![current_command.alias.clone()]);
                         field.text_area.move_cursor(Bottom);
@@ -187,7 +199,6 @@ impl<'a> FieldContext<'a> {
                         field.text_area.move_cursor(Bottom);
                         field.text_area.move_cursor(End);
                     }
-
                     FieldType::Namespace => {
                         field.text_area = TextArea::from(vec![current_command.namespace.clone()]);
                         field.text_area.move_cursor(Bottom);
@@ -257,47 +268,75 @@ mod test {
         description.on_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
         tags.on_input(KeyEvent::new(KeyCode::Char('t'), KeyModifiers::NONE));
 
-        return Fields(vec![alias, namespace, command, description, tags]);
+        let map = vec![alias, namespace, command, description, tags]
+            .into_iter()
+            .map(|f| (f.field_type.to_owned(), f))
+            .collect();
+        let order = [
+            FieldType::Alias,
+            FieldType::Namespace,
+            FieldType::Command,
+            FieldType::Description,
+            FieldType::Tags,
+        ]
+        .to_vec();
+
+        Fields::from((map, order))
     }
 
     #[test]
     fn should_move_to_next_field() {
         let mut field_context = FieldContext::default();
-        field_context.focus_state.select(Some(0));
+        field_context.focus_state.select(Some(FieldType::Alias));
 
         field_context.next_field();
-        assert_eq!(field_context.focus_state.selected(), Some(1));
-        assert_eq!(field_context.fields[0].in_focus(), false);
-        assert_eq!(field_context.fields[1].in_focus(), true);
+        assert_eq!(
+            field_context.focus_state.selected(),
+            Some(FieldType::Namespace)
+        );
+        assert_eq!(field_context.fields[&FieldType::Alias].in_focus(), false);
+        assert_eq!(field_context.fields[&FieldType::Namespace].in_focus(), true);
 
         field_context.next_field();
-        assert_eq!(field_context.focus_state.selected(), Some(2));
-        assert_eq!(field_context.fields[1].in_focus(), false);
-        assert_eq!(field_context.fields[2].in_focus(), true);
+        assert_eq!(
+            field_context.focus_state.selected(),
+            Some(FieldType::Command)
+        );
+        assert_eq!(
+            field_context.fields[&FieldType::Namespace].in_focus(),
+            false
+        );
+        assert_eq!(field_context.fields[&FieldType::Command].in_focus(), true);
     }
 
     #[test]
     fn should_move_to_previous_field() {
         let mut field_context = FieldContext::default();
-        field_context.focus_state.select(Some(0));
+        field_context.focus_state.select(Some(FieldType::Alias));
 
         field_context.previous_field();
-        assert_eq!(field_context.focus_state.selected(), Some(4));
-        assert_eq!(field_context.fields[0].in_focus(), false);
-        assert_eq!(field_context.fields[4].in_focus(), true);
+        assert_eq!(field_context.focus_state.selected(), Some(FieldType::Tags));
+        assert_eq!(field_context.fields[&FieldType::Alias].in_focus(), false);
+        assert_eq!(field_context.fields[&FieldType::Tags].in_focus(), true);
 
         field_context.previous_field();
-        assert_eq!(field_context.focus_state.selected(), Some(3));
-        assert_eq!(field_context.fields[4].in_focus(), false);
-        assert_eq!(field_context.fields[3].in_focus(), true);
+        assert_eq!(
+            field_context.focus_state.selected(),
+            Some(FieldType::Description)
+        );
+        assert_eq!(field_context.fields[&FieldType::Tags].in_focus(), false);
+        assert_eq!(
+            field_context.fields[&FieldType::Description].in_focus(),
+            true
+        );
     }
 
     #[test]
     fn should_return_the_selected_field() {
         let mut field_context = FieldContext::default();
 
-        field_context.focus_state.select(Some(1));
-        let selected_field = field_context.selected_field_mut();
+        field_context.focus_state.select(Some(FieldType::Namespace));
+        let selected_field = field_context.selected_field();
         assert_eq!(selected_field.unwrap().field_type, FieldType::Namespace);
     }
 
@@ -318,7 +357,6 @@ mod test {
     #[test]
     fn should_set_input_based_at_selected_command() {
         let mut field_context = FieldContext::default();
-        field_context.build_form_fields();
         let selected_command = Command {
             alias: String::from("alias"),
             command: String::from("command"),

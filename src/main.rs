@@ -13,13 +13,13 @@ use cli::{
         share::share_subcommand,
     },
 };
-use gui::entities::tui_application::TuiApplication;
 use resources::{
     config::Config,
     logger::{self, ErrorInterceptor},
 };
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let config = Config::load()?;
     logger::init(config.get_log_level(), config.get_app_home_dir())?;
 
@@ -32,11 +32,11 @@ fn main() -> Result<()> {
         Some(SubCommand::Config(sub_command_config)) => {
             config_subcommand(sub_command_config, config)
         }
-        _ => run_main_app(config),
+        _ => run_main_app(config).await,
     }
     .log_if_error()
 }
 
-fn run_main_app(config: Config) -> Result<()> {
-    TuiApplication::create(config)?.render()
+async fn run_main_app(config: Config) -> Result<()> {
+    gui::core::init(config).await
 }

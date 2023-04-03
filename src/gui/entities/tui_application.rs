@@ -1,11 +1,8 @@
-use crate::{
-    gui::{
-        entities::application_context::ApplicationContext,
-        key_handlers,
-        layouts::{get_terminal_size, select_ui},
-    },
-    resources::{config::Config, file_service::FileService},
+use super::{
+    application_context::ApplicationContext, events::input_events::InputMessages,
+    ui_context::UIContext,
 };
+use crate::gui::layouts::{get_terminal_size, select_ui};
 use anyhow::Result;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event},
@@ -13,16 +10,33 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use log::{debug, error};
-use std::{io, panic};
+use parking_lot::Mutex;
+use std::{
+    io, panic,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+    time::Duration,
+};
+use tokio::sync::mpsc::Sender;
 use tui::{backend::CrosstermBackend, Terminal};
 
 pub struct TuiApplication<'a> {
     pub terminal: Terminal<CrosstermBackend<std::io::Stdout>>,
-    pub context: ApplicationContext<'a>,
+    pub input_sx: Sender<InputMessages>,
+    pub should_quit: Arc<AtomicBool>,
+    pub ui_context: Arc<Mutex<UIContext<'a>>>,
+    context: Arc<Mutex<ApplicationContext>>,
 }
 
 impl<'a> TuiApplication<'a> {
-    pub fn create(config: Config) -> Result<TuiApplication<'a>> {
+    pub fn create(
+        input_sx: Sender<InputMessages>,
+        should_quit: Arc<AtomicBool>,
+        ui_context: Arc<Mutex<UIContext<'a>>>,
+        context: Arc<Mutex<ApplicationContext>>,
+    ) -> Result<TuiApplication<'a>> {
         Self::handle_panic();
         // setup terminal
         enable_raw_mode()?;
@@ -32,25 +46,34 @@ impl<'a> TuiApplication<'a> {
         let mut terminal = Terminal::new(backend)?;
         terminal.hide_cursor()?;
 
-        let size = get_terminal_size(&terminal.get_frame());
-        let file_service = FileService::new(config.get_command_file_path()?);
-        let commands = file_service.load_commands_from_file()?;
-        let context = ApplicationContext::init(commands, size, file_service, config.get_options());
-
-        Ok(TuiApplication { terminal, context })
+        Ok(TuiApplication {
+            terminal,
+            input_sx,
+            should_quit,
+            ui_context,
+            context,
+        })
     }
 
-    pub fn render(&mut self) -> Result<()> {
-        loop {
+    pub async fn render(&mut self) -> Result<()> {
+        while !self.should_quit.load(Ordering::SeqCst) {
             self.terminal
-                .draw(|frame| select_ui(frame, &mut self.context))?;
-            if let Event::Key(key) = event::read()? {
-                key_handlers::handle(key, &mut self.context);
-                if self.context.should_quit() {
-                    return Ok(());
+                .draw(|frame| select_ui(frame, &mut self.ui_context, &mut self.context))?;
+            if event::poll(Duration::from_millis(100)).unwrap_or(false) {
+                if let Ok(event) = event::read() {
+                    if let Event::Key(key) = event {
+                        self.input_sx.send(InputMessages::KeyPress(key)).await.ok();
+                    } else if let Event::Resize(_, _) = event {
+                        self.ui_context
+                            .lock()
+                            .resize_to(get_terminal_size(&self.terminal.get_frame()))
+                    }
                 }
             }
         }
+
+        debug!("quiting tui app loop");
+        Ok(())
     }
 
     fn handle_panic() {
@@ -75,12 +98,12 @@ impl<'a> TuiApplication<'a> {
     }
 
     fn callback(&self) -> Result<()> {
-        debug!("executing the callback command");
-        self.context.execute_callback_command()
+        self.context.lock().execute_callback_command()?;
+        Ok(())
     }
 }
 
-impl<'a> Drop for TuiApplication<'a> {
+impl Drop for TuiApplication<'_> {
     fn drop(&mut self) {
         self.clear().expect("Cannot clear the the screen");
         self.callback()

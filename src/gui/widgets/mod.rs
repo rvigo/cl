@@ -5,6 +5,7 @@ pub mod fields;
 pub mod footer;
 pub mod help_footer;
 pub mod help_popup;
+pub mod highlight;
 pub mod navigation_footer;
 pub mod popup;
 pub mod query_box;

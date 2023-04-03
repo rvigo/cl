@@ -1,4 +1,7 @@
-use crate::gui::layouts::{centered_rect, TerminalSize, ViewMode, DEFAULT_SELECTED_COLOR};
+use crate::gui::{
+    entities::ui_state::ViewMode,
+    layouts::{centered_rect, TerminalSize, DEFAULT_SELECTED_COLOR},
+};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Rect},

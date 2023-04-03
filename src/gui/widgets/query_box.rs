@@ -1,3 +1,4 @@
+use super::footer::Footer;
 use crate::gui::layouts::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crossterm::event::{KeyCode, KeyEvent};
 use tui::{
@@ -8,8 +9,6 @@ use tui::{
 };
 use tui_textarea::TextArea;
 
-use super::footer::Footer;
-
 #[derive(Clone)]
 pub struct QueryBox<'a> {
     text_area: TextArea<'a>,
@@ -17,7 +16,9 @@ pub struct QueryBox<'a> {
     on_focus: bool,
     buffer: String,
 }
+
 impl<'a> Footer for QueryBox<'a> {}
+
 impl<'a> Default for QueryBox<'a> {
     fn default() -> Self {
         Self {
@@ -43,12 +44,12 @@ impl<'a> QueryBox<'a> {
         }
     }
 
-    pub fn toggle_focus(&mut self) {
-        self.on_focus = !self.on_focus
+    pub fn activate_focus(&mut self) {
+        self.on_focus = true
     }
 
-    pub fn is_on_focus(&self) -> bool {
-        self.on_focus
+    pub fn deactivate_focus(&mut self) {
+        self.on_focus = false
     }
 
     pub fn get_input(&self) -> String {
