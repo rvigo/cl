@@ -1,3 +1,4 @@
+use super::{display::DisplayWidget, footer::Footer};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -5,12 +6,11 @@ use tui::{
     widgets::{Block, BorderType, Borders, Widget},
 };
 
-use super::{display::DisplayWidget, footer::Footer};
-
 #[derive(Clone)]
 pub struct HelpFooter {
     pub content: String,
 }
+
 impl HelpFooter {
     pub fn new() -> HelpFooter {
         Self {

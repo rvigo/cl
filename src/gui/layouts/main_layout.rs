@@ -10,7 +10,7 @@ use crate::{
         },
         widgets::{
             base_widget::BaseWidget, display::DisplayWidget, help_footer::HelpFooter,
-            help_popup::HelpPopup, query_box::QueryBox,
+            help_popup::HelpPopup, highlight::Highlight, query_box::QueryBox,
         },
     },
 };
@@ -221,9 +221,7 @@ fn create_display_widget<'a>(
     content: &'a str,
     should_highligh: bool,
 ) -> DisplayWidget<'a> {
-    DisplayWidget::new(content, true, should_highligh)
-        .title(title)
-        .block(get_default_block(title))
+    DisplayWidget::new(content, true, should_highligh).block(get_default_block(title))
 }
 
 fn create_tab_menu_widget<'a>(namespaces_context: &NamespacesContext) -> Tabs<'a> {
