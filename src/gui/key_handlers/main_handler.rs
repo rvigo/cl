@@ -1,17 +1,21 @@
-use super::KeyHandler;
-use crate::gui::entities::application_context::ApplicationContext;
+use super::KeyEventHandler;
+use crate::gui::entities::events::app_events::{
+    AppEvents, CommandEvents, MainScreenEvent, PopupCallbackAction, PopupEvent, PopupType,
+    QueryboxEvent, RenderEvents, ScreenEvents,
+};
+use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-pub struct MainHandler;
+pub struct MainScreenHandler;
 
-impl KeyHandler for MainHandler {
-    fn handle(&self, key_event: KeyEvent, context: &mut ApplicationContext) {
+impl KeyEventHandler for MainScreenHandler {
+    fn handle(&self, key_event: KeyEvent) -> Result<Option<AppEvents>> {
         match key_event {
             KeyEvent {
                 code: KeyCode::Char('f'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => context.toogle_querybox_focus(),
+            } => Ok(Some(AppEvents::QueryBox(QueryboxEvent::Active))),
             KeyEvent {
                 code: KeyCode::Char('q') | KeyCode::Esc,
                 modifiers: KeyModifiers::NONE,
@@ -21,9 +25,7 @@ impl KeyHandler for MainHandler {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
                 ..
-            } => {
-                context.quit();
-            }
+            } => Ok(Some(AppEvents::Quit)),
             KeyEvent {
                 code: KeyCode::Left | KeyCode::Char('h'),
                 modifiers: KeyModifiers::NONE,
@@ -33,9 +35,9 @@ impl KeyHandler for MainHandler {
                 code: KeyCode::BackTab,
                 modifiers: KeyModifiers::SHIFT,
                 ..
-            } => {
-                context.previous_namespace();
-            }
+            } => Ok(Some(AppEvents::Screen(ScreenEvents::Main(
+                MainScreenEvent::PreviousNamespace,
+            )))),
             KeyEvent {
                 code: KeyCode::Right | KeyCode::Char('l'),
                 modifiers: KeyModifiers::NONE,
@@ -45,50 +47,54 @@ impl KeyHandler for MainHandler {
                 code: KeyCode::Tab,
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => {
-                context.next_namespace();
-            }
+            } => Ok(Some(AppEvents::Screen(ScreenEvents::Main(
+                MainScreenEvent::NextNamespace,
+            )))),
             KeyEvent {
                 code: KeyCode::Down | KeyCode::Char('k'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => {
-                context.next_command();
-            }
+            } => Ok(Some(AppEvents::Screen(ScreenEvents::Main(
+                MainScreenEvent::NextCommand,
+            )))),
             KeyEvent {
                 code: KeyCode::Up | KeyCode::Char('j'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => {
-                context.previous_command();
-            }
+            } => Ok(Some(AppEvents::Screen(ScreenEvents::Main(
+                MainScreenEvent::PreviousCommand,
+            )))),
             KeyEvent {
                 code: KeyCode::Insert | KeyCode::Char('i'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => context.enter_insert_mode(),
+            } => Ok(Some(AppEvents::Render(RenderEvents::Insert))),
             KeyEvent {
                 code: KeyCode::Char('e'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => context.enter_edit_mode(),
-
+            } => Ok(Some(AppEvents::Render(RenderEvents::Edit))),
             KeyEvent {
                 code: KeyCode::Char('d') | KeyCode::Delete,
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => context.show_delete_popup(),
+            } => Ok(Some(AppEvents::Popup(PopupEvent::Enable(
+                PopupType::Dialog {
+                    message: "Are you sure you want to delete the command?".to_owned(),
+                    callback_action: PopupCallbackAction::Delete,
+                },
+            )))),
             KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => context.set_callback_command(),
+            } => Ok(Some(AppEvents::Run(CommandEvents::Execute))),
             KeyEvent {
                 code: KeyCode::F(1) | KeyCode::Char('?'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => context.set_show_help(true),
-            _ => {}
+            } => Ok(Some(AppEvents::Popup(PopupEvent::Enable(PopupType::Help)))),
+            _ => Ok(None),
         }
     }
 }

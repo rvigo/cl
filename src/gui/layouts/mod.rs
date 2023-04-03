@@ -1,8 +1,11 @@
 mod form_layout;
 mod main_layout;
 
-use crate::gui::entities::application_context::ApplicationContext;
-use std::{fmt, io::Stdout};
+use super::entities::{
+    application_context::ApplicationContext, ui_context::UIContext, ui_state::ViewMode,
+};
+use parking_lot::Mutex;
+use std::{io::Stdout, sync::Arc};
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -14,9 +17,10 @@ use tui::{
 pub const DEFAULT_TEXT_COLOR: Color = Color::Rgb(229, 229, 229);
 pub const DEFAULT_SELECTED_COLOR: Color = Color::Rgb(201, 165, 249);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub enum TerminalSize {
     Small,
+    #[default]
     Medium,
     Large,
 }
@@ -29,24 +33,6 @@ pub fn get_terminal_size<B: Backend>(frame: &Frame<B>) -> TerminalSize {
         TerminalSize::Medium
     } else {
         TerminalSize::Large
-    }
-}
-
-#[derive(Clone, Default, PartialEq, Eq)]
-pub enum ViewMode {
-    #[default]
-    Main,
-    Insert,
-    Edit,
-}
-
-impl fmt::Display for ViewMode {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ViewMode::Main => write!(f, "Main"),
-            ViewMode::Insert => write!(f, "Insert"),
-            ViewMode::Edit => write!(f, "Edit"),
-        }
     }
 }
 
@@ -101,19 +87,21 @@ where
 
 pub fn select_ui(
     frame: &mut Frame<CrosstermBackend<Stdout>>,
-    application_context: &mut ApplicationContext,
+    ui_context: &mut Arc<Mutex<UIContext>>,
+    context: &mut Arc<Mutex<ApplicationContext>>,
 ) {
-    application_context.update_terminal_size(get_terminal_size(frame));
-    match application_context.view_mode() {
-        ViewMode::Main => main_layout::render(
-            frame,
-            application_context,
-            application_context.terminal_size(),
-        ),
-        ViewMode::Insert | ViewMode::Edit => form_layout::render(
-            frame,
-            application_context,
-            application_context.terminal_size(),
-        ),
-    };
+    let mut ui_context = ui_context.lock();
+    let actual_terminal_size = get_terminal_size(frame);
+    let current_terminal_size = &ui_context.terminal_size();
+
+    // check size of the terminal
+    if !actual_terminal_size.eq(current_terminal_size) {
+        ui_context.set_terminal_size(actual_terminal_size);
+        ui_context.order_fields();
+    }
+
+    match ui_context.view_mode() {
+        ViewMode::Main => main_layout::render(frame, context, &mut ui_context),
+        ViewMode::Edit | ViewMode::Insert => form_layout::render(frame, &mut ui_context),
+    }
 }

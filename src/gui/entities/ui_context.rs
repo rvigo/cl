@@ -1,11 +1,15 @@
-use super::{field_context::FieldContext, popup_context::PopupContext};
+use super::{
+    events::app_events::PopupCallbackAction,
+    field_context::FieldContext,
+    popup_context::PopupContext,
+    ui_state::{UiState, ViewMode},
+};
 use crate::{
     command::Command,
     gui::{
-        layouts::{TerminalSize, ViewMode},
+        layouts::TerminalSize,
         widgets::{
             field::{Field, FieldType},
-            fields::Fields,
             popup::{Answer, ChoicesState, Popup},
             query_box::QueryBox,
         },
@@ -13,47 +17,34 @@ use crate::{
 };
 use crossterm::event::KeyEvent;
 
+#[derive(Clone)]
 pub struct UIContext<'a> {
     form_fields_context: FieldContext<'a>,
-    popup_context: PopupContext<'a>,
+    popup_context: PopupContext,
+    ui_state: UiState,
     query_box: QueryBox<'a>,
-    terminal_size: TerminalSize,
-    view_mode: ViewMode,
 }
 
 impl<'a> UIContext<'a> {
-    pub fn new(terminal_size: TerminalSize) -> UIContext<'a> {
+    pub fn new() -> UIContext<'a> {
         let mut context = UIContext {
             form_fields_context: FieldContext::default(),
             popup_context: PopupContext::new(),
+            ui_state: UiState::new(TerminalSize::default()),
             query_box: QueryBox::default(),
-            terminal_size,
-            view_mode: ViewMode::Main,
         };
-        context.select_form_idx(Some(0));
+        context.select_form_field_type(Some(FieldType::default()));
         context.select_command(None);
         context
     }
 
-    pub fn view_mode(&self) -> &ViewMode {
-        &self.view_mode
+    //// popup
+    pub fn set_dialog_popup(&mut self, message: String, callback_action: PopupCallbackAction) {
+        self.set_popup(Some(Popup::from_warning(message, callback_action)))
     }
 
-    pub fn set_view_mode(&mut self, view_mode: ViewMode) {
-        self.view_mode = view_mode
-    }
-
-    pub fn terminal_size(&self) -> TerminalSize {
-        self.terminal_size.to_owned()
-    }
-
-    pub fn update_terminal_size(&mut self, new_size: TerminalSize) {
-        self.terminal_size = new_size;
-        self.reorder_fields()
-    }
-
-    pub fn build_form_fields(&mut self) {
-        self.form_fields_context.build_form_fields()
+    pub fn set_error_popup(&mut self, message: String) {
+        self.set_popup(Some(Popup::from_error(message, None)))
     }
 
     pub fn get_selected_command(&self) -> Option<&Command> {
@@ -68,11 +59,13 @@ impl<'a> UIContext<'a> {
         self.form_fields_context.select_command(selected_command)
     }
 
-    pub fn select_form_idx(&mut self, idx: Option<usize>) {
-        self.form_fields_context.get_focus_state_mut().select(idx);
+    pub fn select_form_field_type(&mut self, field_type: Option<FieldType>) {
+        self.form_fields_context
+            .get_focus_state_mut()
+            .select(field_type);
     }
 
-    pub fn get_form_fields(&self) -> &Fields {
+    pub fn get_form_fields(&self) -> Vec<Field> {
         self.form_fields_context.get_fields()
     }
 
@@ -85,7 +78,7 @@ impl<'a> UIContext<'a> {
     }
 
     pub fn get_selected_form_field_mut(&mut self) -> Option<&mut Field<'a>> {
-        self.form_fields_context.selected_field_mut()
+        self.form_fields_context.selected_field()
     }
 
     pub fn next_form_field(&mut self) {
@@ -100,8 +93,12 @@ impl<'a> UIContext<'a> {
         self.query_box.get_input()
     }
 
-    pub fn toogle_querybox_focus(&mut self) {
-        self.query_box.toggle_focus()
+    pub fn activate_focus(&mut self) {
+        self.query_box.activate_focus()
+    }
+
+    pub fn deactivate_focus(&mut self) {
+        self.query_box.deactivate_focus()
     }
 
     pub fn querybox(&self) -> QueryBox {
@@ -112,15 +109,11 @@ impl<'a> UIContext<'a> {
         self.query_box.handle(key_event)
     }
 
-    pub fn querybox_focus(&self) -> bool {
-        self.query_box.is_on_focus()
-    }
-
-    pub fn popup(&self) -> Option<Popup<'a>> {
+    pub fn popup(&self) -> Option<Popup> {
         self.popup_context.get_popup()
     }
 
-    pub fn set_popup(&mut self, popup: Option<Popup<'a>>) {
+    pub fn set_popup(&mut self, popup: Option<Popup>) {
         self.popup_context.set_popup(popup);
     }
 
@@ -132,64 +125,87 @@ impl<'a> UIContext<'a> {
         self.popup_context.clear()
     }
 
-    pub fn next_choice(&mut self, choices: Vec<Answer>) {
-        self.popup_context.state_mut().next(choices)
+    pub fn next_choice(&mut self) {
+        if let Some(popup) = self.popup() {
+            self.popup_context.state_mut().next(popup.choices())
+        }
     }
 
-    pub fn previous_choice(&mut self, choices: Vec<Answer>) {
-        self.popup_context.state_mut().previous(choices)
+    pub fn previous_choice(&mut self) {
+        if let Some(popup) = self.popup() {
+            self.popup_context.state_mut().previous(popup.choices())
+        }
     }
 
-    pub fn get_selected_choice(&self) -> Option<usize> {
-        self.popup_context.state().selected()
+    pub fn get_selected_choice(&self) -> Option<Answer> {
+        if let Some(choice) = self.popup_context.state().selected() {
+            self.popup().map(|popup| popup.choices()[choice].clone())
+        } else {
+            None
+        }
     }
 
     pub fn get_choices_state_mut(&mut self) -> &mut ChoicesState {
         self.popup_context.state_mut()
     }
 
-    pub fn enter_main_mode(&mut self) {
-        self.select_form_idx(Some(0));
-        self.set_view_mode(ViewMode::Main);
+    pub fn reset_form_field_selected_idx(&mut self) {
+        self.select_form_field_type(Some(FieldType::default()));
     }
 
-    fn reorder_fields(&mut self) {
-        match &self.terminal_size {
-            TerminalSize::Small => {
-                let order = vec![
-                    FieldType::Alias,
-                    FieldType::Namespace,
-                    FieldType::Description,
-                    FieldType::Tags,
-                    FieldType::Command,
-                ];
-                let fields = &mut self.form_fields_context.get_fields_mut();
-
-                fields.sort_by(|a, b| {
-                    order
-                        .iter()
-                        .position(|x| x.eq(&a.field_type))
-                        .cmp(&order.iter().position(|x| x.eq(&b.field_type)))
-                });
-            }
-
-            TerminalSize::Medium | TerminalSize::Large => {
-                let order = vec![
-                    FieldType::Alias,
-                    FieldType::Namespace,
-                    FieldType::Command,
-                    FieldType::Description,
-                    FieldType::Tags,
-                ];
-                let fields = &mut self.form_fields_context.get_fields_mut();
-
-                fields.sort_by(|a, b| {
-                    order
-                        .iter()
-                        .position(|x| x.eq(&a.field_type))
-                        .cmp(&order.iter().position(|x| x.eq(&b.field_type)))
-                });
-            }
+    pub fn handle_form_input(&mut self, input: KeyEvent) {
+        if let Some(selected_field) = self.get_selected_form_field_mut() {
+            selected_field.on_input(input)
         }
+    }
+
+    pub fn resize_to(&mut self, size: TerminalSize) {
+        self.ui_state.set_terminal_size(size);
+        self.order_fields();
+    }
+
+    pub fn order_fields(&mut self) {
+        let size = &self.ui_state.terminal_size();
+        self.form_fields_context.order_field_by_size(size)
+    }
+
+    pub fn querybox_focus(&self) -> bool {
+        self.ui_state.querybox_focus()
+    }
+
+    pub fn set_querybox_focus(&mut self, focus: bool) {
+        self.ui_state.set_querybox_focus(focus)
+    }
+
+    pub fn view_mode(&self) -> ViewMode {
+        self.ui_state.view_mode()
+    }
+
+    pub fn set_view_mode(&mut self, view_mode: ViewMode) {
+        self.ui_state.set_view_mode(view_mode)
+    }
+
+    pub fn terminal_size(&self) -> &TerminalSize {
+        self.ui_state.terminal_size()
+    }
+
+    pub fn set_terminal_size(&mut self, terminal_size: TerminalSize) {
+        self.ui_state.set_terminal_size(terminal_size)
+    }
+
+    pub fn show_popup(&self) -> bool {
+        self.ui_state.show_popup()
+    }
+
+    pub fn set_show_popup(&mut self, should_show: bool) {
+        self.ui_state.set_show_popup(should_show)
+    }
+
+    pub fn show_help(&self) -> bool {
+        self.ui_state.show_help()
+    }
+
+    pub fn set_show_help(&mut self, should_show: bool) {
+        self.ui_state.set_show_help(should_show)
     }
 }
