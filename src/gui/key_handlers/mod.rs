@@ -14,9 +14,5 @@ pub trait KeyEventHandler {
 }
 
 pub trait WidgetKeyEventHandler {
-    fn handle<'a>(
-        &self,
-        key_event: KeyEvent,
-        ui_context: &mut UIContext<'a>,
-    ) -> Result<Option<AppEvents>>;
+    fn handle(&self, key_event: KeyEvent, ui_context: &mut UIContext) -> Result<Option<AppEvents>>;
 }
