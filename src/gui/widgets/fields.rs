@@ -1,13 +1,9 @@
 use super::field::{Field, FieldType};
-use crate::gui::layouts::{get_style, TerminalSize};
+use crate::gui::layouts::{get_default_block, get_style, TerminalSize};
 use log::debug;
 use std::{
     collections::HashMap,
     ops::{Deref, DerefMut},
-};
-use tui::{
-    style::Style,
-    widgets::{Block, BorderType, Borders},
 };
 
 const ORDER_SMALL_SIZE: &[FieldType] = &[
@@ -64,6 +60,15 @@ impl<'a> Fields<'a> {
     }
 }
 
+impl<'a> From<(HashMap<FieldType, Field<'a>>, Vec<FieldType>)> for Fields<'a> {
+    fn from(value: (HashMap<FieldType, Field<'a>>, Vec<FieldType>)) -> Self {
+        Fields {
+            items: value.0,
+            order: value.1,
+        }
+    }
+}
+
 impl Default for Fields<'_> {
     fn default() -> Self {
         let alias = forms_widget_factory(FieldType::Alias, true, false);
@@ -101,13 +106,7 @@ impl DerefMut for Fields<'_> {
 fn forms_widget_factory<'a>(field_type: FieldType, in_focus: bool, multiline: bool) -> Field<'a> {
     let title = field_type.to_string();
     let mut field = Field::new(&title, field_type, in_focus, multiline);
-    field.block(
-        Block::default()
-            .borders(Borders::ALL)
-            .style(Style::default())
-            .title(format!(" {} ", &title))
-            .border_type(BorderType::Plain),
-    );
+    field.block(get_default_block(title));
     field.style(get_style(in_focus));
 
     field

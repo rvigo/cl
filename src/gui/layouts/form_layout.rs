@@ -1,4 +1,4 @@
-use super::{centered_rect, TerminalSize};
+use super::{centered_rect, get_default_block, TerminalSize};
 use crate::gui::{
     entities::ui_context::UIContext,
     widgets::{
@@ -9,8 +9,6 @@ use crate::gui::{
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
-    style::Style,
-    widgets::{Block, BorderType, Borders},
     Frame,
 };
 
@@ -82,11 +80,8 @@ fn render_medium_form<B: Backend>(frame: &mut Frame<B>, ui_context: &UIContext) 
         )
         .split(chunks[0]);
 
-    let form_block = Block::default()
-        .borders(Borders::ALL)
-        .style(Style::default())
-        .title(format!(" {} ", ui_context.view_mode()))
-        .border_type(BorderType::Plain);
+    let form_block = get_default_block(ui_context.view_mode().to_string());
+
     let first_row = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
@@ -130,11 +125,7 @@ fn render_small_form<B: Backend>(frame: &mut Frame<B>, ui_context: &UIContext) {
         )
         .split(frame.size());
 
-    let form_block = Block::default()
-        .borders(Borders::ALL)
-        .style(Style::default())
-        .title(format!(" {} ", ui_context.view_mode()))
-        .border_type(BorderType::Plain);
+    let form_block = get_default_block(ui_context.view_mode().to_string());
     let first_row = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
