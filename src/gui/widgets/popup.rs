@@ -1,6 +1,6 @@
 use crate::gui::{
     entities::events::app_events::PopupCallbackAction,
-    layouts::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
+    layouts::{get_default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
 };
 use log::{error, warn};
 use std::fmt;
@@ -8,7 +8,7 @@ use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, BorderType, Borders, Clear, Paragraph, StatefulWidget, Tabs, Widget, Wrap},
+    widgets::{Block, Borders, Clear, Paragraph, StatefulWidget, Tabs, Widget, Wrap},
 };
 
 #[derive(Clone, Debug)]
@@ -126,12 +126,7 @@ impl StatefulWidget for Popup {
         buf: &mut tui::buffer::Buffer,
         state: &mut Self::State,
     ) {
-        let block = Block::default()
-            .borders(Borders::ALL)
-            .style(Style::default())
-            .title(self.message_type.to_owned().unwrap().to_string())
-            .title_alignment(Alignment::Left)
-            .border_type(BorderType::Plain);
+        let block = get_default_block(self.message_type.to_owned().unwrap().to_string());
         let p = Paragraph::new(self.message.clone())
             .style(Style::default().fg(DEFAULT_TEXT_COLOR))
             .alignment(Alignment::Left)
