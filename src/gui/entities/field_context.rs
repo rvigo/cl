@@ -233,125 +233,152 @@ impl<'a> FieldContext<'a> {
     }
 }
 
-// #[cfg(test)]
-// mod test {
-//     use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+#[cfg(test)]
+mod test {
+    use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-//     use super::*;
-//     fn create_fields() -> Fields<'static> {
-//         let mut alias = Field::new(String::from("alias"), FieldType::Alias, true, false);
-//         let mut command = Field::new(String::from("command"), FieldType::Command, false, true);
-//         let mut namespace = Field::new(
-//             String::from("namespace"),
-//             FieldType::Namespace,
-//             false,
-//             false,
-//         );
-//         let mut description = Field::new(
-//             String::from("description"),
-//             FieldType::Description,
-//             false,
-//             true,
-//         );
-//         let mut tags = Field::new(String::from("tags"), FieldType::Tags, false, false);
+    use super::*;
+    fn create_fields() -> Fields<'static> {
+        let mut alias = Field::new(String::from("alias"), FieldType::Alias, true, false);
+        let mut command = Field::new(String::from("command"), FieldType::Command, false, true);
+        let mut namespace = Field::new(
+            String::from("namespace"),
+            FieldType::Namespace,
+            false,
+            false,
+        );
+        let mut description = Field::new(
+            String::from("description"),
+            FieldType::Description,
+            false,
+            true,
+        );
+        let mut tags = Field::new(String::from("tags"), FieldType::Tags, false, false);
 
-//         alias.on_input(KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE));
-//         alias.on_input(KeyEvent::new(KeyCode::Char('l'), KeyModifiers::NONE));
-//         alias.on_input(KeyEvent::new(KeyCode::Char('i'), KeyModifiers::NONE));
-//         alias.on_input(KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE));
-//         alias.on_input(KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE));
-//         namespace.on_input(KeyEvent::new(KeyCode::Char('n'), KeyModifiers::NONE));
-//         command.on_input(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::NONE));
-//         // multifield description field
-//         description.on_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
-//         description.on_input(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
-//         description.on_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
-//         tags.on_input(KeyEvent::new(KeyCode::Char('t'), KeyModifiers::NONE));
+        alias.on_input(KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE));
+        alias.on_input(KeyEvent::new(KeyCode::Char('l'), KeyModifiers::NONE));
+        alias.on_input(KeyEvent::new(KeyCode::Char('i'), KeyModifiers::NONE));
+        alias.on_input(KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE));
+        alias.on_input(KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE));
+        namespace.on_input(KeyEvent::new(KeyCode::Char('n'), KeyModifiers::NONE));
+        command.on_input(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::NONE));
+        // multifield description field
+        description.on_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
+        description.on_input(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
+        description.on_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
+        tags.on_input(KeyEvent::new(KeyCode::Char('t'), KeyModifiers::NONE));
 
-//         return Fields(vec![alias, namespace, command, description, tags]);
-//     }
+        let map = vec![alias, namespace, command, description, tags]
+            .into_iter()
+            .map(|f| (f.field_type.to_owned(), f))
+            .collect();
+        let order = [
+            FieldType::Alias,
+            FieldType::Namespace,
+            FieldType::Command,
+            FieldType::Description,
+            FieldType::Tags,
+        ]
+        .to_vec();
 
-//     #[test]
-//     fn should_move_to_next_field() {
-//         let mut field_context = FieldContext::default();
-//         field_context.focus_state.select(Some(0));
+        Fields::from((map, order))
+    }
 
-//         field_context.next_field();
-//         assert_eq!(field_context.focus_state.selected(), Some(1));
-//         assert_eq!(field_context.fields[0].in_focus(), false);
-//         assert_eq!(field_context.fields[1].in_focus(), true);
+    #[test]
+    fn should_move_to_next_field() {
+        let mut field_context = FieldContext::default();
+        field_context.focus_state.select(Some(FieldType::Alias));
 
-//         field_context.next_field();
-//         assert_eq!(field_context.focus_state.selected(), Some(2));
-//         assert_eq!(field_context.fields[1].in_focus(), false);
-//         assert_eq!(field_context.fields[2].in_focus(), true);
-//     }
+        field_context.next_field();
+        assert_eq!(
+            field_context.focus_state.selected(),
+            Some(FieldType::Namespace)
+        );
+        assert_eq!(field_context.fields[&FieldType::Alias].in_focus(), false);
+        assert_eq!(field_context.fields[&FieldType::Namespace].in_focus(), true);
 
-//     #[test]
-//     fn should_move_to_previous_field() {
-//         let mut field_context = FieldContext::default();
-//         field_context.focus_state.select(Some(0));
+        field_context.next_field();
+        assert_eq!(
+            field_context.focus_state.selected(),
+            Some(FieldType::Command)
+        );
+        assert_eq!(
+            field_context.fields[&FieldType::Namespace].in_focus(),
+            false
+        );
+        assert_eq!(field_context.fields[&FieldType::Command].in_focus(), true);
+    }
 
-//         field_context.previous_field();
-//         assert_eq!(field_context.focus_state.selected(), Some(4));
-//         assert_eq!(field_context.fields[0].in_focus(), false);
-//         assert_eq!(field_context.fields[4].in_focus(), true);
+    #[test]
+    fn should_move_to_previous_field() {
+        let mut field_context = FieldContext::default();
+        field_context.focus_state.select(Some(FieldType::Alias));
 
-//         field_context.previous_field();
-//         assert_eq!(field_context.focus_state.selected(), Some(3));
-//         assert_eq!(field_context.fields[4].in_focus(), false);
-//         assert_eq!(field_context.fields[3].in_focus(), true);
-//     }
+        field_context.previous_field();
+        assert_eq!(field_context.focus_state.selected(), Some(FieldType::Tags));
+        assert_eq!(field_context.fields[&FieldType::Alias].in_focus(), false);
+        assert_eq!(field_context.fields[&FieldType::Tags].in_focus(), true);
 
-//     #[test]
-//     fn should_return_the_selected_field() {
-//         let mut field_context = FieldContext::default();
+        field_context.previous_field();
+        assert_eq!(
+            field_context.focus_state.selected(),
+            Some(FieldType::Description)
+        );
+        assert_eq!(field_context.fields[&FieldType::Tags].in_focus(), false);
+        assert_eq!(
+            field_context.fields[&FieldType::Description].in_focus(),
+            true
+        );
+    }
 
-//         field_context.focus_state.select(Some(1));
-//         let selected_field = field_context.selected_field_mut();
-//         assert_eq!(selected_field.unwrap().field_type, FieldType::Namespace);
-//     }
+    #[test]
+    fn should_return_the_selected_field() {
+        let mut field_context = FieldContext::default();
 
-//     #[test]
-//     fn should_build_a_new_command() {
-//         let mut field_context = FieldContext::default();
-//         field_context.fields = create_fields();
-//         let command = field_context.build_new_command();
+        field_context.focus_state.select(Some(FieldType::Namespace));
+        let selected_field = field_context.selected_field();
+        assert_eq!(selected_field.unwrap().field_type, FieldType::Namespace);
+    }
 
-//         assert!(command.validate().is_ok());
-//         assert_eq!(command.alias, "alias");
-//         assert_eq!(command.command, "c");
-//         assert_eq!(command.namespace, "n");
-//         assert_eq!(command.description, Some("d\nd".to_string()));
-//         assert_eq!(command.tags, Some(vec!["t".to_string(),]));
-//     }
+    #[test]
+    fn should_build_a_new_command() {
+        let mut field_context = FieldContext::default();
+        field_context.fields = create_fields();
+        let command = field_context.build_new_command();
 
-//     #[test]
-//     fn should_set_input_based_at_selected_command() {
-//         let mut field_context = FieldContext::default();
-//         field_context.build_form_fields();
-//         let selected_command = Command {
-//             alias: String::from("alias"),
-//             command: String::from("command"),
-//             namespace: String::from("namespace"),
-//             description: None,
-//             tags: Some(vec![String::from("tag1"), String::from("tag2")]),
-//         };
-//         field_context.select_command(Some(selected_command));
-//         field_context.set_selected_command_input();
+        assert!(command.validate().is_ok());
+        assert_eq!(command.alias, "alias");
+        assert_eq!(command.command, "c");
+        assert_eq!(command.namespace, "n");
+        assert_eq!(command.description, Some("d\nd".to_string()));
+        assert_eq!(command.tags, Some(vec!["t".to_string(),]));
+    }
 
-//         let command = field_context.selected_command();
+    #[test]
+    fn should_set_input_based_at_selected_command() {
+        let mut field_context = FieldContext::default();
+        let selected_command = Command {
+            alias: String::from("alias"),
+            command: String::from("command"),
+            namespace: String::from("namespace"),
+            description: None,
+            tags: Some(vec![String::from("tag1"), String::from("tag2")]),
+        };
+        field_context.select_command(Some(selected_command));
+        field_context.set_selected_command_input();
 
-//         assert!(command.is_some());
-//         let command = command.unwrap();
+        let command = field_context.selected_command();
 
-//         assert_eq!(command.alias, "alias");
-//         assert_eq!(command.command, "command");
-//         assert_eq!(command.namespace, "namespace");
-//         assert_eq!(command.description, None);
-//         assert_eq!(
-//             command.tags,
-//             Some(vec![String::from("tag1"), String::from("tag2")])
-//         );
-//     }
-// }
+        assert!(command.is_some());
+        let command = command.unwrap();
+
+        assert_eq!(command.alias, "alias");
+        assert_eq!(command.command, "command");
+        assert_eq!(command.namespace, "namespace");
+        assert_eq!(command.description, None);
+        assert_eq!(
+            command.tags,
+            Some(vec![String::from("tag1"), String::from("tag2")])
+        );
+    }
+}
