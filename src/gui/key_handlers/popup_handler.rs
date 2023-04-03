@@ -12,11 +12,7 @@ use crossterm::event::{KeyCode, KeyEvent};
 pub struct PopupHandler;
 
 impl WidgetKeyEventHandler for PopupHandler {
-    fn handle<'a>(
-        &self,
-        key_event: KeyEvent,
-        ui_context: &mut UIContext<'a>,
-    ) -> Result<Option<AppEvents>> {
+    fn handle(&self, key_event: KeyEvent, ui_context: &mut UIContext) -> Result<Option<AppEvents>> {
         if let Some(popup) = ui_context.popup().as_mut() {
             if let Some(message_type) = popup.message_type().as_ref() {
                 match message_type {
