@@ -128,13 +128,13 @@ impl From<Vec<String>> for CommandArgs {
             let parts: Vec<&str> = arg.splitn(2, '=').collect();
             if parts[0].starts_with("--") {
                 command_arg.arg = parts[0].replacen("--", "", 1);
-                command_arg.prefix = "--".to_string();
+                command_arg.prefix = "--".to_owned();
             } else {
-                command_arg.arg = parts[0].to_string();
+                command_arg.arg = parts[0].to_owned();
             }
 
             command_arg.value = if parts.len() > 1 {
-                Some(parts[1].to_string())
+                Some(parts[1].to_owned())
             } else {
                 None
             };
@@ -174,7 +174,7 @@ fn prepare_command(mut command: String, args: Vec<String>) -> Result<String> {
         //extract named_parameter
         let cleaned_matches: Vec<String> = matches
             .into_iter()
-            .map(|m: &str| clean_named_parameter(m.to_string()))
+            .map(|m: &str| clean_named_parameter(m.to_owned()))
             .collect();
         commands_args.mark_named_parameters(&cleaned_matches);
         let named_parameters = commands_args.get_named_parameters();
@@ -208,7 +208,7 @@ fn prepare_command(mut command: String, args: Vec<String>) -> Result<String> {
 
 fn clean_named_parameter(arg: String) -> String {
     arg.trim_matches(|c| c == '#' || c == '{' || c == '}')
-        .to_string()
+        .to_owned()
 }
 
 fn validate_named_parameters(mapped_args: &HashMap<String, String>, command: &str) -> Result<()> {

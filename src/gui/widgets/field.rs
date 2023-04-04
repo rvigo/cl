@@ -77,7 +77,7 @@ impl<'a> Field<'a> {
     }
 
     pub fn input_as_string(&mut self) -> String {
-        self.text_area.clone().into_lines().join("\n")
+        self.text_area.to_owned().into_lines().join("\n")
     }
 
     pub fn in_focus(&self) -> bool {

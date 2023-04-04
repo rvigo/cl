@@ -34,6 +34,6 @@ impl Fuzzy for Command {
             self.description.as_ref().unwrap_or(&String::default()),
         )
         .trim()
-        .to_string()
+        .to_owned()
     }
 }
