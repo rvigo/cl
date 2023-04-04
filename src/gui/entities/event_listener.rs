@@ -214,9 +214,3 @@ impl<'a> EventListener<'a> {
         self.should_quit.store(true, Ordering::SeqCst)
     }
 }
-
-impl Drop for EventListener<'_> {
-    fn drop(&mut self) {
-        debug!("droping event listener")
-    }
-}
