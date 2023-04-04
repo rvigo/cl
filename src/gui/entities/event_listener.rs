@@ -96,6 +96,7 @@ impl<'a> EventListener<'a> {
                         if ui.get_selected_command().is_some() {
                             ui.reset_form_field_selected_idx();
                             ui.order_fields();
+                            ui.clear_form_fields();
                             ui.set_selected_command_input();
                         }
                     }
@@ -103,6 +104,7 @@ impl<'a> EventListener<'a> {
                         let mut ui = self.ui_context.lock();
                         ui.set_view_mode(ViewMode::Insert);
                         ui.reset_form_field_selected_idx();
+                        ui.clear_form_fields();
                         ui.order_fields();
                     }
                 },

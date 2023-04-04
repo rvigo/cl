@@ -162,6 +162,7 @@ mod test {
             .tags(tags.map(|v| v.into_iter().map(String::from).collect::<Vec<String>>()));
         builder.build()
     }
+
     fn build_commands() -> Commands {
         let command1 = command_factory(
             "alias1",

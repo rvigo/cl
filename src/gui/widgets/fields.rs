@@ -1,5 +1,5 @@
 use super::field::{Field, FieldType};
-use crate::gui::layouts::{get_default_block, get_style, TerminalSize};
+use crate::gui::layouts::TerminalSize;
 use log::debug;
 use std::{
     collections::HashMap,
@@ -58,6 +58,12 @@ impl<'a> Fields<'a> {
     pub fn get_order(&self) -> Vec<FieldType> {
         self.order.to_owned()
     }
+
+    pub fn clear_inputs(&mut self) {
+        self.items
+            .iter_mut()
+            .for_each(|(_, field)| field.clear_input());
+    }
 }
 
 impl<'a> From<(HashMap<FieldType, Field<'a>>, Vec<FieldType>)> for Fields<'a> {
@@ -105,9 +111,5 @@ impl DerefMut for Fields<'_> {
 
 fn forms_widget_factory<'a>(field_type: FieldType, in_focus: bool, multiline: bool) -> Field<'a> {
     let title = field_type.to_string();
-    let mut field = Field::new(&title, field_type, in_focus, multiline);
-    field.block(get_default_block(title));
-    field.style(get_style(in_focus));
-
-    field
+    Field::new(title, field_type, in_focus, multiline)
 }

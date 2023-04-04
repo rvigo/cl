@@ -1,11 +1,14 @@
 use crate::gui::layouts::{get_default_block, get_style, DEFAULT_TEXT_COLOR};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use std::{fmt::Display, hash::Hash};
+use std::{
+    fmt::{Debug, Display},
+    hash::Hash,
+};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
     style::{Modifier, Style},
-    widgets::{Block, Widget},
+    widgets::Widget,
 };
 use tui_textarea::TextArea;
 
@@ -36,8 +39,6 @@ pub struct Field<'a> {
     title: String,
     pub field_type: FieldType,
     in_focus: bool,
-    block: Option<Block<'a>>,
-    style: Style,
     alignment: Alignment,
     pub multiline: bool,
     pub text_area: TextArea<'a>,
@@ -52,8 +53,6 @@ impl<'a> Field<'a> {
             title: title.into(),
             field_type,
             in_focus,
-            block: None,
-            style: Style::default(),
             alignment: Alignment::Left,
             multiline,
             text_area: TextArea::default(),
@@ -66,14 +65,6 @@ impl<'a> Field<'a> {
 
     pub fn deactivate_focus(&mut self) {
         self.in_focus = false
-    }
-
-    pub fn block(&mut self, block: Block<'a>) {
-        self.block = Some(block);
-    }
-
-    pub fn style(&mut self, style: Style) {
-        self.style = style;
     }
 
     pub fn input_as_string(&mut self) -> String {
@@ -140,11 +131,7 @@ impl<'a> Widget for Field<'a> {
         } else {
             self.text_area.set_cursor_style(Style::default());
         };
-        self.text_area.set_block(if let Some(block) = &self.block {
-            block.to_owned()
-        } else {
-            get_default_block(&self.title)
-        });
+        self.text_area.set_block(get_default_block(&self.title));
 
         self.text_area.set_cursor_line_style(Style::default());
         self.text_area.set_alignment(self.alignment);
