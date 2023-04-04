@@ -96,7 +96,7 @@ impl CommandBuilder {
     where
         T: Into<String>,
     {
-        self.namespace = namespace.into().trim().to_string();
+        self.namespace = namespace.into().trim().to_owned();
         self
     }
 
@@ -104,7 +104,7 @@ impl CommandBuilder {
     where
         T: Into<String>,
     {
-        self.alias = alias.into().trim().to_string();
+        self.alias = alias.into().trim().to_owned();
         self
     }
 

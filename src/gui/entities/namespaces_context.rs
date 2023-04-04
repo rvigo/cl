@@ -86,7 +86,7 @@ impl NamespacesContext {
 
     fn filter_namespaces(namespaces: Vec<String>) -> Vec<String> {
         let mut namespaces = namespaces.iter().fold(
-            vec![DEFAULT_NAMESPACE.to_string()]
+            vec![DEFAULT_NAMESPACE.to_owned()]
                 .into_iter()
                 .collect::<HashSet<String>>(),
             |mut set, ns| {
