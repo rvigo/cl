@@ -231,6 +231,10 @@ impl<'a> FieldContext<'a> {
             });
         }
     }
+
+    pub fn clear_inputs(&mut self) {
+        self.fields.clear_inputs()
+    }
 }
 
 #[cfg(test)]

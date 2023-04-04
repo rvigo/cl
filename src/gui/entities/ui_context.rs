@@ -65,6 +65,10 @@ impl<'a> UIContext<'a> {
             .select(field_type);
     }
 
+    pub fn clear_form_fields(&mut self) {
+        self.form_fields_context.clear_inputs()
+    }
+
     pub fn get_form_fields(&self) -> Vec<Field> {
         self.form_fields_context.get_fields()
     }
@@ -207,5 +211,38 @@ impl<'a> UIContext<'a> {
 
     pub fn set_show_help(&mut self, should_show: bool) {
         self.ui_state.set_show_help(should_show)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_clear_input_when_enter_insert_screen() {
+        let mut ui = UIContext::new();
+        let command = Command::default();
+
+        // enters edit mode
+        ui.select_command(Some(command));
+        ui.reset_form_field_selected_idx();
+        ui.order_fields();
+        ui.clear_form_fields();
+        ui.set_selected_command_input();
+
+        let alias_form = ui.get_selected_form_field_mut();
+
+        assert!(alias_form.is_some());
+        assert!(!alias_form.unwrap().input_as_string().is_empty());
+
+        // enters insert mode
+        ui.reset_form_field_selected_idx();
+        ui.order_fields();
+        ui.clear_form_fields();
+
+        let alias_form = ui.get_selected_form_field_mut();
+
+        assert!(alias_form.is_some());
+        assert!(alias_form.unwrap().input_as_string().is_empty());
     }
 }
