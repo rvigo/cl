@@ -58,7 +58,7 @@ impl Default for Command {
     fn default() -> Self {
         Command {
             namespace: String::from(""),
-            command: String::from("your command string goes here"),
+            command: String::from("echo \"this is your command\""),
             description: Some(String::from(
                 "This is a demo entry and will be removed as soon you save your first command.
                 Also, a nice description of your command goes here (optional)",
