@@ -29,7 +29,6 @@ tokio = {version = "1.26", features = ["macros", "rt-multi-thread", "sync"]}
 toml = "0.7.1"
 tui = { version = "0.19.0", features = ["crossterm"] }
 tui-textarea = { version = "0.2.0", features = ["crossterm"] }
-unicode-width = "0.1"
 
 [profile.release]
 opt-level = 3
