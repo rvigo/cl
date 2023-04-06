@@ -1,8 +1,8 @@
 use super::{
     application_context::ApplicationContext,
     events::app_events::{
-        AppEvents, CommandEvents, FormScreenEvent, MainScreenEvent, PopupCallbackAction,
-        PopupEvent, PopupType, QueryboxEvent, RenderEvents, ScreenEvents,
+        AppEvent, CommandEvent, FormScreenEvent, MainScreenEvent, PopupCallbackAction, PopupEvent,
+        PopupType, QueryboxEvent, RenderEvent, ScreenEvent,
     },
     ui_context::UIContext,
     ui_state::ViewMode,
@@ -17,7 +17,7 @@ use std::sync::{
 use tokio::sync::mpsc::Receiver;
 
 pub struct EventListener<'a> {
-    app_rx: Receiver<AppEvents>,
+    app_rx: Receiver<AppEvent>,
     context: Arc<Mutex<ApplicationContext>>,
     ui_context: Arc<Mutex<UIContext<'a>>>,
     should_quit: Arc<AtomicBool>,
@@ -25,7 +25,7 @@ pub struct EventListener<'a> {
 
 impl<'a> EventListener<'a> {
     pub async fn init(
-        app_rx: Receiver<AppEvents>,
+        app_rx: Receiver<AppEvent>,
         context: Arc<Mutex<ApplicationContext>>,
         ui_state: Arc<Mutex<UIContext<'a>>>,
         should_quit: Arc<AtomicBool>,
@@ -43,19 +43,23 @@ impl<'a> EventListener<'a> {
     async fn listen(&mut self) {
         while let Some(message) = self.app_rx.recv().await {
             match message {
-                AppEvents::Run(command_event) => match command_event {
-                    CommandEvents::Execute => {
+                AppEvent::Run(command_event) => match command_event {
+                    CommandEvent::Execute => {
                         if let Some(command) = self.ui_context.lock().get_selected_command() {
                             self.context.lock().set_current_command_as_callback(command);
                         }
                         self.quit();
                     }
-                    CommandEvents::Insert => {
+                    CommandEvent::Insert => {
                         let mut ui = self.ui_context.lock();
                         let mut c = self.context.lock();
                         let command = ui.build_new_command();
                         match c.add_command(command) {
-                            Ok(()) => self.ui_context.lock().set_view_mode(ViewMode::Main),
+                            Ok(()) => {
+                                ui.set_view_mode(ViewMode::Main);
+                                c.reload_contexts();
+                                ui.reset_form_field_selected_field();
+                            }
                             Err(error) => {
                                 ui.set_show_popup(true);
                                 ui.set_error_popup(error.to_string());
@@ -63,7 +67,7 @@ impl<'a> EventListener<'a> {
                         }
                     }
                     // CommandEvents::Delete => todo!(),
-                    CommandEvents::Edit => {
+                    CommandEvent::Edit => {
                         let mut c = self.context.lock();
                         let mut ui = self.ui_context.lock();
 
@@ -79,37 +83,34 @@ impl<'a> EventListener<'a> {
                         }
                     }
                 },
-                AppEvents::Render(render_events) => match render_events {
-                    RenderEvents::Main => {
+                AppEvent::Render(render_event) => match render_event {
+                    RenderEvent::Main => {
                         let mut c = self.context.lock();
                         let mut ui = self.ui_context.lock();
-
-                        if ui.popup().is_none() || ui.get_popup_answer().is_some() {
-                            ui.set_view_mode(ViewMode::Main);
-                            c.reload_namespaces_state();
-                            ui.reset_form_field_selected_idx();
-                        }
+                        ui.set_view_mode(ViewMode::Main);
+                        c.reload_contexts();
+                        ui.reset_form_field_selected_field();
                     }
-                    RenderEvents::Edit => {
+                    RenderEvent::Edit => {
                         let mut ui = self.ui_context.lock();
                         ui.set_view_mode(ViewMode::Edit);
                         if ui.get_selected_command().is_some() {
-                            ui.reset_form_field_selected_idx();
+                            ui.reset_form_field_selected_field();
                             ui.order_fields();
                             ui.clear_form_fields();
                             ui.set_selected_command_input();
                         }
                     }
-                    RenderEvents::Insert => {
+                    RenderEvent::Insert => {
                         let mut ui = self.ui_context.lock();
                         ui.set_view_mode(ViewMode::Insert);
-                        ui.reset_form_field_selected_idx();
+                        ui.reset_form_field_selected_field();
                         ui.clear_form_fields();
                         ui.order_fields();
                     }
                 },
-                AppEvents::Quit => self.quit(),
-                AppEvents::Popup(popup_event) => match popup_event {
+                AppEvent::Quit => self.quit(),
+                AppEvent::Popup(popup_event) => match popup_event {
                     PopupEvent::Enable(popup_type) => {
                         let mut ui = self.ui_context.lock();
                         match popup_type {
@@ -130,8 +131,8 @@ impl<'a> EventListener<'a> {
                             match answer {
                                 Answer::Ok => {
                                     let mut ui = self.ui_context.lock();
-
                                     let mut c = self.context.lock();
+
                                     if let Some(popup) = ui.popup() {
                                         match popup.callback() {
                                             PopupCallbackAction::Delete => {
@@ -139,7 +140,7 @@ impl<'a> EventListener<'a> {
                                                     match c.delete_selected_command(command) {
                                                         Ok(()) => {
                                                             ui.clear_popup_context();
-                                                            c.reload_namespaces_state();
+                                                            c.reload_contexts();
                                                         }
                                                         Err(error) => {
                                                             ui.set_show_popup(true);
@@ -171,7 +172,7 @@ impl<'a> EventListener<'a> {
                         }
                     }
                 },
-                AppEvents::QueryBox(status) => match status {
+                AppEvent::QueryBox(status) => match status {
                     QueryboxEvent::Active => {
                         let mut ui = self.ui_context.lock();
                         ui.activate_focus();
@@ -183,20 +184,17 @@ impl<'a> EventListener<'a> {
                         ui.set_querybox_focus(false);
                     }
                 },
-                AppEvents::Screen(screen) => match screen {
-                    ScreenEvents::Main(main_screen) => {
+                AppEvent::Screen(screen) => match screen {
+                    ScreenEvent::Main(main_screen) => {
                         let mut c = self.context.lock();
-                        let ui = self.ui_context.lock();
                         match main_screen {
-                            MainScreenEvent::NextCommand => c.next_command(ui.get_querybox_input()),
-                            MainScreenEvent::PreviousCommand => {
-                                c.previous_command(ui.get_querybox_input())
-                            }
+                            MainScreenEvent::NextCommand => c.next_command(),
+                            MainScreenEvent::PreviousCommand => c.previous_command(),
                             MainScreenEvent::NextNamespace => c.next_namespace(),
                             MainScreenEvent::PreviousNamespace => c.previous_namespace(),
                         }
                     }
-                    ScreenEvents::Form(form_screen) => {
+                    ScreenEvent::Form(form_screen) => {
                         let mut ui = self.ui_context.lock();
                         match form_screen {
                             FormScreenEvent::NextField => ui.next_form_field(),

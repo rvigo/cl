@@ -122,28 +122,27 @@ impl CommandsContext {
     }
 
     /// Resets the command index in the current command list
-    pub fn reset_command_idx(&mut self) {
+    pub fn reset_selected_command_idx(&mut self) {
         self.select_command_idx(0)
     }
 
-    pub fn filter_commands(&mut self, current_namespace: &str, query_string: &str) -> Vec<Command> {
+    pub fn filter_commands(&mut self, current_namespace: &str, query_string: &str) {
         let commands = self.filter(current_namespace, query_string);
 
         if self.get_selected_command_idx() >= commands.len() {
-            self.reset_command_idx()
+            self.reset_selected_command_idx()
         }
 
         self.filtered_commands = commands;
-        self.filtered_commands.to_owned()
     }
 
     pub fn filtered_commands(&self) -> Vec<Command> {
         self.filtered_commands.to_owned()
     }
 
-    pub fn next_command(&mut self, current_namespace: &str, query_string: &str) {
+    pub fn next_command(&mut self) {
         let mut i = self.get_selected_command_idx();
-        let filtered_commands = self.filter(current_namespace, query_string);
+        let filtered_commands = &self.filtered_commands;
         if !filtered_commands.is_empty() {
             i = if i >= filtered_commands.len() - 1 {
                 0
@@ -154,9 +153,9 @@ impl CommandsContext {
         self.select_command_idx(i);
     }
 
-    pub fn previous_command(&mut self, current_namespace: &str, query_string: &str) {
+    pub fn previous_command(&mut self) {
         let mut i = self.get_selected_command_idx();
-        let filtered_commands = self.filter(current_namespace, query_string);
+        let filtered_commands = &self.filtered_commands;
         if !filtered_commands.is_empty() {
             i = if i == 0 {
                 filtered_commands.len() - 1
@@ -300,10 +299,9 @@ impl CommandsContext {
 
 #[cfg(test)]
 mod test {
-    use std::env::temp_dir;
-
     use super::*;
     use crate::command::CommandBuilder;
+    use std::env::temp_dir;
 
     fn commands_builder(n_of_commands: usize) -> Vec<Command> {
         let mut commands = vec![];
@@ -333,16 +331,17 @@ mod test {
         let mut context = commands_context_builder(3);
         let current_namespace = "All";
         let query_string = "";
+        context.filter_commands(current_namespace, query_string);
 
         assert_eq!(context.state.selected(), Some(0));
 
-        context.next_command(current_namespace, query_string);
+        context.next_command();
         assert_eq!(context.state().selected(), Some(1));
 
-        context.next_command(current_namespace, query_string);
+        context.next_command();
         assert_eq!(context.state().selected(), Some(2));
 
-        context.next_command(current_namespace, query_string);
+        context.next_command();
         assert_eq!(context.state().selected(), Some(0));
     }
 
@@ -351,13 +350,14 @@ mod test {
         let mut context = commands_context_builder(3);
         let current_namespace = "All";
         let query_string = "";
+        context.filter_commands(current_namespace, query_string);
 
         assert_eq!(context.state().selected(), Some(0));
 
-        context.previous_command(current_namespace, query_string);
+        context.previous_command();
         assert_eq!(context.state().selected(), Some(2));
 
-        context.previous_command(current_namespace, query_string);
+        context.previous_command();
         assert_eq!(context.state().selected(), Some(1));
     }
 
@@ -431,15 +431,15 @@ mod test {
     #[test]
     fn should_filter_commands() {
         let mut context = commands_context_builder(4);
-
-        context.next_command("All", "");
-        context.next_command("All", "");
+        context.filter_commands("All", "");
+        context.next_command();
+        context.next_command();
         assert_eq!(context.get_selected_command_idx(), 2);
 
-        let result = context.filter_commands("All", "4");
+        context.filter_commands("All", "4");
 
-        assert_eq!(result.len(), 1);
-        let command = &result[0];
+        assert_eq!(context.filtered_commands().len(), 1);
+        let command = &context.filtered_commands()[0];
 
         assert_eq!(command.namespace, "namespace4");
         assert_eq!(context.get_selected_command_idx(), 0)
@@ -488,16 +488,16 @@ mod test {
             FileService::new(temp_dir().to_path_buf().join("commands.toml")),
         );
 
-        let result = context.filter_commands("All", "git");
+        context.filter_commands("All", "git");
 
-        assert_eq!(result.len(), 3);
-        assert!(&result.contains(&command1));
-        assert!(&result.contains(&command2));
-        assert!(&result.contains(&command4));
+        assert_eq!(context.filtered_commands().len(), 3);
+        assert!(&context.filtered_commands().contains(&command1));
+        assert!(&context.filtered_commands().contains(&command2));
+        assert!(&context.filtered_commands().contains(&command4));
 
-        let result = context.filter_commands("All", "cl");
-        assert_eq!(result.len(), 2);
-        assert!(&result.contains(&command3));
-        assert!(&result.contains(&command4));
+        context.filter_commands("All", "cl");
+        assert_eq!(context.filtered_commands().len(), 2);
+        assert!(&context.filtered_commands().contains(&command3));
+        assert!(&context.filtered_commands().contains(&command4));
     }
 }

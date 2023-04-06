@@ -1,4 +1,5 @@
 use super::{
+    answer_state::AnswerState,
     events::app_events::PopupCallbackAction,
     field_context::FieldContext,
     popup_context::PopupContext,
@@ -10,7 +11,7 @@ use crate::{
         layouts::TerminalSize,
         widgets::{
             field::{Field, FieldType},
-            popup::{Answer, ChoicesState, Popup},
+            popup::{Answer, Popup},
             query_box::QueryBox,
         },
     },
@@ -130,15 +131,11 @@ impl<'a> UIContext<'a> {
     }
 
     pub fn next_choice(&mut self) {
-        if let Some(popup) = self.popup() {
-            self.popup_context.state_mut().next(popup.choices())
-        }
+        self.popup_context.next()
     }
 
     pub fn previous_choice(&mut self) {
-        if let Some(popup) = self.popup() {
-            self.popup_context.state_mut().previous(popup.choices())
-        }
+        self.popup_context.previous()
     }
 
     pub fn get_selected_choice(&self) -> Option<Answer> {
@@ -149,12 +146,21 @@ impl<'a> UIContext<'a> {
         }
     }
 
-    pub fn get_choices_state_mut(&mut self) -> &mut ChoicesState {
+    pub fn get_choices_state_mut(&mut self) -> &mut AnswerState {
         self.popup_context.state_mut()
     }
 
-    pub fn reset_form_field_selected_idx(&mut self) {
-        self.select_form_field_type(Some(FieldType::default()));
+    /// Resets forms selection
+    pub fn reset_form_field_selected_field(&mut self) {
+        let default_field = FieldType::default();
+        self.form_fields_context.clear_selection();
+        if let Some(selected) = self.form_fields_context.selected_field() {
+            selected.deactivate_focus()
+        }
+        self.select_form_field_type(Some(default_field));
+        if let Some(selected) = self.form_fields_context.selected_field() {
+            selected.activate_focus()
+        }
     }
 
     pub fn handle_form_input(&mut self, input: KeyEvent) {
@@ -225,7 +231,7 @@ mod tests {
 
         // enters edit mode
         ui.select_command(Some(command));
-        ui.reset_form_field_selected_idx();
+        ui.reset_form_field_selected_field();
         ui.order_fields();
         ui.clear_form_fields();
         ui.set_selected_command_input();
@@ -236,7 +242,7 @@ mod tests {
         assert!(!alias_form.unwrap().input_as_string().is_empty());
 
         // enters insert mode
-        ui.reset_form_field_selected_idx();
+        ui.reset_form_field_selected_field();
         ui.order_fields();
         ui.clear_form_fields();
 

@@ -1,5 +1,5 @@
 use crate::gui::{
-    entities::events::app_events::PopupCallbackAction,
+    entities::{answer_state::AnswerState, events::app_events::PopupCallbackAction},
     layouts::{get_default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
 };
 use log::{error, warn};
@@ -118,7 +118,7 @@ impl Popup {
 }
 
 impl StatefulWidget for Popup {
-    type State = ChoicesState;
+    type State = AnswerState;
 
     fn render(
         self,
@@ -163,35 +163,6 @@ impl Drop for Popup {
         self.message.clear();
         self.message_type = None;
         self.choices = vec![];
-    }
-}
-
-#[derive(Default, Clone)]
-pub struct ChoicesState {
-    selected: Option<usize>,
-}
-
-impl ChoicesState {
-    pub fn selected(&self) -> Option<usize> {
-        self.selected
-    }
-
-    pub fn select(&mut self, index: Option<usize>) {
-        self.selected = index;
-    }
-
-    pub fn next(&mut self, choices: Vec<Answer>) {
-        let mut i = self.selected().unwrap_or(0);
-        i = if i >= choices.len() - 1 { 0 } else { i + 1 };
-
-        self.select(Some(i));
-    }
-
-    pub fn previous(&mut self, choices: Vec<Answer>) {
-        let mut i = self.selected().unwrap_or(0);
-        i = if i == 0 { choices.len() - 1 } else { i - 1 };
-
-        self.select(Some(i));
     }
 }
 

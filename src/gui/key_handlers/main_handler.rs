@@ -1,7 +1,7 @@
 use super::KeyEventHandler;
 use crate::gui::entities::events::app_events::{
-    AppEvents, CommandEvents, MainScreenEvent, PopupCallbackAction, PopupEvent, PopupType,
-    QueryboxEvent, RenderEvents, ScreenEvents,
+    AppEvent, CommandEvent, MainScreenEvent, PopupCallbackAction, PopupEvent, PopupType,
+    QueryboxEvent, RenderEvent, ScreenEvent,
 };
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -9,13 +9,13 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 pub struct MainScreenHandler;
 
 impl KeyEventHandler for MainScreenHandler {
-    fn handle(&self, key_event: KeyEvent) -> Result<Option<AppEvents>> {
+    fn handle(&self, key_event: KeyEvent) -> Result<Option<AppEvent>> {
         match key_event {
             KeyEvent {
                 code: KeyCode::Char('f'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => Ok(Some(AppEvents::QueryBox(QueryboxEvent::Active))),
+            } => Ok(Some(AppEvent::QueryBox(QueryboxEvent::Active))),
             KeyEvent {
                 code: KeyCode::Char('q') | KeyCode::Esc,
                 modifiers: KeyModifiers::NONE,
@@ -25,7 +25,7 @@ impl KeyEventHandler for MainScreenHandler {
                 code: KeyCode::Char('c'),
                 modifiers: KeyModifiers::CONTROL,
                 ..
-            } => Ok(Some(AppEvents::Quit)),
+            } => Ok(Some(AppEvent::Quit)),
             KeyEvent {
                 code: KeyCode::Left | KeyCode::Char('h'),
                 modifiers: KeyModifiers::NONE,
@@ -35,7 +35,7 @@ impl KeyEventHandler for MainScreenHandler {
                 code: KeyCode::BackTab,
                 modifiers: KeyModifiers::SHIFT,
                 ..
-            } => Ok(Some(AppEvents::Screen(ScreenEvents::Main(
+            } => Ok(Some(AppEvent::Screen(ScreenEvent::Main(
                 MainScreenEvent::PreviousNamespace,
             )))),
             KeyEvent {
@@ -47,38 +47,38 @@ impl KeyEventHandler for MainScreenHandler {
                 code: KeyCode::Tab,
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => Ok(Some(AppEvents::Screen(ScreenEvents::Main(
+            } => Ok(Some(AppEvent::Screen(ScreenEvent::Main(
                 MainScreenEvent::NextNamespace,
             )))),
             KeyEvent {
                 code: KeyCode::Down | KeyCode::Char('k'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => Ok(Some(AppEvents::Screen(ScreenEvents::Main(
+            } => Ok(Some(AppEvent::Screen(ScreenEvent::Main(
                 MainScreenEvent::NextCommand,
             )))),
             KeyEvent {
                 code: KeyCode::Up | KeyCode::Char('j'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => Ok(Some(AppEvents::Screen(ScreenEvents::Main(
+            } => Ok(Some(AppEvent::Screen(ScreenEvent::Main(
                 MainScreenEvent::PreviousCommand,
             )))),
             KeyEvent {
                 code: KeyCode::Insert | KeyCode::Char('i'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => Ok(Some(AppEvents::Render(RenderEvents::Insert))),
+            } => Ok(Some(AppEvent::Render(RenderEvent::Insert))),
             KeyEvent {
                 code: KeyCode::Char('e'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => Ok(Some(AppEvents::Render(RenderEvents::Edit))),
+            } => Ok(Some(AppEvent::Render(RenderEvent::Edit))),
             KeyEvent {
                 code: KeyCode::Char('d') | KeyCode::Delete,
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => Ok(Some(AppEvents::Popup(PopupEvent::Enable(
+            } => Ok(Some(AppEvent::Popup(PopupEvent::Enable(
                 PopupType::Dialog {
                     message: "Are you sure you want to delete the command?".to_owned(),
                     callback_action: PopupCallbackAction::Delete,
@@ -88,12 +88,12 @@ impl KeyEventHandler for MainScreenHandler {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => Ok(Some(AppEvents::Run(CommandEvents::Execute))),
+            } => Ok(Some(AppEvent::Run(CommandEvent::Execute))),
             KeyEvent {
                 code: KeyCode::F(1) | KeyCode::Char('?'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => Ok(Some(AppEvents::Popup(PopupEvent::Enable(PopupType::Help)))),
+            } => Ok(Some(AppEvent::Popup(PopupEvent::Enable(PopupType::Help)))),
             _ => Ok(None),
         }
     }

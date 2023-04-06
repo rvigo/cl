@@ -235,6 +235,12 @@ impl<'a> FieldContext<'a> {
     pub fn clear_inputs(&mut self) {
         self.fields.clear_inputs()
     }
+
+    pub fn clear_selection(&mut self) {
+        if let Some(selected) = self.selected_field() {
+            selected.deactivate_focus()
+        }
+    }
 }
 
 #[cfg(test)]

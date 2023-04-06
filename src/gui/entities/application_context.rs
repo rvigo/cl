@@ -31,31 +31,40 @@ impl ApplicationContext {
         &self.namespaces_context
     }
 
-    pub fn reload_namespaces_state(&mut self) {
-        self.namespaces_context.reset_namespaces_state();
-        self.commands_context.reset_command_idx();
+    pub fn reload_contexts(&mut self) {
+        self.reload_commands_context();
+        self.reload_namespaces_context();
+    }
+
+    /// Reloads the command context, filtering all commands and reseting the select command idx
+    fn reload_commands_context(&mut self) {
+        self.commands_context.filter_commands("All", "");
+        self.commands_context.reset_selected_command_idx();
+    }
+
+    /// Reloads the namespace context, updating the availble namespaces
+    fn reload_namespaces_context(&mut self) {
         self.filter_namespaces();
+        self.namespaces_context.reset_context();
     }
 
     pub fn next_namespace(&mut self) {
         self.namespaces_context.next_namespace();
-        self.commands_context.reset_command_idx();
+        self.commands_context.reset_selected_command_idx();
     }
 
     pub fn previous_namespace(&mut self) {
         self.namespaces_context.previous_namespace();
-        self.commands_context.reset_command_idx();
+        self.commands_context.reset_selected_command_idx();
     }
 
     // commands context
-    pub fn next_command(&mut self, query_string: String) {
-        self.commands_context
-            .next_command(&self.namespaces_context.current_namespace(), &query_string);
+    pub fn next_command(&mut self) {
+        self.commands_context.next_command();
     }
 
-    pub fn previous_command(&mut self, query_string: String) {
-        self.commands_context
-            .previous_command(&self.namespaces_context.current_namespace(), &query_string);
+    pub fn previous_command(&mut self) {
+        self.commands_context.previous_command();
     }
 
     pub fn add_command(&mut self, command: Command) -> Result<()> {
@@ -104,7 +113,8 @@ impl ApplicationContext {
     pub fn filter_commands(&mut self, query_string: String) -> Vec<Command> {
         let current_namespace = self.namespaces_context.current_namespace();
         self.commands_context
-            .filter_commands(&current_namespace, &query_string)
+            .filter_commands(&current_namespace, &query_string);
+        self.commands_context.filtered_commands()
     }
 
     /// Filters the namespaces based on a filtered command list
