@@ -6,6 +6,7 @@ pub mod footer;
 pub mod help_footer;
 pub mod help_popup;
 pub mod highlight;
+pub mod list_widget;
 pub mod navigation_footer;
 pub mod popup;
 pub mod query_box;

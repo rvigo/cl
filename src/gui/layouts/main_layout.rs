@@ -1,6 +1,4 @@
-use super::{
-    centered_rect, get_default_block, TerminalSize, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR,
-};
+use super::{centered_rect, get_default_block, TerminalSize, DEFAULT_SELECTED_COLOR};
 use crate::{
     command::{Command, CommandBuilder},
     gui::{
@@ -10,7 +8,8 @@ use crate::{
         },
         widgets::{
             base_widget::BaseWidget, display::DisplayWidget, help_footer::HelpFooter,
-            help_popup::HelpPopup, highlight::Highlight, query_box::QueryBox,
+            help_popup::HelpPopup, highlight::Highlight, list_widget::ListWidget,
+            query_box::QueryBox,
         },
     },
 };
@@ -19,9 +18,9 @@ use std::sync::Arc;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::{Span, Spans},
-    widgets::{List, ListItem, ListState, Tabs},
+    widgets::{ListState, Tabs},
     Frame,
 };
 
@@ -243,24 +242,8 @@ fn create_tab_menu_widget<'a>(namespaces_context: &NamespacesContext) -> Tabs<'a
         .divider(Span::raw("|"))
 }
 
-fn create_command_items_widget<'a>(commands: Vec<Command>) -> List<'a> {
-    let list_items: Vec<ListItem> = commands
-        .into_iter()
-        .map(|c| {
-            let lines = vec![Spans::from(c.alias)];
-            ListItem::new(lines.clone().to_owned()).style(Style::default().fg(DEFAULT_TEXT_COLOR))
-        })
-        .collect();
-
-    List::new(list_items)
-        .block(get_default_block("Aliases"))
-        .highlight_style(
-            Style::default()
-                .fg(Color::Black)
-                .bg(DEFAULT_SELECTED_COLOR)
-                .add_modifier(Modifier::BOLD),
-        )
-        .highlight_symbol("> ")
+fn create_command_items_widget<'a>(commands: Vec<Command>) -> ListWidget<'a> {
+    ListWidget::new(commands)
 }
 
 fn create_command_details_widget<'a>(

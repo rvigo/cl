@@ -4,18 +4,12 @@ mod layouts;
 mod widgets;
 
 pub mod core {
-    use anyhow::Result;
-    use log::debug;
-    use parking_lot::Mutex;
-    use std::sync::{atomic::AtomicBool, Arc};
-    use tokio::sync::mpsc::{Receiver, Sender};
-
     use crate::{
         gui::{
             entities::{
                 application_context::ApplicationContext,
                 event_listener::EventListener,
-                events::{app_events::AppEvents, input_events::InputMessages},
+                events::{app_events::AppEvent, input_events::InputMessages},
                 tui_application::TuiApplication,
                 ui_context::UIContext,
             },
@@ -23,10 +17,15 @@ pub mod core {
         },
         resources::{config::Config, file_service::FileService},
     };
+    use anyhow::Result;
+    use log::debug;
+    use parking_lot::Mutex;
+    use std::sync::{atomic::AtomicBool, Arc};
+    use tokio::sync::mpsc::{Receiver, Sender};
 
     pub async fn init(config: Config) -> Result<()> {
         debug!("creating channels");
-        let (app_sx, app_rx) = tokio::sync::mpsc::channel::<AppEvents>(32);
+        let (app_sx, app_rx) = tokio::sync::mpsc::channel::<AppEvent>(32);
         let (input_sx, input_rx) = tokio::sync::mpsc::channel::<InputMessages>(32);
 
         debug!("loading commands");
@@ -51,7 +50,7 @@ pub mod core {
     }
 
     async fn event_listener_init(
-        app_rx: Receiver<AppEvents>,
+        app_rx: Receiver<AppEvent>,
         context: &Arc<Mutex<ApplicationContext>>,
         ui_context: &Arc<Mutex<UIContext<'static>>>,
         should_quit: &Arc<AtomicBool>,
@@ -68,26 +67,26 @@ pub mod core {
     async fn ui_init(
         input_sx: Sender<InputMessages>,
         should_quit: Arc<AtomicBool>,
-        ui_state: Arc<Mutex<UIContext<'_>>>,
+        ui_context: Arc<Mutex<UIContext<'_>>>,
         context: Arc<Mutex<ApplicationContext>>,
     ) -> Result<()> {
         debug!("starting ui");
-        TuiApplication::create(input_sx, should_quit, ui_state, context)?
+        TuiApplication::create(input_sx, should_quit, ui_context, context)?
             .render()
             .await
     }
 
     async fn handler_init(
         input_rx: Receiver<InputMessages>,
-        app_sx: &Sender<AppEvents>,
-        ui_state: &Arc<Mutex<UIContext<'static>>>,
+        app_sx: &Sender<AppEvent>,
+        ui_context: &Arc<Mutex<UIContext<'static>>>,
         should_quit: &Arc<AtomicBool>,
     ) {
         debug!("starting input handler");
         tokio::spawn(InputHandler::init(
             input_rx,
             app_sx.clone(),
-            ui_state.clone(),
+            ui_context.clone(),
             should_quit.clone(),
         ));
     }

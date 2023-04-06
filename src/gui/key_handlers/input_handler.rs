@@ -7,7 +7,7 @@ use super::{
     KeyEventHandler, WidgetKeyEventHandler,
 };
 use crate::gui::entities::{
-    events::{app_events::AppEvents, input_events::InputMessages},
+    events::{app_events::AppEvent, input_events::InputMessages},
     ui_context::UIContext,
     ui_state::ViewMode,
 };
@@ -23,7 +23,7 @@ use tokio::sync::mpsc::{Receiver, Sender};
 
 pub struct InputHandler {
     input_rx: Receiver<InputMessages>,
-    app_sx: Sender<AppEvents>,
+    app_sx: Sender<AppEvent>,
     ui_context: Arc<Mutex<UIContext<'static>>>,
     should_quit: Arc<AtomicBool>,
 }
@@ -31,7 +31,7 @@ pub struct InputHandler {
 impl InputHandler {
     pub async fn init(
         input_rx: Receiver<InputMessages>,
-        app_sx: Sender<AppEvents>,
+        app_sx: Sender<AppEvent>,
         ui_context: Arc<Mutex<UIContext<'static>>>,
         should_quit: Arc<AtomicBool>,
     ) -> Result<()> {

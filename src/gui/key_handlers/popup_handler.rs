@@ -1,7 +1,7 @@
 use super::WidgetKeyEventHandler;
 use crate::gui::{
     entities::{
-        events::app_events::{AppEvents, PopupEvent},
+        events::app_events::{AppEvent, PopupEvent},
         ui_context::UIContext,
     },
     widgets::popup::MessageType,
@@ -12,11 +12,11 @@ use crossterm::event::{KeyCode, KeyEvent};
 pub struct PopupHandler;
 
 impl WidgetKeyEventHandler for PopupHandler {
-    fn handle(&self, key_event: KeyEvent, ui_context: &mut UIContext) -> Result<Option<AppEvents>> {
+    fn handle(&self, key_event: KeyEvent, ui_context: &mut UIContext) -> Result<Option<AppEvent>> {
         if let Some(popup) = ui_context.popup().as_mut() {
             if let Some(message_type) = popup.message_type().as_ref() {
                 match message_type {
-                    MessageType::Error => return Ok(Some(AppEvents::Popup(PopupEvent::Disable))),
+                    MessageType::Error => return Ok(Some(AppEvent::Popup(PopupEvent::Disable))),
                     MessageType::Warning => match key_event {
                         KeyEvent {
                             code: KeyCode::Right,
@@ -31,13 +31,13 @@ impl WidgetKeyEventHandler for PopupHandler {
                             ..
                         } => {
                             let answer = ui_context.get_selected_choice();
-                            return Ok(Some(AppEvents::Popup(PopupEvent::Answer(answer))));
+                            return Ok(Some(AppEvent::Popup(PopupEvent::Answer(answer))));
                         }
                         KeyEvent {
                             code: KeyCode::Esc | KeyCode::Char('q'),
                             ..
                         } => {
-                            return Ok(Some(AppEvents::Popup(PopupEvent::Disable)));
+                            return Ok(Some(AppEvent::Popup(PopupEvent::Disable)));
                         }
                         _ => {}
                     },
@@ -49,6 +49,6 @@ impl WidgetKeyEventHandler for PopupHandler {
     }
 }
 
-pub fn handle_help() -> Result<Option<AppEvents>> {
-    Ok(Some(AppEvents::Popup(PopupEvent::Disable)))
+pub fn handle_help() -> Result<Option<AppEvent>> {
+    Ok(Some(AppEvent::Popup(PopupEvent::Disable)))
 }

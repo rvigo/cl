@@ -1,9 +1,10 @@
-use crate::gui::widgets::popup::{Answer, ChoicesState, Popup};
+use super::answer_state::AnswerState;
+use crate::gui::widgets::popup::{Answer, Popup};
 
 #[derive(Default, Clone)]
 pub struct PopupContext {
     answer: Option<Answer>,
-    choices_state: ChoicesState,
+    answer_state: AnswerState,
     popup: Option<Popup>,
 }
 
@@ -11,10 +12,10 @@ impl PopupContext {
     pub fn new() -> PopupContext {
         let mut context = Self {
             answer: None,
-            choices_state: ChoicesState::default(),
+            answer_state: AnswerState::default(),
             popup: None,
         };
-        context.choices_state.select(Some(0));
+        context.answer_state.select(Some(0));
 
         context
     }
@@ -27,12 +28,12 @@ impl PopupContext {
         self.popup = popup
     }
 
-    pub fn state(&self) -> &ChoicesState {
-        &self.choices_state
+    pub fn state(&self) -> &AnswerState {
+        &self.answer_state
     }
 
-    pub fn state_mut(&mut self) -> &mut ChoicesState {
-        &mut self.choices_state
+    pub fn state_mut(&mut self) -> &mut AnswerState {
+        &mut self.answer_state
     }
 
     pub fn answer(&self) -> Option<Answer> {
@@ -42,6 +43,32 @@ impl PopupContext {
     pub fn clear(&mut self) {
         self.answer = None;
         self.popup = None;
-        self.choices_state.select(Some(0));
+        self.answer_state.select(Some(0));
+    }
+
+    pub fn next(&mut self) {
+        if let Some(popup) = &self.popup {
+            let mut i = self.answer_state.selected().unwrap_or(0);
+            i = if i >= popup.choices().len() - 1 {
+                0
+            } else {
+                i + 1
+            };
+
+            self.answer_state.select(Some(i));
+        }
+    }
+
+    pub fn previous(&mut self) {
+        if let Some(popup) = &self.popup {
+            let mut i = self.answer_state.selected().unwrap_or(0);
+            i = if i == 0 {
+                popup.choices().len() - 1
+            } else {
+                i - 1
+            };
+
+            self.answer_state.select(Some(i));
+        }
     }
 }

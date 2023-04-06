@@ -1,9 +1,9 @@
+use super::namespace_state::NamespaceState;
 use std::collections::HashSet;
-use tui::widgets::ListState;
 
 pub struct NamespacesContext {
     namespaces: Vec<String>,
-    namespace_state: ListState,
+    namespace_state: NamespaceState,
     current_namespace: String,
 }
 
@@ -14,11 +14,11 @@ impl NamespacesContext {
         let namespaces = Self::filter_namespaces(namespaces);
         let mut context = Self {
             namespaces: namespaces.clone(),
-            namespace_state: ListState::default(),
+            namespace_state: NamespaceState::default(),
             current_namespace: namespaces[0].to_owned(),
         };
 
-        context.namespace_state.select(Some(0));
+        context.namespace_state.select(0);
 
         context
     }
@@ -31,9 +31,10 @@ impl NamespacesContext {
         self.current_namespace.to_owned()
     }
 
-    pub fn reset_namespaces_state(&mut self) {
-        self.select_namespace(Some(0));
-        self.set_current_namespace(self.namespaces()[0].to_owned());
+    pub fn reset_context(&mut self) {
+        self.select_namespace(0);
+        let namespace = self.namespaces()[0].to_owned();
+        self.set_current_namespace(namespace);
     }
 
     pub fn update_namespaces(&mut self, new_namespaces: Vec<String>) {
@@ -42,7 +43,7 @@ impl NamespacesContext {
     }
 
     pub fn get_selected_namespace_idx(&self) -> usize {
-        self.namespace_state.selected().unwrap_or(0)
+        self.namespace_state.selected()
     }
 
     pub fn next_namespace(&mut self) {
@@ -52,7 +53,7 @@ impl NamespacesContext {
         } else {
             i + 1
         };
-        self.namespace_state.select(Some(i));
+        self.namespace_state.select(i);
         self.current_namespace = self
             .namespaces
             .get(i)
@@ -68,7 +69,7 @@ impl NamespacesContext {
             i - 1
         };
 
-        self.namespace_state.select(Some(i));
+        self.namespace_state.select(i);
         self.current_namespace = self
             .namespaces
             .get(i)
@@ -76,7 +77,7 @@ impl NamespacesContext {
             .to_owned();
     }
 
-    fn select_namespace(&mut self, idx: Option<usize>) {
+    fn select_namespace(&mut self, idx: usize) {
         self.namespace_state.select(idx)
     }
 
@@ -143,15 +144,15 @@ mod test {
         assert_eq!(context.current_namespace, DEFAULT_NAMESPACE);
 
         context.previous_namespace();
-        assert_eq!(context.namespace_state.selected().unwrap(), 2);
+        assert_eq!(context.namespace_state.selected(), 2);
         assert_eq!(context.current_namespace, "namespace2");
 
         context.previous_namespace();
-        assert_eq!(context.namespace_state.selected().unwrap(), 1);
+        assert_eq!(context.namespace_state.selected(), 1);
         assert_eq!(context.current_namespace, "namespace1");
 
         context.previous_namespace();
-        assert_eq!(context.namespace_state.selected().unwrap(), 0);
+        assert_eq!(context.namespace_state.selected(), 0);
         assert_eq!(context.current_namespace, DEFAULT_NAMESPACE);
     }
 
@@ -162,15 +163,15 @@ mod test {
         assert_eq!(context.current_namespace, DEFAULT_NAMESPACE);
 
         context.next_namespace();
-        assert_eq!(context.namespace_state.selected().unwrap(), 1);
+        assert_eq!(context.namespace_state.selected(), 1);
         assert_eq!(context.current_namespace, "namespace1");
 
         context.next_namespace();
-        assert_eq!(context.namespace_state.selected().unwrap(), 2);
+        assert_eq!(context.namespace_state.selected(), 2);
         assert_eq!(context.current_namespace, "namespace2");
 
         context.next_namespace();
-        assert_eq!(context.namespace_state.selected().unwrap(), 0);
+        assert_eq!(context.namespace_state.selected(), 0);
         assert_eq!(context.current_namespace, DEFAULT_NAMESPACE);
     }
 }

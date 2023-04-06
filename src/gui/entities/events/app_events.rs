@@ -2,24 +2,24 @@ use crate::gui::widgets::popup::Answer;
 use crossterm::event::KeyEvent;
 
 #[derive(Clone, Debug)]
-pub enum RenderEvents {
+pub enum RenderEvent {
     Main,
     Edit,
     Insert,
 }
 
 #[derive(Clone, Debug)]
-pub enum AppEvents {
-    Run(CommandEvents),
-    Render(RenderEvents),
-    Screen(ScreenEvents),
+pub enum AppEvent {
+    Run(CommandEvent),
+    Render(RenderEvent),
+    Screen(ScreenEvent),
     Popup(PopupEvent),
     QueryBox(QueryboxEvent),
     Quit,
 }
 
 #[derive(Clone, Debug)]
-pub enum CommandEvents {
+pub enum CommandEvent {
     Execute,
     Edit,
     Insert,
@@ -56,7 +56,7 @@ pub enum QueryboxEvent {
     Deactive,
 }
 #[derive(Clone, Debug)]
-pub enum ScreenEvents {
+pub enum ScreenEvent {
     Main(MainScreenEvent),
     Form(FormScreenEvent),
 }
