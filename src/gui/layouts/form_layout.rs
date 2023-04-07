@@ -2,8 +2,8 @@ use super::{centered_rect, get_default_block, TerminalSize};
 use crate::gui::{
     entities::ui_context::UIContext,
     widgets::{
-        base_widget::BaseWidget, field::FieldType, help_footer::HelpFooter, help_popup::HelpPopup,
-        navigation_footer::NavigationFooter,
+        base_widget::BaseWidget, help_footer::HelpFooter, help_popup::HelpPopup,
+        navigation_footer::NavigationFooter, text_field::FieldType,
     },
 };
 use tui::{

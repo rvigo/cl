@@ -10,9 +10,9 @@ use crate::{
     gui::{
         layouts::TerminalSize,
         widgets::{
-            field::{Field, FieldType},
             popup::{Answer, Popup},
-            query_box::QueryBox,
+            querybox::QueryBox,
+            text_field::{FieldType, TextField},
         },
     },
 };
@@ -70,7 +70,7 @@ impl<'a> UIContext<'a> {
         self.form_fields_context.clear_inputs()
     }
 
-    pub fn get_form_fields(&self) -> Vec<Field> {
+    pub fn get_form_fields(&self) -> Vec<TextField> {
         self.form_fields_context.get_fields()
     }
 
@@ -82,7 +82,7 @@ impl<'a> UIContext<'a> {
         self.form_fields_context.build_new_command()
     }
 
-    pub fn get_selected_form_field_mut(&mut self) -> Option<&mut Field<'a>> {
+    pub fn get_selected_form_field_mut(&mut self) -> Option<&mut TextField<'a>> {
         self.form_fields_context.selected_field()
     }
 

@@ -1,4 +1,4 @@
-use super::field::{Field, FieldType};
+use super::text_field::{FieldType, TextField};
 use crate::gui::layouts::TerminalSize;
 use log::debug;
 use std::{
@@ -24,12 +24,12 @@ const ORDER_MEDIUM_SIZE: &[FieldType] = &[
 
 #[derive(Clone)]
 pub struct Fields<'a> {
-    items: HashMap<FieldType, Field<'a>>,
+    items: HashMap<FieldType, TextField<'a>>,
     order: Vec<FieldType>,
 }
 
 impl<'a> Fields<'a> {
-    pub fn get_fields(&self) -> Vec<Field<'a>> {
+    pub fn get_fields(&self) -> Vec<TextField<'a>> {
         let mut ordered_fields = vec![];
 
         self.order.iter().for_each(|i| {
@@ -51,7 +51,7 @@ impl<'a> Fields<'a> {
         self.order = order
     }
 
-    pub fn get_field_mut(&mut self, field_type: &FieldType) -> Option<&mut Field<'a>> {
+    pub fn get_field_mut(&mut self, field_type: &FieldType) -> Option<&mut TextField<'a>> {
         self.items.get_mut(field_type)
     }
 
@@ -66,8 +66,8 @@ impl<'a> Fields<'a> {
     }
 }
 
-impl<'a> From<(HashMap<FieldType, Field<'a>>, Vec<FieldType>)> for Fields<'a> {
-    fn from(value: (HashMap<FieldType, Field<'a>>, Vec<FieldType>)) -> Self {
+impl<'a> From<(HashMap<FieldType, TextField<'a>>, Vec<FieldType>)> for Fields<'a> {
+    fn from(value: (HashMap<FieldType, TextField<'a>>, Vec<FieldType>)) -> Self {
         Fields {
             items: value.0,
             order: value.1,
@@ -96,7 +96,7 @@ impl Default for Fields<'_> {
 }
 
 impl<'a> Deref for Fields<'a> {
-    type Target = HashMap<FieldType, Field<'a>>;
+    type Target = HashMap<FieldType, TextField<'a>>;
 
     fn deref(&self) -> &Self::Target {
         &self.items
@@ -109,7 +109,11 @@ impl DerefMut for Fields<'_> {
     }
 }
 
-fn forms_widget_factory<'a>(field_type: FieldType, in_focus: bool, multiline: bool) -> Field<'a> {
+fn forms_widget_factory<'a>(
+    field_type: FieldType,
+    in_focus: bool,
+    multiline: bool,
+) -> TextField<'a> {
     let title = field_type.to_string();
-    Field::new(title, field_type, in_focus, multiline)
+    TextField::new(title, field_type, in_focus, multiline)
 }

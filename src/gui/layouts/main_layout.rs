@@ -8,8 +8,7 @@ use crate::{
         },
         widgets::{
             base_widget::BaseWidget, display::DisplayWidget, help_footer::HelpFooter,
-            help_popup::HelpPopup, highlight::Highlight, list_widget::ListWidget,
-            query_box::QueryBox,
+            help_popup::HelpPopup, highlight::Highlight, list::ListWidget, querybox::QueryBox,
         },
     },
 };

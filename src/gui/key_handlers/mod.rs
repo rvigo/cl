@@ -9,6 +9,7 @@ use super::entities::{events::app_events::AppEvent, ui_context::UIContext};
 use anyhow::Result;
 use crossterm::event::KeyEvent;
 
+/// (Almost) Every KeyEvent triggers an app event
 pub trait KeyEventHandler {
     fn handle(&self, key_event: KeyEvent) -> Result<Option<AppEvent>>;
 }
