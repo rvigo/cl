@@ -35,7 +35,7 @@ impl Display for FieldType {
 }
 
 #[derive(Clone)]
-pub struct Field<'a> {
+pub struct TextField<'a> {
     title: String,
     pub field_type: FieldType,
     in_focus: bool,
@@ -44,12 +44,12 @@ pub struct Field<'a> {
     pub text_area: TextArea<'a>,
 }
 
-impl<'a> Field<'a> {
-    pub fn new<T>(title: T, field_type: FieldType, in_focus: bool, multiline: bool) -> Field<'a>
+impl<'a> TextField<'a> {
+    pub fn new<T>(title: T, field_type: FieldType, in_focus: bool, multiline: bool) -> TextField<'a>
     where
         T: Into<String>,
     {
-        Field {
+        TextField {
             title: title.into(),
             field_type,
             in_focus,
@@ -114,13 +114,13 @@ impl<'a> Field<'a> {
     }
 }
 
-impl<'a> Drop for Field<'a> {
+impl<'a> Drop for TextField<'a> {
     fn drop(&mut self) {
         self.clear_input()
     }
 }
 
-impl<'a> Widget for Field<'a> {
+impl<'a> Widget for TextField<'a> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
         if self.in_focus() {
             self.text_area.set_cursor_style(

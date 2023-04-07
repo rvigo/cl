@@ -32,6 +32,7 @@ pub enum PopupEvent {
     Answer(Option<Answer>),
     Disable,
 }
+
 #[derive(Clone, Debug)]
 pub enum PopupType {
     Help,
@@ -55,6 +56,7 @@ pub enum QueryboxEvent {
     Active,
     Deactive,
 }
+
 #[derive(Clone, Debug)]
 pub enum ScreenEvent {
     Main(MainScreenEvent),

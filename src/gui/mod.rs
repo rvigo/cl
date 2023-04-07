@@ -21,12 +21,12 @@ pub mod core {
     use log::debug;
     use parking_lot::Mutex;
     use std::sync::{atomic::AtomicBool, Arc};
-    use tokio::sync::mpsc::{Receiver, Sender};
+    use tokio::sync::mpsc::{channel, Receiver, Sender};
 
     pub async fn init(config: Config) -> Result<()> {
         debug!("creating channels");
-        let (app_sx, app_rx) = tokio::sync::mpsc::channel::<AppEvent>(32);
-        let (input_sx, input_rx) = tokio::sync::mpsc::channel::<InputMessages>(32);
+        let (app_sx, app_rx) = channel::<AppEvent>(32);
+        let (input_sx, input_rx) = channel::<InputMessages>(32);
 
         debug!("loading commands");
         let file_service = FileService::new(config.get_command_file_path()?);

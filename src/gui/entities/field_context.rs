@@ -4,8 +4,8 @@ use crate::{
     gui::{
         layouts::TerminalSize,
         widgets::{
-            field::{Field, FieldType},
             fields::Fields,
+            text_field::{FieldType, TextField},
         },
     },
 };
@@ -27,7 +27,7 @@ impl<'a> FieldContext<'a> {
         self.fields.reorder(size);
     }
 
-    pub fn get_fields(&self) -> Vec<Field<'_>> {
+    pub fn get_fields(&self) -> Vec<TextField<'_>> {
         self.fields.get_fields()
     }
 
@@ -84,7 +84,7 @@ impl<'a> FieldContext<'a> {
         }
     }
 
-    pub fn selected_field(&mut self) -> Option<&mut Field<'a>> {
+    pub fn selected_field(&mut self) -> Option<&mut TextField<'a>> {
         if let Some(selected) = self.focus_state.selected() {
             self.fields.get_mut(&selected)
         } else {
@@ -249,21 +249,21 @@ mod test {
 
     use super::*;
     fn create_fields() -> Fields<'static> {
-        let mut alias = Field::new(String::from("alias"), FieldType::Alias, true, false);
-        let mut command = Field::new(String::from("command"), FieldType::Command, false, true);
-        let mut namespace = Field::new(
+        let mut alias = TextField::new(String::from("alias"), FieldType::Alias, true, false);
+        let mut command = TextField::new(String::from("command"), FieldType::Command, false, true);
+        let mut namespace = TextField::new(
             String::from("namespace"),
             FieldType::Namespace,
             false,
             false,
         );
-        let mut description = Field::new(
+        let mut description = TextField::new(
             String::from("description"),
             FieldType::Description,
             false,
             true,
         );
-        let mut tags = Field::new(String::from("tags"), FieldType::Tags, false, false);
+        let mut tags = TextField::new(String::from("tags"), FieldType::Tags, false, false);
 
         alias.on_input(KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE));
         alias.on_input(KeyEvent::new(KeyCode::Char('l'), KeyModifiers::NONE));
