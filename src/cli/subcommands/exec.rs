@@ -1,19 +1,28 @@
 use crate::{
-    command::Command,
     commands::Commands,
     resources::{config::Config, errors::CommandError, file_service::FileService},
 };
 use anyhow::{anyhow, bail, Result};
 use clap::Parser;
+use itertools::Itertools;
 use log::debug;
 use regex::Regex;
 use std::collections::HashMap;
 use strfmt::strfmt;
+use thiserror::Error;
 
 const DEFAULT_NAMED_PARAMS_ERROR_MESSAGE: &str = "This command has named parameters! \
 You should provide them exactly as in the command";
 const INVALID_NAMED_PARAMS_ERROR_MESSAGE: &str = "Invalid named arguments! \
     You should provide them exactly as in the command";
+
+#[derive(Error, Debug)]
+pub enum ExecError {
+    #[error("Missing a named parameter: {missing_parameter}")]
+    MissingNamedParameter { missing_parameter: String },
+    #[error("An error ocurred while parsing your command")]
+    GenericError,
+}
 
 #[derive(Parser)]
 pub struct Exec {
@@ -53,165 +62,198 @@ pub struct Exec {
     command_args: Vec<String>,
 }
 
-#[derive(Debug, Default, Clone, PartialEq)]
-struct CommandArg {
-    arg: String,
-    prefix: String,
-    value: Option<String>,
-    named_parameter: bool,
-}
-
-impl CommandArg {
-    fn as_key_value_pair(&self) -> (String, String) {
-        let key = self.arg.to_string();
-        let value = if let Some(value) = &self.value {
-            value.to_string()
-        } else {
-            String::default()
-        };
-        (key, value)
-    }
-}
-
-impl ToString for CommandArg {
-    fn to_string(&self) -> String {
-        if let Some(value) = &self.value {
-            format!("{}{}={}", self.prefix, self.arg, value)
-        } else {
-            format!("{}{}", self.prefix, self.arg)
-        }
-    }
-}
-
-struct CommandArgs {
-    command_args: Vec<CommandArg>,
-}
-
-impl CommandArgs {
-    pub fn new(command_args: Vec<CommandArg>) -> Self {
-        Self { command_args }
-    }
-
-    fn mark_named_parameters(&mut self, named_parameters: &[String]) {
-        for command_arg in &mut self.command_args {
-            if named_parameters.contains(&command_arg.arg) {
-                command_arg.named_parameter = true;
-            }
-        }
-    }
-
-    fn get_named_parameters(&self) -> Vec<CommandArg> {
-        self.command_args
-            .clone()
-            .into_iter()
-            .filter(|a: &CommandArg| a.named_parameter)
-            .collect()
-    }
-
-    fn get_options_as_string(&self) -> String {
-        self.command_args
-            .clone()
-            .into_iter()
-            .filter(|a: &CommandArg| !a.named_parameter)
-            .map(|a: CommandArg| a.to_string())
-            .collect::<Vec<String>>()
-            .join(" ")
-    }
-}
-
-impl From<Vec<String>> for CommandArgs {
-    fn from(args: Vec<String>) -> Self {
-        let mut mapped_args = vec![];
-
-        for arg in args {
-            let mut command_arg = CommandArg::default();
-            let parts: Vec<&str> = arg.splitn(2, '=').collect();
-            if parts[0].starts_with("--") {
-                command_arg.arg = parts[0].replacen("--", "", 1);
-                command_arg.prefix = "--".to_owned();
-            } else {
-                command_arg.arg = parts[0].to_owned();
-            }
-
-            command_arg.value = if parts.len() > 1 {
-                Some(parts[1].to_owned())
-            } else {
-                None
-            };
-            mapped_args.push(command_arg);
-        }
-
-        CommandArgs::new(mapped_args)
-    }
-}
-
 pub fn exec_subcommand(exec: Exec, config: Config) -> Result<()> {
     let command_list =
         FileService::new(config.get_command_file_path()?).load_commands_from_file()?;
     let commands = Commands::init(command_list);
 
-    let alias: String = exec.alias;
-    let namespace: Option<String> = exec.namespace;
-    let args: Vec<String> = exec.command_args;
-    let dry_run: bool = exec.dry_run;
-    let quiet_mode: bool = exec.quiet || config.get_default_quiet_mode();
-    let mut command_item: Command = commands.find_command(alias, namespace)?;
+    let alias = exec.alias;
+    let namespace = exec.namespace;
+    let args = exec.command_args;
+    let dry_run = exec.dry_run;
+    let quiet_mode = exec.quiet || config.get_default_quiet_mode();
+    let mut command_item = commands.find_command(alias, namespace)?;
 
     command_item.command = prepare_command(command_item.command, args)?;
+
     debug!("command to be executed: {}", command_item.command);
     commands.exec_command(&command_item, dry_run, quiet_mode)
 }
 
-fn prepare_command(mut command: String, args: Vec<String>) -> Result<String> {
-    // check if cmd has named_parameters
-    let re = Regex::new(r"#\{[^\}]+\}").map_err(|e| anyhow!(e))?;
-    let command_ref: &str = command.as_str();
-    let matches: Vec<&str> = re.find_iter(command_ref).map(|m| m.as_str()).collect();
-    let mut commands_args: CommandArgs = CommandArgs::from(args);
+fn prepare_command(mut command: String, args: Vec<String>) -> Result<CommandString> {
+    // checks if cmd has named_parameters
+    let matches = get_named_parameters(&command)?;
+    let named_parameters = matches
+        .iter()
+        .map(|m| clean_named_parameter(m))
+        .collect_vec();
 
-    //cmd does have named_parameter
-    if !matches.is_empty() {
-        //extract named_parameter
-        let cleaned_matches: Vec<String> = matches
-            .into_iter()
-            .map(|m: &str| clean_named_parameter(m.to_owned()))
-            .collect();
-        commands_args.mark_named_parameters(&cleaned_matches);
-        let named_parameters = commands_args.get_named_parameters();
-        let named_parameters: HashMap<String, String> = named_parameters
-            .into_iter()
-            .filter_map(|a: CommandArg| {
-                if a.named_parameter {
-                    Some(a.as_key_value_pair())
+    let mut commands_args = CommandArgs::init(named_parameters);
+
+    // cmd does have named_parameter
+    if !commands_args.named_parameters.is_empty() {
+        let mut peekable_args = args.into_iter().peekable();
+        let mut last_arg = String::default();
+
+        for arg in peekable_args.clone() {
+            // if the current item is the same as last item processed, skips
+            if arg == last_arg {
+                continue;
+            }
+
+            let command_arg = if !arg.contains('=') {
+                if last_arg.is_empty() {
+                    peekable_args.next();
+                }
+
+                if let Some(next) = peekable_args.peek() {
+                    if !next.starts_with("--") && arg.starts_with("--") {
+                        let arg = arg.replacen("--", "", 1);
+                        let prefix = "--".to_owned();
+
+                        // peeks the next item
+                        let next_item = peekable_args.next();
+                        let value = next_item.clone();
+
+                        // and set it as the `last item` processed
+                        if let Some(next_item) = next_item {
+                            last_arg = next_item;
+                        }
+
+                        peekable_args.next();
+
+                        CommandArg::new(arg, prefix, value)
+                    } else if next.starts_with("--") && !arg.starts_with("--") {
+                        let arg = arg.replacen("--", "", 1);
+                        let prefix = "--".to_owned();
+                        let value = None;
+
+                        peekable_args.next();
+
+                        CommandArg::new(arg, prefix, value)
+                    } else if next.starts_with("--") && arg.starts_with("--") {
+                        // it this a flag???
+                        let arg = arg.replacen("--", "", 1);
+                        let prefix = "--".to_owned();
+                        let value = None;
+
+                        CommandArg::new(arg, prefix, value)
+                    } else if !next.starts_with("--") && !arg.starts_with("--") {
+                        // is this a subcommand???
+                        let prefix = "".to_owned();
+                        let value = None;
+
+                        CommandArg::new(arg, prefix, value)
+                    } else {
+                        // wtf is this???
+                        CommandArg::default()
+                    }
+                } else {
+                    let (arg, prefix) = if arg.starts_with("--") {
+                        (arg.replacen("--", "", 1), "--".to_owned())
+                    } else {
+                        (arg, "".to_owned())
+                    };
+                    peekable_args.next();
+                    CommandArg::new(arg, prefix, None)
+                }
+            } else {
+                let parts: Vec<&str> = arg.splitn(2, '=').collect();
+                let (arg, prefix) = if parts[0].starts_with("--") {
+                    (parts[0].replacen("--", "", 1), "--".to_owned())
+                } else {
+                    (parts[0].to_owned(), "".to_owned())
+                };
+
+                let value = if parts.len() > 1 {
+                    Some(parts[1].to_owned())
                 } else {
                     None
-                }
+                };
+
+                CommandArg::new(arg, prefix, value)
+            };
+
+            if !command_arg.is_empty() {
+                commands_args.push_arg(command_arg);
+            }
+        }
+
+        if let Some(parameters) = commands_args.get_named_parameters() {
+            let named_parameters = parameters
+                .iter()
+                .map(|a| a.as_key_value_pair())
+                .collect::<HashMap<String, String>>();
+
+            validate_named_parameters(&named_parameters, &command)?;
+
+            command = replace_placeholders(command, &named_parameters)?;
+        } else {
+            bail!(CommandError::CannotRunCommand {
+                command,
+                cause: DEFAULT_NAMED_PARAMS_ERROR_MESSAGE.to_owned()
             })
-            .collect();
-
-        validate_named_parameters(&named_parameters, &command)?;
-
-        // replace placeholders
-        command = command.replace('#', "");
-        command = strfmt(&command, &named_parameters)?
+        }
     }
 
-    // options/args?
+    // options/args/flags
     let options = commands_args.get_options_as_string();
+    command = append_options(&command, options);
+
+    Ok(command)
+}
+
+fn get_named_parameters(command: &CommandString) -> Result<Vec<String>> {
+    let re = Regex::new(r"#\{[^\}]+\}").map_err(|e| anyhow!(e))?;
+    let matches = re
+        .find_iter(command)
+        .map(|m| String::from(m.as_str()))
+        .collect_vec();
+
+    Ok(matches)
+}
+
+fn append_options(command: &CommandString, options: String) -> String {
     if !options.is_empty() {
         let command = format!("{command} {options}");
-        Ok(command)
+        command
     } else {
-        Ok(command)
+        command.to_owned()
     }
 }
 
-fn clean_named_parameter(arg: String) -> String {
+fn replace_placeholders(
+    mut command: CommandString,
+    named_parameters: &HashMap<String, String>,
+) -> Result<CommandString> {
+    command = command.replace('#', "");
+    let parse_result = match strfmt(&command, named_parameters) {
+        Ok(c) => c,
+        Err(error) => {
+            let res = match error {
+                strfmt::FmtError::KeyError(message) => {
+                    let missing_key = message.split(':').collect_vec()[1].trim();
+                    ExecError::MissingNamedParameter {
+                        missing_parameter: missing_key.to_owned(),
+                    }
+                }
+                _ => ExecError::GenericError,
+            };
+            bail!(res)
+        }
+    };
+    Ok(parse_result)
+}
+
+fn clean_named_parameter(arg: &str) -> CommandString {
     arg.trim_matches(|c| c == '#' || c == '{' || c == '}')
         .to_owned()
 }
 
-fn validate_named_parameters(mapped_args: &HashMap<String, String>, command: &str) -> Result<()> {
+fn validate_named_parameters(
+    mapped_args: &HashMap<String, String>,
+    command: &CommandString,
+) -> Result<()> {
     let mut error_message: &str = "";
 
     if mapped_args.is_empty() {
@@ -230,6 +272,90 @@ fn validate_named_parameters(mapped_args: &HashMap<String, String>, command: &st
     Ok(())
 }
 
+#[derive(Debug, Default, Clone, PartialEq)]
+struct CommandArg {
+    arg: String,
+    prefix: String,
+    value: Option<String>,
+}
+
+impl CommandArg {
+    fn new(arg: String, prefix: String, value: Option<String>) -> CommandArg {
+        Self { arg, prefix, value }
+    }
+
+    fn as_key_value_pair(&self) -> (String, String) {
+        let key = self.arg.to_string();
+        let value = if let Some(value) = &self.value {
+            value.to_string()
+        } else {
+            String::default()
+        };
+        (key, value)
+    }
+
+    fn is_empty(&self) -> bool {
+        self.arg.is_empty() && self.prefix.is_empty()
+    }
+}
+
+impl ToString for CommandArg {
+    fn to_string(&self) -> String {
+        if let Some(value) = &self.value {
+            format!("{}{}={}", self.prefix, self.arg, value)
+        } else {
+            format!("{}{}", self.prefix, self.arg)
+        }
+    }
+}
+
+type CommandString = String;
+
+#[derive(Debug, Default)]
+struct CommandArgs {
+    /// Hashmap with two groups (true - named parameters / false - non named parameters)
+    command_args: HashMap<bool, Vec<CommandArg>>,
+    /// Reference list with collected named parameters keys
+    named_parameters: Vec<String>,
+}
+
+impl CommandArgs {
+    fn init(named_parameters: Vec<String>) -> CommandArgs {
+        Self {
+            command_args: HashMap::default(),
+            named_parameters,
+        }
+    }
+
+    fn push_arg(&mut self, command_arg: CommandArg) {
+        if self.named_parameters.contains(&command_arg.arg) {
+            self.command_args
+                .entry(true)
+                .or_insert(Vec::new())
+                .push(command_arg);
+        } else {
+            self.command_args
+                .entry(false)
+                .or_insert(Vec::new())
+                .push(command_arg);
+        }
+    }
+
+    fn get_named_parameters(&self) -> Option<&Vec<CommandArg>> {
+        self.command_args.get(&true)
+    }
+
+    fn get_options_as_string(&self) -> String {
+        self.command_args
+            .get(&false)
+            .unwrap_or(&vec![])
+            .iter()
+            .map(|a| a.to_string())
+            .collect::<Vec<String>>()
+            .join(" ")
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -237,7 +363,6 @@ mod test {
     #[test]
     fn should_prepare_a_simple_command() {
         let result = prepare_command(String::from("echo hello"), vec![]);
-        assert!(result.is_ok());
         assert_eq!(result.unwrap(), "echo hello");
     }
 
