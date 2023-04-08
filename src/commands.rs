@@ -103,7 +103,7 @@ impl Commands {
             std::process::Command::new(shell)
                 .env_clear()
                 .envs(env::vars())
-                .arg("-ic")
+                .arg("-c")
                 .arg(&command_item.command)
                 .spawn()?
                 .wait()
