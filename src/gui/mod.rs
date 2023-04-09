@@ -8,7 +8,7 @@ pub mod core {
         gui::{
             entities::{
                 application_context::ApplicationContext,
-                event_listener::EventListener,
+                event_handler::EventHandler,
                 events::{app_events::AppEvent, input_events::InputMessages},
                 tui_application::TuiApplication,
                 ui_context::UIContext,
@@ -25,8 +25,8 @@ pub mod core {
 
     pub async fn init(config: Config) -> Result<()> {
         debug!("creating channels");
-        let (app_sx, app_rx) = channel::<AppEvent>(32);
-        let (input_sx, input_rx) = channel::<InputMessages>(32);
+        let (app_sx, app_rx) = channel::<AppEvent>(16);
+        let (input_sx, input_rx) = channel::<InputMessages>(16);
 
         debug!("loading commands");
         let file_service = FileService::new(config.get_command_file_path()?);
@@ -42,21 +42,21 @@ pub mod core {
         )));
 
         debug!("starting components");
-        handler_init(input_rx, &app_sx, &ui_context, &should_quit).await;
-        event_listener_init(app_rx, &context, &ui_context, &should_quit).await;
-        ui_init(input_sx, should_quit, ui_context, context).await?;
+        start_input_handler(input_rx, &app_sx, &ui_context, &should_quit).await;
+        start_event_handler(app_rx, &context, &ui_context, &should_quit).await;
+        start_ui(input_sx, should_quit, ui_context, context).await?;
 
         Ok(())
     }
 
-    async fn event_listener_init(
+    async fn start_event_handler(
         app_rx: Receiver<AppEvent>,
         context: &Arc<Mutex<ApplicationContext>>,
         ui_context: &Arc<Mutex<UIContext<'static>>>,
         should_quit: &Arc<AtomicBool>,
     ) {
         debug!("starting event listener");
-        tokio::spawn(EventListener::init(
+        tokio::spawn(EventHandler::init(
             app_rx,
             context.clone(),
             ui_context.clone(),
@@ -64,7 +64,7 @@ pub mod core {
         ));
     }
 
-    async fn ui_init(
+    async fn start_ui(
         input_sx: Sender<InputMessages>,
         should_quit: Arc<AtomicBool>,
         ui_context: Arc<Mutex<UIContext<'_>>>,
@@ -76,7 +76,7 @@ pub mod core {
             .await
     }
 
-    async fn handler_init(
+    async fn start_input_handler(
         input_rx: Receiver<InputMessages>,
         app_sx: &Sender<AppEvent>,
         ui_context: &Arc<Mutex<UIContext<'static>>>,
