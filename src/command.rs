@@ -3,7 +3,7 @@ use anyhow::{ensure, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialOrd, Ord, Hash)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialOrd, Ord)]
 pub struct Command {
     /// The command's alias. Is a `required` field and should not have empty spaces in it
     pub alias: String,
