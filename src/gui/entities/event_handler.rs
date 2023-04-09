@@ -16,14 +16,14 @@ use std::sync::{
 };
 use tokio::sync::mpsc::Receiver;
 
-pub struct EventListener<'a> {
+pub struct EventHandler<'a> {
     app_rx: Receiver<AppEvent>,
     context: Arc<Mutex<ApplicationContext>>,
     ui_context: Arc<Mutex<UIContext<'a>>>,
     should_quit: Arc<AtomicBool>,
 }
 
-impl<'a> EventListener<'a> {
+impl<'a> EventHandler<'a> {
     pub async fn init(
         app_rx: Receiver<AppEvent>,
         context: Arc<Mutex<ApplicationContext>>,
@@ -37,10 +37,10 @@ impl<'a> EventListener<'a> {
             should_quit,
         };
 
-        app_router.listen().await
+        app_router.handle().await
     }
 
-    async fn listen(&mut self) {
+    async fn handle(&mut self) {
         while let Some(message) = self.app_rx.recv().await {
             match message {
                 AppEvent::Run(command_event) => match command_event {
