@@ -3,7 +3,7 @@ use anyhow::{ensure, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialOrd, Ord, Hash)]
 pub struct Command {
     /// The command's alias. Is a `required` field and should not have empty spaces in it
     pub alias: String,
@@ -45,6 +45,10 @@ impl Command {
         ensure!(
             !self.alias.trim().contains(' '),
             CommandError::AliasWithWhitespaces
+        );
+        ensure!(
+            !self.namespace.trim().contains(' '),
+            CommandError::NamespaceWithWhitespaces
         );
         Ok(())
     }
