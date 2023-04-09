@@ -6,6 +6,8 @@ use thiserror::Error;
 pub enum CommandError {
     #[error("The alias must not contain whitespace as the application may interpret some words as arguments")]
     AliasWithWhitespaces,
+    #[error("The namespace must not contain whitespace as the application may interpret some words as arguments")]
+    NamespaceWithWhitespaces,
     #[error("The alias \'{alias}\' was not found!")]
     AliasNotFound { alias: String },
     #[error("Command with alias \'{alias}\' already exists in \'{namespace}\' namespace")]
