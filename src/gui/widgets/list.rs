@@ -21,8 +21,7 @@ impl<'a> ListWidget<'a> {
         let items: Vec<ListItem> = commands
             .into_iter()
             .map(|c| {
-                let lines = vec![Spans::from(c.alias)];
-                ListItem::new(lines.clone().to_owned())
+                ListItem::new(vec![Spans::from(c.alias)])
                     .style(Style::default().fg(DEFAULT_TEXT_COLOR))
             })
             .collect();
@@ -36,7 +35,7 @@ impl<'a> ListWidget<'a> {
 
 impl<'a> Widget for ListWidget<'a> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
-        StatefulWidget::render(self.clone(), area, buf, &mut self.state)
+        StatefulWidget::render(self.to_owned(), area, buf, &mut self.state)
     }
 }
 
@@ -45,7 +44,7 @@ impl<'a> StatefulWidget for ListWidget<'a> {
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         StatefulWidget::render(
-            List::new(self.items.clone())
+            List::new(self.items.to_owned())
                 .block(get_default_block("Aliases"))
                 .highlight_style(
                     Style::default()

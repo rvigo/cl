@@ -1,4 +1,4 @@
-use super::field_state::FieldState;
+use super::{field_state::FieldState, state::State};
 use crate::{
     command::{Command, CommandBuilder},
     gui::{
