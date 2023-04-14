@@ -1,4 +1,4 @@
-use super::namespace_state::NamespaceState;
+use super::{namespace_state::NamespaceState, state::State};
 use std::collections::HashSet;
 
 pub struct NamespacesContext {
@@ -7,7 +7,7 @@ pub struct NamespacesContext {
     current_namespace: String,
 }
 
-const DEFAULT_NAMESPACE: &str = "All";
+pub const DEFAULT_NAMESPACE: &str = "All";
 
 impl NamespacesContext {
     pub fn new(namespaces: Vec<String>) -> NamespacesContext {
@@ -167,6 +167,7 @@ mod test {
         assert_eq!(context.current_namespace, "namespace1");
 
         context.next_namespace();
+        assert_eq!(context.namespace_state.selected(), 2);
         assert_eq!(context.namespace_state.selected(), 2);
         assert_eq!(context.current_namespace, "namespace2");
 

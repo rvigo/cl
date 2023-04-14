@@ -1,4 +1,4 @@
-use super::fuzzy::Fuzzy;
+use super::{fuzzy::Fuzzy, namespaces_context::DEFAULT_NAMESPACE};
 use crate::{command::Command, commands::Commands, resources::file_service::FileService};
 use anyhow::Result;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
@@ -238,7 +238,7 @@ impl CommandsContext {
     /// * `query_string` - A &str representing the user's query string
     ///
     fn filter(&mut self, current_namespace: &str, query_string: &str) -> Vec<Command> {
-        let commands = if !current_namespace.is_empty() && current_namespace != "All" {
+        let commands = if !current_namespace.is_empty() && current_namespace != DEFAULT_NAMESPACE {
             self.commands_cache.get_entry(current_namespace)
         } else {
             let command_list = self.commands.command_list().to_owned();
@@ -274,7 +274,7 @@ impl CommandsContext {
         let mut scored_commands: Vec<(i64, Command)> = commands
             .iter()
             .cloned()
-            .filter(|c| (namespace.eq("All") || c.namespace.eq(namespace)))
+            .filter(|c| (namespace.eq(DEFAULT_NAMESPACE) || c.namespace.eq(namespace)))
             .filter_map(|c| {
                 self.matcher
                     .fuzzy_indices(&c.lookup_string(), query_string)
@@ -320,16 +320,13 @@ mod test {
 
     fn commands_context_builder(n_of_commands: usize) -> CommandsContext {
         let commands = commands_builder(n_of_commands);
-        CommandsContext::new(
-            commands,
-            FileService::new(temp_dir().to_path_buf().join("commands.toml")),
-        )
+        CommandsContext::new(commands, FileService::new(temp_dir().join("commands.toml")))
     }
 
     #[test]
     fn should_go_to_next_command() {
         let mut context = commands_context_builder(3);
-        let current_namespace = "All";
+        let current_namespace = DEFAULT_NAMESPACE;
         let query_string = "";
         context.filter_commands(current_namespace, query_string);
 
@@ -348,7 +345,7 @@ mod test {
     #[test]
     fn should_go_to_previous_command() {
         let mut context = commands_context_builder(3);
-        let current_namespace = "All";
+        let current_namespace = DEFAULT_NAMESPACE;
         let query_string = "";
         context.filter_commands(current_namespace, query_string);
 
@@ -421,22 +418,22 @@ mod test {
 
         assert_eq!(context.commands.command_list().len(), 1);
         assert!(context
-            .add_edited_command(&edited_command, &current_command)
+            .add_edited_command(&edited_command, current_command)
             .is_ok());
         assert_eq!(context.commands.command_list().len(), 1);
         assert!(context.commands.command_list().contains(&edited_command));
-        assert!(!context.commands.command_list().contains(&current_command))
+        assert!(!context.commands.command_list().contains(current_command))
     }
 
     #[test]
     fn should_filter_commands() {
         let mut context = commands_context_builder(4);
-        context.filter_commands("All", "");
+        context.filter_commands(DEFAULT_NAMESPACE, "");
         context.next_command();
         context.next_command();
         assert_eq!(context.get_selected_command_idx(), 2);
 
-        context.filter_commands("All", "4");
+        context.filter_commands(DEFAULT_NAMESPACE, "4");
 
         assert_eq!(context.filtered_commands().len(), 1);
         let command = &context.filtered_commands()[0];
@@ -483,19 +480,17 @@ mod test {
             command4.clone(),
         ];
 
-        let mut context = CommandsContext::new(
-            commands,
-            FileService::new(temp_dir().to_path_buf().join("commands.toml")),
-        );
+        let mut context =
+            CommandsContext::new(commands, FileService::new(temp_dir().join("commands.toml")));
 
-        context.filter_commands("All", "git");
+        context.filter_commands(DEFAULT_NAMESPACE, "git");
 
         assert_eq!(context.filtered_commands().len(), 3);
         assert!(&context.filtered_commands().contains(&command1));
         assert!(&context.filtered_commands().contains(&command2));
         assert!(&context.filtered_commands().contains(&command4));
 
-        context.filter_commands("All", "cl");
+        context.filter_commands(DEFAULT_NAMESPACE, "cl");
         assert_eq!(context.filtered_commands().len(), 2);
         assert!(&context.filtered_commands().contains(&command3));
         assert!(&context.filtered_commands().contains(&command4));

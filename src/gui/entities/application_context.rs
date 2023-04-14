@@ -1,4 +1,7 @@
-use super::{commands_context::CommandsContext, namespaces_context::NamespacesContext};
+use super::{
+    commands_context::CommandsContext,
+    namespaces_context::{NamespacesContext, DEFAULT_NAMESPACE},
+};
 use crate::{
     command::Command,
     resources::{config::Options, file_service::FileService},
@@ -38,7 +41,7 @@ impl ApplicationContext {
 
     /// Reloads the command context, filtering all commands and reseting the select command idx
     fn reload_commands_context(&mut self) {
-        self.commands_context.filter_commands("All", "");
+        self.commands_context.filter_commands(DEFAULT_NAMESPACE, "");
         self.commands_context.reset_selected_command_idx();
     }
 

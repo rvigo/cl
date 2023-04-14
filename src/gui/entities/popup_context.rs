@@ -1,4 +1,4 @@
-use super::answer_state::AnswerState;
+use super::{answer_state::AnswerState, state::State};
 use crate::gui::widgets::popup::{Answer, Popup};
 
 #[derive(Default, Clone)]
