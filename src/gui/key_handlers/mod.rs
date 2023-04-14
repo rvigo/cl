@@ -1,9 +1,9 @@
-mod edit_handler;
-pub mod input_handler;
-mod insert_handler;
-mod main_handler;
-mod popup_handler;
-mod query_box_handler;
+pub mod edit_handler;
+pub mod help_popup_handler;
+pub mod insert_handler;
+pub mod main_handler;
+pub mod popup_handler;
+pub mod query_box_handler;
 
 use super::entities::{events::app_events::AppEvent, ui_context::UIContext};
 use anyhow::Result;

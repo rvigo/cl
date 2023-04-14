@@ -1,15 +1,15 @@
-use super::{
-    edit_handler::EditScreenHandler,
-    insert_handler::InsertScreenHandler,
-    main_handler::MainScreenHandler,
-    popup_handler::{self, PopupHandler},
-    query_box_handler::QueryboxHandler,
-    KeyEventHandler, WidgetKeyEventHandler,
-};
-use crate::gui::entities::{
-    events::{app_events::AppEvent, input_events::InputMessages},
-    ui_context::UIContext,
-    ui_state::ViewMode,
+use crate::gui::{
+    entities::{
+        events::{app_events::AppEvent, input_events::InputMessages},
+        ui_context::UIContext,
+        ui_state::ViewMode,
+    },
+    key_handlers::{
+        edit_handler::EditScreenHandler, help_popup_handler::HelpPopupHandler,
+        insert_handler::InsertScreenHandler, main_handler::MainScreenHandler,
+        popup_handler::PopupHandler, query_box_handler::QueryboxHandler, KeyEventHandler,
+        WidgetKeyEventHandler,
+    },
 };
 use anyhow::Result;
 use crossterm::event::KeyEvent;
@@ -26,6 +26,12 @@ pub struct InputHandler {
     app_sx: Sender<AppEvent>,
     ui_context: Arc<Mutex<UIContext<'static>>>,
     should_quit: Arc<AtomicBool>,
+    main_screen_handler: MainScreenHandler,
+    insert_screen_handler: InsertScreenHandler,
+    edit_screen_handler: EditScreenHandler,
+    popup_handler: PopupHandler,
+    help_popup_handler: HelpPopupHandler,
+    querybox_handler: QueryboxHandler,
 }
 
 impl InputHandler {
@@ -40,6 +46,12 @@ impl InputHandler {
             app_sx,
             ui_context,
             should_quit,
+            main_screen_handler: MainScreenHandler,
+            insert_screen_handler: InsertScreenHandler,
+            edit_screen_handler: EditScreenHandler,
+            popup_handler: PopupHandler,
+            help_popup_handler: HelpPopupHandler,
+            querybox_handler: QueryboxHandler,
         };
 
         handler.start().await
@@ -62,11 +74,13 @@ impl InputHandler {
     async fn handle_input(&mut self, key_event: KeyEvent) -> Result<()> {
         let ui_context = self.ui_context.lock().to_owned();
         let result = if ui_context.show_popup() {
-            PopupHandler.handle(key_event, &mut self.ui_context.lock())?
+            self.popup_handler
+                .handle(key_event, &mut self.ui_context.lock())?
         } else if ui_context.show_help() {
-            popup_handler::handle_help()? //TODO what should I to do with this help popup?
+            self.help_popup_handler.handle(key_event)?
         } else if ui_context.querybox_focus() {
-            QueryboxHandler.handle(key_event, &mut self.ui_context.lock())?
+            self.querybox_handler
+                .handle(key_event, &mut self.ui_context.lock())?
         } else {
             let handler = self.get_handler(&ui_context.view_mode());
             handler.handle(key_event)?
@@ -79,11 +93,11 @@ impl InputHandler {
         Ok(())
     }
 
-    fn get_handler(&self, view_mode: &ViewMode) -> Box<dyn KeyEventHandler> {
+    fn get_handler(&self, view_mode: &ViewMode) -> &dyn KeyEventHandler {
         match view_mode {
-            ViewMode::Main => Box::new(MainScreenHandler),
-            ViewMode::Insert => Box::new(InsertScreenHandler),
-            ViewMode::Edit => Box::new(EditScreenHandler),
+            ViewMode::Main => &self.main_screen_handler,
+            ViewMode::Insert => &self.insert_screen_handler,
+            ViewMode::Edit => &self.edit_screen_handler,
         }
     }
 }

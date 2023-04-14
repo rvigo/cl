@@ -5,15 +5,13 @@ mod widgets;
 
 pub mod core {
     use crate::{
-        gui::{
-            entities::{
-                application_context::ApplicationContext,
-                event_handler::EventHandler,
-                events::{app_events::AppEvent, input_events::InputMessages},
-                tui_application::TuiApplication,
-                ui_context::UIContext,
-            },
-            key_handlers::input_handler::InputHandler,
+        gui::entities::{
+            application_context::ApplicationContext,
+            event_handler::EventHandler,
+            events::{app_events::AppEvent, input_events::InputMessages},
+            input_handler::InputHandler,
+            tui_application::TuiApplication,
+            ui_context::UIContext,
         },
         resources::{config::Config, file_service::FileService},
     };
