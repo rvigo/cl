@@ -44,11 +44,6 @@ impl WidgetKeyEventHandler for PopupHandler {
                 }
             }
         }
-
         Ok(None)
     }
-}
-
-pub fn handle_help() -> Result<Option<AppEvent>> {
-    Ok(Some(AppEvent::Popup(PopupEvent::Disable)))
 }
