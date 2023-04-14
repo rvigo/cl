@@ -15,6 +15,11 @@ impl KeyEventHandler for MainScreenHandler {
                 code: KeyCode::Char('f'),
                 modifiers: KeyModifiers::NONE,
                 ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('/'),
+                modifiers: KeyModifiers::NONE,
+                ..
             } => Ok(Some(AppEvent::QueryBox(QueryboxEvent::Active))),
             KeyEvent {
                 code: KeyCode::Char('q') | KeyCode::Esc,
@@ -51,14 +56,14 @@ impl KeyEventHandler for MainScreenHandler {
                 MainScreenEvent::NextNamespace,
             )))),
             KeyEvent {
-                code: KeyCode::Down | KeyCode::Char('k'),
+                code: KeyCode::Down | KeyCode::Char('j'),
                 modifiers: KeyModifiers::NONE,
                 ..
             } => Ok(Some(AppEvent::Screen(ScreenEvent::Main(
                 MainScreenEvent::NextCommand,
             )))),
             KeyEvent {
-                code: KeyCode::Up | KeyCode::Char('j'),
+                code: KeyCode::Up | KeyCode::Char('k'),
                 modifiers: KeyModifiers::NONE,
                 ..
             } => Ok(Some(AppEvent::Screen(ScreenEvent::Main(

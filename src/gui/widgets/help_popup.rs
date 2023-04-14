@@ -100,15 +100,15 @@ fn main_options<'a>() -> Vec<Vec<Cell<'a>>> {
             get_cell_style("Left", None),
         ],
         vec![
-            get_cell_style("<J/↑>", Some(key_style())),
+            get_cell_style("<K/↑>", Some(key_style())),
             get_cell_style("Up", None),
         ],
         vec![
-            get_cell_style("<K/↓>", Some(key_style())),
+            get_cell_style("<J/↓>", Some(key_style())),
             get_cell_style("Down", None),
         ],
         vec![
-            get_cell_style("<F>", Some(key_style())),
+            get_cell_style("<F//>", Some(key_style())),
             get_cell_style("Find stored commands", None),
         ],
         vec![
