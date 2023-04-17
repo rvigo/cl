@@ -1,6 +1,5 @@
-use crate::gui::widgets::text_field::FieldType;
-
 use super::state::State;
+pub use crate::gui::widgets::text_field::FieldType;
 
 #[derive(Default, Clone)]
 pub struct FieldState {

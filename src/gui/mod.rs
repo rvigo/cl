@@ -6,12 +6,11 @@ mod widgets;
 pub mod core {
     use crate::{
         gui::entities::{
-            application_context::ApplicationContext,
+            contexts::{application_context::ApplicationContext, ui_context::UIContext},
             event_handler::EventHandler,
             events::{app_events::AppEvent, input_events::InputMessages},
             input_handler::InputHandler,
             tui_application::TuiApplication,
-            ui_context::UIContext,
         },
         resources::{config::Config, file_service::FileService},
     };

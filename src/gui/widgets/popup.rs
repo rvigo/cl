@@ -1,5 +1,8 @@
 use crate::gui::{
-    entities::{answer_state::AnswerState, events::app_events::PopupCallbackAction, state::State},
+    entities::{
+        events::app_events::PopupCallbackAction,
+        states::{answer_state::AnswerState, state::State},
+    },
     layouts::{get_default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
 };
 use log::{error, warn};

@@ -2,7 +2,7 @@ use super::{centered_rect, get_default_block, TerminalSize, DEFAULT_SELECTED_COL
 use crate::{
     command::{Command, CommandBuilder},
     gui::{
-        entities::{
+        entities::contexts::{
             application_context::ApplicationContext, namespaces_context::NamespacesContext,
             ui_context::UIContext,
         },

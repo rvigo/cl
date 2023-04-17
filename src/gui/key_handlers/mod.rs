@@ -3,9 +3,9 @@ pub mod help_popup_handler;
 pub mod insert_handler;
 pub mod main_handler;
 pub mod popup_handler;
-pub mod query_box_handler;
+pub mod querybox_handler;
 
-use super::entities::{events::app_events::AppEvent, ui_context::UIContext};
+use super::entities::{contexts::ui_context::UIContext, events::app_events::AppEvent};
 use anyhow::Result;
 use crossterm::event::KeyEvent;
 

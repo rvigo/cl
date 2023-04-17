@@ -1,7 +1,7 @@
 use super::WidgetKeyEventHandler;
 use crate::gui::entities::{
+    contexts::ui_context::UIContext,
     events::app_events::{AppEvent, QueryboxEvent},
-    ui_context::UIContext,
 };
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};

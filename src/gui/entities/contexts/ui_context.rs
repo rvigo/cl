@@ -1,14 +1,15 @@
-use super::{
-    answer_state::AnswerState,
-    events::app_events::PopupCallbackAction,
-    field_context::FieldContext,
-    popup_context::PopupContext,
-    state::State,
-    ui_state::{UiState, ViewMode},
-};
+use super::{field_context::FieldContext, popup_context::PopupContext};
 use crate::{
     command::Command,
     gui::{
+        entities::{
+            events::app_events::PopupCallbackAction,
+            states::{
+                answer_state::AnswerState,
+                state::State,
+                ui_state::{UiState, ViewMode},
+            },
+        },
         layouts::TerminalSize,
         widgets::{
             popup::{Answer, Popup},

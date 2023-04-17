@@ -1,13 +1,10 @@
+use super::{contexts::ui_context::UIContext, states::ui_state::ViewMode};
 use crate::gui::{
-    entities::{
-        events::{app_events::AppEvent, input_events::InputMessages},
-        ui_context::UIContext,
-        ui_state::ViewMode,
-    },
+    entities::events::{app_events::AppEvent, input_events::InputMessages},
     key_handlers::{
         edit_handler::EditScreenHandler, help_popup_handler::HelpPopupHandler,
         insert_handler::InsertScreenHandler, main_handler::MainScreenHandler,
-        popup_handler::PopupHandler, query_box_handler::QueryboxHandler, KeyEventHandler,
+        popup_handler::PopupHandler, querybox_handler::QueryboxHandler, KeyEventHandler,
         WidgetKeyEventHandler,
     },
 };
@@ -46,6 +43,7 @@ impl InputHandler {
             app_sx,
             ui_context,
             should_quit,
+            // key handlers
             main_screen_handler: MainScreenHandler,
             insert_screen_handler: InsertScreenHandler,
             edit_screen_handler: EditScreenHandler,
@@ -90,6 +88,7 @@ impl InputHandler {
             debug!("sending event: {:?}", event);
             self.app_sx.send(event).await?;
         }
+
         Ok(())
     }
 

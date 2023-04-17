@@ -1,11 +1,10 @@
 use super::{
-    application_context::ApplicationContext,
+    contexts::{application_context::ApplicationContext, ui_context::UIContext},
     events::app_events::{
         AppEvent, CommandEvent, FormScreenEvent, MainScreenEvent, PopupCallbackAction, PopupEvent,
         PopupType, QueryboxEvent, RenderEvent, ScreenEvent,
     },
-    ui_context::UIContext,
-    ui_state::ViewMode,
+    states::ui_state::ViewMode,
 };
 use crate::gui::widgets::popup::Answer;
 use log::debug;
@@ -18,7 +17,7 @@ use tokio::sync::mpsc::Receiver;
 
 pub struct EventHandler<'a> {
     app_rx: Receiver<AppEvent>,
-    context: Arc<Mutex<ApplicationContext>>,
+    app_context: Arc<Mutex<ApplicationContext>>,
     ui_context: Arc<Mutex<UIContext<'a>>>,
     should_quit: Arc<AtomicBool>,
 }
@@ -32,7 +31,7 @@ impl<'a> EventHandler<'a> {
     ) {
         let mut app_router = Self {
             app_rx,
-            context,
+            app_context: context,
             ui_context: ui_state,
             should_quit,
         };
@@ -46,13 +45,15 @@ impl<'a> EventHandler<'a> {
                 AppEvent::Run(command_event) => match command_event {
                     CommandEvent::Execute => {
                         if let Some(command) = self.ui_context.lock().get_selected_command() {
-                            self.context.lock().set_current_command_as_callback(command);
+                            self.app_context
+                                .lock()
+                                .set_current_command_as_callback(command);
                         }
                         self.quit();
                     }
                     CommandEvent::Insert => {
                         let mut ui = self.ui_context.lock();
-                        let mut c = self.context.lock();
+                        let mut c = self.app_context.lock();
                         let command = ui.build_new_command();
                         match c.add_command(command) {
                             Ok(()) => {
@@ -68,7 +69,7 @@ impl<'a> EventHandler<'a> {
                     }
                     // CommandEvents::Delete => todo!(),
                     CommandEvent::Edit => {
-                        let mut c = self.context.lock();
+                        let mut c = self.app_context.lock();
                         let mut ui = self.ui_context.lock();
 
                         let edited_command = ui.edit_command();
@@ -85,7 +86,7 @@ impl<'a> EventHandler<'a> {
                 },
                 AppEvent::Render(render_event) => match render_event {
                     RenderEvent::Main => {
-                        let mut c = self.context.lock();
+                        let mut c = self.app_context.lock();
                         let mut ui = self.ui_context.lock();
                         ui.set_view_mode(ViewMode::Main);
                         c.reload_contexts();
@@ -131,7 +132,7 @@ impl<'a> EventHandler<'a> {
                             match answer {
                                 Answer::Ok => {
                                     let mut ui = self.ui_context.lock();
-                                    let mut c = self.context.lock();
+                                    let mut c = self.app_context.lock();
 
                                     if let Some(popup) = ui.popup() {
                                         match popup.callback() {
@@ -186,7 +187,7 @@ impl<'a> EventHandler<'a> {
                 },
                 AppEvent::Screen(screen) => match screen {
                     ScreenEvent::Main(main_screen) => {
-                        let mut c = self.context.lock();
+                        let mut c = self.app_context.lock();
                         match main_screen {
                             MainScreenEvent::NextCommand => c.next_command(),
                             MainScreenEvent::PreviousCommand => c.previous_command(),

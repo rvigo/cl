@@ -1,4 +1,4 @@
-use crate::gui::layouts::TerminalSize;
+pub use crate::gui::layouts::TerminalSize;
 use std::fmt;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
