@@ -1,7 +1,7 @@
-use super::{field_state::FieldState, state::State};
 use crate::{
     command::{Command, CommandBuilder},
     gui::{
+        entities::states::{field_state::FieldState, state::State},
         layouts::TerminalSize,
         widgets::{
             fields::Fields,
@@ -18,7 +18,7 @@ use tui_textarea::{
 #[derive(Default, Clone)]
 pub struct FieldContext<'a> {
     fields: Fields<'a>,
-    focus_state: FieldState,
+    state: FieldState,
     selected_command: Option<Command>,
 }
 
@@ -32,11 +32,11 @@ impl<'a> FieldContext<'a> {
     }
 
     pub fn get_focus_state_mut(&mut self) -> &mut FieldState {
-        &mut self.focus_state
+        &mut self.state
     }
 
     pub fn next_field(&mut self) {
-        if let Some(current_field_type) = self.focus_state.selected() {
+        if let Some(current_field_type) = self.state.selected() {
             if let Some(field) = self.fields.get_field_mut(&current_field_type) {
                 field.deactivate_focus()
             }
@@ -48,8 +48,8 @@ impl<'a> FieldContext<'a> {
                 let new_field_type = self.fields.get_order()[new_field_idx].to_owned();
 
                 // selects the new field type
-                self.focus_state.select(Some(new_field_type));
-                if let Some(new_field_type) = self.focus_state.selected() {
+                self.state.select(Some(new_field_type));
+                if let Some(new_field_type) = self.state.selected() {
                     if let Some(field) = self.fields.get_field_mut(&new_field_type) {
                         field.activate_focus()
                     }
@@ -59,7 +59,7 @@ impl<'a> FieldContext<'a> {
     }
 
     pub fn previous_field(&mut self) {
-        if let Some(current_field_type) = self.focus_state.selected() {
+        if let Some(current_field_type) = self.state.selected() {
             if let Some(field) = self.fields.get_field_mut(&current_field_type) {
                 field.deactivate_focus()
             }
@@ -74,8 +74,8 @@ impl<'a> FieldContext<'a> {
                 let new_field_type = self.fields.get_order()[new_field_idx].to_owned();
 
                 // selects the new field type
-                self.focus_state.select(Some(new_field_type));
-                if let Some(new_field_type) = self.focus_state.selected() {
+                self.state.select(Some(new_field_type));
+                if let Some(new_field_type) = self.state.selected() {
                     if let Some(field) = self.fields.get_field_mut(&new_field_type) {
                         field.activate_focus()
                     }
@@ -85,7 +85,7 @@ impl<'a> FieldContext<'a> {
     }
 
     pub fn selected_field(&mut self) -> Option<&mut TextField<'a>> {
-        if let Some(selected) = self.focus_state.selected() {
+        if let Some(selected) = self.state.selected() {
             self.fields.get_mut(&selected)
         } else {
             None
@@ -297,21 +297,15 @@ mod test {
     #[test]
     fn should_move_to_next_field() {
         let mut field_context = FieldContext::default();
-        field_context.focus_state.select(Some(FieldType::Alias));
+        field_context.state.select(Some(FieldType::Alias));
 
         field_context.next_field();
-        assert_eq!(
-            field_context.focus_state.selected(),
-            Some(FieldType::Namespace)
-        );
+        assert_eq!(field_context.state.selected(), Some(FieldType::Namespace));
         assert_eq!(field_context.fields[&FieldType::Alias].in_focus(), false);
         assert_eq!(field_context.fields[&FieldType::Namespace].in_focus(), true);
 
         field_context.next_field();
-        assert_eq!(
-            field_context.focus_state.selected(),
-            Some(FieldType::Command)
-        );
+        assert_eq!(field_context.state.selected(), Some(FieldType::Command));
         assert_eq!(
             field_context.fields[&FieldType::Namespace].in_focus(),
             false
@@ -322,18 +316,15 @@ mod test {
     #[test]
     fn should_move_to_previous_field() {
         let mut field_context = FieldContext::default();
-        field_context.focus_state.select(Some(FieldType::Alias));
+        field_context.state.select(Some(FieldType::Alias));
 
         field_context.previous_field();
-        assert_eq!(field_context.focus_state.selected(), Some(FieldType::Tags));
+        assert_eq!(field_context.state.selected(), Some(FieldType::Tags));
         assert_eq!(field_context.fields[&FieldType::Alias].in_focus(), false);
         assert_eq!(field_context.fields[&FieldType::Tags].in_focus(), true);
 
         field_context.previous_field();
-        assert_eq!(
-            field_context.focus_state.selected(),
-            Some(FieldType::Description)
-        );
+        assert_eq!(field_context.state.selected(), Some(FieldType::Description));
         assert_eq!(field_context.fields[&FieldType::Tags].in_focus(), false);
         assert_eq!(
             field_context.fields[&FieldType::Description].in_focus(),
@@ -345,7 +336,7 @@ mod test {
     fn should_return_the_selected_field() {
         let mut field_context = FieldContext::default();
 
-        field_context.focus_state.select(Some(FieldType::Namespace));
+        field_context.state.select(Some(FieldType::Namespace));
         let selected_field = field_context.selected_field();
         assert_eq!(selected_field.unwrap().field_type, FieldType::Namespace);
     }

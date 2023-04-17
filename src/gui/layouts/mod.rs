@@ -1,9 +1,6 @@
 mod form_layout;
 mod main_layout;
 
-use super::entities::{
-    application_context::ApplicationContext, ui_context::UIContext, ui_state::ViewMode,
-};
 use parking_lot::Mutex;
 use std::{io::Stdout, sync::Arc};
 use tui::{
@@ -12,6 +9,11 @@ use tui::{
     style::{Color, Style},
     widgets::{Block, BorderType, Borders},
     Frame,
+};
+
+use super::entities::{
+    contexts::{application_context::ApplicationContext, ui_context::UIContext},
+    states::ui_state::ViewMode,
 };
 
 pub const DEFAULT_TEXT_COLOR: Color = Color::Rgb(229, 229, 229);

@@ -1,5 +1,8 @@
-use super::{fuzzy::Fuzzy, namespaces_context::DEFAULT_NAMESPACE};
-use crate::{command::Command, commands::Commands, resources::file_service::FileService};
+use super::namespaces_context::DEFAULT_NAMESPACE;
+use crate::{
+    command::Command, commands::Commands, gui::entities::fuzzy::Fuzzy,
+    resources::file_service::FileService,
+};
 use anyhow::Result;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;

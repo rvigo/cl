@@ -1,8 +1,8 @@
 use super::WidgetKeyEventHandler;
 use crate::gui::{
     entities::{
+        contexts::ui_context::UIContext,
         events::app_events::{AppEvent, PopupEvent},
-        ui_context::UIContext,
     },
     widgets::popup::MessageType,
 };

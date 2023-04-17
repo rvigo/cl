@@ -167,13 +167,10 @@ impl Config {
             if !config_data.is_empty() {
                 let mut config: Self = toml::from_str(&config_data)?;
                 config.validate()?;
-                Ok(config)
-            } else {
-                Self::new()
+                return Ok(config);
             }
-        } else {
-            Self::new()
         }
+        Self::new()
     }
 
     fn new() -> Result<Self> {

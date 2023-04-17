@@ -1,5 +1,5 @@
 use crate::gui::{
-    entities::ui_state::ViewMode,
+    entities::states::ui_state::ViewMode,
     layouts::{centered_rect, TerminalSize, DEFAULT_SELECTED_COLOR},
 };
 use tui::{

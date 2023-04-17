@@ -1,16 +1,7 @@
-pub mod answer_state;
-pub mod application_context;
-mod commands_context;
+pub mod contexts;
 pub mod event_handler;
 pub mod events;
-mod field_context;
-mod field_state;
 mod fuzzy;
 pub mod input_handler;
-pub mod namespace_state;
-pub mod namespaces_context;
-mod popup_context;
-pub mod state;
+pub mod states;
 pub mod tui_application;
-pub mod ui_context;
-pub mod ui_state;

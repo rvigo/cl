@@ -1,5 +1,7 @@
-use super::{answer_state::AnswerState, state::State};
-use crate::gui::widgets::popup::{Answer, Popup};
+use crate::gui::{
+    entities::states::{answer_state::AnswerState, state::State},
+    widgets::popup::{Answer, Popup},
+};
 
 #[derive(Default, Clone)]
 pub struct PopupContext {

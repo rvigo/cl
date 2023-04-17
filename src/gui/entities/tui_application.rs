@@ -1,7 +1,3 @@
-use super::{
-    application_context::ApplicationContext, events::input_events::InputMessages,
-    ui_context::UIContext,
-};
 use crate::gui::layouts::{get_terminal_size, select_ui};
 use anyhow::Result;
 use crossterm::{
@@ -22,11 +18,16 @@ use std::{
 use tokio::sync::mpsc::Sender;
 use tui::{backend::CrosstermBackend, Terminal};
 
+use super::{
+    contexts::{application_context::ApplicationContext, ui_context::UIContext},
+    events::input_events::InputMessages,
+};
+
 pub struct TuiApplication<'a> {
-    pub terminal: Terminal<CrosstermBackend<std::io::Stdout>>,
-    pub input_sx: Sender<InputMessages>,
-    pub should_quit: Arc<AtomicBool>,
-    pub ui_context: Arc<Mutex<UIContext<'a>>>,
+    terminal: Terminal<CrosstermBackend<std::io::Stdout>>,
+    input_sx: Sender<InputMessages>,
+    should_quit: Arc<AtomicBool>,
+    ui_context: Arc<Mutex<UIContext<'a>>>,
     context: Arc<Mutex<ApplicationContext>>,
 }
 
