@@ -1,4 +1,5 @@
-use crate::gui::entities::states::{namespace_state::NamespaceState, state::State};
+use super::Selectable;
+use crate::gui::entities::states::{namespace_state::NamespaceState, State};
 use std::collections::HashSet;
 
 pub struct NamespacesContext {
@@ -46,37 +47,6 @@ impl NamespacesContext {
         self.state.selected()
     }
 
-    pub fn next_namespace(&mut self) {
-        let i = self.get_selected_namespace_idx();
-        let i = if i >= self.namespaces.len() - 1 {
-            0
-        } else {
-            i + 1
-        };
-        self.state.select(i);
-        self.current_namespace = self
-            .namespaces
-            .get(i)
-            .unwrap_or(&String::from(DEFAULT_NAMESPACE))
-            .to_owned();
-    }
-
-    pub fn previous_namespace(&mut self) {
-        let i = self.get_selected_namespace_idx();
-        let i = if i == 0 {
-            self.namespaces.len() - 1
-        } else {
-            i - 1
-        };
-
-        self.state.select(i);
-        self.current_namespace = self
-            .namespaces
-            .get(i)
-            .unwrap_or(&String::from(DEFAULT_NAMESPACE))
-            .to_owned();
-    }
-
     fn select_namespace(&mut self, idx: usize) {
         self.state.select(idx)
     }
@@ -102,6 +72,38 @@ impl NamespacesContext {
     }
 }
 
+impl Selectable for NamespacesContext {
+    fn next(&mut self) {
+        let i = self.get_selected_namespace_idx();
+        let i = if i >= self.namespaces.len() - 1 {
+            0
+        } else {
+            i + 1
+        };
+        self.state.select(i);
+        self.current_namespace = self
+            .namespaces
+            .get(i)
+            .unwrap_or(&String::from(DEFAULT_NAMESPACE))
+            .to_owned();
+    }
+
+    fn previous(&mut self) {
+        let i = self.get_selected_namespace_idx();
+        let i = if i == 0 {
+            self.namespaces.len() - 1
+        } else {
+            i - 1
+        };
+
+        self.state.select(i);
+        self.current_namespace = self
+            .namespaces
+            .get(i)
+            .unwrap_or(&String::from(DEFAULT_NAMESPACE))
+            .to_owned();
+    }
+}
 #[cfg(test)]
 mod test {
     use super::*;
@@ -143,15 +145,15 @@ mod test {
 
         assert_eq!(context.current_namespace, DEFAULT_NAMESPACE);
 
-        context.previous_namespace();
+        context.previous();
         assert_eq!(context.state.selected(), 2);
         assert_eq!(context.current_namespace, "namespace2");
 
-        context.previous_namespace();
+        context.previous();
         assert_eq!(context.state.selected(), 1);
         assert_eq!(context.current_namespace, "namespace1");
 
-        context.previous_namespace();
+        context.previous();
         assert_eq!(context.state.selected(), 0);
         assert_eq!(context.current_namespace, DEFAULT_NAMESPACE);
     }
@@ -162,16 +164,16 @@ mod test {
 
         assert_eq!(context.current_namespace, DEFAULT_NAMESPACE);
 
-        context.next_namespace();
+        context.next();
         assert_eq!(context.state.selected(), 1);
         assert_eq!(context.current_namespace, "namespace1");
 
-        context.next_namespace();
+        context.next();
         assert_eq!(context.state.selected(), 2);
         assert_eq!(context.state.selected(), 2);
         assert_eq!(context.current_namespace, "namespace2");
 
-        context.next_namespace();
+        context.next();
         assert_eq!(context.state.selected(), 0);
         assert_eq!(context.current_namespace, DEFAULT_NAMESPACE);
     }

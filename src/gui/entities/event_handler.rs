@@ -67,7 +67,6 @@ impl<'a> EventHandler<'a> {
                             }
                         }
                     }
-                    // CommandEvents::Delete => todo!(),
                     CommandEvent::Edit => {
                         let mut c = self.app_context.lock();
                         let mut ui = self.ui_context.lock();
@@ -198,12 +197,12 @@ impl<'a> EventHandler<'a> {
                 AppEvent::QueryBox(status) => match status {
                     QueryboxEvent::Active => {
                         let mut ui = self.ui_context.lock();
-                        ui.activate_focus();
+                        ui.activate_querybox_focus();
                         ui.set_querybox_focus(true);
                     }
                     QueryboxEvent::Deactive => {
                         let mut ui = self.ui_context.lock();
-                        ui.deactivate_focus();
+                        ui.deactivate_querybox_focus();
                         ui.set_querybox_focus(false);
                     }
                 },

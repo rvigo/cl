@@ -1,4 +1,4 @@
-use super::footer::Footer;
+use super::Footer;
 use crate::gui::layouts::TerminalSize;
 use tui::{
     buffer::Buffer,

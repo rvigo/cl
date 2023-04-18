@@ -1,4 +1,4 @@
-pub use super::state::State;
+use super::State;
 
 #[derive(Debug, Clone, Default)]
 pub struct NamespaceState {

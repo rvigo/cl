@@ -1,5 +1,6 @@
+use super::Selectable;
 use crate::gui::{
-    entities::states::{answer_state::AnswerState, state::State},
+    entities::states::{answer_state::AnswerState, State},
     widgets::popup::{Answer, Popup},
 };
 
@@ -47,8 +48,10 @@ impl PopupContext {
         self.popup = None;
         self.answer_state.select(Some(0));
     }
+}
 
-    pub fn next(&mut self) {
+impl Selectable for PopupContext {
+    fn next(&mut self) {
         if let Some(popup) = &self.popup {
             let mut i = self.answer_state.selected().unwrap_or(0);
             i = if i >= popup.choices().len() - 1 {
@@ -61,7 +64,7 @@ impl PopupContext {
         }
     }
 
-    pub fn previous(&mut self) {
+    fn previous(&mut self) {
         if let Some(popup) = &self.popup {
             let mut i = self.answer_state.selected().unwrap_or(0);
             i = if i == 0 {

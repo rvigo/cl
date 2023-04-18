@@ -1,4 +1,4 @@
-use super::{field_context::FieldContext, popup_context::PopupContext};
+use super::{field_context::FieldContext, popup_context::PopupContext, Selectable};
 use crate::{
     command::Command,
     gui::{
@@ -6,8 +6,8 @@ use crate::{
             events::app_events::PopupCallbackAction,
             states::{
                 answer_state::AnswerState,
-                state::State,
                 ui_state::{UiState, ViewMode},
+                State,
             },
         },
         layouts::TerminalSize,
@@ -50,68 +50,6 @@ impl<'a> UIContext<'a> {
         self.set_popup(Some(Popup::from_error(message, None)))
     }
 
-    pub fn get_selected_command(&self) -> Option<&Command> {
-        self.form_fields_context.selected_command()
-    }
-
-    pub fn set_selected_command_input(&mut self) {
-        self.form_fields_context.set_selected_command_input();
-    }
-
-    pub fn select_command(&mut self, selected_command: Option<Command>) {
-        self.form_fields_context.select_command(selected_command)
-    }
-
-    pub fn select_form_field_type(&mut self, field_type: Option<FieldType>) {
-        self.form_fields_context
-            .get_focus_state_mut()
-            .select(field_type);
-    }
-
-    pub fn clear_form_fields(&mut self) {
-        self.form_fields_context.clear_inputs()
-    }
-
-    pub fn get_form_fields(&self) -> Vec<TextField> {
-        self.form_fields_context.get_fields()
-    }
-
-    pub fn edit_command(&mut self) -> Command {
-        self.form_fields_context.build_edited_command()
-    }
-
-    pub fn build_new_command(&mut self) -> Command {
-        self.form_fields_context.build_new_command()
-    }
-
-    pub fn next_form_field(&mut self) {
-        self.form_fields_context.next_field()
-    }
-
-    pub fn previous_form_field(&mut self) {
-        self.form_fields_context.previous_field()
-    }
-
-    pub fn get_querybox_input(&self) -> String {
-        self.query_box.get_input()
-    }
-
-    pub fn activate_focus(&mut self) {
-        self.query_box.activate_focus()
-    }
-
-    pub fn deactivate_focus(&mut self) {
-        self.query_box.deactivate_focus()
-    }
-
-    pub fn querybox(&self) -> QueryBox {
-        self.query_box.to_owned()
-    }
-
-    pub fn handle_querybox_input(&mut self, key_event: KeyEvent) {
-        self.query_box.handle(key_event)
-    }
-
     pub fn popup(&self) -> Option<Popup> {
         self.popup_context.get_popup()
     }
@@ -148,6 +86,65 @@ impl<'a> UIContext<'a> {
         self.popup_context.state_mut()
     }
 
+    pub fn show_popup(&self) -> bool {
+        self.ui_state.show_popup()
+    }
+
+    pub fn set_show_popup(&mut self, should_show: bool) {
+        self.ui_state.set_show_popup(should_show)
+    }
+
+    pub fn show_help(&self) -> bool {
+        self.ui_state.show_help()
+    }
+
+    pub fn set_show_help(&mut self, should_show: bool) {
+        self.ui_state.set_show_help(should_show)
+    }
+
+    pub fn get_selected_command(&self) -> Option<&Command> {
+        self.form_fields_context.selected_command()
+    }
+
+    pub fn set_selected_command_input(&mut self) {
+        self.form_fields_context.set_selected_command_input();
+    }
+
+    pub fn select_command(&mut self, selected_command: Option<Command>) {
+        self.form_fields_context.select_command(selected_command)
+    }
+
+    // form
+    pub fn select_form_field_type(&mut self, field_type: Option<FieldType>) {
+        self.form_fields_context
+            .get_focus_state_mut()
+            .select(field_type);
+    }
+
+    pub fn clear_form_fields(&mut self) {
+        self.form_fields_context.clear_inputs()
+    }
+
+    pub fn get_form_fields(&self) -> Vec<TextField> {
+        self.form_fields_context.get_fields()
+    }
+
+    pub fn edit_command(&mut self) -> Command {
+        self.form_fields_context.build_edited_command()
+    }
+
+    pub fn build_new_command(&mut self) -> Command {
+        self.form_fields_context.build_new_command()
+    }
+
+    pub fn next_form_field(&mut self) {
+        self.form_fields_context.next()
+    }
+
+    pub fn previous_form_field(&mut self) {
+        self.form_fields_context.previous()
+    }
+
     /// Resets forms selection
     pub fn reset_form_field_selected_field(&mut self) {
         let default_field = FieldType::default();
@@ -165,14 +162,34 @@ impl<'a> UIContext<'a> {
         self.form_fields_context.handle_input(input)
     }
 
-    pub fn resize_screen_to(&mut self, size: TerminalSize) {
-        self.ui_state.set_terminal_size(size);
-        self.order_fields();
+    pub fn is_form_modified(&self) -> bool {
+        self.form_fields_context.is_modified()
     }
 
     pub fn order_fields(&mut self) {
         let size = &self.ui_state.terminal_size();
         self.form_fields_context.order_field_by_size(size)
+    }
+
+    // querybox
+    pub fn get_querybox_input(&self) -> String {
+        self.query_box.get_input()
+    }
+
+    pub fn activate_querybox_focus(&mut self) {
+        self.query_box.activate_focus()
+    }
+
+    pub fn deactivate_querybox_focus(&mut self) {
+        self.query_box.deactivate_focus()
+    }
+
+    pub fn querybox(&self) -> QueryBox {
+        self.query_box.to_owned()
+    }
+
+    pub fn handle_querybox_input(&mut self, key_event: KeyEvent) {
+        self.query_box.handle(key_event)
     }
 
     pub fn querybox_focus(&self) -> bool {
@@ -183,6 +200,7 @@ impl<'a> UIContext<'a> {
         self.ui_state.set_querybox_focus(focus)
     }
 
+    //
     pub fn view_mode(&self) -> ViewMode {
         self.ui_state.view_mode()
     }
@@ -195,24 +213,9 @@ impl<'a> UIContext<'a> {
         self.ui_state.terminal_size()
     }
 
-    pub fn show_popup(&self) -> bool {
-        self.ui_state.show_popup()
-    }
-
-    pub fn set_show_popup(&mut self, should_show: bool) {
-        self.ui_state.set_show_popup(should_show)
-    }
-
-    pub fn show_help(&self) -> bool {
-        self.ui_state.show_help()
-    }
-
-    pub fn set_show_help(&mut self, should_show: bool) {
-        self.ui_state.set_show_help(should_show)
-    }
-
-    pub fn is_form_modified(&self) -> bool {
-        self.form_fields_context.is_modified()
+    pub fn resize_screen_to(&mut self, size: TerminalSize) {
+        self.ui_state.set_terminal_size(size);
+        self.order_fields();
     }
 }
 

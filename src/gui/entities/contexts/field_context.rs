@@ -1,7 +1,8 @@
+use super::Selectable;
 use crate::{
     command::{Command, CommandBuilder},
     gui::{
-        entities::states::{field_state::FieldState, state::State},
+        entities::states::{field_state::FieldState, State},
         layouts::TerminalSize,
         widgets::{
             fields::Fields,
@@ -34,55 +35,6 @@ impl<'a> FieldContext<'a> {
 
     pub fn get_focus_state_mut(&mut self) -> &mut FieldState {
         &mut self.state
-    }
-
-    pub fn next_field(&mut self) {
-        if let Some(current_field_type) = self.state.selected() {
-            if let Some(field) = self.fields.get_field_mut(&current_field_type) {
-                field.deactivate_focus()
-            }
-
-            let order = self.fields.get_order();
-
-            if let Some(pos) = order.iter().position(|x| current_field_type.eq(x)) {
-                let new_field_idx = if pos >= order.len() - 1 { 0 } else { pos + 1 };
-                let new_field_type = self.fields.get_order()[new_field_idx].to_owned();
-
-                // selects the new field type
-                self.state.select(Some(new_field_type));
-                if let Some(new_field_type) = self.state.selected() {
-                    if let Some(field) = self.fields.get_field_mut(&new_field_type) {
-                        field.activate_focus()
-                    }
-                }
-            };
-        }
-    }
-
-    pub fn previous_field(&mut self) {
-        if let Some(current_field_type) = self.state.selected() {
-            if let Some(field) = self.fields.get_field_mut(&current_field_type) {
-                field.deactivate_focus()
-            }
-
-            let order = self.fields.get_order();
-            if let Some(pos) = order.iter().position(|x| current_field_type.eq(x)) {
-                let new_field_idx = if pos == 0 {
-                    self.fields.len() - 1
-                } else {
-                    pos - 1
-                };
-                let new_field_type = self.fields.get_order()[new_field_idx].to_owned();
-
-                // selects the new field type
-                self.state.select(Some(new_field_type));
-                if let Some(new_field_type) = self.state.selected() {
-                    if let Some(field) = self.fields.get_field_mut(&new_field_type) {
-                        field.activate_focus()
-                    }
-                }
-            }
-        }
     }
 
     pub fn selected_field_mut(&mut self) -> Option<&mut TextField<'a>> {
@@ -269,10 +221,60 @@ impl<'a> FieldContext<'a> {
     }
 
     fn reset_edition_state(&mut self) {
-        self.state.reset_edition_fields_state()
+        self.state.reset_fields_edition_state()
     }
 }
 
+impl Selectable for FieldContext<'_> {
+    fn next(&mut self) {
+        if let Some(current_field_type) = self.state.selected() {
+            if let Some(field) = self.fields.get_field_mut(&current_field_type) {
+                field.deactivate_focus()
+            }
+
+            let order = self.fields.get_order();
+
+            if let Some(pos) = order.iter().position(|x| current_field_type.eq(x)) {
+                let new_field_idx = if pos >= order.len() - 1 { 0 } else { pos + 1 };
+                let new_field_type = self.fields.get_order()[new_field_idx].to_owned();
+
+                // selects the new field type
+                self.state.select(Some(new_field_type));
+                if let Some(new_field_type) = self.state.selected() {
+                    if let Some(field) = self.fields.get_field_mut(&new_field_type) {
+                        field.activate_focus()
+                    }
+                }
+            };
+        }
+    }
+
+    fn previous(&mut self) {
+        if let Some(current_field_type) = self.state.selected() {
+            if let Some(field) = self.fields.get_field_mut(&current_field_type) {
+                field.deactivate_focus()
+            }
+
+            let order = self.fields.get_order();
+            if let Some(pos) = order.iter().position(|x| current_field_type.eq(x)) {
+                let new_field_idx = if pos == 0 {
+                    self.fields.len() - 1
+                } else {
+                    pos - 1
+                };
+                let new_field_type = self.fields.get_order()[new_field_idx].to_owned();
+
+                // selects the new field type
+                self.state.select(Some(new_field_type));
+                if let Some(new_field_type) = self.state.selected() {
+                    if let Some(field) = self.fields.get_field_mut(&new_field_type) {
+                        field.activate_focus()
+                    }
+                }
+            }
+        }
+    }
+}
 #[cfg(test)]
 mod test {
     use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -329,12 +331,12 @@ mod test {
         let mut field_context = FieldContext::default();
         field_context.state.select(Some(FieldType::Alias));
 
-        field_context.next_field();
+        field_context.next();
         assert_eq!(field_context.state.selected(), Some(FieldType::Namespace));
         assert_eq!(field_context.fields[&FieldType::Alias].in_focus(), false);
         assert_eq!(field_context.fields[&FieldType::Namespace].in_focus(), true);
 
-        field_context.next_field();
+        field_context.next();
         assert_eq!(field_context.state.selected(), Some(FieldType::Command));
         assert_eq!(
             field_context.fields[&FieldType::Namespace].in_focus(),
@@ -348,12 +350,12 @@ mod test {
         let mut field_context = FieldContext::default();
         field_context.state.select(Some(FieldType::Alias));
 
-        field_context.previous_field();
+        field_context.previous();
         assert_eq!(field_context.state.selected(), Some(FieldType::Tags));
         assert_eq!(field_context.fields[&FieldType::Alias].in_focus(), false);
         assert_eq!(field_context.fields[&FieldType::Tags].in_focus(), true);
 
-        field_context.previous_field();
+        field_context.previous();
         assert_eq!(field_context.state.selected(), Some(FieldType::Description));
         assert_eq!(field_context.fields[&FieldType::Tags].in_focus(), false);
         assert_eq!(

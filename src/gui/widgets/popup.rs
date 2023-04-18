@@ -1,7 +1,7 @@
 use crate::gui::{
     entities::{
         events::app_events::PopupCallbackAction,
-        states::{answer_state::AnswerState, state::State},
+        states::{answer_state::AnswerState, State},
     },
     layouts::{get_default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
 };
