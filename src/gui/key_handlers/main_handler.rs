@@ -86,7 +86,7 @@ impl KeyEventHandler for MainScreenHandler {
             } => Ok(Some(AppEvent::Popup(PopupEvent::Enable(
                 PopupType::Dialog {
                     message: "Are you sure you want to delete the command?".to_owned(),
-                    callback_action: PopupCallbackAction::Delete,
+                    callback_action: PopupCallbackAction::DeleteCommand,
                 },
             )))),
             KeyEvent {

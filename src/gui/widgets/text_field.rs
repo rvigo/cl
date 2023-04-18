@@ -3,6 +3,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::{
     fmt::{Debug, Display},
     hash::Hash,
+    slice::Iter,
 };
 use tui::{
     buffer::Buffer,
@@ -20,6 +21,19 @@ pub enum FieldType {
     Command,
     Description,
     Namespace,
+}
+
+impl FieldType {
+    pub fn iter() -> Iter<'static, FieldType> {
+        [
+            FieldType::Alias,
+            FieldType::Tags,
+            FieldType::Command,
+            FieldType::Description,
+            FieldType::Namespace,
+        ]
+        .iter()
+    }
 }
 
 impl Display for FieldType {
@@ -67,7 +81,7 @@ impl<'a> TextField<'a> {
         self.in_focus = false
     }
 
-    pub fn input_as_string(&mut self) -> String {
+    pub fn input_as_string(&self) -> String {
         self.text_area.to_owned().into_lines().join("\n")
     }
 

@@ -1,6 +1,10 @@
 mod form_layout;
 mod main_layout;
 
+use super::entities::{
+    contexts::{application_context::ApplicationContext, ui_context::UIContext},
+    states::ui_state::ViewMode,
+};
 use parking_lot::Mutex;
 use std::{io::Stdout, sync::Arc};
 use tui::{
@@ -9,11 +13,6 @@ use tui::{
     style::{Color, Style},
     widgets::{Block, BorderType, Borders},
     Frame,
-};
-
-use super::entities::{
-    contexts::{application_context::ApplicationContext, ui_context::UIContext},
-    states::ui_state::ViewMode,
 };
 
 pub const DEFAULT_TEXT_COLOR: Color = Color::Rgb(229, 229, 229);
@@ -87,6 +86,22 @@ where
         .border_type(BorderType::Plain)
 }
 
+pub fn get_forms_main_block<'a, T>(title: T, is_modified: bool) -> Block<'a>
+where
+    T: Into<String>,
+{
+    Block::default()
+        .borders(Borders::ALL)
+        .style(Style::default())
+        .title(if is_modified {
+            format!(" {} MODIFIED ", title.into())
+        } else {
+            format!(" {} ", title.into())
+        })
+        .title_alignment(Alignment::Left)
+        .border_type(BorderType::Plain)
+}
+
 pub fn select_ui(
     frame: &mut Frame<CrosstermBackend<Stdout>>,
     ui_context: &mut Arc<Mutex<UIContext>>,
@@ -98,8 +113,7 @@ pub fn select_ui(
 
     // check size of the terminal
     if !actual_terminal_size.eq(current_terminal_size) {
-        ui_context.set_terminal_size(actual_terminal_size);
-        ui_context.order_fields();
+        ui_context.resize_screen_to(actual_terminal_size);
     }
 
     match ui_context.view_mode() {

@@ -1,4 +1,4 @@
-use super::{centered_rect, get_default_block, TerminalSize};
+use super::{centered_rect, get_default_block, get_forms_main_block, TerminalSize};
 use crate::gui::{
     entities::contexts::ui_context::UIContext,
     widgets::{
@@ -80,7 +80,10 @@ fn render_medium_form<B: Backend>(frame: &mut Frame<B>, ui_context: &UIContext) 
         )
         .split(chunks[0]);
 
-    let form_block = get_default_block(ui_context.view_mode().to_string());
+    let form_block = get_forms_main_block(
+        ui_context.view_mode().to_string(),
+        ui_context.is_form_modified(),
+    );
 
     let first_row = Layout::default()
         .direction(Direction::Horizontal)

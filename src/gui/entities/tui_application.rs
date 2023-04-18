@@ -1,4 +1,4 @@
-use crate::gui::layouts::{get_terminal_size, select_ui};
+use crate::gui::layouts::select_ui;
 use anyhow::Result;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event},
@@ -61,14 +61,8 @@ impl<'a> TuiApplication<'a> {
             self.terminal
                 .draw(|frame| select_ui(frame, &mut self.ui_context, &mut self.context))?;
             if event::poll(Duration::from_millis(100)).unwrap_or(false) {
-                if let Ok(event) = event::read() {
-                    if let Event::Key(key) = event {
-                        self.input_sx.send(InputMessages::KeyPress(key)).await.ok();
-                    } else if let Event::Resize(_, _) = event {
-                        self.ui_context
-                            .lock()
-                            .resize_to(get_terminal_size(&self.terminal.get_frame()))
-                    }
+                if let Event::Key(key) = event::read()? {
+                    self.input_sx.send(InputMessages::KeyPress(key)).await.ok();
                 }
             }
         }

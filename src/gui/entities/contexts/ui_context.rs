@@ -77,15 +77,11 @@ impl<'a> UIContext<'a> {
     }
 
     pub fn edit_command(&mut self) -> Command {
-        self.form_fields_context.edit_command()
+        self.form_fields_context.build_edited_command()
     }
 
     pub fn build_new_command(&mut self) -> Command {
         self.form_fields_context.build_new_command()
-    }
-
-    pub fn get_selected_form_field_mut(&mut self) -> Option<&mut TextField<'a>> {
-        self.form_fields_context.selected_field()
     }
 
     pub fn next_form_field(&mut self) {
@@ -156,22 +152,20 @@ impl<'a> UIContext<'a> {
     pub fn reset_form_field_selected_field(&mut self) {
         let default_field = FieldType::default();
         self.form_fields_context.clear_selection();
-        if let Some(selected) = self.form_fields_context.selected_field() {
+        if let Some(selected) = self.form_fields_context.selected_field_mut() {
             selected.deactivate_focus()
         }
         self.select_form_field_type(Some(default_field));
-        if let Some(selected) = self.form_fields_context.selected_field() {
+        if let Some(selected) = self.form_fields_context.selected_field_mut() {
             selected.activate_focus()
         }
     }
 
     pub fn handle_form_input(&mut self, input: KeyEvent) {
-        if let Some(selected_field) = self.get_selected_form_field_mut() {
-            selected_field.on_input(input)
-        }
+        self.form_fields_context.handle_input(input)
     }
 
-    pub fn resize_to(&mut self, size: TerminalSize) {
+    pub fn resize_screen_to(&mut self, size: TerminalSize) {
         self.ui_state.set_terminal_size(size);
         self.order_fields();
     }
@@ -201,10 +195,6 @@ impl<'a> UIContext<'a> {
         self.ui_state.terminal_size()
     }
 
-    pub fn set_terminal_size(&mut self, terminal_size: TerminalSize) {
-        self.ui_state.set_terminal_size(terminal_size)
-    }
-
     pub fn show_popup(&self) -> bool {
         self.ui_state.show_popup()
     }
@@ -219,6 +209,10 @@ impl<'a> UIContext<'a> {
 
     pub fn set_show_help(&mut self, should_show: bool) {
         self.ui_state.set_show_help(should_show)
+    }
+
+    pub fn is_form_modified(&self) -> bool {
+        self.form_fields_context.is_modified()
     }
 }
 
@@ -238,19 +232,12 @@ mod tests {
         ui.clear_form_fields();
         ui.set_selected_command_input();
 
-        let alias_form = ui.get_selected_form_field_mut();
-
-        assert!(alias_form.is_some());
-        assert!(!alias_form.unwrap().input_as_string().is_empty());
-
         // enters insert mode
         ui.reset_form_field_selected_field();
         ui.order_fields();
         ui.clear_form_fields();
 
-        let alias_form = ui.get_selected_form_field_mut();
-
-        assert!(alias_form.is_some());
-        assert!(alias_form.unwrap().input_as_string().is_empty());
+        let fields = ui.get_form_fields();
+        assert!(fields.iter().all(|c| c.input_as_string().is_empty()));
     }
 }
