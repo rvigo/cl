@@ -1,4 +1,4 @@
-use super::{display::DisplayWidget, footer::Footer};
+use super::{display::DisplayWidget, Footer};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},

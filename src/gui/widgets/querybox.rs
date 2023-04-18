@@ -1,4 +1,4 @@
-use super::footer::Footer;
+use super::Footer;
 use crate::gui::layouts::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crossterm::event::{KeyCode, KeyEvent};
 use tui::{

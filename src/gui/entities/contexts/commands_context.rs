@@ -1,4 +1,4 @@
-use super::namespaces_context::DEFAULT_NAMESPACE;
+use super::{namespaces_context::DEFAULT_NAMESPACE, Selectable};
 use crate::{
     command::Command, commands::Commands, gui::entities::fuzzy::Fuzzy,
     resources::file_service::FileService,
@@ -143,33 +143,6 @@ impl CommandsContext {
         self.filtered_commands.to_owned()
     }
 
-    pub fn next_command(&mut self) {
-        let mut i = self.get_selected_command_idx();
-        let filtered_commands = &self.filtered_commands;
-        if !filtered_commands.is_empty() {
-            i = if i >= filtered_commands.len() - 1 {
-                0
-            } else {
-                i + 1
-            };
-        }
-        self.select_command_idx(i);
-    }
-
-    pub fn previous_command(&mut self) {
-        let mut i = self.get_selected_command_idx();
-        let filtered_commands = &self.filtered_commands;
-        if !filtered_commands.is_empty() {
-            i = if i == 0 {
-                filtered_commands.len() - 1
-            } else {
-                i - 1
-            };
-        };
-
-        self.select_command_idx(i);
-    }
-
     /// Adds a new command and then saves the updated `commands.toml` file
     pub fn add_command(&mut self, new_command: &Command) -> Result<()> {
         new_command.validate()?;
@@ -300,6 +273,35 @@ impl CommandsContext {
     }
 }
 
+impl Selectable for CommandsContext {
+    fn next(&mut self) {
+        let mut i = self.get_selected_command_idx();
+        let filtered_commands = &self.filtered_commands;
+        if !filtered_commands.is_empty() {
+            i = if i >= filtered_commands.len() - 1 {
+                0
+            } else {
+                i + 1
+            };
+        }
+        self.select_command_idx(i);
+    }
+
+    fn previous(&mut self) {
+        let mut i = self.get_selected_command_idx();
+        let filtered_commands = &self.filtered_commands;
+        if !filtered_commands.is_empty() {
+            i = if i == 0 {
+                filtered_commands.len() - 1
+            } else {
+                i - 1
+            };
+        };
+
+        self.select_command_idx(i);
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -327,7 +329,7 @@ mod test {
     }
 
     #[test]
-    fn should_go_to_next_command() {
+    fn should_go_to_next() {
         let mut context = commands_context_builder(3);
         let current_namespace = DEFAULT_NAMESPACE;
         let query_string = "";
@@ -335,13 +337,13 @@ mod test {
 
         assert_eq!(context.state.selected(), Some(0));
 
-        context.next_command();
+        context.next();
         assert_eq!(context.state().selected(), Some(1));
 
-        context.next_command();
+        context.next();
         assert_eq!(context.state().selected(), Some(2));
 
-        context.next_command();
+        context.next();
         assert_eq!(context.state().selected(), Some(0));
     }
 
@@ -354,10 +356,10 @@ mod test {
 
         assert_eq!(context.state().selected(), Some(0));
 
-        context.previous_command();
+        context.previous();
         assert_eq!(context.state().selected(), Some(2));
 
-        context.previous_command();
+        context.previous();
         assert_eq!(context.state().selected(), Some(1));
     }
 
@@ -432,8 +434,8 @@ mod test {
     fn should_filter_commands() {
         let mut context = commands_context_builder(4);
         context.filter_commands(DEFAULT_NAMESPACE, "");
-        context.next_command();
-        context.next_command();
+        context.next();
+        context.next();
         assert_eq!(context.get_selected_command_idx(), 2);
 
         context.filter_commands(DEFAULT_NAMESPACE, "4");

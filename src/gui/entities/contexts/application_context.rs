@@ -1,6 +1,7 @@
 use super::{
     commands_context::CommandsContext,
     namespaces_context::{NamespacesContext, DEFAULT_NAMESPACE},
+    Selectable,
 };
 use crate::{
     command::Command,
@@ -52,22 +53,22 @@ impl ApplicationContext {
     }
 
     pub fn next_namespace(&mut self) {
-        self.namespaces_context.next_namespace();
+        self.namespaces_context.next();
         self.commands_context.reset_selected_command_idx();
     }
 
     pub fn previous_namespace(&mut self) {
-        self.namespaces_context.previous_namespace();
+        self.namespaces_context.previous();
         self.commands_context.reset_selected_command_idx();
     }
 
     // commands context
     pub fn next_command(&mut self) {
-        self.commands_context.next_command();
+        self.commands_context.next();
     }
 
     pub fn previous_command(&mut self) {
-        self.commands_context.previous_command();
+        self.commands_context.previous();
     }
 
     pub fn add_command(&mut self, command: Command) -> Result<()> {

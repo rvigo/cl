@@ -1,4 +1,4 @@
-use super::state::State;
+use super::State;
 use crate::gui::widgets::text_field::{FieldType, TextField};
 use std::collections::HashMap;
 
@@ -36,7 +36,7 @@ impl FieldState {
         false
     }
 
-    pub fn reset_edition_fields_state(&mut self) {
+    pub fn reset_fields_edition_state(&mut self) {
         let mut default_map = HashMap::new();
         for field_type in FieldType::iter() {
             default_map.insert(field_type.to_owned(), String::default());
