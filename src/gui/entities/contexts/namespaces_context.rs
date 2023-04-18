@@ -1,6 +1,5 @@
-use std::collections::HashSet;
-
 use crate::gui::entities::states::{namespace_state::NamespaceState, state::State};
+use std::collections::HashSet;
 
 pub struct NamespacesContext {
     namespaces: Vec<String>,

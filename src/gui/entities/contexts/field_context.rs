@@ -9,6 +9,7 @@ use crate::{
         },
     },
 };
+use crossterm::event::KeyEvent;
 use itertools::Itertools;
 use tui_textarea::{
     CursorMove::{Bottom, End},
@@ -84,7 +85,7 @@ impl<'a> FieldContext<'a> {
         }
     }
 
-    pub fn selected_field(&mut self) -> Option<&mut TextField<'a>> {
+    pub fn selected_field_mut(&mut self) -> Option<&mut TextField<'a>> {
         if let Some(selected) = self.state.selected() {
             self.fields.get_mut(&selected)
         } else {
@@ -132,7 +133,7 @@ impl<'a> FieldContext<'a> {
         command_builder.build()
     }
 
-    pub fn edit_command(&mut self) -> Command {
+    pub fn build_edited_command(&mut self) -> Command {
         let mut command = self
             .selected_command()
             .map(|command| command.to_owned())
@@ -228,18 +229,47 @@ impl<'a> FieldContext<'a> {
                         field.text_area.move_cursor(End);
                     }
                 };
+                self.state.update_fields(field)
             });
         }
     }
 
+    pub fn handle_input(&mut self, input: KeyEvent) {
+        // mutable borrow
+        if let Some(field) = self.selected_field_mut() {
+            field.on_input(input)
+        }
+
+        // immutable borrow
+        // can this be improved?
+        if let Some(field_type) = self.state.selected() {
+            if let Some(field) = self.fields.get(&field_type) {
+                self.updated_edited_field(&field.clone())
+            }
+        }
+    }
+
     pub fn clear_inputs(&mut self) {
+        self.reset_edition_state();
         self.fields.clear_inputs()
     }
 
     pub fn clear_selection(&mut self) {
-        if let Some(selected) = self.selected_field() {
+        if let Some(selected) = self.selected_field_mut() {
             selected.deactivate_focus()
         }
+    }
+
+    pub fn updated_edited_field(&mut self, field: &TextField) {
+        self.state.updated_edited_field(field)
+    }
+
+    pub fn is_modified(&self) -> bool {
+        self.state.is_modified()
+    }
+
+    fn reset_edition_state(&mut self) {
+        self.state.reset_edition_fields_state()
     }
 }
 
@@ -337,7 +367,7 @@ mod test {
         let mut field_context = FieldContext::default();
 
         field_context.state.select(Some(FieldType::Namespace));
-        let selected_field = field_context.selected_field();
+        let selected_field = field_context.selected_field_mut();
         assert_eq!(selected_field.unwrap().field_type, FieldType::Namespace);
     }
 

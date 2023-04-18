@@ -88,9 +88,18 @@ impl<'a> EventHandler<'a> {
                     RenderEvent::Main => {
                         let mut c = self.app_context.lock();
                         let mut ui = self.ui_context.lock();
-                        ui.set_view_mode(ViewMode::Main);
-                        c.reload_contexts();
-                        ui.reset_form_field_selected_field();
+                        if ui.is_form_modified() {
+                            ui.set_dialog_popup(
+                                "Wait, you didn't save your changes! Are you sure you want to quit?"
+                                    .to_owned(),
+                                PopupCallbackAction::Render(RenderEvent::Main),
+                            );
+                            ui.set_show_popup(true)
+                        } else {
+                            ui.set_view_mode(ViewMode::Main);
+                            c.reload_contexts();
+                            ui.reset_form_field_selected_field();
+                        }
                     }
                     RenderEvent::Edit => {
                         let mut ui = self.ui_context.lock();
@@ -136,7 +145,7 @@ impl<'a> EventHandler<'a> {
 
                                     if let Some(popup) = ui.popup() {
                                         match popup.callback() {
-                                            PopupCallbackAction::Delete => {
+                                            PopupCallbackAction::DeleteCommand => {
                                                 if let Some(command) = ui.get_selected_command() {
                                                     match c.delete_selected_command(command) {
                                                         Ok(()) => {
@@ -151,8 +160,21 @@ impl<'a> EventHandler<'a> {
                                                 }
                                             }
                                             PopupCallbackAction::None => {
-                                                /* not implemented yet */
+                                                ui.clear_popup_context();
+                                                ui.set_show_popup(false);
                                             }
+                                            PopupCallbackAction::Render(screen) => match screen {
+                                                RenderEvent::Main => {
+                                                    ui.set_view_mode(ViewMode::Main);
+                                                    c.reload_contexts();
+                                                    ui.reset_form_field_selected_field();
+                                                    ui.clear_popup_context();
+                                                    ui.set_show_popup(false);
+                                                }
+                                                RenderEvent::Edit | RenderEvent::Insert => {
+                                                    todo!()
+                                                }
+                                            },
                                         }
                                     }
                                 }

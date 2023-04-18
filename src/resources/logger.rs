@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 pub fn init(log_level: LogLevel, log_path: PathBuf) -> Result<()> {
     let log_level_string = String::from(&log_level);
-    Logger::try_with_str(&log_level_string)?
+    Logger::try_with_str(log_level_string)?
         .log_to_file(
             FileSpec::default()
                 .basename("output")

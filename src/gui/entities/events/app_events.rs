@@ -47,7 +47,8 @@ pub enum PopupType {
 
 #[derive(Clone, Debug)]
 pub enum PopupCallbackAction {
-    Delete,
+    DeleteCommand,
+    Render(RenderEvent),
     None,
 }
 
