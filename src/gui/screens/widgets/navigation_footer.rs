@@ -1,5 +1,5 @@
 use super::{display::DisplayWidget, Footer};
-use crate::gui::layouts::get_default_block;
+use crate::gui::screens::get_default_block;
 use tui::{buffer::Buffer, layout::Rect, widgets::Widget};
 
 #[derive(Clone)]

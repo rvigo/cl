@@ -1,5 +1,5 @@
 use super::Footer;
-use crate::gui::layouts::TerminalSize;
+use crate::gui::screens::ScreenSize;
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -12,7 +12,7 @@ where
     F: Footer,
     H: Footer,
 {
-    terminal_size: &'a TerminalSize,
+    terminal_size: &'a ScreenSize,
     footer: Option<&'a F>,
     help_footer: H, //TODO improve the name of this widget
 }
@@ -23,7 +23,7 @@ where
     H: Footer,
 {
     pub fn new(
-        terminal_size: &'a TerminalSize,
+        terminal_size: &'a ScreenSize,
         footer: Option<&'a F>,
         help_footer: H,
     ) -> BaseWidget<'a, F, H> {
@@ -94,9 +94,9 @@ where
 {
     fn render(self, area: Rect, buf: &mut Buffer) {
         match self.terminal_size {
-            TerminalSize::Small => self.render_small_terminal(area, buf),
-            TerminalSize::Medium => self.render_medium_terminal(area, buf),
-            TerminalSize::Large => self.render_big_terminal(area, buf),
+            ScreenSize::Small => self.render_small_terminal(area, buf),
+            ScreenSize::Medium => self.render_medium_terminal(area, buf),
+            ScreenSize::Large => self.render_big_terminal(area, buf),
         }
     }
 }

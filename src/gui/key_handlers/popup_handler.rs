@@ -4,7 +4,7 @@ use crate::gui::{
         contexts::ui_context::UIContext,
         events::app_events::{AppEvent, PopupEvent},
     },
-    widgets::popup::MessageType,
+    screens::widgets::popup::MessageType,
 };
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};

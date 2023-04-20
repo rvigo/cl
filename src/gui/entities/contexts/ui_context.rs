@@ -10,15 +10,18 @@ use crate::{
                 State,
             },
         },
-        layouts::TerminalSize,
-        widgets::{
-            popup::{Answer, Popup},
-            querybox::QueryBox,
-            text_field::{FieldType, TextField},
+        screens::{
+            widgets::{
+                popup::{Answer, Popup},
+                querybox::QueryBox,
+                text_field::{FieldType, TextField},
+            },
+            ScreenSize,
         },
     },
 };
 use crossterm::event::KeyEvent;
+use log::info;
 
 #[derive(Clone)]
 pub struct UIContext<'a> {
@@ -33,7 +36,7 @@ impl<'a> UIContext<'a> {
         let mut context = UIContext {
             form_fields_context: FieldContext::default(),
             popup_context: PopupContext::new(),
-            ui_state: UiState::new(TerminalSize::default()),
+            ui_state: UiState::new(),
             query_box: QueryBox::default(),
         };
         context.select_form_field_type(Some(FieldType::default()));
@@ -166,9 +169,35 @@ impl<'a> UIContext<'a> {
         self.form_fields_context.is_modified()
     }
 
-    pub fn order_fields(&mut self) {
-        let size = &self.ui_state.terminal_size();
-        self.form_fields_context.order_field_by_size(size)
+    pub fn order_fields<I>(&mut self, screen_size: I)
+    where
+        I: Into<ScreenSize>,
+    {
+        let s = screen_size.into();
+        self.form_fields_context.order_field_by_size(&s)
+    }
+
+    pub fn screen_size(&self) -> ScreenSize {
+        self.ui_state.screen_size()
+    }
+
+    pub fn set_screen_size<I>(&mut self, screen_size: I)
+    where
+        I: Into<ScreenSize>,
+    {
+        self.ui_state.set_screen_size(screen_size.into())
+    }
+
+    pub fn update_screen_size<I>(&mut self, screen_size: I)
+    where
+        I: Into<ScreenSize>,
+    {
+        let s: ScreenSize = screen_size.into();
+        if s != self.screen_size() {
+            info!("updating screen from {:?} to {s:?}", self.screen_size());
+            self.order_fields(s.clone());
+            self.set_screen_size(s)
+        }
     }
 
     // querybox
@@ -200,22 +229,13 @@ impl<'a> UIContext<'a> {
         self.ui_state.set_querybox_focus(focus)
     }
 
-    //
+    ///
     pub fn view_mode(&self) -> ViewMode {
         self.ui_state.view_mode()
     }
 
     pub fn set_view_mode(&mut self, view_mode: ViewMode) {
         self.ui_state.set_view_mode(view_mode)
-    }
-
-    pub fn terminal_size(&self) -> &TerminalSize {
-        self.ui_state.terminal_size()
-    }
-
-    pub fn resize_screen_to(&mut self, size: TerminalSize) {
-        self.ui_state.set_terminal_size(size);
-        self.order_fields();
     }
 }
 
@@ -231,13 +251,11 @@ mod tests {
         // enters edit mode
         ui.select_command(Some(command));
         ui.reset_form_field_selected_field();
-        ui.order_fields();
         ui.clear_form_fields();
         ui.set_selected_command_input();
 
         // enters insert mode
         ui.reset_form_field_selected_field();
-        ui.order_fields();
         ui.clear_form_fields();
 
         let fields = ui.get_form_fields();

@@ -1,5 +1,5 @@
 use super::text_field::{FieldType, TextField};
-use crate::gui::layouts::TerminalSize;
+use crate::gui::screens::ScreenSize;
 use log::debug;
 use std::{
     collections::HashMap,
@@ -41,11 +41,11 @@ impl<'a> Fields<'a> {
         ordered_fields
     }
 
-    pub fn reorder(&mut self, size: &TerminalSize) {
+    pub fn reorder_by_screen_size(&mut self, size: &ScreenSize) {
         debug!("reordering fields to '{size:?}'");
         let order = match size {
-            TerminalSize::Small => ORDER_SMALL_SIZE.to_owned(),
-            TerminalSize::Medium | TerminalSize::Large => ORDER_MEDIUM_SIZE.to_owned(),
+            ScreenSize::Small => ORDER_SMALL_SIZE.to_owned(),
+            ScreenSize::Medium | ScreenSize::Large => ORDER_MEDIUM_SIZE.to_owned(),
         };
 
         self.order = order

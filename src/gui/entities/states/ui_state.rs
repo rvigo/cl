@@ -1,4 +1,5 @@
-pub use crate::gui::layouts::TerminalSize;
+use crate::gui::{entities::terminal::TerminalSize, screens::ScreenSize};
+use log::debug;
 use std::fmt;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -19,20 +20,40 @@ impl fmt::Display for ViewMode {
     }
 }
 
+impl From<&TerminalSize> for &ScreenSize {
+    fn from(value: &TerminalSize) -> Self {
+        match value {
+            TerminalSize::Small => &ScreenSize::Small,
+            TerminalSize::Medium => &ScreenSize::Medium,
+            TerminalSize::Large => &ScreenSize::Large,
+        }
+    }
+}
+
+impl From<TerminalSize> for ScreenSize {
+    fn from(value: TerminalSize) -> Self {
+        match value {
+            TerminalSize::Small => ScreenSize::Small,
+            TerminalSize::Medium => ScreenSize::Medium,
+            TerminalSize::Large => ScreenSize::Large,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct UiState {
     view_mode: ViewMode,
-    terminal_size: TerminalSize,
+    screen_size: ScreenSize,
     show_popup: bool,
     show_help: bool,
     querybox_focus: bool,
 }
 
 impl UiState {
-    pub fn new(size: TerminalSize) -> UiState {
+    pub fn new() -> UiState {
         Self {
             view_mode: ViewMode::Main,
-            terminal_size: size,
+            screen_size: ScreenSize::Medium,
             show_popup: false,
             show_help: false,
             querybox_focus: false,
@@ -55,12 +76,13 @@ impl UiState {
         self.view_mode = view_mode
     }
 
-    pub fn terminal_size(&self) -> &TerminalSize {
-        &self.terminal_size
+    pub fn screen_size(&self) -> ScreenSize {
+        self.screen_size.to_owned()
     }
 
-    pub fn set_terminal_size(&mut self, terminal_size: TerminalSize) {
-        self.terminal_size = terminal_size
+    pub fn set_screen_size(&mut self, screen_size: ScreenSize) {
+        debug!("setting screen size to: {screen_size:?}");
+        self.screen_size = screen_size
     }
 
     pub fn show_popup(&self) -> bool {

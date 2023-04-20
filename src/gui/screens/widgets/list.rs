@@ -1,6 +1,6 @@
 use crate::{
     command::Command,
-    gui::layouts::{get_default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
+    gui::screens::{get_default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
 };
 use tui::{
     buffer::Buffer,
@@ -17,7 +17,7 @@ pub struct ListWidget<'a> {
 }
 
 impl<'a> ListWidget<'a> {
-    pub fn new(commands: Vec<Command>) -> ListWidget<'a> {
+    pub fn new(commands: Vec<Command>, state: ListState) -> ListWidget<'a> {
         let items: Vec<ListItem> = commands
             .into_iter()
             .map(|c| {
@@ -26,10 +26,7 @@ impl<'a> ListWidget<'a> {
             })
             .collect();
 
-        Self {
-            items,
-            state: ListState::default(),
-        }
+        Self { items, state }
     }
 }
 

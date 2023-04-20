@@ -10,7 +10,7 @@ use tui::{
 pub struct DisplayWidget<'a> {
     /// the content of the widget
     content: String,
-    /// flag indicanting if the content can be highlighted
+    /// flag indicating if the content can be highlighted
     should_highlight: bool,
     /// the highlighted content
     highlighted_content: Option<Vec<Spans<'a>>>,
@@ -86,7 +86,7 @@ impl<'a> Widget for DisplayWidget<'a> {
 #[cfg(test)]
 mod test {
     use super::{DisplayWidget, *};
-    use crate::gui::widgets::highlight::Highlight;
+    use crate::gui::screens::widgets::highlight::Highlight;
     use tui::{style::Modifier, text::Span};
 
     #[test]

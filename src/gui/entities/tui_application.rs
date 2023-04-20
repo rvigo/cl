@@ -1,14 +1,16 @@
-use crate::gui::layouts::select_ui;
-use anyhow::Result;
-use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event},
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+use super::{
+    contexts::{application_context::ApplicationContext, ui_context::UIContext},
+    events::input_events::InputMessages,
+    terminal::Terminal,
 };
+use crate::gui::screens::Screens;
+use anyhow::Result;
+use crossterm::event::{self, Event};
 use log::{debug, error};
 use parking_lot::Mutex;
 use std::{
-    io, panic,
+    io::Stdout,
+    panic,
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
@@ -16,19 +18,15 @@ use std::{
     time::Duration,
 };
 use tokio::sync::mpsc::Sender;
-use tui::{backend::CrosstermBackend, Terminal};
-
-use super::{
-    contexts::{application_context::ApplicationContext, ui_context::UIContext},
-    events::input_events::InputMessages,
-};
+use tui::backend::CrosstermBackend;
 
 pub struct TuiApplication<'a> {
-    terminal: Terminal<CrosstermBackend<std::io::Stdout>>,
+    terminal: Terminal<CrosstermBackend<Stdout>>,
     input_sx: Sender<InputMessages>,
     should_quit: Arc<AtomicBool>,
     ui_context: Arc<Mutex<UIContext<'a>>>,
     context: Arc<Mutex<ApplicationContext>>,
+    screens: Screens<'a, CrosstermBackend<Stdout>>,
 }
 
 impl<'a> TuiApplication<'a> {
@@ -37,32 +35,34 @@ impl<'a> TuiApplication<'a> {
         should_quit: Arc<AtomicBool>,
         ui_context: Arc<Mutex<UIContext<'a>>>,
         context: Arc<Mutex<ApplicationContext>>,
+        terminal: Terminal<CrosstermBackend<Stdout>>,
+        screens: Screens<'a, CrosstermBackend<Stdout>>,
     ) -> Result<TuiApplication<'a>> {
         Self::handle_panic();
-        // setup terminal
-        enable_raw_mode()?;
-        let mut stdout = io::stdout();
-        execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
-        let backend = CrosstermBackend::new(stdout);
-        let mut terminal = Terminal::new(backend)?;
-        terminal.hide_cursor()?;
-
         Ok(TuiApplication {
             terminal,
             input_sx,
             should_quit,
             ui_context,
             context,
+            screens,
         })
     }
 
     pub async fn render(&mut self) -> Result<()> {
         while !self.should_quit.load(Ordering::SeqCst) {
-            self.terminal
-                .draw(|frame| select_ui(frame, &mut self.ui_context, &mut self.context))?;
-            if event::poll(Duration::from_millis(100)).unwrap_or(false) {
-                if let Event::Key(key) = event::read()? {
-                    self.input_sx.send(InputMessages::KeyPress(key)).await.ok();
+            let view_mode = self.ui_context.clone().lock().view_mode(); // TODO can this be improved?
+            if let Some(screen) = self.screens.get_screen(view_mode) {
+                self.terminal
+                    .draw(&mut self.ui_context, &mut self.context, &mut **screen)?;
+                if event::poll(Duration::from_millis(0)).unwrap_or(false) {
+                    if let Ok(event) = event::read() {
+                        if let Event::Key(key) = event {
+                            self.input_sx.send(InputMessages::KeyPress(key)).await.ok();
+                        } else if let Event::Resize(_, _) = event {
+                            screen.set_screen_size(self.terminal.size().into())
+                        }
+                    }
                 }
             }
         }
@@ -79,17 +79,7 @@ impl<'a> TuiApplication<'a> {
     }
 
     fn clear(&mut self) -> Result<()> {
-        debug!("clearing the screen");
-        disable_raw_mode()?;
-        execute!(
-            self.terminal.backend_mut(),
-            LeaveAlternateScreen,
-            DisableMouseCapture
-        )?;
-
-        self.terminal.show_cursor()?;
-
-        Ok(())
+        self.terminal.clear()
     }
 
     fn callback(&self) -> Result<()> {

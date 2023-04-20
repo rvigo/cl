@@ -1,5 +1,6 @@
-use crate::gui::widgets::popup::Answer;
 use crossterm::event::KeyEvent;
+
+use crate::gui::screens::widgets::popup::Answer;
 
 #[derive(Clone, Debug)]
 pub enum RenderEvent {

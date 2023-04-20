@@ -3,7 +3,7 @@ use crate::gui::{
         events::app_events::PopupCallbackAction,
         states::{answer_state::AnswerState, State},
     },
-    layouts::{get_default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
+    screens::{get_default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
 };
 use log::{error, warn};
 use std::fmt;
