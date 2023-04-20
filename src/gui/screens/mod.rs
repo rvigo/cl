@@ -76,7 +76,6 @@ where
         .border_type(BorderType::Plain)
 }
 
-use self::widgets::{base_widget::BaseWidget, Footer};
 use super::entities::{
     contexts::{application_context::ApplicationContext, ui_context::UIContext},
     states::ui_state::ViewMode,
@@ -126,6 +125,7 @@ impl From<ScreenType> for ViewMode {
     }
 }
 
+/// Represents a Screen of B where B is a Tui Backend
 pub trait Screen<B>
 where
     B: Backend,
@@ -142,30 +142,7 @@ where
     );
 }
 
-pub trait WidgetExt<B>: Screen<B>
-where
-    B: Backend,
-{
-    fn render_base<F, H>(&self, frame: &mut Frame<B>, footer: Option<&F>, help_footer: H)
-    where
-        F: Footer,
-        H: Footer,
-    {
-        let screen_size = self.get_screen_size();
-        let base_widget = BaseWidget::new(&screen_size, footer, help_footer);
-        frame.render_widget(base_widget, frame.size());
-    }
-
-    fn default_block(&self, title: &str) -> Block<'_> {
-        Block::default()
-            .borders(Borders::ALL)
-            .style(Style::default())
-            .title(format!(" {title} "))
-            .title_alignment(Alignment::Left)
-            .border_type(BorderType::Plain)
-    }
-}
-
+/// Screens aggregator
 pub struct Screens<'a, B>
 where
     B: Backend,

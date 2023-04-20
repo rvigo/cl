@@ -1,5 +1,4 @@
-use super::{display::DisplayWidget, Footer};
-use crate::gui::screens::get_default_block;
+use super::{display::DisplayWidget, Component, Footer, WidgetExt};
 use tui::{buffer::Buffer, layout::Rect, widgets::Widget};
 
 #[derive(Clone)]
@@ -16,11 +15,13 @@ impl NavigationFooter {
         }
     }
 }
+impl Component for NavigationFooter {}
 
 impl Widget for NavigationFooter {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let title = "Navigation";
-        let display = DisplayWidget::new(self.content, true, false).block(get_default_block(title));
+        let display =
+            DisplayWidget::new(&self.content, true, false).block(self.default_block(title));
 
         display.render(area, buf)
     }

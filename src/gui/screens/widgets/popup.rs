@@ -1,9 +1,10 @@
+use super::{Component, WidgetExt};
 use crate::gui::{
     entities::{
         events::app_events::PopupCallbackAction,
         states::{answer_state::AnswerState, State},
     },
-    screens::{get_default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
+    screens::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
 };
 use log::{error, warn};
 use std::fmt;
@@ -120,6 +121,8 @@ impl Popup {
     }
 }
 
+impl Component for Popup {}
+
 impl StatefulWidget for Popup {
     type State = AnswerState;
 
@@ -129,7 +132,7 @@ impl StatefulWidget for Popup {
         buf: &mut tui::buffer::Buffer,
         state: &mut Self::State,
     ) {
-        let block = get_default_block(self.message_type.to_owned().unwrap().to_string());
+        let block = self.default_block(self.message_type.to_owned().unwrap().to_string());
         let p = Paragraph::new(self.message.clone())
             .style(Style::default().fg(DEFAULT_TEXT_COLOR))
             .alignment(Alignment::Left)
