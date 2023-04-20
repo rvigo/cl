@@ -1,4 +1,5 @@
-use crate::gui::screens::{get_default_block, get_style, DEFAULT_TEXT_COLOR};
+use super::{Component, WidgetExt};
+use crate::gui::screens::{get_style, DEFAULT_TEXT_COLOR};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::{
     fmt::{Debug, Display},
@@ -134,6 +135,8 @@ impl<'a> Drop for TextField<'a> {
     }
 }
 
+impl<'a> Component for TextField<'a> {}
+
 impl<'a> Widget for TextField<'a> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
         if self.in_focus() {
@@ -145,7 +148,10 @@ impl<'a> Widget for TextField<'a> {
         } else {
             self.text_area.set_cursor_style(Style::default());
         };
-        self.text_area.set_block(get_default_block(&self.title));
+        let title = self.title.clone();
+        let default_block = self.default_block(title);
+
+        self.text_area.set_block(default_block);
 
         self.text_area.set_cursor_line_style(Style::default());
         self.text_area.set_alignment(self.alignment);

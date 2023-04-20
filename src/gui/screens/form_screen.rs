@@ -2,9 +2,9 @@ use super::{
     centered_rect, get_default_block, get_forms_main_block,
     widgets::{
         help_footer::HelpFooter, help_popup::HelpPopup, navigation_footer::NavigationFooter,
-        text_field::FieldType,
+        text_field::FieldType, Component, ScreenExt,
     },
-    Screen, ScreenSize, WidgetExt,
+    Screen, ScreenSize,
 };
 use crate::gui::entities::{
     contexts::{application_context::ApplicationContext, ui_context::UIContext},
@@ -58,7 +58,7 @@ where
     }
 }
 
-impl<B> WidgetExt<B> for FormScreen where B: Backend {}
+impl Component for FormScreen {}
 
 fn render_popup<B: Backend>(
     frame: &mut Frame<B>,

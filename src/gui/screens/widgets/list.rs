@@ -1,6 +1,7 @@
+use super::{Component, WidgetExt};
 use crate::{
     command::Command,
-    gui::screens::{get_default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
+    gui::screens::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
 };
 use tui::{
     buffer::Buffer,
@@ -15,6 +16,8 @@ pub struct ListWidget<'a> {
     items: Vec<ListItem<'a>>,
     state: ListState,
 }
+
+impl Component for ListWidget<'_> {}
 
 impl<'a> ListWidget<'a> {
     pub fn new(commands: Vec<Command>, state: ListState) -> ListWidget<'a> {
@@ -42,7 +45,7 @@ impl<'a> StatefulWidget for ListWidget<'a> {
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         StatefulWidget::render(
             List::new(self.items.to_owned())
-                .block(get_default_block("Aliases"))
+                .block(self.default_block("Aliases"))
                 .highlight_style(
                     Style::default()
                         .fg(Color::Black)

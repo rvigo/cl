@@ -1,10 +1,10 @@
 use super::{
-    centered_rect, get_default_block,
+    centered_rect,
     widgets::{
         display::DisplayWidget, help_footer::HelpFooter, help_popup::HelpPopup,
-        highlight::Highlight, list::ListWidget,
+        highlight::Highlight, list::ListWidget, Component, ScreenExt, WidgetExt,
     },
-    Screen, ScreenSize, ScreenType, WidgetExt, DEFAULT_SELECTED_COLOR,
+    Screen, ScreenSize, ScreenType, DEFAULT_SELECTED_COLOR,
 };
 use crate::{
     command::{Command, CommandBuilder},
@@ -51,15 +51,6 @@ impl MainScreen {
         }
     }
 
-    fn create_display_widget<'a>(
-        &self,
-        title: &str,
-        content: &'a str,
-        should_highligh: bool,
-    ) -> DisplayWidget<'a> {
-        DisplayWidget::new(content, true, should_highligh).block(get_default_block(title))
-    }
-
     fn create_namespace_widget<'a>(
         &self,
         namespace: &'a str,
@@ -79,7 +70,7 @@ impl MainScreen {
             .collect();
         Tabs::new(tab_menu)
             .select(namespaces_context.get_selected_namespace_idx())
-            .block(get_default_block("Namespaces"))
+            .block(self.default_block("Namespaces"))
             .style(Style::default())
             .highlight_style(
                 Style::default()
@@ -126,9 +117,18 @@ impl MainScreen {
         self.create_display_widget("Tags", tags, should_highligh)
             .highlight(query)
     }
+
+    fn create_display_widget<'a>(
+        &self,
+        title: &str,
+        content: &str,
+        should_highligh: bool,
+    ) -> DisplayWidget<'a> {
+        DisplayWidget::new(content, true, should_highligh).block(self.default_block(title))
+    }
 }
 
-impl<B> WidgetExt<B> for MainScreen where B: Backend {}
+impl Component for MainScreen {}
 
 impl<B> Screen<B> for MainScreen
 where
