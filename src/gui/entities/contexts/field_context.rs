@@ -3,10 +3,12 @@ use crate::{
     command::{Command, CommandBuilder},
     gui::{
         entities::states::{field_state::FieldState, State},
-        layouts::TerminalSize,
-        widgets::{
-            fields::Fields,
-            text_field::{FieldType, TextField},
+        screens::{
+            widgets::{
+                fields::Fields,
+                text_field::{FieldType, TextField},
+            },
+            ScreenSize,
         },
     },
 };
@@ -25,8 +27,8 @@ pub struct FieldContext<'a> {
 }
 
 impl<'a> FieldContext<'a> {
-    pub fn order_field_by_size(&mut self, size: &TerminalSize) {
-        self.fields.reorder(size);
+    pub fn order_field_by_size(&mut self, size: &ScreenSize) {
+        self.fields.reorder_by_screen_size(size);
     }
 
     pub fn get_fields(&self) -> Vec<TextField<'_>> {

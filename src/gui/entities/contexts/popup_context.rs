@@ -1,7 +1,7 @@
 use super::Selectable;
 use crate::gui::{
     entities::states::{answer_state::AnswerState, State},
-    widgets::popup::{Answer, Popup},
+    screens::widgets::popup::{Answer, Popup},
 };
 
 #[derive(Default, Clone)]

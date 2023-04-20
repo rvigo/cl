@@ -1,4 +1,4 @@
-use crate::gui::layouts::{get_default_block, get_style, DEFAULT_TEXT_COLOR};
+use crate::gui::screens::{get_default_block, get_style, DEFAULT_TEXT_COLOR};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::{
     fmt::{Debug, Display},

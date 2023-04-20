@@ -1,10 +1,14 @@
-use super::{centered_rect, get_default_block, get_forms_main_block, TerminalSize};
-use crate::gui::{
-    entities::contexts::ui_context::UIContext,
+use super::{
+    centered_rect, get_default_block, get_forms_main_block,
     widgets::{
-        base_widget::BaseWidget, help_footer::HelpFooter, help_popup::HelpPopup,
-        navigation_footer::NavigationFooter, text_field::FieldType,
+        help_footer::HelpFooter, help_popup::HelpPopup, navigation_footer::NavigationFooter,
+        text_field::FieldType,
     },
+    Screen, ScreenSize, WidgetExt,
+};
+use crate::gui::entities::{
+    contexts::{application_context::ApplicationContext, ui_context::UIContext},
+    terminal::{TerminalSize, TerminalSizeExt},
 };
 use tui::{
     backend::Backend,
@@ -12,21 +16,59 @@ use tui::{
     Frame,
 };
 
-pub fn render<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIContext) {
-    render_base_widget(frame);
-    match ui_context.terminal_size() {
-        TerminalSize::Medium => render_medium_form(frame, ui_context),
-        TerminalSize::Large => render_medium_form(frame, ui_context),
-        TerminalSize::Small => render_small_form(frame, ui_context),
-    }
-
-    render_popup(frame, ui_context)
+pub struct FormScreen {
+    screen_size: ScreenSize,
 }
 
-fn render_popup<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIContext) {
+impl FormScreen {
+    pub fn new(screen_size: ScreenSize) -> Self {
+        Self { screen_size }
+    }
+}
+
+impl<B> Screen<B> for FormScreen
+where
+    B: Backend,
+{
+    fn render(
+        &mut self,
+        frame: &mut Frame<B>,
+        _: &mut ApplicationContext,
+        ui_context: &mut UIContext,
+    ) {
+        let navigation_footer = NavigationFooter::new();
+        let help_footer = HelpFooter::new();
+        self.render_base(frame, Some(&navigation_footer), help_footer);
+
+        match self.screen_size {
+            ScreenSize::Medium => render_medium_form(frame, ui_context),
+            ScreenSize::Large => render_medium_form(frame, ui_context),
+            ScreenSize::Small => render_small_form(frame, ui_context),
+        }
+
+        render_popup(frame, ui_context, &self.screen_size)
+    }
+
+    fn set_screen_size(&mut self, screen_size: ScreenSize) {
+        self.screen_size = screen_size
+    }
+
+    fn get_screen_size(&self) -> ScreenSize {
+        self.screen_size.to_owned()
+    }
+}
+
+impl<B> WidgetExt<B> for FormScreen where B: Backend {}
+
+fn render_popup<B: Backend>(
+    frame: &mut Frame<B>,
+    ui_context: &mut UIContext,
+    screen_size: &ScreenSize,
+) {
+    let terminal_size = frame.size().as_terminal_size();
     if ui_context.show_help() {
         frame.render_widget(
-            HelpPopup::new(ui_context.view_mode(), ui_context.terminal_size().clone()),
+            HelpPopup::new(&ui_context.view_mode(), screen_size.to_owned()),
             frame.size(),
         );
     }
@@ -34,7 +76,7 @@ fn render_popup<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIContext) {
     if ui_context.popup().is_some() && ui_context.get_popup_answer().is_none() {
         let popup = &ui_context.popup().unwrap();
 
-        let area = if !TerminalSize::Small.eq(ui_context.terminal_size()) {
+        let area = if !TerminalSize::Small.eq(&terminal_size) {
             centered_rect(45, 40, frame.size())
         } else {
             frame.size()
@@ -44,18 +86,8 @@ fn render_popup<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIContext) {
     }
 }
 
-fn render_base_widget<B: Backend>(frame: &mut Frame<B>) {
-    let navigation_footer = NavigationFooter::new();
-    let help_footer = HelpFooter::new();
-    let base_widget = BaseWidget::new(
-        &super::TerminalSize::Medium,
-        Some(&navigation_footer),
-        help_footer,
-    );
-    frame.render_widget(base_widget, frame.size());
-}
-
-fn render_medium_form<B: Backend>(frame: &mut Frame<B>, ui_context: &UIContext) {
+fn render_medium_form<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIContext) {
+    ui_context.update_screen_size(frame.size().as_terminal_size());
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -101,7 +133,6 @@ fn render_medium_form<B: Backend>(frame: &mut Frame<B>, ui_context: &UIContext) 
     frame.render_widget(form_block, chunks[0]);
 
     let fields = &(*ui_context.get_form_fields());
-
     fields.iter().for_each(|field| {
         let area = match field.field_type {
             FieldType::Alias => first_row[0],

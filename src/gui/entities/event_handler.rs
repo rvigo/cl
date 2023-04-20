@@ -6,7 +6,7 @@ use super::{
     },
     states::ui_state::ViewMode,
 };
-use crate::gui::widgets::popup::Answer;
+use crate::gui::screens::widgets::popup::Answer;
 use log::debug;
 use parking_lot::Mutex;
 use std::sync::{
@@ -105,7 +105,6 @@ impl<'a> EventHandler<'a> {
                         ui.set_view_mode(ViewMode::Edit);
                         if ui.get_selected_command().is_some() {
                             ui.reset_form_field_selected_field();
-                            ui.order_fields();
                             ui.clear_form_fields();
                             ui.set_selected_command_input();
                         }
@@ -115,7 +114,6 @@ impl<'a> EventHandler<'a> {
                         ui.set_view_mode(ViewMode::Insert);
                         ui.reset_form_field_selected_field();
                         ui.clear_form_fields();
-                        ui.order_fields();
                     }
                 },
                 AppEvent::Quit => self.quit(),

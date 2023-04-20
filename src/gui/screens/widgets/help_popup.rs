@@ -1,6 +1,6 @@
 use crate::gui::{
     entities::states::ui_state::ViewMode,
-    layouts::{centered_rect, TerminalSize, DEFAULT_SELECTED_COLOR},
+    screens::{centered_rect, ScreenSize, DEFAULT_SELECTED_COLOR},
 };
 use tui::{
     buffer::Buffer,
@@ -11,11 +11,11 @@ use tui::{
 
 pub struct HelpPopup<'a> {
     content: Vec<Vec<Cell<'a>>>,
-    terminal_size: TerminalSize,
+    screen_size: ScreenSize,
 }
 
 impl<'a> HelpPopup<'a> {
-    pub fn new(view_mode: ViewMode, terminal_size: TerminalSize) -> HelpPopup<'a> {
+    pub fn new(view_mode: &ViewMode, terminal_size: ScreenSize) -> HelpPopup<'a> {
         let content = match view_mode {
             ViewMode::Main => main_options(),
             ViewMode::Edit => edit_options(),
@@ -23,7 +23,7 @@ impl<'a> HelpPopup<'a> {
         };
         HelpPopup {
             content,
-            terminal_size,
+            screen_size: terminal_size,
         }
     }
 }
@@ -46,7 +46,7 @@ impl<'a> Widget for HelpPopup<'a> {
             )
             .widths(&[Constraint::Percentage(50), Constraint::Percentage(50)]);
 
-        let width = if self.terminal_size.eq(&TerminalSize::Small) {
+        let width = if self.screen_size.eq(&ScreenSize::Small) {
             100
         } else {
             50
