@@ -275,30 +275,19 @@ impl CommandsContext {
 
 impl Selectable for CommandsContext {
     fn next(&mut self) {
-        let mut i = self.get_selected_command_idx();
+        let i = self.get_selected_command_idx();
         let filtered_commands = &self.filtered_commands;
-        if !filtered_commands.is_empty() {
-            i = if i >= filtered_commands.len() - 1 {
-                0
-            } else {
-                i + 1
-            };
-        }
-        self.select_command_idx(i);
+        let next = (i + 1) % filtered_commands.len();
+
+        self.select_command_idx(next);
     }
 
     fn previous(&mut self) {
-        let mut i = self.get_selected_command_idx();
+        let i = self.get_selected_command_idx();
         let filtered_commands = &self.filtered_commands;
-        if !filtered_commands.is_empty() {
-            i = if i == 0 {
-                filtered_commands.len() - 1
-            } else {
-                i - 1
-            };
-        };
+        let previous = (i + filtered_commands.len() - 1) % filtered_commands.len();
 
-        self.select_command_idx(i);
+        self.select_command_idx(previous);
     }
 }
 

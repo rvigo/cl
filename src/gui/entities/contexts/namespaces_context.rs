@@ -74,32 +74,25 @@ impl NamespacesContext {
 
 impl Selectable for NamespacesContext {
     fn next(&mut self) {
-        let i = self.get_selected_namespace_idx();
-        let i = if i >= self.namespaces.len() - 1 {
-            0
-        } else {
-            i + 1
-        };
-        self.state.select(i);
+        let current = self.get_selected_namespace_idx();
+        let next = (current + 1) % self.namespaces.len();
+        self.state.select(next);
+
         self.current_namespace = self
             .namespaces
-            .get(i)
+            .get(next)
             .unwrap_or(&String::from(DEFAULT_NAMESPACE))
             .to_owned();
     }
 
     fn previous(&mut self) {
-        let i = self.get_selected_namespace_idx();
-        let i = if i == 0 {
-            self.namespaces.len() - 1
-        } else {
-            i - 1
-        };
+        let current = self.get_selected_namespace_idx();
+        let previous = (current + self.namespaces.len() - 1) % self.namespaces.len();
 
-        self.state.select(i);
+        self.state.select(previous);
         self.current_namespace = self
             .namespaces
-            .get(i)
+            .get(previous)
             .unwrap_or(&String::from(DEFAULT_NAMESPACE))
             .to_owned();
     }
