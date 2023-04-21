@@ -48,18 +48,6 @@ pub fn centered_rect(width: u16, height: u16, area: Rect) -> Rect {
         .split(new_area[1])[1]
 }
 
-pub fn get_default_block<'a, T>(title: T) -> Block<'a>
-where
-    T: Into<String>,
-{
-    Block::default()
-        .borders(Borders::ALL)
-        .style(Style::default())
-        .title(format!(" {} ", title.into()))
-        .title_alignment(Alignment::Left)
-        .border_type(BorderType::Plain)
-}
-
 pub fn get_forms_main_block<'a, T>(title: T, is_modified: bool) -> Block<'a>
 where
     T: Into<String>,
@@ -84,9 +72,10 @@ use crate::gui::screens::{form_screen::FormScreen, main_screen::MainScreen};
 use std::collections::HashMap;
 use tui::{backend::Backend, Frame};
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub enum ScreenSize {
     Small,
+    #[default]
     Medium,
     Large,
 }
@@ -125,7 +114,7 @@ impl From<ScreenType> for ViewMode {
     }
 }
 
-/// Represents a Screen of B where B is a Tui Backend
+/// Represents a Screen of `B` where `B` is a Tui `Backend`
 pub trait Screen<B>
 where
     B: Backend,

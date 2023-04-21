@@ -21,7 +21,6 @@ use crate::{
     },
 };
 use crossterm::event::KeyEvent;
-use log::info;
 
 #[derive(Clone)]
 pub struct UIContext<'a> {
@@ -32,11 +31,11 @@ pub struct UIContext<'a> {
 }
 
 impl<'a> UIContext<'a> {
-    pub fn new() -> UIContext<'a> {
+    pub fn new(size: ScreenSize) -> UIContext<'a> {
         let mut context = UIContext {
             form_fields_context: FieldContext::default(),
             popup_context: PopupContext::new(),
-            ui_state: UiState::new(),
+            ui_state: UiState::new(size),
             query_box: QueryBox::default(),
         };
         context.select_form_field_type(Some(FieldType::default()));
@@ -174,7 +173,9 @@ impl<'a> UIContext<'a> {
         I: Into<ScreenSize>,
     {
         let s = screen_size.into();
-        self.form_fields_context.order_field_by_size(&s)
+        if self.screen_size() != s {
+            self.form_fields_context.order_field_by_size(&s)
+        }
     }
 
     pub fn screen_size(&self) -> ScreenSize {
@@ -194,7 +195,6 @@ impl<'a> UIContext<'a> {
     {
         let s: ScreenSize = screen_size.into();
         if s != self.screen_size() {
-            info!("updating screen from {:?} to {s:?}", self.screen_size());
             self.order_fields(s.clone());
             self.set_screen_size(s)
         }
@@ -245,7 +245,7 @@ mod tests {
 
     #[test]
     fn should_clear_input_when_enter_insert_screen() {
-        let mut ui = UIContext::new();
+        let mut ui = UIContext::new(ScreenSize::Medium);
         let command = Command::default();
 
         // enters edit mode

@@ -1,5 +1,4 @@
 use crate::gui::{entities::terminal::TerminalSize, screens::ScreenSize};
-use log::debug;
 use std::fmt;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -50,10 +49,10 @@ pub struct UiState {
 }
 
 impl UiState {
-    pub fn new() -> UiState {
+    pub fn new(screen_size: ScreenSize) -> UiState {
         Self {
             view_mode: ViewMode::Main,
-            screen_size: ScreenSize::Medium,
+            screen_size,
             show_popup: false,
             show_help: false,
             querybox_focus: false,
@@ -81,7 +80,6 @@ impl UiState {
     }
 
     pub fn set_screen_size(&mut self, screen_size: ScreenSize) {
-        debug!("setting screen size to: {screen_size:?}");
         self.screen_size = screen_size
     }
 

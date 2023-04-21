@@ -141,13 +141,14 @@ where
         ui_context: &mut UIContext,
     ) {
         let filtered_commands = context.filter_commands(ui_context.get_querybox_input());
-
         let query_box = ui_context.querybox();
         let help_footer = HelpFooter::new();
+
         self.render_base(frame, Some(&query_box), help_footer);
 
         let selected_idx = context.get_selected_command_idx();
         let selected_command = self.get_selected_command(selected_idx, &filtered_commands);
+
         ui_context.select_command(Some(selected_command.to_owned()));
 
         let should_highlight = context.should_highligh();
