@@ -1,6 +1,6 @@
+use super::WidgetExt;
 use crate::gui::{
-    entities::states::ui_state::ViewMode,
-    screens::{centered_rect, ScreenSize, DEFAULT_SELECTED_COLOR},
+    entities::states::ui_state::ViewMode, screens::ScreenSize, DEFAULT_SELECTED_COLOR,
 };
 use tui::{
     buffer::Buffer,
@@ -54,7 +54,7 @@ impl<'a> Widget for HelpPopup<'a> {
 
         let dynamic_height = (100 * (self.content.len() as u16 * 2)) / area.height;
         let height = std::cmp::max(dynamic_height, area.height);
-        let centered_rect = centered_rect(width, height, area);
+        let centered_rect = self.centered_area(width, height, area);
 
         Clear::render(Clear, centered_rect, buf);
         table.render(centered_rect, buf)

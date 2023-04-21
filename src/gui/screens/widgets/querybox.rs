@@ -1,5 +1,5 @@
 use super::Footer;
-use crate::gui::screens::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
+use crate::gui::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crossterm::event::{KeyCode, KeyEvent};
 use tui::{
     buffer::Buffer,

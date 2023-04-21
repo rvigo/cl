@@ -34,11 +34,11 @@ where
         }
     }
 
-    fn render_small_terminal(&self, area: Rect, buf: &mut Buffer) {
+    fn render_small_screen(&self, area: Rect, buf: &mut Buffer) {
         self.render_base_block(area, buf)
     }
 
-    fn render_medium_terminal(&self, area: Rect, buf: &mut Buffer) {
+    fn render_medium_screen(&self, area: Rect, buf: &mut Buffer) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .margin(1)
@@ -71,8 +71,8 @@ where
         self.render_base_block(area, buf);
     }
 
-    fn render_big_terminal(&self, area: Rect, buf: &mut Buffer) {
-        self.render_medium_terminal(area, buf)
+    fn render_big_screen(&self, area: Rect, buf: &mut Buffer) {
+        self.render_medium_screen(area, buf)
     }
 
     fn render_base_block(&self, area: Rect, buf: &mut Buffer) {
@@ -94,9 +94,9 @@ where
 {
     fn render(self, area: Rect, buf: &mut Buffer) {
         match self.terminal_size {
-            ScreenSize::Small => self.render_small_terminal(area, buf),
-            ScreenSize::Medium => self.render_medium_terminal(area, buf),
-            ScreenSize::Large => self.render_big_terminal(area, buf),
+            ScreenSize::Small => self.render_small_screen(area, buf),
+            ScreenSize::Medium => self.render_medium_screen(area, buf),
+            ScreenSize::Large => self.render_big_screen(area, buf),
         }
     }
 }

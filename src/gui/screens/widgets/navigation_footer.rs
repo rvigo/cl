@@ -1,4 +1,4 @@
-use super::{display::DisplayWidget, Component, Footer, WidgetExt};
+use super::{display::DisplayWidget, Footer, WidgetExt};
 use tui::{buffer::Buffer, layout::Rect, widgets::Widget};
 
 #[derive(Clone)]
@@ -15,7 +15,6 @@ impl NavigationFooter {
         }
     }
 }
-impl Component for NavigationFooter {}
 
 impl Widget for NavigationFooter {
     fn render(self, area: Rect, buf: &mut Buffer) {

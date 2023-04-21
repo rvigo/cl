@@ -1,8 +1,7 @@
 use super::{
-    centered_rect, get_forms_main_block,
     widgets::{
         help_footer::HelpFooter, help_popup::HelpPopup, navigation_footer::NavigationFooter,
-        text_field::FieldType, Component, ScreenExt,
+        text_field::FieldType, ScreenExt, WidgetExt,
     },
     Screen, ScreenSize,
 };
@@ -13,6 +12,7 @@ use crate::gui::entities::{
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
+    widgets::Block,
     Frame,
 };
 
@@ -40,10 +40,15 @@ where
         let help_footer = HelpFooter::new();
         self.render_base(frame, Some(&navigation_footer), help_footer);
 
+        let block = self.default_block(if ui_context.is_form_modified() {
+            format!(" {} MODIFIED ", ui_context.view_mode())
+        } else {
+            format!(" {} ", ui_context.view_mode())
+        });
         match self.screen_size {
-            ScreenSize::Medium => render_medium_form(frame, ui_context),
-            ScreenSize::Large => render_medium_form(frame, ui_context),
-            ScreenSize::Small => render_small_form(frame, ui_context),
+            ScreenSize::Medium => render_medium_form(frame, ui_context, block),
+            ScreenSize::Large => render_medium_form(frame, ui_context, block),
+            ScreenSize::Small => render_small_form(frame, ui_context, block),
         }
 
         if ui_context.show_help() {
@@ -57,7 +62,7 @@ where
             let popup = &ui_context.popup().unwrap();
 
             let area = if !ScreenSize::Small.eq(&self.screen_size) {
-                centered_rect(45, 40, frame.size())
+                self.centered_area(45, 40, frame.size())
             } else {
                 frame.size()
             };
@@ -79,9 +84,9 @@ where
     }
 }
 
-impl Component for FormScreen {}
+impl WidgetExt for FormScreen {}
 
-fn render_medium_form<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIContext) {
+fn render_medium_form<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIContext, block: Block) {
     ui_context.update_screen_size(frame.size().as_terminal_size());
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -107,11 +112,6 @@ fn render_medium_form<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIConte
         )
         .split(chunks[0]);
 
-    let form_block = get_forms_main_block(
-        ui_context.view_mode().to_string(),
-        ui_context.is_form_modified(),
-    );
-
     let first_row = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
@@ -125,7 +125,7 @@ fn render_medium_form<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIConte
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
         .split(form_chunks[2]);
 
-    frame.render_widget(form_block, chunks[0]);
+    frame.render_widget(block, chunks[0]);
 
     let fields = &(*ui_context.get_form_fields());
     fields.iter().for_each(|field| {
@@ -140,7 +140,7 @@ fn render_medium_form<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIConte
     })
 }
 
-fn render_small_form<B: Backend>(frame: &mut Frame<B>, ui_context: &UIContext) {
+fn render_small_form<B: Backend>(frame: &mut Frame<B>, ui_context: &UIContext, block: Block) {
     let form_chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -154,10 +154,6 @@ fn render_small_form<B: Backend>(frame: &mut Frame<B>, ui_context: &UIContext) {
         )
         .split(frame.size());
 
-    let form_block = get_forms_main_block(
-        ui_context.view_mode().to_string(),
-        ui_context.is_form_modified(),
-    );
     let first_row = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
@@ -171,7 +167,7 @@ fn render_small_form<B: Backend>(frame: &mut Frame<B>, ui_context: &UIContext) {
         .constraints([Constraint::Percentage(100)].as_ref())
         .split(form_chunks[2]);
 
-    frame.render_widget(form_block, form_chunks[0]);
+    frame.render_widget(block, form_chunks[0]);
 
     let fields = ui_context.get_form_fields();
 

@@ -1,16 +1,18 @@
 use super::{
-    centered_rect,
     widgets::{
         display::DisplayWidget, help_footer::HelpFooter, help_popup::HelpPopup,
-        highlight::Highlight, list::ListWidget, Component, ScreenExt, WidgetExt,
+        highlight::Highlight, list::ListWidget, ScreenExt, WidgetExt,
     },
-    Screen, ScreenSize, ScreenType, DEFAULT_SELECTED_COLOR,
+    Screen, ScreenSize, ScreenType,
 };
 use crate::{
     command::{Command, CommandBuilder},
-    gui::entities::contexts::{
-        application_context::ApplicationContext, namespaces_context::NamespacesContext,
-        ui_context::UIContext,
+    gui::{
+        entities::contexts::{
+            application_context::ApplicationContext, namespaces_context::NamespacesContext,
+            ui_context::UIContext,
+        },
+        DEFAULT_SELECTED_COLOR,
     },
 };
 use tui::{
@@ -128,7 +130,7 @@ impl MainScreen {
     }
 }
 
-impl Component for MainScreen {}
+impl WidgetExt for MainScreen {}
 
 impl<B> Screen<B> for MainScreen
 where
@@ -144,11 +146,13 @@ where
         let query_box = ui_context.querybox();
         let help_footer = HelpFooter::new();
 
+        //
         self.render_base(frame, Some(&query_box), help_footer);
 
         let selected_idx = context.get_selected_command_idx();
         let selected_command = self.get_selected_command(selected_idx, &filtered_commands);
 
+        //
         ui_context.select_command(Some(selected_command.to_owned()));
 
         let should_highlight = context.should_highligh();
@@ -167,6 +171,7 @@ where
             self.create_command_description_widget(description_str, &query, should_highlight);
         let commands = self.create_command_items_widget(filtered_commands, command_state);
 
+        //
         match self.screen_size {
             ScreenSize::Medium => {
                 render_form_medium(frame, tabs, command, commands, namespace, tags, description)
@@ -177,6 +182,7 @@ where
             ScreenSize::Small => render_form_small(frame, tabs, commands, command),
         }
 
+        //
         if ui_context.show_help() {
             frame.render_widget(
                 HelpPopup::new(
@@ -187,12 +193,13 @@ where
             );
         }
 
+        //
         if ui_context.popup().is_some() && ui_context.get_popup_answer().is_none() {
             let popup = &ui_context.popup().as_ref().unwrap().to_owned();
 
             //TODO move this to `UiContext`
             let area = if !ScreenSize::Small.eq(&self.screen_size) {
-                centered_rect(45, 40, frame.size())
+                self.centered_area(45, 40, frame.size())
             } else {
                 frame.size()
             };

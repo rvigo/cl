@@ -65,11 +65,8 @@ impl<'a> Fields<'a> {
 }
 
 impl<'a> From<(HashMap<FieldType, TextField<'a>>, Vec<FieldType>)> for Fields<'a> {
-    fn from(value: (HashMap<FieldType, TextField<'a>>, Vec<FieldType>)) -> Self {
-        Fields {
-            items: value.0,
-            order: value.1,
-        }
+    fn from((items, order): (HashMap<FieldType, TextField<'a>>, Vec<FieldType>)) -> Self {
+        Fields { items, order }
     }
 }
 
