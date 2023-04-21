@@ -53,27 +53,19 @@ impl PopupContext {
 impl Selectable for PopupContext {
     fn next(&mut self) {
         if let Some(popup) = &self.popup {
-            let mut i = self.answer_state.selected().unwrap_or(0);
-            i = if i >= popup.choices().len() - 1 {
-                0
-            } else {
-                i + 1
-            };
+            let current = self.answer_state.selected().unwrap_or(0);
+            let next = (current + 1) % popup.choices().len();
 
-            self.answer_state.select(Some(i));
+            self.answer_state.select(Some(next));
         }
     }
 
     fn previous(&mut self) {
         if let Some(popup) = &self.popup {
-            let mut i = self.answer_state.selected().unwrap_or(0);
-            i = if i == 0 {
-                popup.choices().len() - 1
-            } else {
-                i - 1
-            };
+            let current = self.answer_state.selected().unwrap_or(0);
+            let previous = (current + popup.choices().len() - 1) % popup.choices().len();
 
-            self.answer_state.select(Some(i));
+            self.answer_state.select(Some(previous));
         }
     }
 }

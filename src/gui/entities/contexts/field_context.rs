@@ -237,7 +237,7 @@ impl Selectable for FieldContext<'_> {
             let order = self.fields.get_order();
 
             if let Some(pos) = order.iter().position(|x| current_field_type.eq(x)) {
-                let new_field_idx = if pos >= order.len() - 1 { 0 } else { pos + 1 };
+                let new_field_idx = (pos + 1) % order.len();
                 let new_field_type = self.fields.get_order()[new_field_idx].to_owned();
 
                 // selects the new field type
@@ -259,11 +259,7 @@ impl Selectable for FieldContext<'_> {
 
             let order = self.fields.get_order();
             if let Some(pos) = order.iter().position(|x| current_field_type.eq(x)) {
-                let new_field_idx = if pos == 0 {
-                    self.fields.len() - 1
-                } else {
-                    pos - 1
-                };
+                let new_field_idx = (pos + order.len() - 1) % order.len();
                 let new_field_type = self.fields.get_order()[new_field_idx].to_owned();
 
                 // selects the new field type
@@ -277,6 +273,7 @@ impl Selectable for FieldContext<'_> {
         }
     }
 }
+
 #[cfg(test)]
 mod test {
     use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
