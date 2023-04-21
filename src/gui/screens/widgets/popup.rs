@@ -1,10 +1,10 @@
-use super::{Component, WidgetExt};
+use super::WidgetExt;
 use crate::gui::{
     entities::{
         events::app_events::PopupCallbackAction,
         states::{answer_state::AnswerState, State},
     },
-    screens::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
+    DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR,
 };
 use log::{error, warn};
 use std::fmt;
@@ -121,7 +121,7 @@ impl Popup {
     }
 }
 
-impl Component for Popup {}
+impl WidgetExt for Popup {}
 
 impl StatefulWidget for Popup {
     type State = AnswerState;

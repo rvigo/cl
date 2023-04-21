@@ -2,68 +2,6 @@ pub mod form_screen;
 pub mod main_screen;
 pub mod widgets;
 
-use tui::{
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
-    widgets::{Block, BorderType, Borders},
-};
-
-pub const DEFAULT_TEXT_COLOR: Color = Color::Rgb(229, 229, 229);
-pub const DEFAULT_SELECTED_COLOR: Color = Color::Rgb(201, 165, 249);
-
-pub fn get_style(in_focus: bool) -> Style {
-    if in_focus {
-        Style::default().fg(Color::Black).bg(DEFAULT_SELECTED_COLOR)
-    } else {
-        Style::default().fg(DEFAULT_TEXT_COLOR)
-    }
-}
-
-pub fn centered_rect(width: u16, height: u16, area: Rect) -> Rect {
-    let height = if height > 100 { 100 } else { height };
-    let width = if width > 100 { 100 } else { width };
-
-    let new_area = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(
-            [
-                Constraint::Percentage((100 - height) / 2),
-                Constraint::Percentage(height),
-                Constraint::Percentage((100 - height) / 2),
-            ]
-            .as_ref(),
-        )
-        .split(area);
-
-    Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(
-            [
-                Constraint::Percentage((100 - width) / 2),
-                Constraint::Percentage(width),
-                Constraint::Percentage((100 - width) / 2),
-            ]
-            .as_ref(),
-        )
-        .split(new_area[1])[1]
-}
-
-pub fn get_forms_main_block<'a, T>(title: T, is_modified: bool) -> Block<'a>
-where
-    T: Into<String>,
-{
-    Block::default()
-        .borders(Borders::ALL)
-        .style(Style::default())
-        .title(if is_modified {
-            format!(" {} MODIFIED ", title.into())
-        } else {
-            format!(" {} ", title.into())
-        })
-        .title_alignment(Alignment::Left)
-        .border_type(BorderType::Plain)
-}
-
 use super::entities::{
     contexts::{application_context::ApplicationContext, ui_context::UIContext},
     states::ui_state::ViewMode,
@@ -151,6 +89,7 @@ where
         let main_screen = MainScreen::new(size.clone());
         let insert_screen = FormScreen::new(size.clone());
         let edit_screen = FormScreen::new(size);
+
         let mut screens = Self {
             screens: HashMap::new(),
         };

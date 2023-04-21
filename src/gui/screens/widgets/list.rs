@@ -1,7 +1,7 @@
-use super::{Component, WidgetExt};
+use super::WidgetExt;
 use crate::{
     command::Command,
-    gui::screens::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
+    gui::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
 };
 use tui::{
     buffer::Buffer,
@@ -16,8 +16,6 @@ pub struct ListWidget<'a> {
     items: Vec<ListItem<'a>>,
     state: ListState,
 }
-
-impl Component for ListWidget<'_> {}
 
 impl<'a> ListWidget<'a> {
     pub fn new(commands: Vec<Command>, state: ListState) -> ListWidget<'a> {
