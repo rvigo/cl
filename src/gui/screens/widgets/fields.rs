@@ -1,6 +1,5 @@
 use super::text_field::{FieldType, TextField};
 use crate::gui::screens::ScreenSize;
-use log::debug;
 use std::{
     collections::HashMap,
     ops::{Deref, DerefMut},
@@ -42,7 +41,6 @@ impl<'a> Fields<'a> {
     }
 
     pub fn reorder_by_screen_size(&mut self, size: &ScreenSize) {
-        debug!("reordering fields to '{size:?}'");
         let order = match size {
             ScreenSize::Small => ORDER_SMALL_SIZE.to_owned(),
             ScreenSize::Medium | ScreenSize::Large => ORDER_MEDIUM_SIZE.to_owned(),

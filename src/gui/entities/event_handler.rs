@@ -104,6 +104,8 @@ impl<'a> EventHandler<'a> {
                         let mut ui = self.ui_context.lock();
                         ui.set_view_mode(ViewMode::Edit);
                         if ui.get_selected_command().is_some() {
+                            let screen_size = ui.screen_size();
+                            ui.order_fields(screen_size);
                             ui.reset_form_field_selected_field();
                             ui.clear_form_fields();
                             ui.set_selected_command_input();
@@ -111,6 +113,8 @@ impl<'a> EventHandler<'a> {
                     }
                     RenderEvent::Insert => {
                         let mut ui = self.ui_context.lock();
+                        let screen_size = ui.screen_size();
+                        ui.order_fields(screen_size);
                         ui.set_view_mode(ViewMode::Insert);
                         ui.reset_form_field_selected_field();
                         ui.clear_form_fields();

@@ -1,5 +1,5 @@
 use super::{
-    centered_rect, get_default_block, get_forms_main_block,
+    centered_rect, get_forms_main_block,
     widgets::{
         help_footer::HelpFooter, help_popup::HelpPopup, navigation_footer::NavigationFooter,
         text_field::FieldType, Component, ScreenExt,
@@ -8,7 +8,7 @@ use super::{
 };
 use crate::gui::entities::{
     contexts::{application_context::ApplicationContext, ui_context::UIContext},
-    terminal::{TerminalSize, TerminalSizeExt},
+    terminal::TerminalSizeExt,
 };
 use tui::{
     backend::Backend,
@@ -46,7 +46,28 @@ where
             ScreenSize::Small => render_small_form(frame, ui_context),
         }
 
-        render_popup(frame, ui_context, &self.screen_size)
+        if ui_context.show_help() {
+            frame.render_widget(
+                HelpPopup::new(&ui_context.view_mode(), self.screen_size.to_owned()),
+                frame.size(),
+            );
+        }
+
+        if ui_context.popup().is_some() && ui_context.get_popup_answer().is_none() {
+            let popup = &ui_context.popup().unwrap();
+
+            let area = if !ScreenSize::Small.eq(&self.screen_size) {
+                centered_rect(45, 40, frame.size())
+            } else {
+                frame.size()
+            };
+
+            frame.render_stateful_widget(
+                popup.to_owned(),
+                area,
+                ui_context.get_choices_state_mut(),
+            );
+        }
     }
 
     fn set_screen_size(&mut self, screen_size: ScreenSize) {
@@ -59,32 +80,6 @@ where
 }
 
 impl Component for FormScreen {}
-
-fn render_popup<B: Backend>(
-    frame: &mut Frame<B>,
-    ui_context: &mut UIContext,
-    screen_size: &ScreenSize,
-) {
-    let terminal_size = frame.size().as_terminal_size();
-    if ui_context.show_help() {
-        frame.render_widget(
-            HelpPopup::new(&ui_context.view_mode(), screen_size.to_owned()),
-            frame.size(),
-        );
-    }
-
-    if ui_context.popup().is_some() && ui_context.get_popup_answer().is_none() {
-        let popup = &ui_context.popup().unwrap();
-
-        let area = if !TerminalSize::Small.eq(&terminal_size) {
-            centered_rect(45, 40, frame.size())
-        } else {
-            frame.size()
-        };
-
-        frame.render_stateful_widget(popup.to_owned(), area, ui_context.get_choices_state_mut());
-    }
-}
 
 fn render_medium_form<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIContext) {
     ui_context.update_screen_size(frame.size().as_terminal_size());
@@ -159,7 +154,10 @@ fn render_small_form<B: Backend>(frame: &mut Frame<B>, ui_context: &UIContext) {
         )
         .split(frame.size());
 
-    let form_block = get_default_block(ui_context.view_mode().to_string());
+    let form_block = get_forms_main_block(
+        ui_context.view_mode().to_string(),
+        ui_context.is_form_modified(),
+    );
     let first_row = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())

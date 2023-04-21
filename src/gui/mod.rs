@@ -36,19 +36,18 @@ pub mod core {
         let file_service = FileService::new(config.get_command_file_path()?);
         let commands = file_service.load_commands_from_file()?;
 
+        debug!("creating terminal");
+        let mut terminal = create_terminal()?;
+        let size = terminal.size();
+
         debug!("creating contexts");
         let should_quit: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
-        let ui_context = Arc::new(Mutex::new(UIContext::new()));
+        let ui_context = Arc::new(Mutex::new(UIContext::new(size.clone().into())));
         let context = Arc::new(Mutex::new(ApplicationContext::init(
             commands,
             file_service,
             config.get_options(),
         )));
-
-        debug!("creating terminal");
-        let mut terminal = create_terminal()?;
-
-        let size = terminal.size();
 
         debug!("creating screens with size {size:?}");
         let screens = Screens::new(size);
