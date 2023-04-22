@@ -1,6 +1,5 @@
-use crossterm::event::KeyEvent;
-
 use crate::gui::screens::widgets::popup::Answer;
+use crossterm::event::KeyEvent;
 
 #[derive(Clone, Debug)]
 pub enum RenderEvent {
@@ -24,7 +23,7 @@ pub enum CommandEvent {
     Execute,
     Edit,
     Insert,
-    // Delete,
+    Copy,
 }
 
 #[derive(Clone, Debug)]
@@ -41,9 +40,6 @@ pub enum PopupType {
         message: String,
         callback_action: PopupCallbackAction,
     },
-    // Error {
-    //     message: String,
-    // },
 }
 
 #[derive(Clone, Debug)]

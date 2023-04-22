@@ -1,3 +1,4 @@
+mod clipboard;
 pub mod contexts;
 pub mod event_handler;
 pub mod events;

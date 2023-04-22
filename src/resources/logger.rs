@@ -24,15 +24,18 @@ pub fn init(log_level: LogLevel, log_path: PathBuf) -> Result<()> {
     Ok(())
 }
 
-pub trait ErrorInterceptor<T> {
-    fn log_if_error(self) -> Result<T>;
+pub trait ErrorInterceptor<T, E> {
+    fn log_if_error(self) -> Result<T, E>;
 }
 
-impl<T> ErrorInterceptor<T> for Result<T> {
-    fn log_if_error(self) -> Result<T> {
-        if let Err(ref err) = self {
+impl<T, E> ErrorInterceptor<T, E> for Result<T, E>
+where
+    E: std::fmt::Debug,
+{
+    fn log_if_error(self) -> Result<T, E> {
+        self.map_err(|err| {
             error!("{err:?}");
-        }
-        self
+            err
+        })
     }
 }

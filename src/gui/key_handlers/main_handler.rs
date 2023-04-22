@@ -99,6 +99,11 @@ impl KeyEventHandler for MainScreenHandler {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => Ok(Some(AppEvent::Popup(PopupEvent::Enable(PopupType::Help)))),
+            KeyEvent {
+                code: KeyCode::Char('y'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            } => Ok(Some(AppEvent::Run(CommandEvent::Copy))),
             _ => Ok(None),
         }
     }

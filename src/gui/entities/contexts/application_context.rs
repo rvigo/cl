@@ -5,7 +5,8 @@ use super::{
 };
 use crate::{
     command::Command,
-    resources::{config::Options, file_service::FileService},
+    gui::entities::clipboard::Clipboard,
+    resources::{config::Options, file_service::FileService, logger::ErrorInterceptor},
 };
 use anyhow::Result;
 use tui::widgets::ListState;
@@ -14,6 +15,7 @@ pub struct ApplicationContext {
     namespaces_context: NamespacesContext,
     commands_context: CommandsContext,
     config_options: Options,
+    clipboard: Option<Clipboard>,
 }
 
 impl ApplicationContext {
@@ -23,11 +25,21 @@ impl ApplicationContext {
         config_options: Options,
     ) -> ApplicationContext {
         let namespaces = commands.iter().map(|c| c.namespace.to_owned()).collect();
+        let clipboard = Clipboard::new().log_if_error().ok();
+
         ApplicationContext {
             namespaces_context: NamespacesContext::new(namespaces),
             commands_context: CommandsContext::new(commands, file_service),
             config_options,
+            clipboard,
         }
+    }
+
+    pub fn copy_text_to_clipboard<T: Into<String>>(&mut self, content: T) -> Result<()> {
+        if let Some(ref mut clipboard) = &mut self.clipboard {
+            clipboard.set_content(content.into())?;
+        }
+        Ok(())
     }
 
     // namespaces context

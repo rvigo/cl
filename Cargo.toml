@@ -13,6 +13,7 @@ description  = "Group your commands and aliases in an organized and human readab
 
 anyhow = "1.0.70"
 clap = { version = "4.2.4", features = ["derive"] }
+copypasta = "0.8.2"
 crossterm = "0.25.0"
 dirs = "5.0.0"
 flexi_logger = "0.25.3"

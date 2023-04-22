@@ -82,6 +82,20 @@ impl<'a> EventHandler<'a> {
                             }
                         }
                     }
+                    CommandEvent::Copy => {
+                        // TODO should it trigger a visual event???
+                        let mut ui = self.ui_context.lock();
+                        if let Some(command) = ui.get_selected_command() {
+                            if let Err(error) = self
+                                .app_context
+                                .lock()
+                                .copy_text_to_clipboard(&command.command)
+                            {
+                                ui.set_show_popup(true);
+                                ui.set_error_popup(error.to_string())
+                            }
+                        }
+                    }
                 },
                 AppEvent::Render(render_event) => match render_event {
                     RenderEvent::Main => {
@@ -134,7 +148,7 @@ impl<'a> EventHandler<'a> {
                             } => {
                                 ui.set_show_popup(true);
                                 ui.set_dialog_popup(message, callback_action);
-                            } // PopupType::Error { message: _ } => todo!(),
+                            }
                         }
                     }
                     PopupEvent::Answer(answer) => {
