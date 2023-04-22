@@ -81,31 +81,35 @@ fn main_options<'a>() -> Vec<Vec<Cell<'a>>> {
         ],
         vec![
             get_cell_style("<I/Insert>", Some(key_style())),
-            get_cell_style("New command", None),
+            get_cell_style("Create new command", None),
         ],
         vec![
             get_cell_style("<D/Delete>", Some(key_style())),
-            get_cell_style("Delete command", None),
+            get_cell_style("Delete selected command", None),
         ],
         vec![
             get_cell_style("<E>", Some(key_style())),
-            get_cell_style("Edit command", None),
+            get_cell_style("Edit selected command", None),
         ],
         vec![
             get_cell_style("<L/→/Tab>", Some(key_style())),
-            get_cell_style("Right", None),
+            get_cell_style("Move to next namespace", None),
         ],
         vec![
             get_cell_style("<H/←/Shift + Tab>", Some(key_style())),
-            get_cell_style("Left", None),
+            get_cell_style("Move to previous namespace", None),
         ],
         vec![
             get_cell_style("<K/↑>", Some(key_style())),
-            get_cell_style("Up", None),
+            get_cell_style("Move up", None),
         ],
         vec![
             get_cell_style("<J/↓>", Some(key_style())),
-            get_cell_style("Down", None),
+            get_cell_style("Move down", None),
+        ],
+        vec![
+            get_cell_style("<Y>", Some(key_style())),
+            get_cell_style("Copy selected command", None),
         ],
         vec![
             get_cell_style("<F//>", Some(key_style())),
@@ -113,7 +117,7 @@ fn main_options<'a>() -> Vec<Vec<Cell<'a>>> {
         ],
         vec![
             get_cell_style("<F1/?>", Some(key_style())),
-            get_cell_style("Help", None),
+            get_cell_style("Show help", None),
         ],
     ]
 }
