@@ -10,23 +10,24 @@ description  = "Group your commands and aliases in an organized and human readab
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.68"
-clap = { version = "4.0.32", features = ["derive"] }
+
+anyhow = "1.0.70"
+clap = { version = "4.2.4", features = ["derive"] }
 crossterm = "0.25.0"
 dirs = "5.0.0"
-flexi_logger = "0.25.1"
-futures-util = "0.3"
+flexi_logger = "0.25.3"
+futures-util = "0.3.28"
 fuzzy-matcher = "0.3.7"
 itertools = "0.10.5"
 log = "0.4.17"
-owo-colors = "3.5.0"
-parking_lot = {version= "0.12"}
-regex="1.7.1"
-serde = { version = "1.0.152", features = ["derive"] }
-strfmt = "0.2.2"
-thiserror = "1.0.39"
-tokio = {version = "1.26", features = ["macros", "rt-multi-thread", "sync"]}
-toml = "0.7.1"
+owo-colors = "3.5.0" 
+parking_lot = "0.12.1"
+regex="1.8.1"
+serde = { version = "1.0.160", features = ["derive"] }
+strfmt = "0.2.4"
+thiserror = "1.0.40"
+tokio = {version = "1.27.0", features = ["macros", "rt-multi-thread", "sync"]}
+toml = "0.7.3"
 tui = { version = "0.19.0", features = ["crossterm"] }
 tui-textarea = { version = "0.2.0", features = ["crossterm"] }
 
