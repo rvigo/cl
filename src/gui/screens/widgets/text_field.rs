@@ -82,8 +82,8 @@ impl<'a> TextField<'a> {
         self.field_type.to_owned()
     }
 
-    pub fn text(&self) -> TextArea {
-        self.text_area.to_owned()
+    pub fn text(&self) -> String {
+        self.text_area.to_owned().into_lines().join("\n")
     }
 
     pub fn set_text<L>(&mut self, content: L)
@@ -99,10 +99,6 @@ impl<'a> TextField<'a> {
 
     pub fn deactivate_focus(&mut self) {
         self.in_focus = false
-    }
-
-    pub fn input_as_string(&self) -> String {
-        self.text_area.to_owned().into_lines().join("\n")
     }
 
     pub fn in_focus(&self) -> bool {
