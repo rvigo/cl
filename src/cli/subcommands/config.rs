@@ -1,6 +1,7 @@
+use super::Subcommand;
 use crate::resources::config::{Config as AppConfig, LogLevel as ConfigLogLevel};
 use anyhow::{bail, Result};
-use clap::{Parser, Subcommand, ValueEnum};
+use clap::{Parser, Subcommand as ClapSubcommand, ValueEnum};
 use std::{env, path::PathBuf, process::Command};
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
@@ -52,7 +53,7 @@ pub struct Config {
     subcommand: Option<ConfigSubcommand>,
 }
 
-#[derive(Subcommand)]
+#[derive(ClapSubcommand)]
 pub enum ConfigSubcommand {
     ZshWidget(Widget),
 }
@@ -63,23 +64,25 @@ pub struct Widget {
     install: bool,
 }
 
-pub fn config_subcommand(config: Config, mut app_config: AppConfig) -> Result<()> {
-    if let Some(ConfigSubcommand::ZshWidget(_)) = config.subcommand {
-        install_zsh_widget(app_config.get_app_home_dir())?
-    } else if let Some(quiet) = config.default_quiet_mode {
-        app_config.set_default_quiet_mode(quiet)?;
-        println!("quiet mode set to {quiet}")
-    } else if let Some(log_level) = config.default_log_level {
-        app_config.set_log_level(log_level.as_config_enum())?;
-        println!("log level set to {log_level:?}")
-    } else if let Some(highlight) = config.highlight_matches {
-        app_config.set_highlight(highlight)?;
-        println!("highlight matches set to {highlight}")
-    } else {
-        println!("{}", app_config.printable_string())
-    }
+impl Subcommand for Config {
+    fn run(&self, mut config: AppConfig) -> Result<()> {
+        if let Some(ConfigSubcommand::ZshWidget(_)) = self.subcommand {
+            install_zsh_widget(config.get_app_home_dir())?
+        } else if let Some(quiet) = self.default_quiet_mode {
+            config.set_default_quiet_mode(quiet)?;
+            println!("quiet mode set to {quiet}")
+        } else if let Some(log_level) = self.default_log_level {
+            config.set_log_level(log_level.as_config_enum())?;
+            println!("log level set to {log_level:?}")
+        } else if let Some(highlight) = self.highlight_matches {
+            config.set_highlight(highlight)?;
+            println!("highlight matches set to {highlight}")
+        } else {
+            println!("{}", config.printable_string())
+        }
 
-    Ok(())
+        Ok(())
+    }
 }
 
 fn install_zsh_widget(app_home_dir: PathBuf) -> Result<()> {

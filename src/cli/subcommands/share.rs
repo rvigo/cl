@@ -1,3 +1,4 @@
+use super::Subcommand;
 use crate::{
     command::Command,
     commands::Commands,
@@ -39,37 +40,38 @@ pub struct Share {
     namespace: Option<Vec<String>>,
 }
 
-pub fn share_subcommand(share: Share, config: Config) -> Result<()> {
-    let file_location: PathBuf = share.file_location;
-    let namespaces = share.namespace;
+impl Subcommand for Share {
+    fn run(&self, config: Config) -> Result<()> {
+        let file_location = &self.file_location;
+        let namespaces = &self.namespace;
 
-    let file_service = FileService::new(config.get_command_file_path()?);
-    let command_list = file_service.load_commands_from_file()?;
-    let commands = Commands::init(command_list);
+        let file_service = FileService::new(config.get_command_file_path()?);
+        let command_list = file_service.load_commands_from_file()?;
+        let commands = Commands::init(command_list);
 
-    match share.mode {
-        Mode::Import => {
-            let mut stored_commands = commands.command_list().to_owned();
-            let mut commands_from_file: Vec<Command> = vec![];
+        match self.mode {
+            Mode::Import => {
+                let mut stored_commands = commands.command_list().to_owned();
+                let mut commands_from_file: Vec<Command> = vec![];
 
-            //filter given namespaces
-            if let Some(namespaces) = namespaces {
-                commands_from_file.retain(|item| namespaces.contains(&item.namespace));
-            }
+                //filter given namespaces
+                if let Some(namespaces) = namespaces {
+                    commands_from_file.retain(|item| namespaces.contains(&item.namespace));
+                }
 
-            let reference_commands = commands_from_file.clone();
+                let reference_commands = commands_from_file.clone();
 
-            //removes duplicated items
-            commands_from_file.retain(|item| !stored_commands.contains(item));
+                //removes duplicated items
+                commands_from_file.retain(|item| !stored_commands.contains(item));
 
-            //get duplicated items using the reference_commands vec
-            let diff: Vec<_> = reference_commands
-                .iter()
-                .filter(|item| !commands_from_file.contains(item))
-                .collect();
+                //get duplicated items using the reference_commands vec
+                let diff: Vec<_> = reference_commands
+                    .iter()
+                    .filter(|item| !commands_from_file.contains(item))
+                    .collect();
 
-            if !diff.is_empty() {
-                eprintln!(
+                if !diff.is_empty() {
+                    eprintln!(
                     "Warning: Duplicated aliases found! Please adjust them by choosing a new alias/namespace:\n{}",
                     diff
                         .iter()
@@ -77,39 +79,41 @@ pub fn share_subcommand(share: Share, config: Config) -> Result<()> {
                         .collect_vec()
                         .join(",\n")
                 );
-            }
-            if !commands_from_file.is_empty() {
-                stored_commands.append(&mut commands_from_file);
-                file_service.write_toml_file(&stored_commands, &config.get_command_file_path()?)?;
-                println!(
-                    "Info: Successfully imported {} aliases",
-                    commands_from_file.len()
-                )
-            } else {
-                println!("There are no aliases to be imported")
-            }
-        }
-        Mode::Export => {
-            eprintln!("Exporting aliases to: {}", file_location.display());
-            let mut command_list = Vec::default();
-            if let Some(namespaces) = namespaces {
-                for namespace in namespaces.iter() {
-                    command_list.append(
-                        &mut commands
-                            .command_list()
-                            .iter()
-                            .filter(|c| c.namespace.eq(namespace))
-                            .map(|c| c.to_owned())
-                            .collect(),
-                    );
                 }
-            } else {
-                command_list = commands.command_list().to_owned();
+                if !commands_from_file.is_empty() {
+                    stored_commands.append(&mut commands_from_file);
+                    file_service
+                        .write_toml_file(&stored_commands, &config.get_command_file_path()?)?;
+                    println!(
+                        "Info: Successfully imported {} aliases",
+                        commands_from_file.len()
+                    )
+                } else {
+                    println!("There are no aliases to be imported")
+                }
             }
+            Mode::Export => {
+                eprintln!("Exporting aliases to: {}", file_location.display());
+                let mut command_list = Vec::default();
+                if let Some(namespaces) = namespaces {
+                    for namespace in namespaces.iter() {
+                        command_list.append(
+                            &mut commands
+                                .command_list()
+                                .iter()
+                                .filter(|c| c.namespace.eq(namespace))
+                                .map(|c| c.to_owned())
+                                .collect(),
+                        );
+                    }
+                } else {
+                    command_list = commands.command_list().to_owned();
+                }
 
-            file_service.write_toml_file(&command_list, &file_location)?;
-            println!("Info: Exported {} aliases", command_list.len())
+                file_service.write_toml_file(&command_list, file_location)?;
+                println!("Info: Exported {} aliases", command_list.len())
+            }
         }
+        Ok(())
     }
-    Ok(())
 }
