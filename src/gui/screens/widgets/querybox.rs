@@ -1,4 +1,4 @@
-use super::Footer;
+use super::{Footer, WidgetKeyHandler};
 use crate::gui::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crossterm::event::{KeyCode, KeyEvent};
 use tui::{
@@ -31,19 +31,6 @@ impl<'a> Default for QueryBox<'a> {
 }
 
 impl<'a> QueryBox<'a> {
-    pub fn handle(&mut self, key_event: KeyEvent) {
-        match key_event {
-            KeyEvent {
-                code: KeyCode::Esc | KeyCode::Enter | KeyCode::Down | KeyCode::Up,
-                ..
-            } => self.on_focus = false,
-            input => {
-                self.text_area.input(input);
-                self.buffer = self.text_area.lines()[0].clone()
-            }
-        }
-    }
-
     pub fn activate_focus(&mut self) {
         self.on_focus = true
     }
@@ -54,6 +41,21 @@ impl<'a> QueryBox<'a> {
 
     pub fn get_input(&self) -> String {
         self.buffer.to_owned()
+    }
+}
+
+impl WidgetKeyHandler for QueryBox<'_> {
+    fn handle_input(&mut self, key_event: KeyEvent) {
+        match key_event {
+            KeyEvent {
+                code: KeyCode::Esc | KeyCode::Enter | KeyCode::Down | KeyCode::Up,
+                ..
+            } => self.on_focus = false,
+            input => {
+                self.text_area.input(input);
+                self.buffer = self.text_area.lines()[0].clone()
+            }
+        }
     }
 }
 

@@ -15,6 +15,7 @@ use crate::{
                 popup::{Answer, Popup},
                 querybox::QueryBox,
                 text_field::{FieldType, TextField},
+                WidgetKeyHandler,
             },
             ScreenSize,
         },
@@ -109,7 +110,7 @@ impl<'a> UIContext<'a> {
     }
 
     pub fn set_selected_command_input(&mut self) {
-        self.form_fields_context.set_selected_command_input();
+        self.form_fields_context.popuplate_form();
     }
 
     pub fn select_command(&mut self, selected_command: Option<Command>) {
@@ -119,7 +120,7 @@ impl<'a> UIContext<'a> {
     // form
     pub fn select_form_field_type(&mut self, field_type: Option<FieldType>) {
         self.form_fields_context
-            .get_focus_state_mut()
+            .get_field_state_mut()
             .select(field_type);
     }
 
@@ -218,7 +219,7 @@ impl<'a> UIContext<'a> {
     }
 
     pub fn handle_querybox_input(&mut self, key_event: KeyEvent) {
-        self.query_box.handle(key_event)
+        self.query_box.handle_input(key_event)
     }
 
     pub fn querybox_focus(&self) -> bool {

@@ -1,6 +1,5 @@
-use crate::gui::screens::widgets::text_field::{FieldType, TextField};
-
 use super::State;
+use crate::gui::screens::widgets::text_field::{FieldType, TextField};
 use std::collections::HashMap;
 
 #[derive(Default, Clone)]
@@ -11,17 +10,16 @@ pub struct FieldState {
 }
 
 impl FieldState {
-    pub fn update_fields(&mut self, field: &TextField) {
+    pub fn update_field(&mut self, field: &TextField) {
         self.original_fields
-            .insert(field.field_type.to_owned(), field.input_as_string());
+            .insert(field.field_type(), field.input_as_string());
         self.edited_fields
-            .insert(field.field_type.to_owned(), field.input_as_string());
+            .insert(field.field_type(), field.input_as_string());
     }
 
     pub fn updated_edited_field(&mut self, field: &TextField) {
         let input = field.input_as_string();
-        self.edited_fields
-            .insert(field.field_type.to_owned(), input);
+        self.edited_fields.insert(field.field_type(), input);
     }
 
     pub fn is_modified(&self) -> bool {

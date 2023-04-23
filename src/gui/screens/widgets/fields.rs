@@ -80,7 +80,7 @@ impl Default for Fields<'_> {
 
         let map = vec![alias, namespace, command, description, tags]
             .into_iter()
-            .map(|f| (f.field_type.to_owned(), f))
+            .map(|f| (f.field_type(), f))
             .collect();
 
         Fields {

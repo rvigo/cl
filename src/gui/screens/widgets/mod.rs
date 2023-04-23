@@ -13,6 +13,7 @@ pub mod text_field;
 use self::base_widget::BaseWidget;
 use super::Screen;
 use crate::gui::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
+use crossterm::event::KeyEvent;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -101,3 +102,8 @@ pub trait WidgetExt {
 
 // Every tui Widget implements this
 impl<T> WidgetExt for T where T: Widget {}
+
+/// Handles use key input
+pub trait WidgetKeyHandler {
+    fn handle_input(&mut self, input: KeyEvent);
+}
