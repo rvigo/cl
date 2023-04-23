@@ -8,7 +8,7 @@ use tui::{
 
 #[derive(Clone)]
 pub struct HelpFooter {
-    pub content: String,
+    content: String,
 }
 
 impl HelpFooter {

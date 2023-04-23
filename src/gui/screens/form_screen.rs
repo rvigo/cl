@@ -86,7 +86,10 @@ where
 
 impl WidgetExt for FormScreen {}
 
-fn render_medium_form<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIContext, block: Block) {
+fn render_medium_form<B>(frame: &mut Frame<B>, ui_context: &mut UIContext, block: Block)
+where
+    B: Backend,
+{
     ui_context.update_screen_size(frame.size().as_terminal_size());
     let chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -140,7 +143,10 @@ fn render_medium_form<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIConte
     })
 }
 
-fn render_small_form<B: Backend>(frame: &mut Frame<B>, ui_context: &UIContext, block: Block) {
+fn render_small_form<B>(frame: &mut Frame<B>, ui_context: &UIContext, block: Block)
+where
+    B: Backend,
+{
     let form_chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)

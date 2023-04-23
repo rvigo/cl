@@ -136,7 +136,7 @@ impl Commands {
 
     fn command_already_exists(&self, command_item: &Command) -> bool {
         self.commands.iter().any(|command| {
-            command.alias == command_item.alias && command.namespace.eq(&command_item.namespace)
+            command.alias == command_item.alias && command.namespace == command_item.namespace
         })
     }
 }

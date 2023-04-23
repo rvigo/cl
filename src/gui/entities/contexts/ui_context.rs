@@ -79,7 +79,7 @@ impl<'a> UIContext<'a> {
 
     pub fn get_selected_choice(&self) -> Option<Answer> {
         if let Some(choice) = self.popup_context.state().selected() {
-            self.popup().map(|popup| popup.choices()[choice].clone())
+            self.popup().map(|popup| popup.choices()[choice].to_owned())
         } else {
             None
         }
@@ -260,6 +260,6 @@ mod tests {
         ui.clear_form_fields();
 
         let fields = ui.get_form_fields();
-        assert!(fields.iter().all(|c| c.input_as_string().is_empty()));
+        assert!(fields.iter().all(|c| c.text().is_empty()));
     }
 }
