@@ -1,3 +1,4 @@
+use super::Subcommand;
 use crate::{
     command::Command,
     commands::Commands,
@@ -20,50 +21,52 @@ pub struct Misc {
     fzf: bool,
 }
 
-pub fn misc_subcommand(misc: Misc, config: Config) -> Result<()> {
-    let command_list =
-        FileService::new(config.get_command_file_path()?).load_commands_from_file()?;
-    let commands = Commands::init(command_list);
-    if misc.description {
-        if let Some(alias) = &misc.alias {
-            let namespace = misc.namespace;
-            let command = commands.find_command(alias.clone(), namespace)?;
-            println!("{}", command.to_color_string());
-        }
-    } else if misc.fzf {
-        let mut seen = HashSet::with_capacity(commands.command_list().len());
-        let duplicated: Vec<String> = commands
-            .command_list()
-            .iter()
-            .filter_map(|c| {
-                if seen.contains(&c.alias) {
-                    Some(c.alias.to_owned())
+impl Subcommand for Misc {
+    fn run(&self, config: Config) -> Result<()> {
+        let command_list =
+            FileService::new(config.get_command_file_path()?).load_commands_from_file()?;
+        let commands = Commands::init(command_list);
+        if self.description {
+            if let Some(alias) = &self.alias {
+                let namespace = &self.namespace;
+                let command = commands.find_command(alias.clone(), namespace.to_owned())?;
+                println!("{}", command.to_color_string());
+            }
+        } else if self.fzf {
+            let mut seen = HashSet::with_capacity(commands.command_list().len());
+            let duplicated: Vec<String> = commands
+                .command_list()
+                .iter()
+                .filter_map(|c| {
+                    if seen.contains(&c.alias) {
+                        Some(c.alias.to_owned())
+                    } else {
+                        seen.insert(c.alias.to_owned());
+                        None
+                    }
+                })
+                .collect();
+
+            commands.command_list().iter().for_each(|c| {
+                if duplicated.contains(&c.alias) {
+                    println!(
+                        "{} ({})",
+                        c.alias,
+                        c.namespace.fg::<CustomColor<201, 165, 249>>()
+                    )
                 } else {
-                    seen.insert(c.alias.to_owned());
-                    None
+                    println!("{}", c.alias)
                 }
             })
-            .collect();
+        } else {
+            commands
+                .command_list()
+                .iter()
+                .for_each(|c| println!("{}", c.sumarize()));
+        }
 
-        commands.command_list().iter().for_each(|c| {
-            if duplicated.contains(&c.alias) {
-                println!(
-                    "{} ({})",
-                    c.alias,
-                    c.namespace.fg::<CustomColor<201, 165, 249>>()
-                )
-            } else {
-                println!("{}", c.alias)
-            }
-        })
-    } else {
-        commands
-            .command_list()
-            .iter()
-            .for_each(|c| println!("{}", c.sumarize()));
+        Ok(())
     }
-
-    Ok(())
 }
 
 trait ToColorString {

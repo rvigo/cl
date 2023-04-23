@@ -1,5 +1,5 @@
 use super::subcommands::{config::Config, exec::Exec, misc::Misc, share::Share};
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand as ClapSubcommand};
 
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 
@@ -15,11 +15,11 @@ const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 )]
 pub struct App {
     #[clap(subcommand)]
-    pub subcommand: Option<SubCommand>,
+    pub subcommands: Option<Subcommands>,
 }
 
-#[derive(Subcommand)]
-pub enum SubCommand {
+#[derive(ClapSubcommand)]
+pub enum Subcommands {
     #[clap(aliases = &["X", "x"],
            about="Run your commands via CLI")]
     Exec(Exec),

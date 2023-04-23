@@ -1,3 +1,4 @@
+use super::Subcommand;
 use crate::{
     commands::Commands,
     resources::{config::Config, errors::CommandError, file_service::FileService},
@@ -17,7 +18,7 @@ const INVALID_NAMED_PARAMS_ERROR_MESSAGE: &str = "Invalid named arguments! \
     You should provide them exactly as in the command";
 
 #[derive(Error, Debug)]
-pub enum ExecError {
+enum ExecError {
     #[error("Missing a named parameter: {missing_parameter}")]
     MissingNamedParameter { missing_parameter: String },
     #[error("An error ocurred while parsing your command")]
@@ -62,25 +63,28 @@ pub struct Exec {
     command_args: Vec<String>,
 }
 
-pub fn exec_subcommand(exec: Exec, config: Config) -> Result<()> {
-    let command_list =
-        FileService::new(config.get_command_file_path()?).load_commands_from_file()?;
-    let commands = Commands::init(command_list);
+impl Subcommand for Exec {
+    fn run(&self, config: Config) -> Result<()> {
+        let command_list =
+            FileService::new(config.get_command_file_path()?).load_commands_from_file()?;
+        let commands = Commands::init(command_list);
 
-    let alias = exec.alias;
-    let namespace = exec.namespace;
-    let args = exec.command_args;
-    let dry_run = exec.dry_run;
-    let quiet_mode = exec.quiet || config.get_default_quiet_mode();
-    let mut command_item = commands.find_command(alias, namespace)?;
+        let alias = &self.alias;
+        let namespace = &self.namespace;
+        let args = &self.command_args;
+        let dry_run = self.dry_run;
+        let quiet_mode = self.quiet || config.get_default_quiet_mode();
+        let mut command_item = commands.find_command(alias.to_owned(), namespace.to_owned())?;
 
-    command_item.command = prepare_command(command_item.command, args)?;
+        command_item.command = prepare_command(command_item.command, args.to_owned())?;
 
-    debug!("command to be executed: {}", command_item.command);
-    commands.exec_command(&command_item, dry_run, quiet_mode)
+        debug!("command to be executed: {}", command_item.command);
+        commands.exec_command(&command_item, dry_run, quiet_mode)
+    }
 }
 
-fn prepare_command(mut command: String, args: Vec<String>) -> Result<CommandString> {
+// TODO it should use a `&str`
+fn prepare_command(mut command: CommandString, args: Vec<String>) -> Result<CommandString> {
     // checks if cmd has named_parameters
     let matches = get_named_parameters(&command)?;
     let named_parameters = matches
@@ -175,7 +179,7 @@ fn prepare_command(mut command: String, args: Vec<String>) -> Result<CommandStri
             };
 
             if !command_arg.is_empty() {
-                commands_args.push_arg(command_arg);
+                commands_args.push(command_arg);
             }
         }
 
@@ -327,7 +331,7 @@ impl CommandArgs {
         }
     }
 
-    fn push_arg(&mut self, command_arg: CommandArg) {
+    fn push(&mut self, command_arg: CommandArg) {
         if self.named_parameters.contains(&command_arg.arg) {
             self.command_args
                 .entry(true)
