@@ -42,7 +42,8 @@ pub(super) mod core {
         let commands = file_service.load_commands_from_file()?;
 
         debug!("creating terminal");
-        let mut terminal = create_terminal()?;
+        let mut terminal = Terminal::new()?;
+
         let size = terminal.size();
 
         debug!("creating contexts");
@@ -107,10 +108,6 @@ pub(super) mod core {
         )?
         .render()
         .await
-    }
-
-    fn create_terminal() -> Result<Terminal<CrosstermBackend<Stdout>>> {
-        Terminal::new()
     }
 
     async fn start_input_handler(
