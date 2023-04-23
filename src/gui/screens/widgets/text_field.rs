@@ -1,4 +1,4 @@
-use super::WidgetExt;
+use super::{WidgetExt, WidgetKeyHandler};
 use crate::gui::DEFAULT_TEXT_COLOR;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::{
@@ -12,7 +12,10 @@ use tui::{
     style::{Modifier, Style},
     widgets::Widget,
 };
-use tui_textarea::TextArea;
+use tui_textarea::{
+    CursorMove::{Bottom, End},
+    TextArea,
+};
 
 #[derive(Debug, Clone, Eq, Hash, PartialEq, Default)]
 pub enum FieldType {
@@ -49,14 +52,15 @@ impl Display for FieldType {
     }
 }
 
+/// Represents a text field component/widget
 #[derive(Clone)]
 pub struct TextField<'a> {
     title: String,
-    pub field_type: FieldType,
+    field_type: FieldType,
     in_focus: bool,
     alignment: Alignment,
-    pub multiline: bool,
-    pub text_area: TextArea<'a>,
+    multiline: bool,
+    text_area: TextArea<'a>,
 }
 
 impl<'a> TextField<'a> {
@@ -72,6 +76,21 @@ impl<'a> TextField<'a> {
             multiline,
             text_area: TextArea::default(),
         }
+    }
+
+    pub fn field_type(&self) -> FieldType {
+        self.field_type.to_owned()
+    }
+
+    pub fn text(&self) -> TextArea {
+        self.text_area.to_owned()
+    }
+
+    pub fn set_text<L>(&mut self, content: L)
+    where
+        L: ToLines,
+    {
+        self.text_area = TextArea::from(content.to_lines())
     }
 
     pub fn activate_focus(&mut self) {
@@ -90,27 +109,9 @@ impl<'a> TextField<'a> {
         self.in_focus
     }
 
-    pub fn on_input(&mut self, input: KeyEvent) {
-        if self.multiline {
-            self.text_area.input(input);
-        } else {
-            // should avoid new lines
-            match input {
-                KeyEvent {
-                    code: KeyCode::Enter,
-                    modifiers: KeyModifiers::NONE,
-                    ..
-                }
-                | KeyEvent {
-                    code: KeyCode::Char('m'),
-                    modifiers: KeyModifiers::CONTROL,
-                    ..
-                } => {}
-                input => {
-                    self.text_area.input(input);
-                }
-            }
-        }
+    pub fn move_cursor_to_end_of_text(&mut self) {
+        self.text_area.move_cursor(Bottom);
+        self.text_area.move_cursor(End);
     }
 
     pub fn clear_input(&mut self) {
@@ -135,6 +136,31 @@ impl<'a> Drop for TextField<'a> {
     }
 }
 
+impl WidgetKeyHandler for TextField<'_> {
+    fn handle_input(&mut self, input: KeyEvent) {
+        if self.multiline {
+            self.text_area.input(input);
+        } else {
+            // should avoid new lines
+            match input {
+                KeyEvent {
+                    code: KeyCode::Enter,
+                    modifiers: KeyModifiers::NONE,
+                    ..
+                }
+                | KeyEvent {
+                    code: KeyCode::Char('m'),
+                    modifiers: KeyModifiers::CONTROL,
+                    ..
+                } => {}
+                input => {
+                    self.text_area.input(input);
+                }
+            }
+        }
+    }
+}
+
 impl<'a> Widget for TextField<'a> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
         if self.in_focus() {
@@ -155,5 +181,24 @@ impl<'a> Widget for TextField<'a> {
         self.text_area.set_alignment(self.alignment);
         self.text_area.set_style(self.get_style(self.in_focus));
         self.text_area.widget().render(area, buf)
+    }
+}
+
+type Lines = Vec<String>;
+
+/// Converts the content to `Lines`
+pub trait ToLines {
+    fn to_lines(&self) -> Lines;
+}
+
+impl ToLines for Vec<String> {
+    fn to_lines(&self) -> Lines {
+        self.to_owned()
+    }
+}
+
+impl ToLines for String {
+    fn to_lines(&self) -> Lines {
+        vec![self.to_owned()]
     }
 }

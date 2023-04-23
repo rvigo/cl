@@ -129,7 +129,7 @@ fn render_medium_form<B: Backend>(frame: &mut Frame<B>, ui_context: &mut UIConte
 
     let fields = &(*ui_context.get_form_fields());
     fields.iter().for_each(|field| {
-        let area = match field.field_type {
+        let area = match field.field_type() {
             FieldType::Alias => first_row[0],
             FieldType::Namespace => first_row[1],
             FieldType::Command => second_row[0],
@@ -172,7 +172,7 @@ fn render_small_form<B: Backend>(frame: &mut Frame<B>, ui_context: &UIContext, b
     let fields = ui_context.get_form_fields();
 
     fields.iter().for_each(|field| {
-        let area = match field.field_type {
+        let area = match field.field_type() {
             FieldType::Alias => first_row[0],
             FieldType::Namespace => first_row[1],
             FieldType::Command => third_row[0],

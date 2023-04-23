@@ -7,6 +7,7 @@ use crate::{
             widgets::{
                 fields::Fields,
                 text_field::{FieldType, TextField},
+                WidgetKeyHandler,
             },
             ScreenSize,
         },
@@ -14,10 +15,6 @@ use crate::{
 };
 use crossterm::event::KeyEvent;
 use itertools::Itertools;
-use tui_textarea::{
-    CursorMove::{Bottom, End},
-    TextArea,
-};
 
 #[derive(Default, Clone)]
 pub struct FieldContext<'a> {
@@ -35,7 +32,7 @@ impl<'a> FieldContext<'a> {
         self.fields.get_fields()
     }
 
-    pub fn get_focus_state_mut(&mut self) -> &mut FieldState {
+    pub fn get_field_state_mut(&mut self) -> &mut FieldState {
         &mut self.state
     }
 
@@ -59,21 +56,18 @@ impl<'a> FieldContext<'a> {
                     command_builder.command(field.input_as_string());
                 }
                 FieldType::Tags => {
-                    if field.text_area.is_empty() {
-                        command_builder.tags(None::<Vec<&str>>);
-                    } else {
-                        command_builder.tags(Some(
-                            field
-                                .input_as_string()
-                                .split(',')
-                                .map(|tag| String::from(tag.trim()))
-                                .filter(|tag| !tag.is_empty())
-                                .collect_vec(),
-                        ));
-                    }
+                    command_builder.tags(Some(
+                        field
+                            .input_as_string()
+                            .split(',')
+                            .map(|tag| String::from(tag.trim()))
+                            .filter(|tag| !tag.is_empty())
+                            .collect_vec(),
+                    ));
                 }
                 FieldType::Description => {
-                    if field.text_area.is_empty() {
+                    // TODO improve this
+                    if field.text().is_empty() {
                         command_builder.description(None::<&str>);
                     } else {
                         command_builder.description(Some(field.input_as_string()));
@@ -99,14 +93,14 @@ impl<'a> FieldContext<'a> {
                 FieldType::Command => command.command = field.input_as_string(),
                 FieldType::Namespace => command.namespace = field.input_as_string(),
                 FieldType::Description => {
-                    if field.text_area.is_empty() {
+                    if field.text().is_empty() {
                         command.description = None;
                     } else {
                         command.description = Some(field.input_as_string());
                     }
                 }
                 FieldType::Tags => {
-                    if field.text_area.is_empty() {
+                    if field.text().is_empty() {
                         command.tags = None;
                     } else {
                         command.tags = Some(
@@ -132,58 +126,49 @@ impl<'a> FieldContext<'a> {
         self.selected_command = selected_command
     }
 
-    pub fn set_selected_command_input(&mut self) {
-        let selected_command = self.selected_command.as_mut();
+    pub fn popuplate_form(&mut self) {
+        let selected_command = self.selected_command.as_ref();
         if let Some(current_command) = selected_command {
             self.fields.iter_mut().for_each(|(field_type, field)| {
                 match field_type {
                     FieldType::Alias => {
-                        field.text_area = TextArea::from(vec![current_command.alias.clone()]);
-                        field.text_area.move_cursor(Bottom);
-                        field.text_area.move_cursor(End);
+                        field.set_text(current_command.alias.to_owned());
                     }
                     FieldType::Command => {
-                        field.text_area = TextArea::from(
+                        field.set_text(
                             current_command
                                 .command
-                                .clone()
                                 .lines()
                                 .map(String::from)
                                 .collect::<Vec<String>>(),
                         );
-                        field.text_area.move_cursor(Bottom);
-                        field.text_area.move_cursor(End);
                     }
                     FieldType::Namespace => {
-                        field.text_area = TextArea::from(vec![current_command.namespace.clone()]);
-                        field.text_area.move_cursor(Bottom);
-                        field.text_area.move_cursor(End);
+                        field.set_text(current_command.namespace.to_owned());
                     }
                     FieldType::Description => {
-                        field.text_area = TextArea::from(
+                        field.set_text(
                             current_command
                                 .description
                                 .as_ref()
                                 .unwrap_or(&String::from(""))
-                                .clone()
                                 .lines()
                                 .map(String::from)
                                 .collect::<Vec<String>>(),
                         );
-                        field.text_area.move_cursor(Bottom);
-                        field.text_area.move_cursor(End);
                     }
                     FieldType::Tags => {
-                        field.text_area = TextArea::from(vec![current_command
-                            .tags
-                            .as_ref()
-                            .unwrap_or(&vec![String::from("")])
-                            .join(", ")]);
-                        field.text_area.move_cursor(Bottom);
-                        field.text_area.move_cursor(End);
+                        field.set_text(
+                            current_command
+                                .tags
+                                .as_ref()
+                                .unwrap_or(&vec![String::from("")])
+                                .join(", "),
+                        );
                     }
                 };
-                self.state.update_fields(field)
+                field.move_cursor_to_end_of_text();
+                self.state.update_field(field);
             });
         }
     }
@@ -191,7 +176,7 @@ impl<'a> FieldContext<'a> {
     pub fn handle_input(&mut self, input: KeyEvent) {
         // mutable borrow
         if let Some(field) = self.selected_field_mut() {
-            field.on_input(input)
+            field.handle_input(input)
         }
 
         // immutable borrow
@@ -276,9 +261,10 @@ impl Selectable for FieldContext<'_> {
 
 #[cfg(test)]
 mod test {
+    use super::*;
+    use crate::gui::screens::widgets::WidgetKeyHandler;
     use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-    use super::*;
     fn create_fields() -> Fields<'static> {
         let mut alias = TextField::new(String::from("alias"), FieldType::Alias, true, false);
         let mut command = TextField::new(String::from("command"), FieldType::Command, false, true);
@@ -296,22 +282,22 @@ mod test {
         );
         let mut tags = TextField::new(String::from("tags"), FieldType::Tags, false, false);
 
-        alias.on_input(KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE));
-        alias.on_input(KeyEvent::new(KeyCode::Char('l'), KeyModifiers::NONE));
-        alias.on_input(KeyEvent::new(KeyCode::Char('i'), KeyModifiers::NONE));
-        alias.on_input(KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE));
-        alias.on_input(KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE));
-        namespace.on_input(KeyEvent::new(KeyCode::Char('n'), KeyModifiers::NONE));
-        command.on_input(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::NONE));
+        alias.handle_input(KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE));
+        alias.handle_input(KeyEvent::new(KeyCode::Char('l'), KeyModifiers::NONE));
+        alias.handle_input(KeyEvent::new(KeyCode::Char('i'), KeyModifiers::NONE));
+        alias.handle_input(KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE));
+        alias.handle_input(KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE));
+        namespace.handle_input(KeyEvent::new(KeyCode::Char('n'), KeyModifiers::NONE));
+        command.handle_input(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::NONE));
         // multifield description field
-        description.on_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
-        description.on_input(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
-        description.on_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
-        tags.on_input(KeyEvent::new(KeyCode::Char('t'), KeyModifiers::NONE));
+        description.handle_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
+        description.handle_input(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
+        description.handle_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
+        tags.handle_input(KeyEvent::new(KeyCode::Char('t'), KeyModifiers::NONE));
 
         let map = vec![alias, namespace, command, description, tags]
             .into_iter()
-            .map(|f| (f.field_type.to_owned(), f))
+            .map(|f| (f.field_type(), f))
             .collect();
         let order = [
             FieldType::Alias,
@@ -369,7 +355,7 @@ mod test {
 
         field_context.state.select(Some(FieldType::Namespace));
         let selected_field = field_context.selected_field_mut();
-        assert_eq!(selected_field.unwrap().field_type, FieldType::Namespace);
+        assert_eq!(selected_field.unwrap().field_type(), FieldType::Namespace);
     }
 
     #[test]
@@ -397,7 +383,7 @@ mod test {
             tags: Some(vec![String::from("tag1"), String::from("tag2")]),
         };
         field_context.select_command(Some(selected_command));
-        field_context.set_selected_command_input();
+        field_context.popuplate_form();
 
         let command = field_context.selected_command();
 
