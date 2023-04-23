@@ -12,13 +12,12 @@ pub struct FieldState {
 impl FieldState {
     pub fn update_field(&mut self, field: &TextField) {
         self.original_fields
-            .insert(field.field_type(), field.input_as_string());
-        self.edited_fields
-            .insert(field.field_type(), field.input_as_string());
+            .insert(field.field_type(), field.text());
+        self.edited_fields.insert(field.field_type(), field.text());
     }
 
     pub fn updated_edited_field(&mut self, field: &TextField) {
-        let input = field.input_as_string();
+        let input = field.text();
         self.edited_fields.insert(field.field_type(), input);
     }
 

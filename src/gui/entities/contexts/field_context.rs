@@ -50,31 +50,27 @@ impl<'a> FieldContext<'a> {
             .iter_mut()
             .for_each(|(field_type, field)| match field_type {
                 FieldType::Alias => {
-                    command_builder.alias(field.input_as_string());
+                    command_builder.alias(field.text());
                 }
                 FieldType::Command => {
-                    command_builder.command(field.input_as_string());
+                    command_builder.command(field.text());
                 }
                 FieldType::Tags => {
-                    command_builder.tags(Some(
+                    command_builder.tags(
                         field
-                            .input_as_string()
+                            .text()
                             .split(',')
                             .map(|tag| String::from(tag.trim()))
                             .filter(|tag| !tag.is_empty())
-                            .collect_vec(),
-                    ));
+                            .collect_vec()
+                            .to_option(),
+                    );
                 }
                 FieldType::Description => {
-                    // TODO improve this
-                    if field.text().is_empty() {
-                        command_builder.description(None::<&str>);
-                    } else {
-                        command_builder.description(Some(field.input_as_string()));
-                    }
+                    command_builder.description(field.text().to_option());
                 }
                 FieldType::Namespace => {
-                    command_builder.namespace(field.input_as_string());
+                    command_builder.namespace(field.text());
                 }
             });
 
@@ -89,29 +85,20 @@ impl<'a> FieldContext<'a> {
         self.fields
             .iter_mut()
             .for_each(|(field_type, field)| match field_type {
-                FieldType::Alias => command.alias = field.input_as_string(),
-                FieldType::Command => command.command = field.input_as_string(),
-                FieldType::Namespace => command.namespace = field.input_as_string(),
+                FieldType::Alias => command.alias = field.text(),
+                FieldType::Command => command.command = field.text(),
+                FieldType::Namespace => command.namespace = field.text(),
                 FieldType::Description => {
-                    if field.text().is_empty() {
-                        command.description = None;
-                    } else {
-                        command.description = Some(field.input_as_string());
-                    }
+                    command.description = field.text().to_option();
                 }
                 FieldType::Tags => {
-                    if field.text().is_empty() {
-                        command.tags = None;
-                    } else {
-                        command.tags = Some(
-                            field
-                                .input_as_string()
-                                .split(',')
-                                .map(|tag| String::from(tag.trim()))
-                                .filter(|tag| !tag.is_empty())
-                                .collect_vec(),
-                        );
-                    }
+                    command.tags = field
+                        .text()
+                        .split(',')
+                        .map(|tag| String::from(tag.trim()))
+                        .filter(|tag| !tag.is_empty())
+                        .collect_vec()
+                        .to_option();
                 }
             });
 
@@ -158,13 +145,7 @@ impl<'a> FieldContext<'a> {
                         );
                     }
                     FieldType::Tags => {
-                        field.set_text(
-                            current_command
-                                .tags
-                                .as_ref()
-                                .unwrap_or(&vec![String::from("")])
-                                .join(", "),
-                        );
+                        field.set_text(current_command.tags.as_ref().unwrap_or(&vec![]).join(", "));
                     }
                 };
                 field.move_cursor_to_end_of_text();
@@ -183,7 +164,7 @@ impl<'a> FieldContext<'a> {
         // can this be improved?
         if let Some(field_type) = self.state.selected() {
             if let Some(field) = self.fields.get(&field_type) {
-                self.updated_edited_field(&field.clone())
+                self.updated_edited_field(&field.to_owned())
             }
         }
     }
@@ -255,6 +236,36 @@ impl Selectable for FieldContext<'_> {
                     }
                 }
             }
+        }
+    }
+}
+
+/// Convets a type into an Option
+trait ToOption {
+    fn to_option(&self) -> Option<Self>
+    where
+        Self: Sized;
+}
+
+impl ToOption for String {
+    fn to_option(&self) -> Option<Self> {
+        if self.is_empty() {
+            None
+        } else {
+            Some(self.to_owned())
+        }
+    }
+}
+
+impl ToOption for Vec<String> {
+    fn to_option(&self) -> Option<Self>
+    where
+        Self: Sized,
+    {
+        if self.is_empty() || self.iter().all(String::is_empty) {
+            None
+        } else {
+            Some(self.to_owned())
         }
     }
 }
