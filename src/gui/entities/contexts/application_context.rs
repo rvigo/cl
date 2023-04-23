@@ -35,7 +35,10 @@ impl ApplicationContext {
         }
     }
 
-    pub fn copy_text_to_clipboard<T: Into<String>>(&mut self, content: T) -> Result<()> {
+    pub fn copy_text_to_clipboard<T>(&mut self, content: T) -> Result<()>
+    where
+        T: Into<String>,
+    {
         if let Some(ref mut clipboard) = &mut self.clipboard {
             clipboard.set_content(content.into())?;
         }

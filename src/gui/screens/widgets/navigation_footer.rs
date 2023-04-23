@@ -3,7 +3,7 @@ use tui::{buffer::Buffer, layout::Rect, widgets::Widget};
 
 #[derive(Clone)]
 pub struct NavigationFooter {
-    pub content: String,
+    content: String,
 }
 
 impl Footer for NavigationFooter {}

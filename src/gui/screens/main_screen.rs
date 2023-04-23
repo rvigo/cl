@@ -221,7 +221,7 @@ where
     }
 }
 
-fn render_form_medium<B: Backend>(
+fn render_form_medium<B>(
     frame: &mut Frame<B>,
     tabs: Tabs,
     command: DisplayWidget,
@@ -229,7 +229,9 @@ fn render_form_medium<B: Backend>(
     namespace: DisplayWidget,
     tags: DisplayWidget,
     description: DisplayWidget,
-) {
+) where
+    B: Backend,
+{
     let constraints = [
         Constraint::Length(3),
         Constraint::Length(5),
@@ -265,12 +267,14 @@ fn render_form_medium<B: Backend>(
     frame.render_widget(description, chunks[1]);
 }
 
-fn render_form_small<B: Backend>(
+fn render_form_small<B>(
     frame: &mut Frame<B>,
     tabs: Tabs,
     commands: ListWidget,
     command: DisplayWidget,
-) {
+) where
+    B: Backend,
+{
     let constraints = [Constraint::Length(3), Constraint::Min(5)];
     let chunks = Layout::default()
         .direction(Direction::Vertical)
