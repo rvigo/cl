@@ -1,6 +1,6 @@
-pub mod form_screen;
-pub mod main_screen;
-pub mod widgets;
+mod form_screen;
+mod main_screen;
+pub(super) mod widgets;
 
 use super::entities::{
     contexts::{application_context::ApplicationContext, ui_context::UIContext},

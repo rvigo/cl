@@ -1,11 +1,11 @@
-pub mod base_widget;
-pub mod display;
+mod base_widget;
+pub(super) mod display;
 pub mod fields;
-pub mod help_footer;
-pub mod help_popup;
-pub mod highlight;
-pub mod list;
-pub mod navigation_footer;
+pub(super) mod help_footer;
+pub(super) mod help_popup;
+pub(super) mod highlight;
+pub(super) mod list;
+pub(super) mod navigation_footer;
 pub mod popup;
 pub mod querybox;
 pub mod text_field;
