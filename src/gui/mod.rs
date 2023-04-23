@@ -1,14 +1,13 @@
-use tui::style::Color;
-
 mod entities;
 mod key_handlers;
 mod screens;
 
+use tui::style::Color;
+
 pub const DEFAULT_TEXT_COLOR: Color = Color::Rgb(229, 229, 229);
 pub const DEFAULT_SELECTED_COLOR: Color = Color::Rgb(201, 165, 249);
 
-pub mod core {
-
+pub(super) mod core {
     use super::entities::terminal::Terminal;
     use crate::{
         gui::{
