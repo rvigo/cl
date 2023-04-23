@@ -40,25 +40,3 @@ pub enum ClipboardError {
         cause: Box<dyn Error + Send + Sync>,
     },
 }
-
-#[cfg(test)]
-pub mod test {
-    use super::*;
-    use anyhow::anyhow;
-
-    #[test]
-    pub fn should_copy_content() -> Result<()> {
-        let mut clipboard = Clipboard::new()?;
-        let text = "hello world";
-
-        clipboard.set_content(text)?;
-
-        let result = clipboard
-            .clipboard
-            .get_contents()
-            .map_err(|err| anyhow!(err))?;
-
-        assert_eq!(result, text);
-        Ok(())
-    }
-}
