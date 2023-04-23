@@ -60,6 +60,3 @@ $ cl share export --namespace git
 # you can also choose which namespace will be imported
 $ cl share import -f `path/to/shared.toml`
 ```
-
-## disclaimer
-This project is in early development stage, so if you find some weird behavior, please open an `issue` describing what is happening. Contributions are also welcome
