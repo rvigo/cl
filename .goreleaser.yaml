@@ -14,11 +14,10 @@ builds:
       post:
         - sh .github/utils/post_build.sh
 archives:
-  - replacements:
-      amd64: x86_64
-    files:
+  - files:
       - README.md
       - completions/**/*
+    rlcp: true
 brews:
   - name: cl
     description: |
