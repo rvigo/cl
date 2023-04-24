@@ -1,6 +1,6 @@
 [package]
 name = "cl"
-version = "0.7.2"
+version = "0.8.0"
 edition = "2021"
 homepage = "https://github.com/rvigo/cl"
 repository = "https://github.com/rvigo/cl"
@@ -10,7 +10,6 @@ description  = "Group your commands and aliases in an organized and human readab
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-
 anyhow = "1.0.70"
 clap = { version = "4.2.4", features = ["derive"] }
 copypasta = "0.8.2"
