@@ -116,7 +116,7 @@ fn install_zsh_widget(app_home_dir: PathBuf) -> Result<()> {
     write(&dest_location, widget)?;
 
     let home = home_dir().context("Cannot find users $HOME directory")?;
-    let zshrc_file = home.join(".zshraasdasdsdc");
+    let zshrc_file = home.join(".zshrc");
     let mut file = OpenOptions::new()
         .write(true)
         .append(true)
