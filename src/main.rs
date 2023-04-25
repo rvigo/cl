@@ -4,21 +4,19 @@ mod commands;
 mod gui;
 mod resources;
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::Parser;
 use cli::{
     app::{App, Subcommands},
     subcommands::Subcommand,
 };
-use resources::{
-    config::Config,
-    logger::{self, ErrorInterceptor},
-};
+use resources::{config::Config, logger};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let config = Config::load()?;
-    logger::init(config.get_log_level(), config.get_app_home_dir())?;
+    let config = Config::load().context("Cannot load the config file")?;
+    logger::init(config.get_log_level(), config.get_app_home_dir())
+        .context("Cannot start the logger")?;
 
     let app = App::parse();
 
@@ -29,7 +27,6 @@ async fn main() -> Result<()> {
         Some(Subcommands::Config(subcommand_config)) => subcommand_config.run(config),
         _ => run_main_app(config).await,
     }
-    .log_if_error()
 }
 
 async fn run_main_app(config: Config) -> Result<()> {

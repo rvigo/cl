@@ -1,9 +1,9 @@
 use super::Subcommand;
 use crate::{
-    commands::Commands,
-    resources::{config::Config, errors::CommandError, file_service::FileService},
+    cli::subcommands::load_commands,
+    resources::{config::Config, errors::CommandError, logger::interceptor::ErrorInterceptor},
 };
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
 use itertools::Itertools;
 use log::debug;
@@ -65,9 +65,7 @@ pub struct Exec {
 
 impl Subcommand for Exec {
     fn run(&self, config: Config) -> Result<()> {
-        let command_list =
-            FileService::new(config.get_command_file_path()?).load_commands_from_file()?;
-        let commands = Commands::init(command_list);
+        let commands = load_commands(config.get_command_file_path()?).log_error()?;
 
         let alias = &self.alias;
         let namespace = &self.namespace;
@@ -75,11 +73,15 @@ impl Subcommand for Exec {
         let dry_run = self.dry_run;
         let quiet_mode = self.quiet || config.get_default_quiet_mode();
         let mut command_item = commands.find_command(alias.to_owned(), namespace.to_owned())?;
-
-        command_item.command = prepare_command(command_item.command, args.to_owned())?;
+        command_item.command = prepare_command(command_item.command, args.to_owned())
+            .context("Cannot prepare the command to be executed")
+            .log_error()?;
 
         debug!("command to be executed: {}", command_item.command);
-        commands.exec_command(&command_item, dry_run, quiet_mode)
+        commands
+            .exec_command(&command_item, dry_run, quiet_mode)
+            .context("Cannot run the command")
+            .log_error()
     }
 }
 
@@ -189,9 +191,11 @@ fn prepare_command(mut command: CommandString, args: Vec<String>) -> Result<Comm
                 .map(|a| a.as_key_value_pair())
                 .collect::<HashMap<String, String>>();
 
-            validate_named_parameters(&named_parameters, &command)?;
+            validate_named_parameters(&named_parameters, &command)
+                .context("Cannot validate the named parameters")?;
 
-            command = replace_placeholders(command, &named_parameters)?;
+            command = replace_placeholders(command, &named_parameters)
+                .context("Cannot replace the placeholders with the provided args")?;
         } else {
             bail!(CommandError::CannotRunCommand {
                 command,

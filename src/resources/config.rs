@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use dirs::home_dir;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -80,7 +80,7 @@ impl Options {
     }
 }
 
-#[derive(Serialize, Deserialize, Default, PartialEq)]
+#[derive(Serialize, Deserialize, Default, PartialEq, Debug)]
 pub struct Config {
     /// the location of the config file. Defaults to `$HOME/.config/cl`
     app_home_dir: Option<PathBuf>,
@@ -96,7 +96,10 @@ impl Config {
     }
 
     pub fn get_command_file_path(&self) -> Result<PathBuf> {
-        Ok(self.get_app_home_dir().join(COMMAND_FILE))
+        Ok(self
+            .command_file_path
+            .to_owned()
+            .unwrap_or(self.get_app_home_dir().join(COMMAND_FILE)))
     }
 
     pub fn get_app_home_dir(&self) -> PathBuf {
@@ -149,7 +152,7 @@ impl Config {
     pub fn save(&self) -> Result<()> {
         let app_home_dir = self.get_app_home_dir();
         if !app_home_dir.exists() {
-            create_dir_all(&app_home_dir)?
+            create_dir_all(&app_home_dir).context(format!("Cannot create {:?}", app_home_dir))?
         }
         let config_file_path = app_home_dir.join(self.get_config_file_path()?);
         let config_data = toml::to_string(self)?;
@@ -161,12 +164,14 @@ impl Config {
     ///
     /// Creates a new one if the config data is empty or is missing
     pub fn load() -> Result<Self> {
-        let home = home_dir().expect("Could not find home directory");
+        let home = home_dir().context("Could not find home directory")?;
         let config_file_path = home.join(APP_HOME_DIR).join(APP_CONFIG_FILE);
         if let Ok(config_data) = read_to_string(config_file_path) {
             if !config_data.is_empty() {
                 let mut config: Self = toml::from_str(&config_data)?;
-                config.validate()?;
+                config
+                    .validate()
+                    .context("Cannot validate the loaded config")?;
                 return Ok(config);
             }
         }
@@ -174,15 +179,17 @@ impl Config {
     }
 
     fn new() -> Result<Self> {
-        let home_dir = home_dir().expect("Could not find home directory");
+        let home_dir = home_dir().context("Could not find home directory")?;
         let mut config = Self {
             app_home_dir: Some(home_dir.join(APP_HOME_DIR)),
             config_home_path: None,
             command_file_path: None,
             options: Some(Options::new()),
         };
-        config.save()?;
-        config.validate()?;
+        config.save().context("Cannot save the config file")?;
+        config
+            .validate()
+            .context("Cannot validate the new config")?;
 
         Ok(config)
     }
@@ -267,13 +274,17 @@ impl Config {
         let mut has_changes = false;
         if let Some(command_file) = &self.command_file_path {
             if !command_file.exists() {
-                self.create_empty_command_file(command_file)?;
+                self.create_empty_command_file(command_file)
+                    .context(format!(
+                        "Cannot create an empty commands file at {command_file:?}"
+                    ))?;
             }
             Ok(has_changes)
         } else {
             let path = self.app_home_dir.as_ref().unwrap().join(COMMAND_FILE);
             self.command_file_path = Some(path.clone());
-            self.create_empty_command_file(path)?;
+            self.create_empty_command_file(&path)
+                .context(format!("Cannot create an empty commands file at {path:?}"))?;
             has_changes = true;
             Ok(has_changes)
         }

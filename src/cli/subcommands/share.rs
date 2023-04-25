@@ -2,9 +2,9 @@ use super::Subcommand;
 use crate::{
     command::Command,
     commands::Commands,
-    resources::{config::Config, file_service::FileService},
+    resources::{config::Config, file_service::FileService, logger::interceptor::ErrorInterceptor},
 };
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
 use itertools::Itertools;
 use std::path::PathBuf;
@@ -46,7 +46,7 @@ impl Subcommand for Share {
         let namespaces = &self.namespace;
 
         let file_service = FileService::new(config.get_command_file_path()?);
-        let command_list = file_service.load_commands_from_file()?;
+        let command_list = file_service.load_commands_from_file().log_error()?;
         let commands = Commands::init(command_list);
 
         match self.mode {
@@ -83,7 +83,8 @@ impl Subcommand for Share {
                 if !commands_from_file.is_empty() {
                     stored_commands.append(&mut commands_from_file);
                     file_service
-                        .write_toml_file(&stored_commands, &config.get_command_file_path()?)?;
+                        .write_toml_file(&stored_commands, &config.get_command_file_path()?)
+                        .context("Could not import the aliases")?;
                     println!(
                         "Info: Successfully imported {} aliases",
                         commands_from_file.len()
@@ -110,7 +111,9 @@ impl Subcommand for Share {
                     command_list = commands.command_list().to_owned();
                 }
 
-                file_service.write_toml_file(&command_list, file_location)?;
+                file_service
+                    .write_toml_file(&command_list, file_location)
+                    .context("Could not export the aliases")?;
                 println!("Info: Exported {} aliases", command_list.len())
             }
         }

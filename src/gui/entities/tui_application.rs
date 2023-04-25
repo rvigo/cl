@@ -4,7 +4,7 @@ use super::{
     terminal::Terminal,
 };
 use crate::gui::screens::Screens;
-use anyhow::Result;
+use anyhow::{Context, Result};
 use crossterm::event::{self, Event};
 use log::{debug, error};
 use parking_lot::Mutex;
@@ -78,21 +78,18 @@ impl<'a> TuiApplication<'a> {
         }));
     }
 
-    fn clear(&mut self) -> Result<()> {
-        self.terminal.clear()
-    }
-
     fn callback(&self) -> Result<()> {
         self.context.lock().execute_callback_command()?;
         Ok(())
     }
-}
 
-impl Drop for TuiApplication<'_> {
-    fn drop(&mut self) {
-        self.clear().expect("Cannot clear the the screen");
+    pub fn shutdown(&mut self) -> Result<()> {
+        self.terminal
+            .clear()
+            .context("Cannot clear the the screen")?;
         self.callback()
-            .expect("Cannot execute the selected command");
+            .context("Cannot execute the selected command")?;
         debug!("shutting down the app");
+        Ok(())
     }
 }
