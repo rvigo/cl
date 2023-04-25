@@ -151,14 +151,14 @@ trait IfOk<T> {
     /// If the `anyhow::Result` variant if `Ok(T)`, runs `f` and then returns `Ok(T)`
     fn if_ok<F>(self, f: F) -> Result<T>
     where
-        F: FnOnce() -> (),
+        F: FnOnce(),
         Self: Sized;
 }
 
 impl<T> IfOk<T> for Result<T> {
     fn if_ok<F>(self, f: F) -> Result<T>
     where
-        F: FnOnce() -> (),
+        F: FnOnce(),
         Self: Sized,
     {
         match self {
