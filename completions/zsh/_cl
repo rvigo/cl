@@ -1,6 +1,6 @@
 #compdef _cl cl
 
-#you must ensure that $(brew --prefix)/share/zsh/site-functions is present in $FPATH
+# you must ensure that "site-functions" is present in $FPATH
 _cl() {
     local line
     typeset -A opt_args
@@ -43,7 +43,7 @@ _cl_config() {
     "*::options:->options" \
     {-q,--default-quiet-mode}="[Set the default quiet mode]" \
     {-l,--default-log-level}="[Set the default log level]" \
-    {-H,--highlitght-matches}="[ Set the `highlight matches` mode]"
+    {-H,--highlitght-matches}="[Set the highlight matches mode]"
     
     case $line[1] in
         zsh-widget)

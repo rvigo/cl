@@ -15,12 +15,12 @@ cl-exec-widget() {
         --reverse \
         --exit-0 \
         --height 40% \
-        --header=$'Enter: set prompt with the selected command \n\n' \
-        --bind='enter:abort+execute(echo cl exec {1} $(if [[ ! -z {2} ]];then echo --namespace {2} | sed "s/[()]//g"; fi))' \
-        --preview='[[ -z {2} ]] && cl misc -d -a {1} || cl misc -d -a {1} -n $(echo {2} | sed "s/[()]//g")' \
+        --header='Enter: set prompt with the selected command' \
+        --bind='enter:abort+execute:echo cl exec {1} $(if [[ ! -z {2} ]] then  echo --namespace {2} | sed "s/[()]//g"; fi)'\
+        --preview='[[ ! -z {2} ]] && echo "$(cl misc -d -a {1} -n $(echo {2} | sed "s/[()]//g";))" || echo "$(cl misc -d -a {1})"' \
         --preview-window=right:60%:wrap 
     ) 
-    
+
     local choice=$($cl | $fzf)
     if [[ ! -z "$choice" ]]; then
         zle -U "$choice"
