@@ -152,7 +152,7 @@ impl Config {
     pub fn save(&self) -> Result<()> {
         let app_home_dir = self.get_app_home_dir();
         if !app_home_dir.exists() {
-            create_dir_all(&app_home_dir).context(format!("Cannot create {:?}", app_home_dir))?
+            create_dir_all(&app_home_dir).context(format!("Cannot create {app_home_dir:?}"))?
         }
         let config_file_path = app_home_dir.join(self.get_config_file_path()?);
         let config_data = toml::to_string(self)?;
