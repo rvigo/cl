@@ -20,9 +20,11 @@ pub(super) mod core {
             },
             screens::Screens,
         },
-        resources::{config::Config, file_service::FileService},
+        resources::{
+            config::Config, file_service::FileService, logger::interceptor::ErrorInterceptor,
+        },
     };
-    use anyhow::Result;
+    use anyhow::{Context, Result};
     use log::debug;
     use parking_lot::Mutex;
     use std::{
@@ -38,11 +40,14 @@ pub(super) mod core {
         let (input_sx, input_rx) = channel::<InputMessages>(16);
 
         debug!("loading commands from file");
-        let file_service = FileService::new(config.get_command_file_path()?);
-        let commands = file_service.load_commands_from_file()?;
+        let file_service = FileService::new(config.get_command_file_path().log_error()?);
+        let commands = file_service
+            .load_commands_from_file()
+            .context("Cannot load commands from file")
+            .log_error()?;
 
         debug!("creating terminal");
-        let mut terminal = Terminal::new()?;
+        let mut terminal = Terminal::new().log_error()?;
 
         let size = terminal.size();
 
@@ -61,7 +66,7 @@ pub(super) mod core {
         debug!("starting components");
         start_input_handler(input_rx, &app_sx, &ui_context, &should_quit).await;
         start_event_handler(app_rx, &context, &ui_context, &should_quit).await;
-        start_ui(
+        let mut tui = start_ui(
             input_sx,
             should_quit,
             ui_context,
@@ -69,8 +74,11 @@ pub(super) mod core {
             terminal,
             screens,
         )
-        .await?;
+        .await
+        .log_error()?;
 
+        // shutdown the ui after the main loop execution
+        tui.shutdown().log_error()?;
         Ok(())
     }
 
@@ -96,18 +104,20 @@ pub(super) mod core {
         context: Arc<Mutex<ApplicationContext>>,
         terminal: Terminal<CrosstermBackend<Stdout>>,
         screens: Screens<'a, CrosstermBackend<Stdout>>,
-    ) -> Result<()> {
+    ) -> Result<TuiApplication<'a>> {
         debug!("starting ui");
-        TuiApplication::create(
+        let mut tui = TuiApplication::create(
             input_sx,
             should_quit,
             ui_context,
             context,
             terminal,
             screens,
-        )?
-        .render()
-        .await
+        )?;
+
+        tui.render().await?;
+
+        Ok(tui)
     }
 
     async fn start_input_handler(

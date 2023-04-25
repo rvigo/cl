@@ -1,8 +1,7 @@
-use super::Subcommand;
+use super::{load_commands, Subcommand};
 use crate::{
     command::Command,
-    commands::Commands,
-    resources::{config::Config, file_service::FileService},
+    resources::{config::Config, logger::interceptor::ErrorInterceptor},
 };
 use anyhow::Result;
 use clap::Parser;
@@ -23,9 +22,8 @@ pub struct Misc {
 
 impl Subcommand for Misc {
     fn run(&self, config: Config) -> Result<()> {
-        let command_list =
-            FileService::new(config.get_command_file_path()?).load_commands_from_file()?;
-        let commands = Commands::init(command_list);
+        let commands = load_commands(config.get_command_file_path()?).log_error()?;
+
         if self.description {
             if let Some(alias) = &self.alias {
                 let namespace = &self.namespace;

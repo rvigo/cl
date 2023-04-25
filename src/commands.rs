@@ -1,5 +1,5 @@
 use crate::{command::Command, resources::errors::CommandError};
-use anyhow::{bail, ensure, Result};
+use anyhow::{bail, ensure, Context, Result};
 use std::env;
 
 #[derive(Default)]
@@ -107,7 +107,7 @@ impl Commands {
                 .arg(&command_item.command)
                 .spawn()?
                 .wait()
-                .expect("The command did not run");
+                .context("The command did not run")?;
         }
         Ok(())
     }

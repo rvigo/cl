@@ -6,7 +6,9 @@ use super::{
 use crate::{
     command::Command,
     gui::entities::clipboard::Clipboard,
-    resources::{config::Options, file_service::FileService, logger::ErrorInterceptor},
+    resources::{
+        config::Options, file_service::FileService, logger::interceptor::ErrorInterceptor,
+    },
 };
 use anyhow::Result;
 use tui::widgets::ListState;
@@ -25,7 +27,7 @@ impl ApplicationContext {
         config_options: Options,
     ) -> ApplicationContext {
         let namespaces = commands.iter().map(|c| c.namespace.to_owned()).collect();
-        let clipboard = Clipboard::new().log_if_error().ok();
+        let clipboard = Clipboard::new().log_error().ok();
 
         ApplicationContext {
             namespaces_context: NamespacesContext::new(namespaces),
