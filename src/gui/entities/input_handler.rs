@@ -5,7 +5,7 @@ use crate::gui::{
         edit_handler::EditScreenHandler, help_popup_handler::HelpPopupHandler,
         insert_handler::InsertScreenHandler, main_handler::MainScreenHandler,
         popup_handler::PopupHandler, querybox_handler::QueryboxHandler, KeyEventHandler,
-        WidgetKeyEventHandler,
+        ViKeyEventHandler, WidgetKeyEventHandler,
     },
 };
 use anyhow::Result;
@@ -70,7 +70,7 @@ impl InputHandler {
     }
 
     async fn handle_input(&mut self, key_event: KeyEvent) -> Result<()> {
-        let ui_context = self.ui_context.lock().to_owned();
+        let mut ui_context = self.ui_context.lock().to_owned();
         let result = if ui_context.show_popup() {
             self.popup_handler
                 .handle(key_event, &mut self.ui_context.lock())?
@@ -79,6 +79,9 @@ impl InputHandler {
         } else if ui_context.querybox_focus() {
             self.querybox_handler
                 .handle(key_event, &mut self.ui_context.lock())?
+        } else if ui_context.vi().enabled() && ui_context.view_mode() != ViewMode::Main {
+            let handler = self.get_vi_handler(&ui_context.view_mode());
+            handler.handle(key_event, ui_context.vi().mode())?
         } else {
             let handler = self.get_handler(&ui_context.view_mode());
             handler.handle(key_event)?
@@ -90,6 +93,14 @@ impl InputHandler {
         }
 
         Ok(())
+    }
+
+    fn get_vi_handler(&self, view_mode: &ViewMode) -> &dyn ViKeyEventHandler {
+        match view_mode {
+            ViewMode::Insert => &self.insert_screen_handler,
+            ViewMode::Edit => &self.edit_screen_handler,
+            _ => unimplemented!(),
+        }
     }
 
     fn get_handler(&self, view_mode: &ViewMode) -> &dyn KeyEventHandler {

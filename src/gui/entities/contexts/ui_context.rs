@@ -7,6 +7,7 @@ use crate::{
             states::{
                 answer_state::AnswerState,
                 ui_state::{UiState, ViewMode},
+                vi_state::ViState,
                 State,
             },
         },
@@ -32,9 +33,9 @@ pub struct UIContext<'a> {
 }
 
 impl<'a> UIContext<'a> {
-    pub fn new(size: ScreenSize) -> UIContext<'a> {
+    pub fn new(size: ScreenSize, vi_enabled: bool) -> UIContext<'a> {
         let mut context = UIContext {
-            form_fields_context: FieldContext::default(),
+            form_fields_context: FieldContext::init(vi_enabled),
             popup_context: PopupContext::new(),
             ui_state: UiState::new(size),
             query_box: QueryBox::default(),
@@ -238,6 +239,10 @@ impl<'a> UIContext<'a> {
     pub fn set_view_mode(&mut self, view_mode: ViewMode) {
         self.ui_state.set_view_mode(view_mode)
     }
+
+    pub fn vi(&mut self) -> &mut ViState {
+        self.form_fields_context.vi_state_mut()
+    }
 }
 
 #[cfg(test)]
@@ -246,7 +251,7 @@ mod tests {
 
     #[test]
     fn should_clear_input_when_enter_insert_screen() {
-        let mut ui = UIContext::new(ScreenSize::Medium);
+        let mut ui = UIContext::new(ScreenSize::Medium, false);
         let command = Command::default();
 
         // enters edit mode

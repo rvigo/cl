@@ -57,6 +57,14 @@ pub struct Config {
         help = "Set the `highlight matches` mode"
     )]
     highlight_matches: Option<bool>,
+    #[clap(
+        long,
+        short = 'V',
+        required = false,
+        num_args(1),
+        help = "Set basic Vi Keybindings for editing"
+    )]
+    vi_keybindings: Option<bool>,
     #[clap(subcommand)]
     subcommand: Option<ConfigSubcommand>,
 }
@@ -90,6 +98,11 @@ impl Subcommand for Config {
                 .set_highlight(highlight)
                 .context("Failed to set highlight")
                 .if_ok(|| println!("highlight matches set to {highlight}"))
+        } else if let Some(enable) = self.vi_keybindings {
+            config
+                .enable_vi_keybindings(enable)
+                .context("Failed to set Vi keybindings")
+                .if_ok(|| println!("Vi keybindings set to {enable}"))
         } else {
             println!("{}", config.printable_string());
             Ok(())

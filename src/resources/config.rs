@@ -44,6 +44,7 @@ pub struct Options {
     default_quiet_mode: Option<bool>,
     log_level: Option<LogLevel>,
     highlight_matches: Option<bool>,
+    vi_keybindings_enabled: Option<bool>,
 }
 
 impl Options {
@@ -52,6 +53,7 @@ impl Options {
             default_quiet_mode: Some(false),
             log_level: Some(LogLevel::default()),
             highlight_matches: Some(true),
+            vi_keybindings_enabled: Some(false),
         }
     }
 
@@ -77,6 +79,14 @@ impl Options {
 
     pub fn set_default_quiet_mode(&mut self, quiet_mode: bool) {
         self.default_quiet_mode = Some(quiet_mode);
+    }
+
+    pub fn vi_enabled(&self) -> bool {
+        self.vi_keybindings_enabled.unwrap_or(false)
+    }
+
+    pub fn enable_vi(&mut self, enable: bool) {
+        self.vi_keybindings_enabled = Some(enable)
     }
 }
 
@@ -147,6 +157,15 @@ impl Config {
             .unwrap()
             .set_default_quiet_mode(quiet_mode);
         self.save()
+    }
+
+    pub fn enable_vi_keybindings(&mut self, enable: bool) -> Result<()> {
+        self.options.as_mut().unwrap().enable_vi(enable);
+        self.save()
+    }
+
+    pub fn vi_keybindings_enabled(&self) -> bool {
+        self.options.as_ref().unwrap().vi_enabled()
     }
 
     pub fn save(&self) -> Result<()> {
@@ -224,6 +243,9 @@ impl Config {
             if let Some(val) = &options.highlight_matches {
                 result.push_str(&format!("highlight matches: {val}\n"));
             }
+            if let Some(val) = &options.vi_keybindings_enabled {
+                result.push_str(&format!("vi keybindings enabled: {val}\n"))
+            }
         }
         result
     }
@@ -258,9 +280,19 @@ impl Config {
             should_save = true;
             self.options.as_mut().unwrap().highlight_matches = Some(true);
         }
+        if self
+            .options
+            .as_ref()
+            .unwrap()
+            .vi_keybindings_enabled
+            .is_none()
+        {
+            should_save = true;
+            self.options.as_mut().unwrap().vi_keybindings_enabled = Some(false)
+        }
 
-        if self.ensure_command_file()? {
-            should_save = true
+        if let Ok(save) = self.ensure_command_file() {
+            should_save = save
         }
 
         if should_save {
@@ -316,6 +348,7 @@ mod test {
                 default_quiet_mode: None,
                 log_level: None,
                 highlight_matches: None,
+                vi_keybindings_enabled: None,
             }),
         }
     }
@@ -418,6 +451,26 @@ mod test {
         config.options.as_mut().unwrap().highlight_matches = None;
 
         assert_eq!(config.get_options().get_highlight(), true);
+
+        tear_down(config)
+    }
+
+    #[test]
+    fn should_set_vi_keybindings() -> Result<()> {
+        let mut config = builder();
+        config.save()?;
+        config.validate()?;
+
+        assert_eq!(config.get_options().vi_enabled(), false);
+
+        config.enable_vi_keybindings(true)?;
+
+        assert_eq!(config.get_options().vi_enabled(), true);
+
+        // get default value in case of None
+        config.options.as_mut().unwrap().vi_keybindings_enabled = None;
+
+        assert_eq!(config.get_options().vi_enabled(), false);
 
         tear_down(config)
     }

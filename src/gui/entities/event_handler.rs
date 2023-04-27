@@ -4,7 +4,7 @@ use super::{
         AppEvent, CommandEvent, FormScreenEvent, MainScreenEvent, PopupCallbackAction, PopupEvent,
         PopupType, QueryboxEvent, RenderEvent, ScreenEvent,
     },
-    states::ui_state::ViewMode,
+    states::{ui_state::ViewMode, vi_state::ViMode},
 };
 use crate::gui::screens::widgets::popup::Answer;
 use log::debug;
@@ -123,6 +123,9 @@ impl<'a> EventHandler<'a> {
                             ui.reset_form_field_selected_field();
                             ui.clear_form_fields();
                             ui.set_selected_command_input();
+                            if ui.vi().enabled() {
+                                ui.vi().change_mode_to(ViMode::Normal)
+                            }
                         }
                     }
                     RenderEvent::Insert => {
@@ -132,6 +135,9 @@ impl<'a> EventHandler<'a> {
                         ui.set_view_mode(ViewMode::Insert);
                         ui.reset_form_field_selected_field();
                         ui.clear_form_fields();
+                        if ui.vi().enabled() {
+                            ui.vi().change_mode_to(ViMode::Normal)
+                        }
                     }
                 },
                 AppEvent::Quit => self.quit(),

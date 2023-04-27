@@ -1,7 +1,7 @@
 use super::{
     widgets::{
         help_footer::HelpFooter, help_popup::HelpPopup, navigation_footer::NavigationFooter,
-        text_field::FieldType, ScreenExt, WidgetExt,
+        text_field::FieldType, vi_footer::ViFooter, ScreenExt, WidgetExt,
     },
     Screen, ScreenSize,
 };
@@ -36,9 +36,15 @@ where
         _: &mut ApplicationContext,
         ui_context: &mut UIContext,
     ) {
-        let navigation_footer = NavigationFooter::new();
         let help_footer = HelpFooter::new();
-        self.render_base(frame, Some(&navigation_footer), help_footer);
+
+        //TODO improve this
+        if ui_context.vi().enabled() {
+            let vi_footer = ViFooter::new(ui_context.vi());
+            self.render_base(frame, Some(&vi_footer), help_footer)
+        } else {
+            self.render_base(frame, Some(&NavigationFooter::new()), help_footer);
+        }
 
         let block = self.default_block(if ui_context.is_form_modified() {
             format!(" {} MODIFIED ", ui_context.view_mode())

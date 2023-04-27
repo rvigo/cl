@@ -52,8 +52,9 @@ pub(super) mod core {
         let size = terminal.size();
 
         debug!("creating contexts");
+        let vi_enabled = config.vi_keybindings_enabled();
         let should_quit: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
-        let ui_context = Arc::new(Mutex::new(UIContext::new(size.clone().into())));
+        let ui_context = Arc::new(Mutex::new(UIContext::new(size.clone().into(), vi_enabled)));
         let context = Arc::new(Mutex::new(ApplicationContext::init(
             commands,
             file_service,

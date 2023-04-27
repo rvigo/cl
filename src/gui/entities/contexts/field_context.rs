@@ -2,12 +2,12 @@ use super::Selectable;
 use crate::{
     command::{Command, CommandBuilder},
     gui::{
-        entities::states::{field_state::FieldState, State},
+        entities::states::{field_state::FieldState, vi_state::ViState, State},
         screens::{
             widgets::{
                 fields::Fields,
                 text_field::{FieldType, TextField},
-                WidgetKeyHandler,
+                ViWidgetKeyHandler, WidgetKeyHandler,
             },
             ScreenSize,
         },
@@ -21,9 +21,19 @@ pub struct FieldContext<'a> {
     fields: Fields<'a>,
     state: FieldState,
     selected_command: Option<Command>,
+    vi_state: ViState,
 }
 
 impl<'a> FieldContext<'a> {
+    pub fn init(vi_enabled: bool) -> FieldContext<'a> {
+        Self {
+            fields: Fields::default(),
+            state: FieldState::default(),
+            selected_command: Option::default(),
+            vi_state: ViState::init(vi_enabled),
+        }
+    }
+
     pub fn order_field_by_size(&mut self, size: &ScreenSize) {
         self.fields.reorder_by_screen_size(size);
     }
@@ -154,10 +164,22 @@ impl<'a> FieldContext<'a> {
         }
     }
 
+    //TODO PLEASE improve this method
     pub fn handle_input(&mut self, input: KeyEvent) {
+        let vi_state = &mut self.vi_state;
+        let field = if let Some(selected) = self.state.selected() {
+            self.fields.get_mut(&selected)
+        } else {
+            None
+        };
+
         // mutable borrow
-        if let Some(field) = self.selected_field_mut() {
-            field.handle_input(input)
+        if let Some(field) = field {
+            if vi_state.enabled() {
+                ViWidgetKeyHandler::handle_input(field, input, vi_state);
+            } else {
+                WidgetKeyHandler::handle_input(field, input);
+            }
         }
 
         // immutable borrow
@@ -190,6 +212,10 @@ impl<'a> FieldContext<'a> {
 
     fn reset_edition_state(&mut self) {
         self.state.reset_fields_edition_state()
+    }
+
+    pub fn vi_state_mut(&mut self) -> &mut ViState {
+        &mut self.vi_state
     }
 }
 
@@ -293,18 +319,51 @@ mod test {
         );
         let mut tags = TextField::new(String::from("tags"), FieldType::Tags, false, false);
 
-        alias.handle_input(KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE));
-        alias.handle_input(KeyEvent::new(KeyCode::Char('l'), KeyModifiers::NONE));
-        alias.handle_input(KeyEvent::new(KeyCode::Char('i'), KeyModifiers::NONE));
-        alias.handle_input(KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE));
-        alias.handle_input(KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE));
-        namespace.handle_input(KeyEvent::new(KeyCode::Char('n'), KeyModifiers::NONE));
-        command.handle_input(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::NONE));
+        WidgetKeyHandler::handle_input(
+            &mut alias,
+            KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE),
+        );
+        WidgetKeyHandler::handle_input(
+            &mut alias,
+            KeyEvent::new(KeyCode::Char('l'), KeyModifiers::NONE),
+        );
+        WidgetKeyHandler::handle_input(
+            &mut alias,
+            KeyEvent::new(KeyCode::Char('i'), KeyModifiers::NONE),
+        );
+        WidgetKeyHandler::handle_input(
+            &mut alias,
+            KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE),
+        );
+        WidgetKeyHandler::handle_input(
+            &mut alias,
+            KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE),
+        );
+        WidgetKeyHandler::handle_input(
+            &mut namespace,
+            KeyEvent::new(KeyCode::Char('n'), KeyModifiers::NONE),
+        );
+        WidgetKeyHandler::handle_input(
+            &mut command,
+            KeyEvent::new(KeyCode::Char('c'), KeyModifiers::NONE),
+        );
         // multifield description field
-        description.handle_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
-        description.handle_input(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
-        description.handle_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
-        tags.handle_input(KeyEvent::new(KeyCode::Char('t'), KeyModifiers::NONE));
+        WidgetKeyHandler::handle_input(
+            &mut description,
+            KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE),
+        );
+        WidgetKeyHandler::handle_input(
+            &mut description,
+            KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE),
+        );
+        WidgetKeyHandler::handle_input(
+            &mut description,
+            KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE),
+        );
+        WidgetKeyHandler::handle_input(
+            &mut tags,
+            KeyEvent::new(KeyCode::Char('t'), KeyModifiers::NONE),
+        );
 
         let map = vec![alias, namespace, command, description, tags]
             .into_iter()

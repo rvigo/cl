@@ -9,10 +9,12 @@ pub(super) mod navigation_footer;
 pub mod popup;
 pub mod querybox;
 pub mod text_field;
+pub mod vi_footer;
 
 use self::base_widget::BaseWidget;
+
 use super::Screen;
-use crate::gui::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
+use crate::gui::{entities::states::vi_state::ViState, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crossterm::event::KeyEvent;
 use tui::{
     backend::Backend,
@@ -103,7 +105,12 @@ pub trait WidgetExt {
 // Every tui Widget implements this
 impl<T> WidgetExt for T where T: Widget {}
 
-/// Handles use key input
 pub trait WidgetKeyHandler {
+    /// Handles user key input
     fn handle_input(&mut self, input: KeyEvent);
+}
+
+pub trait ViWidgetKeyHandler {
+    /// Handles user key input using Vi keybindings. Note that it's a very basic "emulation", not every motion present in Vi will work
+    fn handle_input(&mut self, input: KeyEvent, state: &mut ViState);
 }
