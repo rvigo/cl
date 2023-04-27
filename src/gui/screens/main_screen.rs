@@ -57,9 +57,9 @@ impl MainScreen {
         &self,
         namespace: &'a str,
         query: &'a str,
-        should_highligh: bool,
+        should_highlight: bool,
     ) -> DisplayWidget<'a> {
-        self.create_display_widget("Namespace", namespace, should_highligh)
+        self.create_display_widget("Namespace", namespace, should_highlight)
             .highlight(query)
     }
 
@@ -94,9 +94,9 @@ impl MainScreen {
         &self,
         command: &'a str,
         query: &'a str,
-        should_highligh: bool,
+        should_highlight: bool,
     ) -> DisplayWidget<'a> {
-        self.create_display_widget("Command", command, should_highligh)
+        self.create_display_widget("Command", command, should_highlight)
             .highlight(query)
     }
 
@@ -104,9 +104,9 @@ impl MainScreen {
         &self,
         description: &'a str,
         query: &'a str,
-        should_highligh: bool,
+        should_highlight: bool,
     ) -> DisplayWidget<'a> {
-        self.create_display_widget("Description", description, should_highligh)
+        self.create_display_widget("Description", description, should_highlight)
             .highlight(query)
     }
 
@@ -114,9 +114,9 @@ impl MainScreen {
         &self,
         tags: &'a str,
         query: &'a str,
-        should_highligh: bool,
+        should_highlight: bool,
     ) -> DisplayWidget<'a> {
-        self.create_display_widget("Tags", tags, should_highligh)
+        self.create_display_widget("Tags", tags, should_highlight)
             .highlight(query)
     }
 
@@ -124,9 +124,9 @@ impl MainScreen {
         &self,
         title: &str,
         content: &str,
-        should_highligh: bool,
+        should_highlight: bool,
     ) -> DisplayWidget<'a> {
-        DisplayWidget::new(content, true, should_highligh).block(self.default_block(title))
+        DisplayWidget::new(content, true, should_highlight).block(self.default_block(title))
     }
 }
 
@@ -155,7 +155,7 @@ where
         //
         ui_context.select_command(Some(selected_command.to_owned()));
 
-        let should_highlight = context.should_highligh();
+        let should_highlight = context.should_highlight();
         let query = ui_context.querybox().get_input();
         let namespaces_context = context.namespaces_context();
         let command_state = context.get_commands_state();
