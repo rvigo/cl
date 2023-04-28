@@ -5,7 +5,6 @@ use crate::gui::{
         edit_handler::EditScreenHandler, help_popup_handler::HelpPopupHandler,
         insert_handler::InsertScreenHandler, main_handler::MainScreenHandler,
         popup_handler::PopupHandler, querybox_handler::QueryboxHandler, KeyEventHandler,
-        WidgetKeyEventHandler,
     },
 };
 use anyhow::Result;
@@ -47,7 +46,7 @@ impl InputHandler {
             main_screen_handler: MainScreenHandler,
             insert_screen_handler: InsertScreenHandler,
             edit_screen_handler: EditScreenHandler,
-            popup_handler: PopupHandler,
+            popup_handler: PopupHandler::new(None),
             help_popup_handler: HelpPopupHandler,
             querybox_handler: QueryboxHandler,
         };
@@ -73,12 +72,12 @@ impl InputHandler {
         let ui_context = self.ui_context.lock().to_owned();
         let result = if ui_context.show_popup() {
             self.popup_handler
-                .handle(key_event, &mut self.ui_context.lock())?
+                .update_message_type(ui_context.popup().and_then(|popup| popup.message_type()));
+            self.popup_handler.handle(key_event)?
         } else if ui_context.show_help() {
             self.help_popup_handler.handle(key_event)?
         } else if ui_context.querybox_focus() {
-            self.querybox_handler
-                .handle(key_event, &mut self.ui_context.lock())?
+            self.querybox_handler.handle(key_event)?
         } else {
             let handler = self.get_handler(&ui_context.view_mode());
             handler.handle(key_event)?

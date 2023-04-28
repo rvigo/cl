@@ -1,4 +1,3 @@
-use crate::gui::screens::widgets::popup::Answer;
 use crossterm::event::KeyEvent;
 
 #[derive(Clone, Debug)]
@@ -29,8 +28,10 @@ pub enum CommandEvent {
 #[derive(Clone, Debug)]
 pub enum PopupEvent {
     Enable(PopupType),
-    Answer(Option<Answer>),
+    Answer,
     Disable,
+    NextChoice,
+    PreviousChoice,
 }
 
 #[derive(Clone, Debug)]
@@ -53,6 +54,7 @@ pub enum PopupCallbackAction {
 pub enum QueryboxEvent {
     Active,
     Deactive,
+    Input(KeyEvent),
 }
 
 #[derive(Clone, Debug)]
