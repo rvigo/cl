@@ -151,11 +151,11 @@ impl<'a> EventHandler<'a> {
                             }
                         }
                     }
-                    PopupEvent::Answer(answer) => {
-                        if let Some(answer) = answer {
+                    PopupEvent::Answer => {
+                        let mut ui = self.ui_context.lock();
+                        if let Some(answer) = ui.get_selected_choice() {
                             match answer {
                                 Answer::Ok => {
-                                    let mut ui = self.ui_context.lock();
                                     let mut c = self.app_context.lock();
 
                                     if let Some(popup) = ui.popup() {
@@ -194,11 +194,12 @@ impl<'a> EventHandler<'a> {
                                     }
                                 }
                                 Answer::Cancel => {
-                                    self.ui_context.lock().clear_popup_context();
+                                    ui.clear_popup_context();
                                 }
                             };
                         }
-                        self.ui_context.lock().set_show_popup(false)
+                        // else
+                        ui.set_show_popup(false)
                     }
                     PopupEvent::Disable => {
                         let mut ui = self.ui_context.lock();
@@ -209,8 +210,10 @@ impl<'a> EventHandler<'a> {
                             ui.set_show_popup(false)
                         }
                     }
+                    PopupEvent::NextChoice => self.ui_context.lock().next_choice(),
+                    PopupEvent::PreviousChoice => self.ui_context.lock().previous_choice(),
                 },
-                AppEvent::QueryBox(status) => match status {
+                AppEvent::QueryBox(event) => match event {
                     QueryboxEvent::Active => {
                         let mut ui = self.ui_context.lock();
                         ui.activate_querybox_focus();
@@ -220,6 +223,9 @@ impl<'a> EventHandler<'a> {
                         let mut ui = self.ui_context.lock();
                         ui.deactivate_querybox_focus();
                         ui.set_querybox_focus(false);
+                    }
+                    QueryboxEvent::Input(key_event) => {
+                        self.ui_context.lock().handle_querybox_input(key_event)
                     }
                 },
                 AppEvent::Screen(screen) => match screen {
