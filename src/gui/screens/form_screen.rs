@@ -59,19 +59,15 @@ where
         }
 
         if ui_context.popup().is_some() && ui_context.get_popup_answer().is_none() {
-            let popup = &ui_context.popup().unwrap();
+            if let Some(popup) = ui_context.popup() {
+                let area = if !ScreenSize::Small.eq(&self.screen_size) {
+                    self.centered_area(45, 40, frame.size())
+                } else {
+                    frame.size()
+                };
 
-            let area = if !ScreenSize::Small.eq(&self.screen_size) {
-                self.centered_area(45, 40, frame.size())
-            } else {
-                frame.size()
-            };
-
-            frame.render_stateful_widget(
-                popup.to_owned(),
-                area,
-                ui_context.get_choices_state_mut(),
-            );
+                frame.render_stateful_widget(popup, area, ui_context.get_choices_state_mut());
+            }
         }
     }
 

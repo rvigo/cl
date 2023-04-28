@@ -45,7 +45,7 @@ impl Subcommand for Share {
         let file_location = &self.file_location;
         let namespaces = &self.namespace;
 
-        let file_service = FileService::new(config.get_command_file_path()?);
+        let file_service = FileService::new(config.get_command_file_path());
         let command_list = file_service.load_commands_from_file().log_error()?;
         let commands = Commands::init(command_list);
 
@@ -83,7 +83,7 @@ impl Subcommand for Share {
                 if !commands_from_file.is_empty() {
                     stored_commands.append(&mut commands_from_file);
                     file_service
-                        .write_toml_file(&stored_commands, &config.get_command_file_path()?)
+                        .write_toml_file(&stored_commands, &config.get_command_file_path())
                         .context("Could not import the aliases")?;
                     println!(
                         "Info: Successfully imported {} aliases",

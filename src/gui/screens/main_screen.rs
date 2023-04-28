@@ -40,16 +40,12 @@ impl MainScreen {
     fn get_selected_command(
         &self,
         selected_command_index: usize,
-        filtered_commands: &Vec<Command>,
+        filtered_commands: &[Command],
     ) -> Command {
-        if filtered_commands.is_empty() || filtered_commands.get(selected_command_index).is_none() {
-            //creates an empty command
-            CommandBuilder::default().build()
+        if let Some(command) = filtered_commands.get(selected_command_index) {
+            command.to_owned()
         } else {
-            filtered_commands
-                .get(selected_command_index)
-                .unwrap()
-                .to_owned()
+            CommandBuilder::default().build()
         }
     }
 
@@ -195,20 +191,20 @@ where
 
         //
         if ui_context.popup().is_some() && ui_context.get_popup_answer().is_none() {
-            let popup = &ui_context.popup().as_ref().unwrap().to_owned();
+            if let Some(popup) = &ui_context.popup() {
+                //TODO move this to `UiContext`
+                let area = if !ScreenSize::Small.eq(&self.screen_size) {
+                    self.centered_area(45, 40, frame.size())
+                } else {
+                    frame.size()
+                };
 
-            //TODO move this to `UiContext`
-            let area = if !ScreenSize::Small.eq(&self.screen_size) {
-                self.centered_area(45, 40, frame.size())
-            } else {
-                frame.size()
-            };
-
-            frame.render_stateful_widget(
-                popup.to_owned(),
-                area,
-                ui_context.get_choices_state_mut(),
-            );
+                frame.render_stateful_widget(
+                    popup.to_owned(),
+                    area,
+                    ui_context.get_choices_state_mut(),
+                );
+            }
         }
     }
 
