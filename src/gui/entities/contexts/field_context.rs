@@ -37,11 +37,9 @@ impl<'a> FieldContext<'a> {
     }
 
     pub fn selected_field_mut(&mut self) -> Option<&mut TextField<'a>> {
-        if let Some(selected) = self.state.selected() {
-            self.fields.get_mut(&selected)
-        } else {
-            None
-        }
+        self.state
+            .selected()
+            .and_then(|selected| self.fields.get_mut(&selected))
     }
 
     pub fn build_new_command(&mut self) -> Command {
@@ -55,6 +53,12 @@ impl<'a> FieldContext<'a> {
                 FieldType::Command => {
                     command_builder.command(field.text());
                 }
+                FieldType::Description => {
+                    command_builder.description(field.text().to_option());
+                }
+                FieldType::Namespace => {
+                    command_builder.namespace(field.text());
+                }
                 FieldType::Tags => {
                     command_builder.tags(
                         field
@@ -66,43 +70,34 @@ impl<'a> FieldContext<'a> {
                             .to_option(),
                     );
                 }
-                FieldType::Description => {
-                    command_builder.description(field.text().to_option());
-                }
-                FieldType::Namespace => {
-                    command_builder.namespace(field.text());
-                }
             });
 
         command_builder.build()
     }
 
     pub fn build_edited_command(&mut self) -> Command {
-        let mut command = self
-            .selected_command()
-            .map(|command| command.to_owned())
-            .unwrap();
-        self.fields
-            .iter_mut()
-            .for_each(|(field_type, field)| match field_type {
-                FieldType::Alias => command.alias = field.text(),
-                FieldType::Command => command.command = field.text(),
-                FieldType::Namespace => command.namespace = field.text(),
-                FieldType::Description => {
-                    command.description = field.text().to_option();
-                }
-                FieldType::Tags => {
-                    command.tags = field
-                        .text()
-                        .split(',')
-                        .map(|tag| String::from(tag.trim()))
-                        .filter(|tag| !tag.is_empty())
-                        .collect_vec()
-                        .to_option();
-                }
-            });
+        if let Some(command) = self.selected_command.as_mut() {
+            self.fields
+                .iter_mut()
+                .for_each(|(field_type, field)| match field_type {
+                    FieldType::Alias => command.alias = field.text(),
+                    FieldType::Command => command.command = field.text(),
+                    FieldType::Namespace => command.namespace = field.text(),
+                    FieldType::Description => command.description = field.text().to_option(),
+                    FieldType::Tags => {
+                        command.tags = field
+                            .text()
+                            .split(',')
+                            .map(|tag| String::from(tag.trim()))
+                            .filter(|tag| !tag.is_empty())
+                            .collect_vec()
+                            .to_option();
+                    }
+                });
 
-        command
+            return command.to_owned();
+        }
+        Command::default()
     }
 
     pub fn selected_command(&self) -> Option<&Command> {
@@ -114,8 +109,7 @@ impl<'a> FieldContext<'a> {
     }
 
     pub fn popuplate_form(&mut self) {
-        let selected_command = self.selected_command.as_ref();
-        if let Some(current_command) = selected_command {
+        if let Some(current_command) = self.selected_command.as_ref() {
             self.fields.iter_mut().for_each(|(field_type, field)| {
                 match field_type {
                     FieldType::Alias => {
@@ -155,16 +149,10 @@ impl<'a> FieldContext<'a> {
     }
 
     pub fn handle_input(&mut self, input: KeyEvent) {
-        // mutable borrow
-        if let Some(field) = self.selected_field_mut() {
-            field.handle_input(input)
-        }
-
-        // immutable borrow
-        // can this be improved?
-        if let Some(field_type) = self.state.selected() {
-            if let Some(field) = self.fields.get(&field_type) {
-                self.updated_edited_field(&field.to_owned())
+        if let Some(selected) = self.state.selected() {
+            if let Some(field) = self.fields.get_mut(&selected) {
+                field.handle_input(input);
+                self.state.updated_edited_field(&field.to_owned())
             }
         }
     }
@@ -178,10 +166,6 @@ impl<'a> FieldContext<'a> {
         if let Some(selected) = self.selected_field_mut() {
             selected.deactivate_focus()
         }
-    }
-
-    pub fn updated_edited_field(&mut self, field: &TextField) {
-        self.state.updated_edited_field(field)
     }
 
     pub fn is_modified(&self) -> bool {

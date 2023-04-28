@@ -35,8 +35,10 @@ impl CacheInfo {
 
     #[inline]
     pub fn get_entry(&mut self, namespace: &str) -> Vec<Command> {
-        let commands = self.cache.get(namespace).unwrap().to_owned();
-        commands
+        self.cache
+            .get(namespace)
+            .unwrap_or(&Vec::default())
+            .to_owned()
     }
 
     #[inline]

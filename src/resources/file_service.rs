@@ -24,7 +24,7 @@ impl FileService {
     }
 
     pub fn open_file(&self, path: &Path) -> Result<String, FileError> {
-        let path_str = path.to_str().unwrap();
+        let path_str = path.display().to_string();
 
         read_to_string(path_str).map_err(|cause| FileError::ReadFile {
             file_path: path.to_path_buf(),
@@ -53,7 +53,7 @@ impl FileService {
             if let Some(commands) = map.get_mut(&item.namespace) {
                 commands.push(item);
             } else {
-                map.insert(item.clone().namespace, vec![item]);
+                map.insert(item.namespace.to_owned(), vec![item]);
             }
         }
 

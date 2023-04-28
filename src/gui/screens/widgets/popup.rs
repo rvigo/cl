@@ -132,7 +132,12 @@ impl StatefulWidget for Popup {
         buf: &mut tui::buffer::Buffer,
         state: &mut Self::State,
     ) {
-        let block = self.default_block(self.message_type.to_owned().unwrap().to_string());
+        let messate_type_string = if let Some(message_type) = &self.message_type {
+            message_type.to_string()
+        } else {
+            String::default()
+        };
+        let block = self.default_block(messate_type_string);
         let p = Paragraph::new(self.message.clone())
             .style(Style::default().fg(DEFAULT_TEXT_COLOR))
             .alignment(Alignment::Left)

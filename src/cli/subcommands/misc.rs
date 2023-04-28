@@ -22,7 +22,7 @@ pub struct Misc {
 
 impl Subcommand for Misc {
     fn run(&self, config: Config) -> Result<()> {
-        let commands = load_commands(config.get_command_file_path()?).log_error()?;
+        let commands = load_commands(config.get_command_file_path()).log_error()?;
 
         if self.description {
             if let Some(alias) = &self.alias {

@@ -63,8 +63,11 @@ impl Options {
         self.highlight_matches = Some(highlight);
     }
 
-    pub fn get_log_level(&self) -> Result<Option<&LogLevel>> {
-        Ok(self.log_level.as_ref())
+    pub fn get_log_level(&self) -> LogLevel {
+        self.log_level
+            .as_ref()
+            .unwrap_or(&LogLevel::default())
+            .to_owned()
     }
 
     pub fn set_log_level(&mut self, log_level: LogLevel) {
@@ -91,19 +94,29 @@ pub struct Config {
 
 impl Config {
     pub fn get_options(&self) -> Options {
-        // assuming that `Config::load` is the only public entrypoint, the options should never be `None`
-        self.options.to_owned().unwrap()
+        // assuming that `Config::load` is the only public entrypoint, this method should never return a default `Options`
+        self.options
+            .as_ref()
+            .map_or_else(Options::default, |options| options.to_owned())
     }
 
-    pub fn get_command_file_path(&self) -> Result<PathBuf> {
-        Ok(self
-            .command_file_path
-            .to_owned()
-            .unwrap_or(self.get_app_home_dir().join(COMMAND_FILE)))
+    pub fn get_command_file_path(&self) -> PathBuf {
+        self.command_file_path.as_ref().map_or_else(
+            || self.get_app_home_dir().join(COMMAND_FILE),
+            |p| p.to_owned(),
+        )
     }
 
+    /// Should return a default value if not present?
     pub fn get_app_home_dir(&self) -> PathBuf {
-        self.app_home_dir.as_ref().unwrap().to_owned()
+        self.app_home_dir
+            .as_ref()
+            .unwrap_or(
+                &home_dir()
+                    .expect("Cannot evaluate $HOME")
+                    .join(APP_HOME_DIR),
+            )
+            .to_owned()
     }
 
     // pub fn set_config_home_path<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
@@ -122,10 +135,9 @@ impl Config {
     }
 
     pub fn get_log_level(&self) -> LogLevel {
-        match self.options.as_ref().unwrap().get_log_level() {
-            Ok(Some(log_level)) => log_level.to_owned(),
-            _ => LogLevel::default(),
-        }
+        self.options
+            .as_ref()
+            .map_or_else(LogLevel::default, |options| options.get_log_level())
     }
 
     pub fn set_log_level(&mut self, log_level: LogLevel) -> Result<()> {
@@ -136,9 +148,7 @@ impl Config {
     pub fn get_default_quiet_mode(&self) -> bool {
         self.options
             .as_ref()
-            .unwrap()
-            .default_quiet_mode
-            .unwrap_or(false)
+            .map_or_else(|| false, |options| options.get_default_quiet_mode())
     }
 
     pub fn set_default_quiet_mode(&mut self, quiet_mode: bool) -> Result<()> {
@@ -235,39 +245,50 @@ impl Config {
         let mut should_save = false;
 
         if self.app_home_dir.is_none() {
-            should_save = true;
-            self.app_home_dir = Some(PathBuf::from(APP_HOME_DIR))
+            self.app_home_dir = Some(PathBuf::from(APP_HOME_DIR));
+            should_save |= true;
         }
         if self.config_home_path.is_none() {
-            should_save = true;
-            self.config_home_path = Some(self.app_home_dir.as_ref().unwrap().join(APP_CONFIG_FILE));
-        }
-        if self.options.is_none() {
-            should_save = true;
-            self.options = Some(Options::new())
-        }
-        if self.options.as_ref().unwrap().default_quiet_mode.is_none() {
-            should_save = true;
-            self.options.as_mut().unwrap().default_quiet_mode = Some(false);
-        }
-        if self.options.as_ref().unwrap().log_level.is_none() {
-            should_save = true;
-            self.options.as_mut().unwrap().log_level = Some(LogLevel::default());
-        }
-        if self.options.as_ref().unwrap().highlight_matches.is_none() {
-            should_save = true;
-            self.options.as_mut().unwrap().highlight_matches = Some(true);
+            self.config_home_path = self
+                .app_home_dir
+                .as_ref()
+                .map(|dir| dir.join(APP_CONFIG_FILE));
+            should_save |= true;
         }
 
-        if self.ensure_command_file()? {
-            should_save = true
+        if self.options.is_some() {
+            should_save |= self.validate_options();
+        } else {
+            self.options = Some(Options::default());
+            should_save |= self.validate_options()
         }
+
+        should_save |= self.ensure_command_file().unwrap_or(false);
 
         if should_save {
             self.save()
         } else {
             Ok(())
         }
+    }
+
+    fn validate_options(&mut self) -> bool {
+        let mut should_save = false;
+        if let Some(options) = self.options.as_mut() {
+            if options.default_quiet_mode.is_none() {
+                options.default_quiet_mode = Some(false);
+                should_save |= true;
+            }
+            if options.log_level.is_none() {
+                options.log_level = Some(LogLevel::default());
+                should_save |= true;
+            }
+            if options.highlight_matches.is_none() {
+                options.highlight_matches = Some(true);
+                should_save |= true;
+            }
+        }
+        should_save
     }
 
     fn ensure_command_file(&mut self) -> Result<bool> {
