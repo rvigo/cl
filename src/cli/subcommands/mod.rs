@@ -3,13 +3,8 @@ pub(super) mod exec;
 pub(super) mod misc;
 pub(super) mod share;
 
-use std::path::PathBuf;
-
-use crate::{
-    commands::Commands,
-    resources::{config::Config, file_service::FileService},
-};
-use anyhow::{Context, Result};
+use crate::resources::config::Config;
+use anyhow::Result;
 
 /// Represents a CLI Subcommand
 pub trait Subcommand {
@@ -17,13 +12,24 @@ pub trait Subcommand {
     fn run(&self, config: Config) -> Result<()>;
 }
 
-// Subcommands aux method to load commands
-pub(self) fn load_commands(command_file_path: PathBuf) -> Result<Commands> {
-    let file_service = FileService::new(command_file_path);
-    let command_list = file_service
-        .load_commands_from_file()
-        .context("Could not load the commands from file")?;
-    let commands = Commands::init(command_list);
+/// Loads a `Commands` instance from a command file at the given path
+#[macro_export]
+macro_rules! load_commands {
+    ($command_file_path:expr) => {{
+        use anyhow::{Context, Result};
+        use std::path::PathBuf;
+        use $crate::{commands::Commands, resources::file_service::FileService};
 
-    Ok(commands)
+        fn load(command_file_path: PathBuf) -> Result<Commands> {
+            let file_service = FileService::new(command_file_path);
+            let command_list = file_service
+                .load_commands_from_file()
+                .context("Could not load the commands from file")?;
+            let commands = Commands::init(command_list);
+            Ok(commands)
+        }
+        load($command_file_path)
+    }};
 }
+
+pub(super) use load_commands;

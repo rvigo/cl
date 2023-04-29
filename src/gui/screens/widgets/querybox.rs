@@ -3,7 +3,7 @@ use crate::gui::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crossterm::event::{KeyCode, KeyEvent};
 use tui::{
     buffer::Buffer,
-    layout::Rect,
+    layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     widgets::{Block, BorderType, Borders, Widget},
 };
@@ -96,7 +96,7 @@ impl<'a> Widget for QueryBox<'a> {
                 .title(format!(" {} ", self.title))
                 .border_type(BorderType::Plain),
         );
-        self.text_area.set_alignment(tui::layout::Alignment::Left);
+        self.text_area.set_alignment(Alignment::Left);
         self.text_area.set_style(style);
 
         self.text_area.widget().render(area, buf)

@@ -1,6 +1,8 @@
 use super::Subcommand;
-use crate::resources::config::{Config as AppConfig, LogLevel as ConfigLogLevel};
-use crate::resources::logger::interceptor::ErrorInterceptor;
+use crate::resources::{
+    config::{Config as AppConfig, LogLevel as ConfigLogLevel},
+    logger::interceptor::ErrorInterceptor,
+};
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand as ClapSubcommand, ValueEnum};
 use dirs::home_dir;

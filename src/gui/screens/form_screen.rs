@@ -5,9 +5,12 @@ use super::{
     },
     Screen, ScreenSize,
 };
-use crate::gui::entities::{
-    contexts::{application_context::ApplicationContext, ui_context::UIContext},
-    terminal::TerminalSizeExt,
+use crate::{
+    centered_rect,
+    gui::entities::{
+        contexts::{application_context::ApplicationContext, ui_context::UIContext},
+        terminal::TerminalSizeExt,
+    },
 };
 use tui::{
     backend::Backend,
@@ -61,7 +64,7 @@ where
         if ui_context.popup().is_some() && ui_context.get_popup_answer().is_none() {
             if let Some(popup) = ui_context.popup() {
                 let area = if !ScreenSize::Small.eq(&self.screen_size) {
-                    self.centered_area(45, 40, frame.size())
+                    centered_rect!(45, 40, frame.size())
                 } else {
                     frame.size()
                 };

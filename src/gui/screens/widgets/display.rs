@@ -1,6 +1,7 @@
 use itertools::Itertools;
 use tui::{
-    layout::Alignment,
+    buffer::Buffer,
+    layout::{Alignment, Rect},
     style::Style,
     text::{Spans, Text},
     widgets::{Block, Paragraph, Widget, Wrap},
@@ -61,7 +62,7 @@ impl<'a> DisplayWidget<'a> {
 }
 
 impl<'a> Widget for DisplayWidget<'a> {
-    fn render(self, area: tui::layout::Rect, buf: &mut tui::buffer::Buffer) {
+    fn render(self, area: Rect, buf: &mut Buffer) {
         // if there is no highlighted content, transforms the content in a `Vec<Spans>`
         let content = if let Some(styled) = self.highlighted_content {
             Text::from(styled)

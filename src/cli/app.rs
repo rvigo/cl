@@ -21,7 +21,7 @@ pub struct App {
 #[derive(ClapSubcommand)]
 pub enum Subcommands {
     #[clap(aliases = &["X", "x"],
-           about="Run your commands via CLI")]
+    about="Run your commands via CLI")]
     Exec(Exec),
     #[clap(aliases = &["S", "s"],
     about = "Import/Export aliases")]
