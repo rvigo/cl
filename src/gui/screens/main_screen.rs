@@ -6,6 +6,7 @@ use super::{
     Screen, ScreenSize, ScreenType,
 };
 use crate::{
+    centered_rect,
     command::{Command, CommandBuilder},
     gui::{
         entities::contexts::{
@@ -194,7 +195,7 @@ where
             if let Some(popup) = &ui_context.popup() {
                 //TODO move this to `UiContext`
                 let area = if !ScreenSize::Small.eq(&self.screen_size) {
-                    self.centered_area(45, 40, frame.size())
+                    centered_rect!(45, 40, frame.size())
                 } else {
                     frame.size()
                 };

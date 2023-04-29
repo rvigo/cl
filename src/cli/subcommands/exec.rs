@@ -1,7 +1,6 @@
-use super::Subcommand;
-use crate::{
-    cli::subcommands::load_commands,
-    resources::{config::Config, errors::CommandError, logger::interceptor::ErrorInterceptor},
+use super::{load_commands, Subcommand};
+use crate::resources::{
+    config::Config, errors::CommandError, logger::interceptor::ErrorInterceptor,
 };
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
@@ -65,8 +64,7 @@ pub struct Exec {
 
 impl Subcommand for Exec {
     fn run(&self, config: Config) -> Result<()> {
-        let commands = load_commands(config.get_command_file_path()).log_error()?;
-
+        let commands = load_commands!(config.get_command_file_path()).log_error()?;
         let alias = &self.alias;
         let namespace = &self.namespace;
         let args = &self.command_args;

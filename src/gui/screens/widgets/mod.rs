@@ -16,11 +16,47 @@ use crate::gui::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crossterm::event::KeyEvent;
 use tui::{
     backend::Backend,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::Alignment,
     style::{Color, Style},
     widgets::{Block, BorderType, Borders, Widget},
     Frame,
 };
+
+#[macro_export]
+macro_rules! centered_rect {
+    ($width: expr, $height: expr, $area: expr) => {{
+        use tui::layout::{Constraint, Direction, Layout, Rect};
+
+        fn centered_area(width: u16, height: u16, area: Rect) -> Rect {
+            let height = if height > 100 { 100 } else { height };
+            let width = if width > 100 { 100 } else { width };
+
+            let new_area = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints(
+                    [
+                        Constraint::Percentage((100 - height) / 2),
+                        Constraint::Percentage(height),
+                        Constraint::Percentage((100 - height) / 2),
+                    ]
+                    .as_ref(),
+                )
+                .split(area);
+            Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints(
+                    [
+                        Constraint::Percentage((100 - width) / 2),
+                        Constraint::Percentage(width),
+                        Constraint::Percentage((100 - width) / 2),
+                    ]
+                    .as_ref(),
+                )
+                .split(new_area[1])[1]
+        }
+        centered_area($width, $height, $area)
+    }};
+}
 
 /// Marks the struct as a `Footer`
 pub trait Footer: Clone + Widget {}
@@ -63,34 +99,6 @@ pub trait WidgetExt {
             .border_type(BorderType::Plain)
     }
 
-    fn centered_area(&self, width: u16, height: u16, area: Rect) -> Rect {
-        let height = if height > 100 { 100 } else { height };
-        let width = if width > 100 { 100 } else { width };
-
-        let new_area = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(
-                [
-                    Constraint::Percentage((100 - height) / 2),
-                    Constraint::Percentage(height),
-                    Constraint::Percentage((100 - height) / 2),
-                ]
-                .as_ref(),
-            )
-            .split(area);
-
-        Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(
-                [
-                    Constraint::Percentage((100 - width) / 2),
-                    Constraint::Percentage(width),
-                    Constraint::Percentage((100 - width) / 2),
-                ]
-                .as_ref(),
-            )
-            .split(new_area[1])[1]
-    }
     fn get_style(&self, in_focus: bool) -> Style {
         if in_focus {
             Style::default().fg(Color::Black).bg(DEFAULT_SELECTED_COLOR)

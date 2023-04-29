@@ -1,6 +1,6 @@
-use super::WidgetExt;
-use crate::gui::{
-    entities::states::ui_state::ViewMode, screens::ScreenSize, DEFAULT_SELECTED_COLOR,
+use crate::{
+    centered_rect,
+    gui::{entities::states::ui_state::ViewMode, screens::ScreenSize, DEFAULT_SELECTED_COLOR},
 };
 use tui::{
     buffer::Buffer,
@@ -54,7 +54,7 @@ impl<'a> Widget for HelpPopup<'a> {
 
         let dynamic_height = (100 * (self.content.len() as u16 * 2)) / area.height;
         let height = std::cmp::max(dynamic_height, area.height);
-        let centered_rect = self.centered_area(width, height, area);
+        let centered_rect = centered_rect!(width, height, area);
 
         Clear::render(Clear, centered_rect, buf);
         table.render(centered_rect, buf)
@@ -65,84 +65,58 @@ fn key_style() -> Style {
     Style::default().fg(DEFAULT_SELECTED_COLOR)
 }
 
-fn get_cell_style(text: &str, style: Option<Style>) -> Cell {
-    if let Some(style) = style {
-        Cell::from(text).style(style)
-    } else {
-        Cell::from(text)
-    }
+macro_rules! styled_cell {
+    ($text:expr) => {
+        Cell::from($text)
+    };
+
+    ($text:expr, $style:expr) => {
+        Cell::from($text).style($style)
+    };
 }
 
 fn main_options<'a>() -> Vec<Vec<Cell<'a>>> {
     vec![
         vec![
-            get_cell_style("<Q/Esc/Ctrl + C>", Some(key_style())),
-            get_cell_style("Quit", None),
+            styled_cell!("<Q/Esc/Ctrl + C>", key_style()),
+            styled_cell!("Quit"),
         ],
         vec![
-            get_cell_style("<I/Insert>", Some(key_style())),
-            get_cell_style("Create new command", None),
+            styled_cell!("<I/Insert>", key_style()),
+            styled_cell!("Create new command"),
         ],
         vec![
-            get_cell_style("<D/Delete>", Some(key_style())),
-            get_cell_style("Delete selected command", None),
+            styled_cell!("<D/Delete>", key_style()),
+            styled_cell!("Delete selected command"),
         ],
         vec![
-            get_cell_style("<E>", Some(key_style())),
-            get_cell_style("Edit selected command", None),
+            styled_cell!("<E>", key_style()),
+            styled_cell!("Edit selected command"),
         ],
         vec![
-            get_cell_style("<L/→/Tab>", Some(key_style())),
-            get_cell_style("Move to next namespace", None),
+            styled_cell!("<L/→/Tab>", key_style()),
+            styled_cell!("Move to next namespace"),
         ],
         vec![
-            get_cell_style("<H/←/Shift + Tab>", Some(key_style())),
-            get_cell_style("Move to previous namespace", None),
+            styled_cell!("<H/←/Shift + Tab>", key_style()),
+            styled_cell!("Move to previous namespace"),
+        ],
+        vec![styled_cell!("<K/↑>", key_style()), styled_cell!("Move up")],
+        vec![
+            styled_cell!("<J/↓>", key_style()),
+            styled_cell!("Move down"),
         ],
         vec![
-            get_cell_style("<K/↑>", Some(key_style())),
-            get_cell_style("Move up", None),
+            styled_cell!("<Y>", key_style()),
+            styled_cell!("Copy selected command"),
         ],
         vec![
-            get_cell_style("<J/↓>", Some(key_style())),
-            get_cell_style("Move down", None),
+            styled_cell!("<F//>", key_style()),
+            styled_cell!("Find stored commands"),
         ],
         vec![
-            get_cell_style("<Y>", Some(key_style())),
-            get_cell_style("Copy selected command", None),
-        ],
-        vec![
-            get_cell_style("<F//>", Some(key_style())),
-            get_cell_style("Find stored commands", None),
-        ],
-        vec![
-            get_cell_style("<F1/?>", Some(key_style())),
-            get_cell_style("Show help", None),
-        ],
-    ]
-}
-
-fn insert_options<'a>() -> Vec<Vec<Cell<'a>>> {
-    vec![
-        vec![
-            get_cell_style("<Esc/Ctrl + C>", Some(key_style())),
-            get_cell_style("Return", None),
-        ],
-        vec![
-            get_cell_style("<Tab>", Some(key_style())),
-            get_cell_style("Next Field", None),
-        ],
-        vec![
-            get_cell_style("<Shift + Tab>", Some(key_style())),
-            get_cell_style("Previous Field", None),
-        ],
-        vec![
-            get_cell_style("<Enter/ Ctrl + S>", Some(key_style())),
-            get_cell_style("Create command", None),
-        ],
-        vec![
-            get_cell_style("<F1>", Some(key_style())),
-            get_cell_style("Help", None),
+            styled_cell!("<F1/?>", key_style()),
+            styled_cell!("Show help"),
         ],
     ]
 }
@@ -150,24 +124,43 @@ fn insert_options<'a>() -> Vec<Vec<Cell<'a>>> {
 fn edit_options<'a>() -> Vec<Vec<Cell<'a>>> {
     vec![
         vec![
-            get_cell_style("<Esc/Ctrl + C>", Some(key_style())),
-            get_cell_style("Return", None),
+            styled_cell!("<Esc/Ctrl + C>", key_style()),
+            styled_cell!("Return"),
         ],
         vec![
-            get_cell_style("<Tab>", Some(key_style())),
-            get_cell_style("Next Field", None),
+            styled_cell!("<Tab>", key_style()),
+            styled_cell!("Next Field"),
         ],
         vec![
-            get_cell_style("<Shift + Tab>", Some(key_style())),
-            get_cell_style("Previous Field", None),
+            styled_cell!("<Shift + Tab>", key_style()),
+            styled_cell!("Previous Field"),
         ],
         vec![
-            get_cell_style("<Enter/ Ctrl + S>", Some(key_style())),
-            get_cell_style("Update command", None),
+            styled_cell!("<Enter/ Ctrl + S>", key_style()),
+            styled_cell!("Update command"),
+        ],
+        vec![styled_cell!("<F1>", key_style()), styled_cell!("Help")],
+    ]
+}
+
+fn insert_options<'a>() -> Vec<Vec<Cell<'a>>> {
+    vec![
+        vec![
+            styled_cell!("<Esc/Ctrl + C>", key_style()),
+            styled_cell!("Return"),
         ],
         vec![
-            get_cell_style("<F1>", Some(key_style())),
-            get_cell_style("Help", None),
+            styled_cell!("<Tab>", key_style()),
+            styled_cell!("Next Field"),
         ],
+        vec![
+            styled_cell!("<Shift + Tab>", key_style()),
+            styled_cell!("Previous Field"),
+        ],
+        vec![
+            styled_cell!("<Enter/ Ctrl + S>", key_style()),
+            styled_cell!("Create command"),
+        ],
+        vec![styled_cell!("<F1>", key_style()), styled_cell!("Help")],
     ]
 }
