@@ -58,7 +58,7 @@ impl<'a> TuiApplication<'a> {
                 self.terminal
                     .draw(&mut self.ui_context, &mut self.context, &mut **screen)?;
 
-                if event::poll(Duration::from_millis(0))? {
+                if event::poll(Duration::from_millis(50))? {
                     if let Ok(event) = event::read() {
                         if let Event::Key(key) = event {
                             self.input_sx.send(InputMessages::KeyPress(key)).await?;
