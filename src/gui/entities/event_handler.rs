@@ -26,13 +26,13 @@ impl<'a> EventHandler<'a> {
     pub async fn init(
         app_rx: Receiver<AppEvent>,
         context: Arc<Mutex<ApplicationContext>>,
-        ui_state: Arc<Mutex<UIContext<'a>>>,
+        ui_context: Arc<Mutex<UIContext<'a>>>,
         should_quit: Arc<AtomicBool>,
     ) {
         let mut app_router = Self {
             app_rx,
             app_context: context,
-            ui_context: ui_state,
+            ui_context,
             should_quit,
         };
 

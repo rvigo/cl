@@ -1,6 +1,7 @@
 use super::{
     contexts::{application_context::ApplicationContext, ui_context::UIContext},
     events::input_events::InputMessages,
+    states::ui_state::ViewMode,
     terminal::Terminal,
 };
 use crate::gui::screens::Screens;
@@ -51,14 +52,16 @@ impl<'a> TuiApplication<'a> {
 
     pub async fn render(&mut self) -> Result<()> {
         while !self.should_quit.load(Ordering::SeqCst) {
-            let view_mode = self.ui_context.clone().lock().view_mode(); // TODO can this be improved?
+            let view_mode = self.get_current_screen_type();
+
             if let Some(screen) = self.screens.get_screen(view_mode) {
                 self.terminal
                     .draw(&mut self.ui_context, &mut self.context, &mut **screen)?;
-                if event::poll(Duration::from_millis(0)).unwrap_or(false) {
+
+                if event::poll(Duration::from_millis(0))? {
                     if let Ok(event) = event::read() {
                         if let Event::Key(key) = event {
-                            self.input_sx.send(InputMessages::KeyPress(key)).await.ok();
+                            self.input_sx.send(InputMessages::KeyPress(key)).await?;
                         } else if let Event::Resize(_, _) = event {
                             screen.set_screen_size(self.terminal.size().into())
                         }
@@ -71,25 +74,30 @@ impl<'a> TuiApplication<'a> {
         Ok(())
     }
 
+    pub fn shutdown(&mut self) -> Result<()> {
+        debug!("shutting down the app");
+        self.terminal
+            .clear()
+            .context("Cannot clear the the screen")
+            .and_then(|_| {
+                self.callback()
+                    .context("Cannot execute the selected command")
+            })
+    }
+
+    fn get_current_screen_type(&self) -> ViewMode {
+        let ui_context = self.ui_context.lock();
+        ui_context.view_mode()
+    }
+
+    fn callback(&self) -> Result<()> {
+        self.context.lock().execute_callback_command()
+    }
+
     fn handle_panic() {
         panic::set_hook(Box::new(|e| {
             eprintln!("{e}");
             error!("{e}")
         }));
-    }
-
-    fn callback(&self) -> Result<()> {
-        self.context.lock().execute_callback_command()?;
-        Ok(())
-    }
-
-    pub fn shutdown(&mut self) -> Result<()> {
-        self.terminal
-            .clear()
-            .context("Cannot clear the the screen")?;
-        self.callback()
-            .context("Cannot execute the selected command")?;
-        debug!("shutting down the app");
-        Ok(())
     }
 }

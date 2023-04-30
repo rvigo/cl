@@ -23,7 +23,6 @@ use crate::{
 };
 use crossterm::event::KeyEvent;
 
-#[derive(Clone)]
 pub struct UIContext<'a> {
     form_fields_context: FieldContext<'a>,
     popup_context: PopupContext,
@@ -214,8 +213,8 @@ impl<'a> UIContext<'a> {
         self.query_box.deactivate_focus()
     }
 
-    pub fn querybox(&self) -> QueryBox {
-        self.query_box.to_owned()
+    pub fn querybox(&self) -> &QueryBox {
+        &self.query_box
     }
 
     pub fn handle_querybox_input(&mut self, key_event: KeyEvent) {

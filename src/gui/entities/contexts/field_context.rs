@@ -16,7 +16,7 @@ use crate::{
 use crossterm::event::KeyEvent;
 use itertools::Itertools;
 
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub struct FieldContext<'a> {
     fields: Fields<'a>,
     state: FieldState,

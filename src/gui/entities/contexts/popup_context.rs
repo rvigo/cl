@@ -4,7 +4,7 @@ use crate::gui::{
     screens::widgets::popup::{Answer, Popup},
 };
 
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub struct PopupContext {
     answer: Option<Answer>,
     answer_state: AnswerState,

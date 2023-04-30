@@ -39,7 +39,7 @@ impl From<TerminalSize> for ScreenSize {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct UiState {
     view_mode: ViewMode,
     screen_size: ScreenSize,
