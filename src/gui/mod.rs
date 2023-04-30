@@ -66,7 +66,8 @@ pub(super) mod core {
         debug!("starting components");
         start_input_handler(input_rx, &app_sx, &ui_context, &should_quit).await;
         start_event_handler(app_rx, &context, &ui_context, &should_quit).await;
-        let mut tui = start_ui(
+
+        start_ui(
             input_sx,
             should_quit,
             ui_context,
@@ -75,11 +76,8 @@ pub(super) mod core {
             screens,
         )
         .await
-        .log_error()?;
-
-        // shutdown the ui after the main loop execution
-        tui.shutdown().log_error()?;
-        Ok(())
+        .log_error()
+        .and_then(|mut tui| tui.shutdown())
     }
 
     async fn start_event_handler(

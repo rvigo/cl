@@ -144,7 +144,7 @@ where
         let help_footer = HelpFooter::new();
 
         //
-        self.render_base(frame, Some(&query_box), help_footer);
+        self.render_base(frame, Some(query_box), help_footer);
 
         let selected_idx = context.get_selected_command_idx();
         let selected_command = self.get_selected_command(selected_idx, &filtered_commands);
