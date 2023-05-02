@@ -127,8 +127,8 @@ impl<'a> UIContext<'a> {
         self.form_fields_context.clear_inputs()
     }
 
-    pub fn get_form_fields(&self) -> Vec<TextField> {
-        self.form_fields_context.get_fields()
+    pub fn get_form_fields_iter(&self) -> impl Iterator<Item = TextField> {
+        self.form_fields_context.get_fields_iter()
     }
 
     pub fn edit_command(&mut self) -> Command {
@@ -258,7 +258,7 @@ mod tests {
         ui.reset_form_field_selected_field();
         ui.clear_form_fields();
 
-        let fields = ui.get_form_fields();
-        assert!(fields.iter().all(|c| c.text().is_empty()));
+        let mut fields = ui.get_form_fields_iter();
+        assert!(fields.all(|c| c.text().is_empty()));
     }
 }

@@ -129,8 +129,8 @@ where
 
     frame.render_widget(block, chunks[0]);
 
-    let fields = &(*ui_context.get_form_fields());
-    fields.iter().for_each(|field| {
+    let fields = ui_context.get_form_fields_iter();
+    fields.for_each(|field| {
         let area = match field.field_type() {
             FieldType::Alias => first_row[0],
             FieldType::Namespace => first_row[1],
@@ -174,9 +174,9 @@ where
 
     frame.render_widget(block, form_chunks[0]);
 
-    let fields = ui_context.get_form_fields();
+    let fields = ui_context.get_form_fields_iter();
 
-    fields.iter().for_each(|field| {
+    fields.for_each(|field| {
         let area = match field.field_type() {
             FieldType::Alias => first_row[0],
             FieldType::Namespace => first_row[1],
