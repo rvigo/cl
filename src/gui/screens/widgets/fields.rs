@@ -28,7 +28,7 @@ pub struct Fields<'a> {
 }
 
 impl<'a> Fields<'a> {
-    pub fn get_fields(&self) -> Vec<TextField<'a>> {
+    pub fn get_fields_iter(&self) -> impl Iterator<Item = TextField<'a>> {
         let mut ordered_fields = vec![];
 
         self.order.iter().for_each(|i| {
@@ -37,7 +37,7 @@ impl<'a> Fields<'a> {
             }
         });
 
-        ordered_fields
+        ordered_fields.into_iter()
     }
 
     pub fn reorder_by_screen_size(&mut self, size: &ScreenSize) {

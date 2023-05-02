@@ -14,7 +14,7 @@ impl NamespacesContext {
     pub fn new(namespaces: Vec<String>) -> NamespacesContext {
         let namespaces = Self::filter_namespaces(namespaces);
         let mut context = Self {
-            namespaces: namespaces.clone(),
+            namespaces: namespaces.to_owned(),
             state: NamespaceState::default(),
             current_namespace: namespaces[0].to_owned(),
         };

@@ -28,8 +28,8 @@ impl<'a> FieldContext<'a> {
         self.fields.reorder_by_screen_size(size);
     }
 
-    pub fn get_fields(&self) -> Vec<TextField<'_>> {
-        self.fields.get_fields()
+    pub fn get_fields_iter(&self) -> impl Iterator<Item = TextField<'_>> {
+        self.fields.get_fields_iter()
     }
 
     pub fn get_field_state_mut(&mut self) -> &mut FieldState {
