@@ -7,7 +7,8 @@ use crate::{
     command::Command,
     gui::entities::clipboard::Clipboard,
     resources::{
-        config::Options, file_service::FileService, logger::interceptor::ErrorInterceptor,
+        commands_file_service::CommandsFileService, config::Options,
+        logger::interceptor::ErrorInterceptor,
     },
 };
 use anyhow::Result;
@@ -23,7 +24,7 @@ pub struct ApplicationContext {
 impl ApplicationContext {
     pub fn init(
         commands: Vec<Command>,
-        file_service: FileService,
+        commands_file_service: CommandsFileService,
         config_options: Options,
     ) -> ApplicationContext {
         let namespaces = commands.iter().map(|c| c.namespace.to_owned()).collect();
@@ -31,7 +32,7 @@ impl ApplicationContext {
 
         ApplicationContext {
             namespaces_context: NamespacesContext::new(namespaces),
-            commands_context: CommandsContext::new(commands, file_service),
+            commands_context: CommandsContext::new(commands, commands_file_service),
             config_options,
             clipboard,
         }
@@ -114,7 +115,7 @@ impl ApplicationContext {
     /// Executes the callback command
     pub fn execute_callback_command(&self) -> Result<()> {
         self.commands_context
-            .execute_command(self.config_options.get_default_quiet_mode())
+            .execute_command(self.config_options.get_quiet_mode())
     }
 
     pub fn get_commands_state(&self) -> ListState {

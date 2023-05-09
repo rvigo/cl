@@ -1,6 +1,7 @@
-use super::{load_commands, Subcommand};
+use super::Subcommand;
 use crate::{
     command::Command,
+    load_commands,
     resources::{config::Config, logger::interceptor::ErrorInterceptor},
 };
 use anyhow::Result;
