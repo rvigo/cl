@@ -1,10 +1,8 @@
+use super::fs_wrapper;
 use anyhow::{Context, Result};
 use dirs::home_dir;
 use serde::{Deserialize, Serialize};
-use std::{
-    fs::{create_dir_all, read_to_string, write},
-    path::PathBuf,
-};
+use std::path::PathBuf;
 
 const ROOT_DIR: &str = ".config/cl";
 const COMMAND_FILE: &str = "commands.toml";
@@ -39,7 +37,7 @@ impl From<&LogLevel> for String {
 #[serde(rename_all = "kebab-case")]
 pub struct Options {
     #[serde(skip_serializing_if = "Option::is_none", alias = "default_quiet_mode")]
-    default_quiet_mode: Option<bool>,
+    quiet_mode: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none", alias = "log_level")]
     log_level: Option<LogLevel>,
     #[serde(skip_serializing_if = "Option::is_none", alias = "highlight_matches")]
@@ -49,7 +47,7 @@ pub struct Options {
 impl Options {
     pub fn new() -> Options {
         Self {
-            default_quiet_mode: None,
+            quiet_mode: None,
             log_level: None,
             highlight_matches: None,
         }
@@ -74,25 +72,25 @@ impl Options {
         self.log_level = Some(log_level);
     }
 
-    pub fn get_default_quiet_mode(&self) -> bool {
-        self.default_quiet_mode.unwrap_or(DEFAULT_QUIET_MODE)
+    pub fn get_quiet_mode(&self) -> bool {
+        self.quiet_mode.unwrap_or(DEFAULT_QUIET_MODE)
     }
 
-    pub fn set_default_quiet_mode(&mut self, quiet_mode: bool) {
-        self.default_quiet_mode = Some(quiet_mode);
+    pub fn set_quiet_mode(&mut self, quiet_mode: bool) {
+        self.quiet_mode = Some(quiet_mode);
     }
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Config {
-    // serde alias should be removed in the future
+    // serde `alias` should be removed in the future
     #[serde(alias = "app_home_dir")]
-    root_dir: Option<PathBuf>,
+    root_dir: PathBuf,
     #[serde(skip_serializing_if = "Option::is_none", alias = "config_home_path")]
     config_file_path: Option<PathBuf>,
     #[serde(skip_serializing_if = "Option::is_none", alias = "command_file_path")]
-    command_file_path: Option<PathBuf>,
+    commands_file_path: Option<PathBuf>,
     options: Option<Options>,
 }
 
@@ -104,31 +102,24 @@ impl Config {
     }
 
     pub fn get_command_file_path(&self) -> PathBuf {
-        self.command_file_path
+        self.commands_file_path
             .as_ref()
             .map_or_else(|| self.get_root_dir().join(COMMAND_FILE), |p| p.to_owned())
     }
 
-    // Should return a default value if not present?
     pub fn get_root_dir(&self) -> PathBuf {
-        self.root_dir
-            .as_ref()
-            .unwrap_or(&home_dir().expect("Cannot evaluate $HOME").join(ROOT_DIR))
-            .to_owned()
+        self.root_dir.to_owned()
     }
-
-    // pub fn set_config_home_path<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
-    //     self.config_home_path = Some(path.as_ref().to_path_buf());
-    //     self.save()
-    // }
-
-    // pub fn set_command_file_path<P: AsRef<Path>>(&mut self, path: P) -> Result<()> {
-    //     self.command_file_path = Some(path.as_ref().to_path_buf());
-    //     self.save()
-    // }
 
     pub fn set_highlight(&mut self, highlight: bool) -> Result<()> {
         self.change_and_save(|config| config.ensure_options().set_highlight(highlight))
+    }
+
+    pub fn get_highlight(&self) -> bool {
+        self.options
+            .to_owned()
+            .unwrap_or_else(|| Options::new())
+            .get_highlight()
     }
 
     pub fn get_log_level(&self) -> LogLevel {
@@ -142,22 +133,23 @@ impl Config {
         self.change_and_save(|config| config.ensure_options().set_log_level(log_level))
     }
 
-    pub fn get_default_quiet_mode(&self) -> bool {
+    pub fn get_quiet_mode(&self) -> bool {
         self.options
             .to_owned()
             .unwrap_or_else(|| Options::new())
-            .get_default_quiet_mode()
+            .get_quiet_mode()
     }
 
-    pub fn set_default_quiet_mode(&mut self, quiet_mode: bool) -> Result<()> {
-        self.change_and_save(|config| config.ensure_options().set_default_quiet_mode(quiet_mode))
+    pub fn set_quiet_mode(&mut self, quiet_mode: bool) -> Result<()> {
+        self.change_and_save(|config| config.ensure_options().set_quiet_mode(quiet_mode))
     }
 
     pub fn save(&self) -> Result<()> {
         let app_home_dir = self.get_root_dir();
 
         if !app_home_dir.exists() {
-            create_dir_all(&app_home_dir).context(format!("Cannot create {app_home_dir:?}"))?
+            fs_wrapper::create_dir_all(&app_home_dir)
+                .context(format!("Cannot create {app_home_dir:?}"))?
         }
 
         let config_file_path = app_home_dir.join(self.get_config_file_path());
@@ -165,7 +157,7 @@ impl Config {
 
         config_data.insert_str(0, DEFAULT_FILE_MESSAGE);
 
-        write(config_file_path, config_data)?;
+        fs_wrapper::write(config_file_path, config_data)?;
         Ok(())
     }
 
@@ -173,7 +165,7 @@ impl Config {
     pub fn load() -> Result<Self> {
         let home = home_dir().context("Could not find home directory")?;
         let config_file_path = home.join(ROOT_DIR).join(CONFIG_FILE);
-        if let Ok(config_data) = read_to_string(config_file_path) {
+        if let Ok(config_data) = fs_wrapper::read_to_string(config_file_path) {
             if !config_data.is_empty() {
                 let config: Self = toml::from_str(&config_data)?;
                 return Ok(config);
@@ -184,41 +176,19 @@ impl Config {
 
     fn new() -> Result<Self> {
         let home_dir = home_dir().context("Could not find home directory")?;
-        let app_home_dir = home_dir.join(ROOT_DIR);
+        let root = home_dir.join(ROOT_DIR);
         let config = Self {
-            root_dir: Some(app_home_dir.to_owned()),
-            config_file_path: Some(app_home_dir.to_owned().join(CONFIG_FILE)),
-            command_file_path: Some(app_home_dir.to_owned().join(COMMAND_FILE)),
+            root_dir: root.to_owned(),
+            config_file_path: Some(root.to_owned().join(CONFIG_FILE)),
+            commands_file_path: Some(root.to_owned().join(COMMAND_FILE)),
             options: Some(Options::new()),
         };
         config.save().context("Cannot save the config file")?;
         Ok(config)
     }
 
-    fn get_config_file_path(&self) -> PathBuf {
+    pub fn get_config_file_path(&self) -> PathBuf {
         self.get_root_dir().join(CONFIG_FILE)
-    }
-
-    pub fn printable_string(&self) -> String {
-        let mut result = String::new();
-        result.push_str(&format!("config-file: {:?}\n", self.get_config_file_path()));
-        result.push_str(&format!(
-            "command-file: {:?}\n",
-            self.get_command_file_path()
-        ));
-        if let Some(options) = &self.options {
-            result.push_str("options:\n");
-            if let Some(quiet_mode) = &options.default_quiet_mode {
-                result.push_str(&format!("  default-quiet-mode: {quiet_mode}\n"));
-            }
-            if let Some(log_level) = &options.log_level {
-                result.push_str(&format!("  log-level: {}\n", String::from(log_level)));
-            }
-            if let Some(highlight_matches) = &options.highlight_matches {
-                result.push_str(&format!("  highlight-matches: {highlight_matches}\n"));
-            }
-        }
-        result
     }
 
     fn ensure_options(&mut self) -> &mut Options {
@@ -252,11 +222,11 @@ mod test {
         let tmp = temp_dir();
         let config_dir = tmp.join(format!(".config{}", get_id()));
         Config {
-            root_dir: Some(config_dir.to_owned()),
+            root_dir: config_dir.to_owned(),
             config_file_path: Some(config_dir.join(CONFIG_FILE)),
-            command_file_path: None,
+            commands_file_path: None,
             options: Some(Options {
-                default_quiet_mode: None,
+                quiet_mode: None,
                 log_level: None,
                 highlight_matches: None,
             }),
@@ -267,7 +237,6 @@ mod test {
         if config.config_file_path.as_ref().is_some()
             && config.config_file_path.as_ref().unwrap().exists()
         {
-            println!("trying to delete config.toml");
             fs::remove_file(config.config_file_path.as_ref().unwrap())?;
         }
         fs::remove_dir(config.get_root_dir()).unwrap();
@@ -279,21 +248,13 @@ mod test {
     fn should_save_a_new_config() -> Result<()> {
         let config = builder();
 
-        assert!(config.root_dir.is_some());
-        assert!(config.root_dir.as_ref().unwrap().try_exists().is_ok());
-        assert_eq!(
-            config.root_dir.as_ref().unwrap().try_exists().unwrap(),
-            false
-        );
+        assert!(config.root_dir.try_exists().is_ok());
+        assert_eq!(config.root_dir.try_exists().unwrap(), false);
 
         config.save()?;
 
-        assert!(config.root_dir.is_some());
-        assert!(config.root_dir.as_ref().unwrap().try_exists().is_ok());
-        assert_eq!(
-            config.root_dir.as_ref().unwrap().try_exists().unwrap(),
-            true
-        );
+        assert!(config.root_dir.try_exists().is_ok());
+        assert_eq!(config.root_dir.try_exists().unwrap(), true);
 
         tear_down(config)
     }
@@ -303,11 +264,11 @@ mod test {
         let mut config = builder();
         config.save()?;
 
-        assert_eq!(config.get_default_quiet_mode(), false);
+        assert_eq!(config.get_quiet_mode(), false);
 
-        config.set_default_quiet_mode(true)?;
+        config.set_quiet_mode(true)?;
 
-        assert_eq!(config.get_default_quiet_mode(), true);
+        assert_eq!(config.get_quiet_mode(), true);
 
         tear_down(config)
     }

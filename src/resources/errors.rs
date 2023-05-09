@@ -28,16 +28,22 @@ pub enum CommandError {
 pub enum FileError {
     #[error("Cannot create a String of TOML")]
     CreateTomlFromString(#[from] toml::ser::Error),
-    #[error("Cannot read {file_path}")]
+    #[error("Cannot read {path}")]
     ReadFile {
-        file_path: PathBuf,
+        path: PathBuf,
         #[source]
         cause: anyhow::Error,
     },
-    #[error("Cannot write {file_path}")]
+    #[error("Cannot write {path}")]
     WriteFile {
-        file_path: PathBuf,
+        path: PathBuf,
         #[source]
         cause: anyhow::Error,
+    },
+    #[error("Cannot create dirs at {path}")]
+    CreateDirs {
+        path: PathBuf,
+        #[source]
+        cause: std::io::Error,
     },
 }

@@ -21,7 +21,8 @@ pub(super) mod core {
             screens::Screens,
         },
         resources::{
-            config::Config, file_service::FileService, logger::interceptor::ErrorInterceptor,
+            commands_file_service::CommandsFileService, config::Config,
+            logger::interceptor::ErrorInterceptor,
         },
     };
     use anyhow::{Context, Result};
@@ -40,7 +41,7 @@ pub(super) mod core {
         let (input_sx, input_rx) = channel::<InputMessages>(16);
 
         debug!("loading commands from file");
-        let file_service = FileService::new(config.get_command_file_path()).validate()?;
+        let file_service = CommandsFileService::new(config.get_command_file_path()).validate()?;
         let commands = file_service
             .load()
             .context("Cannot load commands from file")

@@ -1,7 +1,7 @@
 use super::{namespaces_context::DEFAULT_NAMESPACE, Selectable};
 use crate::{
     command::Command, commands::Commands, gui::entities::fuzzy::Fuzzy,
-    resources::file_service::FileService,
+    resources::commands_file_service::CommandsFileService,
 };
 use anyhow::Result;
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
@@ -92,19 +92,19 @@ pub struct CommandsContext {
     to_be_executed: Option<Command>,
     commands_cache: CacheInfo,
     matcher: SkimMatcherV2,
-    file_service: FileService,
+    commands_file_service: CommandsFileService,
     filtered_commands: Vec<Command>,
 }
 
 impl CommandsContext {
-    pub fn new(commands: Vec<Command>, file_service: FileService) -> Self {
+    pub fn new(commands: Vec<Command>, commands_file_service: CommandsFileService) -> Self {
         let mut context = Self {
             commands: Commands::init(commands.clone()),
             state: ListState::default(),
             to_be_executed: None,
             commands_cache: CacheInfo::new(commands),
             matcher: SkimMatcherV2::default(),
-            file_service,
+            commands_file_service,
             filtered_commands: vec![],
         };
         context.state.select(Some(0));
@@ -152,7 +152,7 @@ impl CommandsContext {
         let commands = self.commands.add_command(new_command)?;
 
         self.commands_cache.insert_entry(new_command.to_owned());
-        self.file_service.write_to_command_file(&commands)?;
+        self.commands_file_service.save(&commands)?;
         Ok(())
     }
 
@@ -168,7 +168,7 @@ impl CommandsContext {
             .add_edited_command(edited_command, current_command)?;
         self.commands_cache
             .update_entry(edited_command, current_command);
-        self.file_service.write_to_command_file(&commands)?;
+        self.commands_file_service.save(&commands)?;
         Ok(())
     }
 
@@ -176,7 +176,7 @@ impl CommandsContext {
     pub fn remove_command(&mut self, command: &Command) -> Result<()> {
         let commands = self.commands.remove(command)?;
         self.commands_cache.remove_entry(command);
-        self.file_service.write_to_command_file(&commands)?;
+        self.commands_file_service.save(&commands)?;
         Ok(())
     }
 
@@ -316,7 +316,10 @@ mod test {
 
     fn commands_context_builder(n_of_commands: usize) -> CommandsContext {
         let commands = commands_builder(n_of_commands);
-        CommandsContext::new(commands, FileService::new(temp_dir().join("commands.toml")))
+        CommandsContext::new(
+            commands,
+            CommandsFileService::new(temp_dir().join("commands.toml")),
+        )
     }
 
     #[test]
@@ -476,8 +479,10 @@ mod test {
             command4.clone(),
         ];
 
-        let mut context =
-            CommandsContext::new(commands, FileService::new(temp_dir().join("commands.toml")));
+        let mut context = CommandsContext::new(
+            commands,
+            CommandsFileService::new(temp_dir().join("commands.toml")),
+        );
 
         context.filter_commands(DEFAULT_NAMESPACE, "git");
 
