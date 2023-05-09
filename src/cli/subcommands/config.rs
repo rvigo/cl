@@ -77,7 +77,7 @@ pub struct Widget {
 impl Subcommand for Config {
     fn run(&self, mut config: AppConfig) -> Result<()> {
         let res = if let Some(ConfigSubcommand::ZshWidget(_)) = self.subcommand {
-            install_zsh_widget(config.get_app_home_dir()).context("Failed to install zsh widget")
+            install_zsh_widget(config.get_root_dir()).context("Failed to install zsh widget")
         } else if let Some(quiet) = self.default_quiet_mode {
             config
                 .set_default_quiet_mode(quiet)

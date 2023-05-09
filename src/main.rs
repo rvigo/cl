@@ -15,7 +15,7 @@ use resources::{config::Config, logger};
 #[tokio::main]
 async fn main() -> Result<()> {
     let config = Config::load().context("Cannot load the config file")?;
-    logger::init(config.get_log_level(), config.get_app_home_dir())
+    logger::init(config.get_log_level(), config.get_root_dir())
         .context("Cannot start the logger")?;
 
     let app = App::parse();
