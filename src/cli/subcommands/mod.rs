@@ -21,9 +21,9 @@ macro_rules! load_commands {
         use $crate::{commands::Commands, resources::file_service::FileService};
 
         fn load(command_file_path: PathBuf) -> Result<Commands> {
-            let file_service = FileService::new(command_file_path);
+            let file_service = FileService::new(command_file_path).validate()?;
             let command_list = file_service
-                .load_commands_from_file()
+                .load()
                 .context("Could not load the commands from file")?;
             let commands = Commands::init(command_list);
             Ok(commands)

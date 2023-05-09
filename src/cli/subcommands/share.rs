@@ -45,8 +45,8 @@ impl Subcommand for Share {
         let file_location = &self.file_location;
         let namespaces = &self.namespace;
 
-        let file_service = FileService::new(config.get_command_file_path());
-        let command_list = file_service.load_commands_from_file().log_error()?;
+        let file_service = FileService::new(config.get_command_file_path()).validate()?;
+        let command_list = file_service.load().log_error()?;
         let commands = Commands::init(command_list);
 
         match self.mode {

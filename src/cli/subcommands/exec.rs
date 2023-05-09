@@ -71,6 +71,7 @@ impl Subcommand for Exec {
         let dry_run = self.dry_run;
         let quiet_mode = self.quiet || config.get_default_quiet_mode();
         let mut command_item = commands.find_command(alias.to_owned(), namespace.to_owned())?;
+
         command_item.command = prepare_command(command_item.command, args.to_owned())
             .context("Cannot prepare the command to be executed")
             .log_error()?;

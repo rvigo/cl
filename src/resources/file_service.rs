@@ -16,6 +16,19 @@ impl FileService {
         Self { command_file_path }
     }
 
+    pub fn validate(self) -> Result<Self> {
+        if !self.command_file_path.exists() {
+            debug!(
+                "Creating a new commands.toml file at {:?}",
+                self.command_file_path
+            );
+            self.write_to_command_file(&vec![])?;
+        } else {
+            debug!("Found a commands.toml file at {:?}", self.command_file_path)
+        }
+        Ok(self)
+    }
+
     pub fn save_file(&self, contents: &str, path: &Path) -> Result<(), FileError> {
         write(path, contents).map_err(|cause| FileError::WriteFile {
             file_path: self.command_file_path.to_path_buf(),
@@ -32,7 +45,7 @@ impl FileService {
         })
     }
 
-    pub fn convert_from_toml_file(&self, path: &Path) -> Result<Vec<Command>> {
+    fn convert_from_toml_file(&self, path: &Path) -> Result<Vec<Command>> {
         let toml = toml::from_str::<HashMap<String, Vec<Command>>>(&self.open_file(path)?)?;
         let mut commands: Vec<Command> = toml
             .into_iter()
@@ -42,7 +55,7 @@ impl FileService {
         Ok(commands)
     }
 
-    pub fn load_commands_from_file(&self) -> Result<Vec<Command>> {
+    pub fn load(&self) -> Result<Vec<Command>> {
         self.convert_from_toml_file(&self.command_file_path)
     }
 
@@ -67,11 +80,7 @@ impl FileService {
 
     pub fn write_to_command_file(&self, commands: &Vec<Command>) -> Result<(), FileError> {
         let path = &self.command_file_path;
-        debug!(
-            "saving {} commands to {:?}",
-            commands.len(),
-            self.command_file_path
-        );
+
         self.write_toml_file(commands, path)
             .context("Failed to write to the commands file")
             .map_err(|cause| FileError::WriteFile {
