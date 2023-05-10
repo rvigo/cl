@@ -1,26 +1,89 @@
 use crate::resources::config::LogLevel;
 use anyhow::Result;
-use flexi_logger::{Cleanup, Criterion, FileSpec, Logger, Naming};
-use std::path::PathBuf;
+use std::path::Path;
+use tracing::metadata::LevelFilter;
+use tracing_subscriber::{
+    fmt::format::{Format, PrettyFields},
+    prelude::__tracing_subscriber_SubscriberExt,
+    util::SubscriberInitExt,
+    Layer,
+};
 
-pub fn init(log_level: LogLevel, log_path: PathBuf) -> Result<()> {
-    let log_level_string = String::from(&log_level);
-    Logger::try_with_str(log_level_string)?
-        .log_to_file(
-            FileSpec::default()
-                .basename("output")
-                .directory(log_path.join("log")),
+pub fn init<P>(level: LogLevel, path: P) -> Result<()>
+where
+    P: AsRef<Path>,
+{
+    tracing_logger_stdout_and_file(level, path.as_ref().join("log"))?;
+
+    self::panic_handler::setup_panic_hook();
+    Ok(())
+}
+
+/// Sets a logger with two layers (stdout and a file)
+pub fn tracing_logger_stdout_and_file<L, P>(level: L, path: P) -> Result<()>
+where
+    L: Into<LevelFilter>,
+    P: AsRef<Path>,
+{
+    let level_filter: LevelFilter = level.into();
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::fmt::layer()
+                .event_format(Format::default().with_source_location(false).without_time())
+                .fmt_fields(PrettyFields::new())
+                .with_target(false)
+                .with_filter(
+                    // ensures at least an info message to console
+                    if level_filter == LevelFilter::ERROR {
+                        LevelFilter::INFO
+                    } else {
+                        level_filter
+                    },
+                ),
         )
-        .append()
-        .rotate(
-            Criterion::Size(1024 * 1000),
-            Naming::Numbers,
-            Cleanup::KeepLogFiles(3),
+        .with(
+            tracing_subscriber::fmt::layer()
+                .with_writer(tracing_appender::rolling::never(path, "log.log"))
+                .with_ansi(false)
+                .with_thread_names(true)
+                .with_filter(level_filter),
         )
-        .format_for_files(flexi_logger::detailed_format)
-        .start()?;
+        .init();
 
     Ok(())
+}
+
+impl From<LogLevel> for LevelFilter {
+    fn from(value: LogLevel) -> Self {
+        match value {
+            LogLevel::Debug => LevelFilter::DEBUG,
+            LogLevel::Info => LevelFilter::INFO,
+            LogLevel::Error => LevelFilter::ERROR,
+        }
+    }
+}
+pub(super) mod panic_handler {
+    use log::error;
+    use std::panic::PanicInfo;
+
+    pub fn setup_panic_hook() {
+        std::panic::set_hook(Box::new(format_panic_message));
+    }
+
+    fn format_panic_message(panic_info: &PanicInfo) {
+        let mut message = String::from("The application crashed\n");
+        let payload = panic_info
+            .payload()
+            .downcast_ref::<String>()
+            .map(String::as_str)
+            .or_else(|| panic_info.payload().downcast_ref::<&str>().cloned())
+            .unwrap_or("Box<Any>");
+        message.push_str("cause:\n");
+        for line in payload.lines() {
+            message.push_str(&format!("    {line}\n"))
+        }
+        error!("{message}")
+    }
 }
 
 pub mod interceptor {
