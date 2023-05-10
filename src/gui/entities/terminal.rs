@@ -35,24 +35,23 @@ where
 
 impl Terminal<CrosstermBackend<Stdout>> {
     pub fn new() -> Result<Terminal<CrosstermBackend<Stdout>>> {
+        setup_terminal_panic_hook();
         enable_raw_mode()?;
         let mut stdout = io::stdout();
         execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
         let backend = CrosstermBackend::new(stdout);
-        let mut terminal = TuiTerminal::new(backend)?;
+        let mut tui_terminal = TuiTerminal::new(backend)?;
 
-        terminal.hide_cursor()?;
+        tui_terminal.hide_cursor()?;
 
-        Ok(Self {
-            tui_terminal: terminal,
-        })
+        Ok(Self { tui_terminal })
     }
 
     pub fn size(&mut self) -> TerminalSize {
         self.tui_terminal.get_frame().size().as_terminal_size()
     }
 
-    pub fn clear(&mut self) -> Result<()> {
+    pub fn restore(&mut self) -> Result<()> {
         debug!("clearing the screen");
         disable_raw_mode()?;
         execute!(
@@ -93,4 +92,27 @@ impl TerminalSizeExt for Rect {
             TerminalSize::Large
         }
     }
+}
+
+trait BackendExt {
+    /// Forces a "shutdown" in case of `panic!`
+    fn force_restore();
+}
+
+impl BackendExt for CrosstermBackend<Stdout> {
+    fn force_restore() {
+        let mut stdout = io::stdout();
+        let _ = execute!(stdout, LeaveAlternateScreen, DisableMouseCapture);
+        let mut c = CrosstermBackend::new(stdout);
+        let _ = disable_raw_mode();
+        let _ = c.show_cursor();
+    }
+}
+
+fn setup_terminal_panic_hook() {
+    let current = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |panic| {
+        CrosstermBackend::force_restore();
+        current(panic);
+    }));
 }

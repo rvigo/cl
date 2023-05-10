@@ -7,11 +7,10 @@ use super::{
 use crate::gui::screens::Screens;
 use anyhow::{Context, Result};
 use crossterm::event::{self, Event};
-use log::{debug, error};
+use log::debug;
 use parking_lot::Mutex;
 use std::{
     io::Stdout,
-    panic,
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
@@ -39,15 +38,16 @@ impl<'a> TuiApplication<'a> {
         terminal: Terminal<CrosstermBackend<Stdout>>,
         screens: Screens<'a, CrosstermBackend<Stdout>>,
     ) -> Result<TuiApplication<'a>> {
-        Self::handle_panic();
-        Ok(TuiApplication {
+        let tui = TuiApplication {
             terminal,
             input_sx,
             should_quit,
             ui_context,
             context,
             screens,
-        })
+        };
+
+        Ok(tui)
     }
 
     pub async fn render(&mut self) -> Result<()> {
@@ -77,7 +77,7 @@ impl<'a> TuiApplication<'a> {
     pub fn shutdown(&mut self) -> Result<()> {
         debug!("shutting down the app");
         self.terminal
-            .clear()
+            .restore()
             .context("Cannot clear the the screen")
             .and_then(|_| {
                 self.callback()
@@ -92,12 +92,5 @@ impl<'a> TuiApplication<'a> {
 
     fn callback(&self) -> Result<()> {
         self.context.lock().execute_callback_command()
-    }
-
-    fn handle_panic() {
-        panic::set_hook(Box::new(|e| {
-            eprintln!("{e}");
-            error!("{e}")
-        }));
     }
 }
