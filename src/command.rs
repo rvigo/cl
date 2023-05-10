@@ -80,9 +80,7 @@ impl Default for Command {
 
 impl PartialEq for Command {
     fn eq(&self, other: &Self) -> bool {
-        self.alias.eq(&other.alias)
-            && self.namespace.eq(&other.namespace)
-            && self.command.eq(&other.command)
+        self.alias.eq(&other.alias) && self.namespace.eq(&other.namespace)
     }
 }
 
