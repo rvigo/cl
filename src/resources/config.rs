@@ -118,14 +118,14 @@ impl Config {
     pub fn get_highlight(&self) -> bool {
         self.options
             .to_owned()
-            .unwrap_or_else(|| Options::new())
+            .unwrap_or_else(Options::new)
             .get_highlight()
     }
 
     pub fn get_log_level(&self) -> LogLevel {
         self.options
             .to_owned()
-            .unwrap_or_else(|| Options::new())
+            .unwrap_or_else(Options::new)
             .get_log_level()
     }
 
@@ -136,7 +136,7 @@ impl Config {
     pub fn get_quiet_mode(&self) -> bool {
         self.options
             .to_owned()
-            .unwrap_or_else(|| Options::new())
+            .unwrap_or_else(Options::new)
             .get_quiet_mode()
     }
 
@@ -179,8 +179,8 @@ impl Config {
         let root = home_dir.join(ROOT_DIR);
         let config = Self {
             root_dir: root.to_owned(),
-            config_file_path: Some(root.to_owned().join(CONFIG_FILE)),
-            commands_file_path: Some(root.to_owned().join(COMMAND_FILE)),
+            config_file_path: Some(root.join(CONFIG_FILE)),
+            commands_file_path: Some(root.join(COMMAND_FILE)),
             options: Some(Options::new()),
         };
         config.save().context("Cannot save the config file")?;

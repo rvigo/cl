@@ -10,25 +10,44 @@ use cli::{
     app::{App, Subcommands},
     subcommands::Subcommand,
 };
-use resources::{config::Config, logger};
+use resources::{
+    config::Config,
+    logger::{self, LoggerType},
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let config = Config::load().context("Cannot load the config file")?;
-    logger::init(config.get_log_level(), config.get_root_dir())
-        .context("Cannot start the logger")?;
-
     let app = App::parse();
 
-    match app.subcommands {
-        Some(Subcommands::Exec(exec)) => exec.run(config),
-        Some(Subcommands::Share(share)) => share.run(config),
-        Some(Subcommands::Misc(misc)) => misc.run(config),
-        Some(Subcommands::Config(subcommand_config)) => subcommand_config.run(config),
-        _ => run_main_app(config).await,
+    if let Some(subcommands) = app.subcommands {
+        run_subcommands(subcommands, config)
+    } else {
+        run_main_app(config).await
+    }
+}
+
+fn run_subcommands(subcommands: Subcommands, config: Config) -> Result<()> {
+    logger::init(
+        config.get_log_level(),
+        config.get_root_dir(),
+        LoggerType::Subcommand,
+    )
+    .context("Cannot start the logger")?;
+
+    match subcommands {
+        Subcommands::Exec(exec) => exec.run(config),
+        Subcommands::Share(share) => share.run(config),
+        Subcommands::Misc(misc) => misc.run(config),
+        Subcommands::Config(subcommand_config) => subcommand_config.run(config),
     }
 }
 
 async fn run_main_app(config: Config) -> Result<()> {
+    logger::init(
+        config.get_log_level(),
+        config.get_root_dir(),
+        LoggerType::MainApp,
+    )?;
     gui::core::init(config).await
 }

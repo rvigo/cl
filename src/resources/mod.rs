@@ -70,8 +70,12 @@ pub(super) mod toml {
     use std::{collections::HashMap, path::Path};
 
     pub trait TomlFileHandler {
-        fn generate_commands_from_toml(&self, path: &Path) -> Result<Vec<Command>> {
-            let toml = toml::from_str::<HashMap<String, Vec<Command>>>(&read_to_string(path)?)?;
+        fn generate_commands_from_toml<P>(&self, path: P) -> Result<Vec<Command>>
+        where
+            P: AsRef<Path>,
+        {
+            let string_data = read_to_string(path)?;
+            let toml = toml::from_str::<HashMap<String, Vec<Command>>>(&string_data)?;
             let mut commands: Vec<Command> = toml
                 .into_iter()
                 .flat_map(|(_, _commands)| _commands)
