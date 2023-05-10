@@ -44,6 +44,13 @@ impl CommandsFileService {
     pub fn load(&self) -> Result<Vec<Command>> {
         self.generate_commands_from_toml(&self.command_file_path)
     }
+
+    pub fn load_from<P>(&self, path: P) -> Result<Vec<Command>>
+    where
+        P: AsRef<Path>,
+    {
+        self.generate_commands_from_toml(path)
+    }
 }
 
 #[cfg(test)]

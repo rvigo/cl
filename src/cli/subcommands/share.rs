@@ -9,8 +9,8 @@ use crate::{
 };
 use anyhow::{Context, Result};
 use clap::{Parser, ValueEnum};
-use itertools::Itertools;
-use std::path::PathBuf;
+use log::{info, warn};
+use std::{collections::HashSet, path::PathBuf};
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 enum Mode {
@@ -48,56 +48,75 @@ impl Subcommand for Share {
         let file_location = &self.file_location;
         let namespaces = &self.namespace;
 
-        let file_service = CommandsFileService::new(config.get_command_file_path()).validate()?;
-        let command_list = file_service.load().log_error()?;
+        let commands_file_service =
+            CommandsFileService::new(config.get_command_file_path()).validate()?;
+        let command_list = commands_file_service.load().log_error()?;
         let commands = Commands::init(command_list);
 
         match self.mode {
             Mode::Import => {
                 let mut stored_commands = commands.command_list().to_owned();
-                let mut commands_from_file: Vec<Command> = vec![];
+                let commands_from_file: Vec<Command> =
+                    commands_file_service.load_from(&self.file_location)?;
 
-                //filter given namespaces
-                if let Some(namespaces) = namespaces {
-                    commands_from_file.retain(|item| namespaces.contains(&item.namespace));
-                }
+                let namespaces_set: HashSet<String> =
+                    namespaces.to_owned().map_or(HashSet::new(), |n| {
+                        n.into_iter().collect::<HashSet<String>>()
+                    });
 
-                let reference_commands = commands_from_file.clone();
-
-                //removes duplicated items
-                commands_from_file.retain(|item| !stored_commands.contains(item));
-
-                //get duplicated items using the reference_commands vec
-                let diff: Vec<_> = reference_commands
-                    .iter()
-                    .filter(|item| !commands_from_file.contains(item))
+                // filter by namespaces
+                let mut commands_from_file: Vec<Command> = commands_from_file
+                    .into_iter()
+                    .filter(|c| namespaces_set.is_empty() || namespaces_set.contains(&c.namespace))
                     .collect();
 
-                if !diff.is_empty() {
-                    eprintln!(
-                    "Warning: Duplicated aliases found! Please adjust them by choosing a new alias/namespace:\n{}",
-                    diff
-                        .iter()
-                        .map(|item| format!(" - alias: {}, namespace: {}", item.alias.clone(), item.namespace.clone()))
-                        .collect_vec()
-                        .join(",\n")
-                );
+                // duplicated items
+                let mut duplicates = Vec::new();
+                let mut reference_set = HashSet::new();
+
+                for command in &stored_commands {
+                    reference_set.insert((&command.alias, &command.namespace));
                 }
+
+                for command in commands_from_file.iter().cloned() {
+                    let key = (&command.alias, &command.namespace);
+                    if reference_set.contains(&key) {
+                        duplicates.push(command)
+                    }
+                }
+
+                if !duplicates.is_empty() {
+                    warn!(
+                        "Duplicated aliases found! Please adjust them by choosing a new alias/namespace:\n{}",
+                            duplicates.iter()
+                            .map(|item| format!(" - alias: {}, namespace: {}", item.alias.clone(), item.namespace.clone()))
+                            .collect::<Vec<_>>()
+                            .join(",\n")
+                    );
+                }
+
+                // remove duplicates
+                commands_from_file.retain(|c| {
+                    !stored_commands
+                        .iter()
+                        .any(|s| c.alias == s.alias && c.namespace == s.namespace)
+                });
+
                 if !commands_from_file.is_empty() {
-                    stored_commands.append(&mut commands_from_file);
-                    file_service
-                        .save_at(&stored_commands, &config.get_command_file_path())
+                    stored_commands.extend(commands_from_file.to_owned());
+                    commands_file_service
+                        .save(&stored_commands)
                         .context("Could not import the aliases")?;
-                    println!(
-                        "Info: Successfully imported {} aliases",
-                        commands_from_file.len()
+                    info!(
+                        "Successfully imported {} aliases",
+                        commands_from_file.len() - duplicates.len()
                     )
                 } else {
-                    println!("There are no aliases to be imported")
+                    info!("There are no aliases to be imported");
                 }
             }
             Mode::Export => {
-                eprintln!("Exporting aliases to: {}", file_location.display());
+                info!("Exporting aliases to: {}", file_location.display());
                 let mut command_list = Vec::default();
                 if let Some(namespaces) = namespaces {
                     for namespace in namespaces.iter() {
@@ -114,10 +133,10 @@ impl Subcommand for Share {
                     command_list = commands.command_list().to_owned();
                 }
 
-                file_service
+                commands_file_service
                     .save_at(&command_list, file_location)
                     .context("Could not export the aliases")?;
-                println!("Info: Exported {} aliases", command_list.len())
+                info!("Exported {} aliases", command_list.len())
             }
         }
         Ok(())
