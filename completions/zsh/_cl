@@ -41,8 +41,8 @@ _cl_config() {
     _arguments -C \
     "1:config_subcommand:_cl_config_subcommands" \
     "*::options:->options" \
-    {-q,--default-quiet-mode}="[Set the default quiet mode]" \
-    {-l,--default-log-level}="[Set the default log level]" \
+    {-q,--quiet-mode}="[Set the quiet mode]" \
+    {-l,--log-level}="[Set the log level]" \
     {-H,--highlitght-matches}="[Set the highlight matches mode]"
     
     case $line[1] in
