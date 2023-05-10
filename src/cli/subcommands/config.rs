@@ -6,6 +6,7 @@ use crate::resources::{
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand as ClapSubcommand, ValueEnum};
 use dirs::home_dir;
+use log::info;
 use std::io::Write;
 use std::{
     env,
@@ -81,17 +82,17 @@ impl Subcommand for Config {
         } else if let Some(quiet) = self.quiet_mode {
             config
                 .set_quiet_mode(quiet)
-                .if_ok(|| println!("quiet mode set to {quiet}"))
+                .if_ok(|| info!("quiet mode set to {quiet}"))
         } else if let Some(log_level) = self.log_level {
             config
                 .set_log_level(log_level.as_config_enum())
                 .context("Failed to set log level")
-                .if_ok(|| println!("log level set to {log_level:?}"))
+                .if_ok(|| info!("log level set to {log_level:?}"))
         } else if let Some(highlight) = self.highlight_matches {
             config
                 .set_highlight(highlight)
                 .context("Failed to set highlight")
-                .if_ok(|| println!("highlight matches set to {highlight}"))
+                .if_ok(|| info!("highlight matches set to {highlight}"))
         } else {
             println!("{}", config.printable());
             Ok(())
@@ -131,7 +132,7 @@ fn install_zsh_widget(app_home_dir: PathBuf) -> Result<()> {
         dest_location.display()
     ))?;
 
-    println!("Info: Done!!! Please restart your terminal and press <Ctrl+O> to access the widget");
+    info!("Done!!! Please restart your terminal and press <Ctrl+O> to access the widget");
     Ok(())
 }
 

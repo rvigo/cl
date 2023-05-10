@@ -2,25 +2,37 @@ use crate::resources::config::LogLevel;
 use anyhow::Result;
 use std::path::Path;
 use tracing::metadata::LevelFilter;
+use tracing_appender::rolling;
 use tracing_subscriber::{
-    fmt::format::{Format, PrettyFields},
+    fmt::{
+        self,
+        format::{Format, PrettyFields},
+    },
     prelude::__tracing_subscriber_SubscriberExt,
     util::SubscriberInitExt,
     Layer,
 };
+pub enum LoggerType {
+    MainApp,
+    Subcommand,
+}
 
-pub fn init<P>(level: LogLevel, path: P) -> Result<()>
+pub fn init<P>(level: LogLevel, path: P, logger_type: LoggerType) -> Result<()>
 where
     P: AsRef<Path>,
 {
-    tracing_logger_stdout_and_file(level, path.as_ref().join("log"))?;
+    let path = path.as_ref().join("log");
+    match logger_type {
+        LoggerType::MainApp => init_main_app_logger(level, path)?,
+        LoggerType::Subcommand => init_subcommand_logger(level, path)?,
+    }
 
     self::panic_handler::setup_panic_hook();
     Ok(())
 }
 
-/// Sets a logger with two layers (stdout and a file)
-pub fn tracing_logger_stdout_and_file<L, P>(level: L, path: P) -> Result<()>
+/// Sets a logger with a single layer
+fn init_main_app_logger<L, P>(level: L, path: P) -> Result<()>
 where
     L: Into<LevelFilter>,
     P: AsRef<Path>,
@@ -28,12 +40,31 @@ where
     let level_filter: LevelFilter = level.into();
     tracing_subscriber::registry()
         .with(
-            tracing_subscriber::fmt::layer()
+            fmt::layer()
+                .with_writer(rolling::daily(path, "log"))
+                .with_ansi(false)
+                .with_filter(level_filter),
+        )
+        .init();
+
+    Ok(())
+}
+
+/// Sets a logger with two layers (stdout and a file)
+fn init_subcommand_logger<L, P>(level: L, path: P) -> Result<()>
+where
+    L: Into<LevelFilter>,
+    P: AsRef<Path>,
+{
+    let level_filter: LevelFilter = level.into();
+    tracing_subscriber::registry()
+        .with(
+            fmt::layer()
                 .event_format(Format::default().with_source_location(false).without_time())
                 .fmt_fields(PrettyFields::new())
                 .with_target(false)
                 .with_filter(
-                    // ensures at least an info message to console
+                    // ensures at least INFO messages when logging to console
                     if level_filter == LevelFilter::ERROR {
                         LevelFilter::INFO
                     } else {
@@ -42,10 +73,9 @@ where
                 ),
         )
         .with(
-            tracing_subscriber::fmt::layer()
-                .with_writer(tracing_appender::rolling::never(path, "log.log"))
+            fmt::layer()
+                .with_writer(rolling::never(path, "log.log"))
                 .with_ansi(false)
-                .with_thread_names(true)
                 .with_filter(level_filter),
         )
         .init();
@@ -62,6 +92,7 @@ impl From<LogLevel> for LevelFilter {
         }
     }
 }
+
 pub(super) mod panic_handler {
     use log::error;
     use std::panic::PanicInfo;
