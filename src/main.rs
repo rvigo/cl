@@ -48,6 +48,8 @@ async fn run_main_app(config: Config) -> Result<()> {
         config.get_log_level(),
         config.get_root_dir(),
         LoggerType::MainApp,
-    )?;
+    )
+    .context("Cannot start the logger")?;
+
     gui::core::init(config).await
 }

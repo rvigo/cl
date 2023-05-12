@@ -95,6 +95,10 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn get_root_dir(&self) -> PathBuf {
+        self.root_dir.to_owned()
+    }
+
     pub fn get_options(&self) -> Options {
         self.options
             .as_ref()
@@ -107,12 +111,8 @@ impl Config {
             .map_or_else(|| self.get_root_dir().join(COMMAND_FILE), |p| p.to_owned())
     }
 
-    pub fn get_root_dir(&self) -> PathBuf {
-        self.root_dir.to_owned()
-    }
-
-    pub fn set_highlight(&mut self, highlight: bool) -> Result<()> {
-        self.change_and_save(|config| config.ensure_options().set_highlight(highlight))
+    pub fn get_config_file_path(&self) -> PathBuf {
+        self.get_root_dir().join(CONFIG_FILE)
     }
 
     pub fn get_highlight(&self) -> bool {
@@ -120,6 +120,10 @@ impl Config {
             .to_owned()
             .unwrap_or_else(Options::new)
             .get_highlight()
+    }
+
+    pub fn set_highlight(&mut self, highlight: bool) -> Result<()> {
+        self.change_and_save(|config| config.ensure_options().set_highlight(highlight))
     }
 
     pub fn get_log_level(&self) -> LogLevel {
@@ -185,10 +189,6 @@ impl Config {
         };
         config.save().context("Cannot save the config file")?;
         Ok(config)
-    }
-
-    pub fn get_config_file_path(&self) -> PathBuf {
-        self.get_root_dir().join(CONFIG_FILE)
     }
 
     fn ensure_options(&mut self) -> &mut Options {

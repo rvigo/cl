@@ -1,8 +1,5 @@
 use super::Subcommand;
-use crate::resources::{
-    config::{Config as AppConfig, LogLevel as ConfigLogLevel},
-    logger::interceptor::ErrorInterceptor,
-};
+use crate::resources::config::{Config as AppConfig, LogLevel as ConfigLogLevel};
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand as ClapSubcommand, ValueEnum};
 use dirs::home_dir;
@@ -77,7 +74,7 @@ pub struct Widget {
 
 impl Subcommand for Config {
     fn run(&self, mut config: AppConfig) -> Result<()> {
-        let res = if let Some(ConfigSubcommand::ZshWidget(_)) = self.subcommand {
+        if let Some(ConfigSubcommand::ZshWidget(_)) = self.subcommand {
             install_zsh_widget(config.get_root_dir()).context("Failed to install zsh widget")
         } else if let Some(quiet) = self.quiet_mode {
             config
@@ -96,9 +93,7 @@ impl Subcommand for Config {
         } else {
             println!("{}", config.printable());
             Ok(())
-        };
-
-        res.log_error()
+        }
     }
 }
 
@@ -151,7 +146,6 @@ fn validate_fzf() -> Result<()> {
 }
 
 trait IfOk<T> {
-    /// If the `anyhow::Result` variant if `Ok(T)`, runs `f` and then returns `Ok(T)`
     fn if_ok<F>(self, f: F) -> Result<T>
     where
         F: FnOnce(),
@@ -159,6 +153,7 @@ trait IfOk<T> {
 }
 
 impl<T> IfOk<T> for Result<T> {
+    // If the `anyhow::Result` variant if `Ok(T)`, runs `f` and then returns `Ok(T)`
     fn if_ok<F>(self, f: F) -> Result<T>
     where
         F: FnOnce(),
