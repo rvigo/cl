@@ -1,7 +1,7 @@
 use crate::resources::config::LogLevel;
 use anyhow::Result;
 use std::path::Path;
-use tracing::metadata::LevelFilter;
+use tracing::{metadata::LevelFilter, Subscriber};
 use tracing_appender::rolling;
 use tracing_subscriber::{
     fmt::{
@@ -9,9 +9,11 @@ use tracing_subscriber::{
         format::{Format, PrettyFields},
     },
     prelude::__tracing_subscriber_SubscriberExt,
+    registry::LookupSpan,
     util::SubscriberInitExt,
     Layer,
 };
+
 pub enum LoggerType {
     MainApp,
     Subcommand,
@@ -39,12 +41,7 @@ where
 {
     let level_filter: LevelFilter = level.into();
     tracing_subscriber::registry()
-        .with(
-            fmt::layer()
-                .with_writer(rolling::daily(path, "log"))
-                .with_ansi(false)
-                .with_filter(level_filter),
-        )
+        .with(get_logfile_layer(path, level_filter))
         .init();
 
     Ok(())
@@ -58,29 +55,40 @@ where
 {
     let level_filter: LevelFilter = level.into();
     tracing_subscriber::registry()
-        .with(
-            fmt::layer()
-                .event_format(Format::default().with_source_location(false).without_time())
-                .fmt_fields(PrettyFields::new())
-                .with_target(false)
-                .with_filter(
-                    // ensures at least INFO messages when logging to console
-                    if level_filter == LevelFilter::ERROR {
-                        LevelFilter::INFO
-                    } else {
-                        level_filter
-                    },
-                ),
-        )
-        .with(
-            fmt::layer()
-                .with_writer(rolling::never(path, "log.log"))
-                .with_ansi(false)
-                .with_filter(level_filter),
-        )
+        .with(get_stdout_layer(level_filter))
+        .with(get_logfile_layer(path, level_filter))
         .init();
 
     Ok(())
+}
+
+fn get_logfile_layer<S, P>(path: P, level_filter: LevelFilter) -> impl Layer<S>
+where
+    S: Subscriber + for<'span> LookupSpan<'span>,
+    P: AsRef<Path>,
+{
+    fmt::layer()
+        .with_writer(rolling::daily(path, "log.log"))
+        .with_ansi(false)
+        .with_filter(level_filter)
+}
+
+fn get_stdout_layer<S>(level_filter: LevelFilter) -> impl Layer<S>
+where
+    S: Subscriber + for<'span> LookupSpan<'span>,
+{
+    fmt::layer()
+        .event_format(Format::default().with_source_location(false).without_time())
+        .fmt_fields(PrettyFields::new())
+        .with_target(false)
+        .with_filter(
+            // ensures at least INFO messages when logging to console
+            if level_filter == LevelFilter::ERROR {
+                LevelFilter::INFO
+            } else {
+                level_filter
+            },
+        )
 }
 
 impl From<LogLevel> for LevelFilter {
