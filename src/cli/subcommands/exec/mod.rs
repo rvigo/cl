@@ -1,3 +1,6 @@
+pub mod command_args;
+
+use self::command_args::CommandArg;
 use super::Subcommand;
 use crate::{
     load_commands,
@@ -5,6 +8,7 @@ use crate::{
 };
 use anyhow::{anyhow, bail, Context, Result};
 use clap::Parser;
+use command_args::CommandArgs;
 use itertools::Itertools;
 use log::debug;
 use regex::Regex;
@@ -86,7 +90,7 @@ impl Subcommand for Exec {
 }
 
 // TODO it should use a `&str`
-fn prepare_command(mut command: CommandString, args: Vec<String>) -> Result<CommandString> {
+fn prepare_command(mut command: String, args: Vec<String>) -> Result<CommandString> {
     // checks if cmd has named_parameters
     let matches = get_named_parameters(&command)?;
     let named_parameters = matches
@@ -94,10 +98,10 @@ fn prepare_command(mut command: CommandString, args: Vec<String>) -> Result<Comm
         .map(|m| clean_named_parameter(m))
         .collect_vec();
 
-    let mut commands_args = CommandArgs::init(named_parameters);
+    let mut command_args = CommandArgs::init(named_parameters);
 
     // cmd does have named_parameter
-    if !commands_args.named_parameters.is_empty() {
+    if command_args.has_named_parameters() {
         let mut peekable_args = args.into_iter().peekable();
         let mut last_arg = String::default();
 
@@ -115,7 +119,7 @@ fn prepare_command(mut command: CommandString, args: Vec<String>) -> Result<Comm
                 if let Some(next) = peekable_args.peek() {
                     if !next.starts_with("--") && arg.starts_with("--") {
                         let arg = arg.replacen("--", "", 1);
-                        let prefix = "--".to_owned();
+                        let prefix = Some("--".to_owned());
 
                         // peeks the next item
                         let next_item = peekable_args.next();
@@ -131,7 +135,7 @@ fn prepare_command(mut command: CommandString, args: Vec<String>) -> Result<Comm
                         CommandArg::new(arg, prefix, value)
                     } else if next.starts_with("--") && !arg.starts_with("--") {
                         let arg = arg.replacen("--", "", 1);
-                        let prefix = "--".to_owned();
+                        let prefix = Some("--".to_owned());
                         let value = None;
 
                         peekable_args.next();
@@ -140,13 +144,13 @@ fn prepare_command(mut command: CommandString, args: Vec<String>) -> Result<Comm
                     } else if next.starts_with("--") && arg.starts_with("--") {
                         // it this a flag???
                         let arg = arg.replacen("--", "", 1);
-                        let prefix = "--".to_owned();
+                        let prefix = Some("--".to_owned());
                         let value = None;
 
                         CommandArg::new(arg, prefix, value)
                     } else if !next.starts_with("--") && !arg.starts_with("--") {
                         // is this a subcommand???
-                        let prefix = "".to_owned();
+                        let prefix = None;
                         let value = None;
 
                         CommandArg::new(arg, prefix, value)
@@ -156,9 +160,9 @@ fn prepare_command(mut command: CommandString, args: Vec<String>) -> Result<Comm
                     }
                 } else {
                     let (arg, prefix) = if arg.starts_with("--") {
-                        (arg.replacen("--", "", 1), "--".to_owned())
+                        (arg.replacen("--", "", 1), Some("--".to_owned()))
                     } else {
-                        (arg, "".to_owned())
+                        (arg, None)
                     };
                     peekable_args.next();
                     CommandArg::new(arg, prefix, None)
@@ -166,9 +170,9 @@ fn prepare_command(mut command: CommandString, args: Vec<String>) -> Result<Comm
             } else {
                 let parts: Vec<&str> = arg.splitn(2, '=').collect();
                 let (arg, prefix) = if parts[0].starts_with("--") {
-                    (parts[0].replacen("--", "", 1), "--".to_owned())
+                    (parts[0].replacen("--", "", 1), Some("--".to_owned()))
                 } else {
-                    (parts[0].to_owned(), "".to_owned())
+                    (parts[0].to_owned(), None)
                 };
 
                 let value = if parts.len() > 1 {
@@ -181,11 +185,11 @@ fn prepare_command(mut command: CommandString, args: Vec<String>) -> Result<Comm
             };
 
             if !command_arg.is_empty() {
-                commands_args.push(command_arg);
+                command_args.push(command_arg);
             }
         }
 
-        if let Some(parameters) = commands_args.get_named_parameters() {
+        if let Some(parameters) = command_args.named_parameters() {
             let named_parameters = parameters
                 .iter()
                 .map(|a| a.as_key_value_pair())
@@ -202,16 +206,25 @@ fn prepare_command(mut command: CommandString, args: Vec<String>) -> Result<Comm
                 cause: DEFAULT_NAMED_PARAMS_ERROR_MESSAGE.to_owned()
             })
         }
+        // options/args/flags
+        let options = command_args
+            .options()
+            .unwrap_or(&vec![])
+            .iter()
+            .map(|a| a.to_string())
+            .collect::<Vec<String>>();
+
+        command = append_options(&command, options);
+
+        Ok(command)
+    } else {
+        let command = append_options(&command, args);
+
+        Ok(command)
     }
-
-    // options/args/flags
-    let options = commands_args.get_options_as_string();
-    command = append_options(&command, options);
-
-    Ok(command)
 }
 
-fn get_named_parameters(command: &CommandString) -> Result<Vec<String>> {
+fn get_named_parameters(command: &str) -> Result<Vec<String>> {
     let re = Regex::new(r"#\{[^\}]+\}").map_err(|e| anyhow!(e))?;
     let matches = re
         .find_iter(command)
@@ -221,9 +234,9 @@ fn get_named_parameters(command: &CommandString) -> Result<Vec<String>> {
     Ok(matches)
 }
 
-fn append_options(command: &CommandString, options: String) -> String {
+fn append_options(command: &str, options: Vec<String>) -> CommandString {
     if !options.is_empty() {
-        let command = format!("{command} {options}");
+        let command = format!("{command} {}", options.join(" "));
         command
     } else {
         command.to_owned()
@@ -258,10 +271,7 @@ fn clean_named_parameter(arg: &str) -> CommandString {
         .to_owned()
 }
 
-fn validate_named_parameters(
-    mapped_args: &HashMap<String, String>,
-    command: &CommandString,
-) -> Result<()> {
+fn validate_named_parameters(mapped_args: &HashMap<String, String>, command: &str) -> Result<()> {
     let mut error_message: &str = "";
 
     if mapped_args.is_empty() {
@@ -280,89 +290,7 @@ fn validate_named_parameters(
     Ok(())
 }
 
-#[derive(Debug, Default, Clone, PartialEq)]
-struct CommandArg {
-    arg: String,
-    prefix: String,
-    value: Option<String>,
-}
-
-impl CommandArg {
-    fn new(arg: String, prefix: String, value: Option<String>) -> CommandArg {
-        Self { arg, prefix, value }
-    }
-
-    fn as_key_value_pair(&self) -> (String, String) {
-        let key = self.arg.to_string();
-        let value = if let Some(value) = &self.value {
-            value.to_string()
-        } else {
-            String::default()
-        };
-        (key, value)
-    }
-
-    fn is_empty(&self) -> bool {
-        self.arg.is_empty() && self.prefix.is_empty()
-    }
-}
-
-impl ToString for CommandArg {
-    fn to_string(&self) -> String {
-        if let Some(value) = &self.value {
-            format!("{}{}={}", self.prefix, self.arg, value)
-        } else {
-            format!("{}{}", self.prefix, self.arg)
-        }
-    }
-}
-
 type CommandString = String;
-
-#[derive(Debug, Default)]
-struct CommandArgs {
-    /// Hashmap with two groups (true - named parameters / false - non named parameters)
-    command_args: HashMap<bool, Vec<CommandArg>>,
-    /// Reference list with collected named parameters keys
-    named_parameters: Vec<String>,
-}
-
-impl CommandArgs {
-    fn init(named_parameters: Vec<String>) -> CommandArgs {
-        Self {
-            command_args: HashMap::default(),
-            named_parameters,
-        }
-    }
-
-    fn push(&mut self, command_arg: CommandArg) {
-        if self.named_parameters.contains(&command_arg.arg) {
-            self.command_args
-                .entry(true)
-                .or_insert(Vec::new())
-                .push(command_arg);
-        } else {
-            self.command_args
-                .entry(false)
-                .or_insert(Vec::new())
-                .push(command_arg);
-        }
-    }
-
-    fn get_named_parameters(&self) -> Option<&Vec<CommandArg>> {
-        self.command_args.get(&true)
-    }
-
-    fn get_options_as_string(&self) -> String {
-        self.command_args
-            .get(&false)
-            .unwrap_or(&vec![])
-            .iter()
-            .map(|a| a.to_string())
-            .collect::<Vec<String>>()
-            .join(" ")
-    }
-}
 
 #[cfg(test)]
 mod test {
@@ -398,5 +326,15 @@ mod test {
             }
             .to_string()
         );
+    }
+
+    #[test]
+    fn should_append_the_options_to_the_command() {
+        let command = String::from("echo Hello");
+        let args = vec![String::from("World")];
+        let result = prepare_command(command.clone(), args.clone());
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), format!("{} {}", command, args[0]));
     }
 }
