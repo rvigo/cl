@@ -180,6 +180,35 @@ impl<'a> Widget for TextField<'a> {
     }
 }
 
+#[derive(Default)]
+pub struct TextFieldBuilder {
+    field_type: FieldType,
+    in_focus: bool,
+    multiline: bool,
+}
+
+impl TextFieldBuilder {
+    pub fn field_type(mut self, field_type: FieldType) -> Self {
+        self.field_type = field_type;
+        self
+    }
+
+    pub fn in_focus(mut self, in_focus: bool) -> Self {
+        self.in_focus = in_focus;
+        self
+    }
+
+    pub fn multiline(mut self, multiline: bool) -> Self {
+        self.multiline = multiline;
+        self
+    }
+
+    pub fn build(self) -> TextField<'static> {
+        let title = self.field_type.to_string();
+        TextField::new(title, self.field_type, self.in_focus, self.multiline)
+    }
+}
+
 type Lines = Vec<String>;
 
 /// Converts the content to `Lines`
