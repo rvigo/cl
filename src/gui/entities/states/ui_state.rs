@@ -49,10 +49,10 @@ pub struct UiState {
 }
 
 impl UiState {
-    pub fn new(screen_size: ScreenSize) -> UiState {
+    pub fn new(screen_size: &ScreenSize) -> UiState {
         Self {
             view_mode: ViewMode::Main,
-            screen_size,
+            screen_size: screen_size.to_owned(),
             show_popup: false,
             show_help: false,
             querybox_focus: false,

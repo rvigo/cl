@@ -33,11 +33,13 @@ pub struct UIContext<'a> {
 impl<'a> UIContext<'a> {
     pub fn new(size: ScreenSize) -> UIContext<'a> {
         let mut context = UIContext {
-            form_fields_context: FieldContext::default(),
+            form_fields_context: FieldContext::new(&size),
             popup_context: PopupContext::new(),
-            ui_state: UiState::new(size),
+            ui_state: UiState::new(&size),
             query_box: QueryBox::default(),
         };
+
+        context.sort_fields(size);
         context.select_form_field_type(Some(FieldType::default()));
         context.select_command(None);
         context
@@ -168,13 +170,13 @@ impl<'a> UIContext<'a> {
         self.form_fields_context.is_modified()
     }
 
-    pub fn order_fields<I>(&mut self, screen_size: I)
+    pub fn sort_fields<I>(&mut self, screen_size: I)
     where
         I: Into<ScreenSize>,
     {
         let s = screen_size.into();
         if self.screen_size() != s {
-            self.form_fields_context.order_field_by_size(&s)
+            self.form_fields_context.sort_field_by_size(&s)
         }
     }
 
@@ -195,7 +197,7 @@ impl<'a> UIContext<'a> {
     {
         let s: ScreenSize = screen_size.into();
         if s != self.screen_size() {
-            self.order_fields(s.clone());
+            self.sort_fields(s.clone());
             self.set_screen_size(s)
         }
     }

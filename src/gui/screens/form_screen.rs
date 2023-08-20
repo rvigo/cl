@@ -29,6 +29,8 @@ impl FormScreen {
     }
 }
 
+impl WidgetExt for FormScreen {}
+
 impl<B> Screen<B> for FormScreen
 where
     B: Backend,
@@ -48,6 +50,13 @@ where
         } else {
             format!(" {} ", ui_context.view_mode())
         });
+
+        let screen_size = frame.size().as_terminal_size().into();
+
+        if screen_size != self.screen_size {
+            <FormScreen as Screen<B>>::set_screen_size(self, screen_size);
+        }
+
         match self.screen_size {
             ScreenSize::Medium => render_medium_form(frame, ui_context, block),
             ScreenSize::Large => render_medium_form(frame, ui_context, block),
@@ -83,13 +92,12 @@ where
     }
 }
 
-impl WidgetExt for FormScreen {}
-
 fn render_medium_form<B>(frame: &mut Frame<B>, ui_context: &mut UIContext, block: Block)
 where
     B: Backend,
 {
     ui_context.update_screen_size(frame.size().as_terminal_size());
+
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -142,10 +150,12 @@ where
     })
 }
 
-fn render_small_form<B>(frame: &mut Frame<B>, ui_context: &UIContext, block: Block)
+fn render_small_form<B>(frame: &mut Frame<B>, ui_context: &mut UIContext, block: Block)
 where
     B: Backend,
 {
+    ui_context.update_screen_size(frame.size().as_terminal_size());
+
     let form_chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -180,9 +190,9 @@ where
         let area = match field.field_type() {
             FieldType::Alias => first_row[0],
             FieldType::Namespace => first_row[1],
-            FieldType::Command => third_row[0],
             FieldType::Description => second_row[0],
             FieldType::Tags => second_row[1],
+            FieldType::Command => third_row[0],
         };
         frame.render_widget(field.clone(), area);
     })
