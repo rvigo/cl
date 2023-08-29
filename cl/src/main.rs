@@ -1,21 +1,19 @@
-mod cli;
 mod gui;
 
 use anyhow::{Context, Result};
+use cl_cli::{
+    app::{App, Subcommands},
+    subcommands::Subcommand,
+};
 use cl_core::resources::{
     config::Config,
     logger::{self, LoggerType},
-};
-use clap::Parser;
-use cli::{
-    app::{App, Subcommands},
-    subcommands::Subcommand,
 };
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let config = Config::load().context("Cannot load the config file")?;
-    let app = App::parse();
+    let app = App::parse_app();
 
     if let Some(subcommands) = app.subcommands {
         run_subcommands(subcommands, config)
