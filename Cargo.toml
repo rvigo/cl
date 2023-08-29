@@ -1,6 +1,20 @@
 [workspace]
 members = ["cl", "cl-core", "cl-cli", "cl-gui"]
 
+[workspace.package]
+version = "0.9.2"
+edition = "2021"
+homepage = "https://github.com/rvigo/cl"
+repository = "https://github.com/rvigo/cl"
+readme = "README.md"
+description = "Group your commands and aliases in an organized and human readable place"
+
+[workspace.dependencies]
+anyhow = "1.0.75"
+itertools = "0.11.0"
+log = "0.4.20"
+tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread", "sync"] }
+
 [profile.release]
 opt-level = 3
 strip = "symbols"
