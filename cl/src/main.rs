@@ -1,5 +1,3 @@
-mod gui;
-
 use anyhow::{Context, Result};
 use cl_cli::{
     app::{App, Subcommands},
@@ -46,5 +44,5 @@ async fn run_main_app(config: Config) -> Result<()> {
     )
     .context("Cannot start the logger")?;
 
-    gui::core::init(config).await
+    cl_gui::core::init(config).await
 }

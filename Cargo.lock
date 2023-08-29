@@ -141,16 +141,8 @@ dependencies = [
  "anyhow",
  "cl-cli",
  "cl-core",
- "copypasta",
- "crossterm",
- "fuzzy-matcher",
- "itertools",
- "log",
- "parking_lot",
- "thiserror",
+ "cl-gui",
  "tokio",
- "tui",
- "tui-textarea",
 ]
 
 [[package]]
@@ -184,6 +176,24 @@ dependencies = [
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "cl-gui"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cl-core",
+ "copypasta",
+ "crossterm",
+ "fuzzy-matcher",
+ "itertools",
+ "log",
+ "parking_lot",
+ "thiserror",
+ "tokio",
+ "tui",
+ "tui-textarea",
 ]
 
 [[package]]
