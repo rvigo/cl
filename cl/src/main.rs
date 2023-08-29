@@ -1,18 +1,15 @@
 mod cli;
-mod command;
-mod commands;
 mod gui;
-mod resources;
 
 use anyhow::{Context, Result};
+use cl_core::resources::{
+    config::Config,
+    logger::{self, LoggerType},
+};
 use clap::Parser;
 use cli::{
     app::{App, Subcommands},
     subcommands::Subcommand,
-};
-use resources::{
-    config::Config,
-    logger::{self, LoggerType},
 };
 
 #[tokio::main]

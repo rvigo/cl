@@ -1,7 +1,7 @@
-pub(super) mod commands_file_service;
-pub(super) mod config;
-pub(super) mod errors;
-pub(super) mod logger;
+pub mod commands_file_service;
+pub mod config;
+pub mod errors;
+pub mod logger;
 
 /// Loads a `Commands` instance from a command file at the given path
 #[macro_export]

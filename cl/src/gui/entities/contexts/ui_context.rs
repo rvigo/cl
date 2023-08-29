@@ -1,26 +1,24 @@
 use super::{field_context::FieldContext, popup_context::PopupContext, Selectable};
-use crate::{
-    command::Command,
-    gui::{
-        entities::{
-            events::app_events::PopupCallbackAction,
-            states::{
-                answer_state::AnswerState,
-                ui_state::{UiState, ViewMode},
-                State,
-            },
-        },
-        screens::{
-            widgets::{
-                popup::{Answer, Popup},
-                querybox::QueryBox,
-                text_field::{FieldType, TextField},
-                WidgetKeyHandler,
-            },
-            ScreenSize,
+use crate::gui::{
+    entities::{
+        events::app_events::PopupCallbackAction,
+        states::{
+            answer_state::AnswerState,
+            ui_state::{UiState, ViewMode},
+            State,
         },
     },
+    screens::{
+        widgets::{
+            popup::{Answer, Popup},
+            querybox::QueryBox,
+            text_field::{FieldType, TextField},
+            WidgetKeyHandler,
+        },
+        ScreenSize,
+    },
 };
+use cl_core::command::Command;
 use crossterm::event::KeyEvent;
 
 pub struct UIContext<'a> {

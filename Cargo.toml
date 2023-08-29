@@ -1,37 +1,5 @@
-[package]
-name = "cl"
-version = "0.9.2"
-edition = "2021"
-homepage = "https://github.com/rvigo/cl"
-repository = "https://github.com/rvigo/cl"
-readme = "README.md"
-description = "Group your commands and aliases in an organized and human readable place"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
-anyhow = "1.0.71"
-clap = { version = "4.2.4", features = ["derive"] }
-copypasta = "0.8.2"
-crossterm = "0.25.0"
-dirs = "5.0.0"
-futures-util = "0.3.28"
-fuzzy-matcher = "0.3.7"
-itertools = "0.10.5"
-log = "0.4.17"
-owo-colors = "3.5.0"
-parking_lot = "0.12.1"
-regex = "1.8.1"
-serde = { version = "1.0.160", features = ["derive"] }
-strfmt = "0.2.4"
-thiserror = "1.0.40"
-tokio = { version = "1.28.0", features = ["macros", "rt-multi-thread", "sync"] }
-toml = "0.7.3"
-tracing = "0.1"
-tracing-subscriber = "0.3"
-tracing-appender = "0.2.2"
-tui = { version = "0.19.0", features = ["crossterm"] }
-tui-textarea = { version = "0.2.0", features = ["crossterm"] }
+[workspace]
+members = ["cl", "cl-core"]
 
 [profile.release]
 opt-level = 3
