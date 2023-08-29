@@ -7,25 +7,23 @@ use tui::style::Color;
 pub const DEFAULT_TEXT_COLOR: Color = Color::Rgb(229, 229, 229);
 pub const DEFAULT_SELECTED_COLOR: Color = Color::Rgb(201, 165, 249);
 
-pub(super) mod core {
+pub mod core {
     use super::entities::terminal::Terminal;
-    use crate::{
-        gui::{
-            entities::{
-                contexts::{application_context::ApplicationContext, ui_context::UIContext},
-                event_handler::EventHandler,
-                events::{app_events::AppEvent, input_events::InputMessages},
-                input_handler::InputHandler,
-                tui_application::TuiApplication,
-            },
-            screens::Screens,
+    use crate::gui::{
+        entities::{
+            contexts::{application_context::ApplicationContext, ui_context::UIContext},
+            event_handler::EventHandler,
+            events::{app_events::AppEvent, input_events::InputMessages},
+            input_handler::InputHandler,
+            tui_application::TuiApplication,
         },
-        resources::{
-            commands_file_service::CommandsFileService, config::Config,
-            logger::interceptor::ErrorInterceptor,
-        },
+        screens::Screens,
     };
     use anyhow::{Context, Result};
+    use cl_core::resources::{
+        commands_file_service::CommandsFileService, config::Config,
+        logger::interceptor::ErrorInterceptor,
+    };
     use log::debug;
     use parking_lot::Mutex;
     use std::{

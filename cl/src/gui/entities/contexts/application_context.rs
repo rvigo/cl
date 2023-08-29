@@ -3,15 +3,15 @@ use super::{
     namespaces_context::{NamespacesContext, DEFAULT_NAMESPACE},
     Selectable,
 };
-use crate::{
+use crate::gui::entities::clipboard::Clipboard;
+use anyhow::Result;
+use cl_core::{
     command::Command,
-    gui::entities::clipboard::Clipboard,
     resources::{
         commands_file_service::CommandsFileService, config::Options,
         logger::interceptor::ErrorInterceptor,
     },
 };
-use anyhow::Result;
 use tui::widgets::ListState;
 
 pub struct ApplicationContext {

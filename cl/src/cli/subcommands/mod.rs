@@ -1,10 +1,10 @@
-pub(super) mod config;
-pub(super) mod exec;
-pub(super) mod misc;
-pub(super) mod share;
+pub mod config;
+pub mod exec;
+pub mod misc;
+pub mod share;
 
-use crate::resources::config::Config;
 use anyhow::Result;
+use cl_core::resources::config::Config;
 
 /// Represents a CLI Subcommand
 pub trait Subcommand {

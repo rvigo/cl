@@ -1,8 +1,6 @@
 use super::WidgetExt;
-use crate::{
-    command::Command,
-    gui::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
-};
+use crate::gui::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
+use cl_core::command::Command;
 use tui::{
     buffer::Buffer,
     layout::Rect,

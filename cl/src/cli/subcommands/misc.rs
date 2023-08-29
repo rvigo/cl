@@ -1,10 +1,10 @@
 use super::Subcommand;
-use crate::{
+use anyhow::Result;
+use cl_core::{
     command::Command,
     load_commands,
     resources::{config::Config, logger::interceptor::ErrorInterceptor},
 };
-use anyhow::Result;
 use clap::Parser;
 use owo_colors::{colors::CustomColor, OwoColorize};
 use std::collections::HashSet;

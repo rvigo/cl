@@ -1,6 +1,6 @@
 use super::Subcommand;
-use crate::resources::config::{Config as AppConfig, LogLevel as ConfigLogLevel};
 use anyhow::{bail, Context, Result};
+use cl_core::resources::config::{Config as AppConfig, LogLevel as ConfigLogLevel};
 use clap::{Parser, Subcommand as ClapSubcommand, ValueEnum};
 use dirs::home_dir;
 use log::info;
@@ -190,5 +190,15 @@ impl PrintableAppConfig for AppConfig {
         ));
         result.push_str(&format!("  highlight-matches: {}\n", self.get_highlight()));
         result
+    }
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn should_find_the_widget_file() {
+        let widget = include_str!("../resources/zsh/cl-exec-widget");
+
+        assert!(!widget.is_empty())
     }
 }

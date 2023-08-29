@@ -7,7 +7,6 @@ use super::{
 };
 use crate::{
     centered_rect,
-    command::{Command, CommandBuilder},
     gui::{
         entities::contexts::{
             application_context::ApplicationContext, namespaces_context::NamespacesContext,
@@ -16,6 +15,7 @@ use crate::{
         DEFAULT_SELECTED_COLOR,
     },
 };
+use cl_core::command::{Command, CommandBuilder};
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},

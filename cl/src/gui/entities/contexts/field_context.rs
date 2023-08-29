@@ -1,18 +1,16 @@
 use super::Selectable;
-use crate::{
-    command::{Command, CommandBuilder},
-    gui::{
-        entities::states::{field_state::FieldState, State},
-        screens::{
-            widgets::{
-                fields::Fields,
-                text_field::{FieldType, TextField},
-                WidgetKeyHandler,
-            },
-            ScreenSize,
+use crate::gui::{
+    entities::states::{field_state::FieldState, State},
+    screens::{
+        widgets::{
+            fields::Fields,
+            text_field::{FieldType, TextField},
+            WidgetKeyHandler,
         },
+        ScreenSize,
     },
 };
+use cl_core::command::{Command, CommandBuilder};
 use crossterm::event::KeyEvent;
 use itertools::Itertools;
 

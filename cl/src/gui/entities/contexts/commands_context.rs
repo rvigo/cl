@@ -1,9 +1,10 @@
+use crate::gui::entities::fuzzy::Fuzzy;
+
 use super::{namespaces_context::DEFAULT_NAMESPACE, Selectable};
-use crate::{
-    command::Command, commands::Commands, gui::entities::fuzzy::Fuzzy,
-    resources::commands_file_service::CommandsFileService,
-};
 use anyhow::Result;
+use cl_core::{
+    command::Command, commands::Commands, resources::commands_file_service::CommandsFileService,
+};
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
 use log::debug;
@@ -296,7 +297,7 @@ impl Selectable for CommandsContext {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::command::CommandBuilder;
+    use cl_core::command::CommandBuilder;
     use std::env::temp_dir;
 
     fn commands_builder(n_of_commands: usize) -> Vec<Command> {
