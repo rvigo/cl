@@ -81,6 +81,12 @@ impl Options {
     }
 }
 
+impl Default for Options {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct Config {
@@ -102,7 +108,7 @@ impl Config {
     pub fn get_options(&self) -> Options {
         self.options
             .as_ref()
-            .map_or_else(Options::new, |options| options.to_owned())
+            .map_or_else(Options::default, |options| options.to_owned())
     }
 
     pub fn get_command_file_path(&self) -> PathBuf {
@@ -116,10 +122,7 @@ impl Config {
     }
 
     pub fn get_highlight(&self) -> bool {
-        self.options
-            .to_owned()
-            .unwrap_or_else(Options::new)
-            .get_highlight()
+        self.options.to_owned().unwrap_or_default().get_highlight()
     }
 
     pub fn set_highlight(&mut self, highlight: bool) -> Result<()> {
@@ -127,10 +130,7 @@ impl Config {
     }
 
     pub fn get_log_level(&self) -> LogLevel {
-        self.options
-            .to_owned()
-            .unwrap_or_else(Options::new)
-            .get_log_level()
+        self.options.to_owned().unwrap_or_default().get_log_level()
     }
 
     pub fn set_log_level(&mut self, log_level: LogLevel) -> Result<()> {
@@ -138,10 +138,7 @@ impl Config {
     }
 
     pub fn get_quiet_mode(&self) -> bool {
-        self.options
-            .to_owned()
-            .unwrap_or_else(Options::new)
-            .get_quiet_mode()
+        self.options.to_owned().unwrap_or_default().get_quiet_mode()
     }
 
     pub fn set_quiet_mode(&mut self, quiet_mode: bool) -> Result<()> {
@@ -185,14 +182,14 @@ impl Config {
             root_dir: root.to_owned(),
             config_file_path: Some(root.join(CONFIG_FILE)),
             commands_file_path: Some(root.join(COMMAND_FILE)),
-            options: Some(Options::new()),
+            options: Some(Options::default()),
         };
         config.save().context("Cannot save the config file")?;
         Ok(config)
     }
 
     fn ensure_options(&mut self) -> &mut Options {
-        self.options.get_or_insert_with(Options::new)
+        self.options.get_or_insert_with(Options::default)
     }
 
     fn change_and_save<F>(&mut self, f: F) -> Result<()>
