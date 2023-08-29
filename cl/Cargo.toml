@@ -11,20 +11,15 @@ description = "Group your commands and aliases in an organized and human readabl
 
 [dependencies]
 cl-core = { path = "../cl-core", version = "0.1.0" }
+cl-cli = { path = "../cl-cli", version = "0.1.0" }
+
 anyhow = "1.0.75"
-clap = { version = "4.4.1", features = ["derive"] }
 copypasta = "0.8.2"
 crossterm = "0.25.0"
-dirs = "5.0.1"
-futures-util = "0.3.28"
 fuzzy-matcher = "0.3.7"
 itertools = "0.11.0"
 log = "0.4.20"
-owo-colors = "3.5.0"
 parking_lot = "0.12.1"
-regex = "1.9.4"
-serde = { version = "1.0.188", features = ["derive"] }
-strfmt = "0.2.4"
 thiserror = "1.0.47"
 tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread", "sync"] }
 tui = { version = "0.19.0", features = ["crossterm"] }

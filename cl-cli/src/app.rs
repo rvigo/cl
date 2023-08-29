@@ -18,6 +18,12 @@ pub struct App {
     pub subcommands: Option<Subcommands>,
 }
 
+impl App {
+    pub fn parse_app() -> App {
+        App::parse()
+    }
+}
+
 #[derive(ClapSubcommand)]
 pub enum Subcommands {
     #[clap(aliases = &["X", "x"],

@@ -1,5 +1,5 @@
 [workspace]
-members = ["cl", "cl-core"]
+members = ["cl", "cl-core", "cl-cli"]
 
 [profile.release]
 opt-level = 3
