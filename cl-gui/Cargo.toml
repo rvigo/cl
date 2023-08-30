@@ -8,7 +8,7 @@ repository.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cl-core = { path = "../cl-core", version = "0.9.2" }
+cl-core.workspace = true
 
 anyhow.workspace = true
 copypasta = "0.8.2"

@@ -1,5 +1,5 @@
 [workspace]
-members = ["cl", "cl-core", "cl-cli", "cl-gui"]
+members = ["cl-core", "cl-cli", "cl-gui"]
 
 [workspace.package]
 version = "0.9.2"
@@ -14,6 +14,24 @@ anyhow = "1.0.75"
 itertools = "0.11.0"
 log = "0.4.20"
 tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread", "sync"] }
+cl-core = { path = "cl-core", version = "0.9.2" }
+
+[package]
+name = "cl"
+version.workspace = true
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+readme.workspace = true
+description.workspace = true
+
+[dependencies]
+cl-core.workspace = true
+cl-cli = { path = "cl-cli", version = "0.1.0" }
+cl-gui = { path = "cl-gui", version = "0.1.0" }
+
+anyhow.workspace = true
+tokio.workspace = true
 
 [profile.release]
 opt-level = 3
