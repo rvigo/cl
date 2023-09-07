@@ -11,12 +11,12 @@ repository.workspace = true
 cl-core.workspace = true
 
 anyhow.workspace = true
-clap = { version = "4.2.4", features = ["derive"] }
+clap = { version = "4.4.2", features = ["derive"] }
 dirs = "5.0.1"
 itertools.workspace = true
 log.workspace = true
 owo-colors = "3.5.0"
-regex = "1.9.4"
+regex = "1.9.5"
 serde = { version = "1.0.188", features = ["derive"] }
 strfmt = "0.2.4"
-thiserror = "1.0.47"
+thiserror = "1.0.48"
