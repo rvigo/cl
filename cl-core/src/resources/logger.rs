@@ -14,81 +14,117 @@ use tracing_subscriber::{
     Layer,
 };
 
+#[derive(Default)]
 pub enum LoggerType {
+    #[default]
     MainApp,
     Subcommand,
 }
 
-pub fn init<P>(level: LogLevel, path: P, logger_type: LoggerType) -> Result<()>
+#[derive(Default)]
+pub struct LoggerBuilder<P> {
+    log_level: LogLevel,
+    logger_type: LoggerType,
+    path: P,
+}
+
+impl<P> LoggerBuilder<P>
 where
     P: AsRef<Path>,
 {
-    let path = path.as_ref().join("log");
-    match logger_type {
-        LoggerType::MainApp => init_main_app_logger(level, path)?,
-        LoggerType::Subcommand => init_subcommand_logger(level, path)?,
+    pub fn with_log_level(mut self, log_level: LogLevel) -> LoggerBuilder<P> {
+        self.log_level = log_level;
+        self
     }
 
-    self::panic_handler::setup_panic_hook();
-    Ok(())
+    pub fn with_path(mut self, path: P) -> LoggerBuilder<P> {
+        self.path = path;
+        self
+    }
+
+    pub fn with_logger_type(mut self, logger_type: LoggerType) -> LoggerBuilder<P> {
+        self.logger_type = logger_type;
+        self
+    }
+
+    pub fn build(self) -> Logger<P> {
+        Logger {
+            log_level: self.log_level,
+            logger_type: self.logger_type,
+            path: self.path,
+        }
+    }
 }
 
-/// Sets a logger with a single layer
-fn init_main_app_logger<L, P>(level: L, path: P) -> Result<()>
+pub struct Logger<P> {
+    log_level: LogLevel,
+    logger_type: LoggerType,
+    path: P,
+}
+
+impl<P> Logger<P>
 where
-    L: Into<LevelFilter>,
     P: AsRef<Path>,
 {
-    let level_filter: LevelFilter = level.into();
-    tracing_subscriber::registry()
-        .with(get_logfile_layer(path, level_filter))
-        .init();
+    pub fn init(&self) -> Result<()> {
+        match self.logger_type {
+            LoggerType::MainApp => self.init_main_app_logger()?,
+            LoggerType::Subcommand => self.init_subcommand_logger()?,
+        }
 
-    Ok(())
-}
+        self::panic_handler::setup_panic_hook();
+        Ok(())
+    }
 
-/// Sets a logger with two layers (stdout and a file)
-fn init_subcommand_logger<L, P>(level: L, path: P) -> Result<()>
-where
-    L: Into<LevelFilter>,
-    P: AsRef<Path>,
-{
-    let level_filter: LevelFilter = level.into();
-    tracing_subscriber::registry()
-        .with(get_stdout_layer(level_filter))
-        .with(get_logfile_layer(path, level_filter))
-        .init();
+    /// Sets a logger with a single layer
+    fn init_main_app_logger(&self) -> Result<()> {
+        let level_filter: LevelFilter = self.log_level.to_owned().into();
+        tracing_subscriber::registry()
+            .with(self.get_logfile_layer(level_filter))
+            .init();
 
-    Ok(())
-}
+        Ok(())
+    }
 
-fn get_logfile_layer<S, P>(path: P, level_filter: LevelFilter) -> impl Layer<S>
-where
-    S: Subscriber + for<'span> LookupSpan<'span>,
-    P: AsRef<Path>,
-{
-    fmt::layer()
-        .with_writer(rolling::daily(path, "log.log"))
-        .with_ansi(false)
-        .with_filter(level_filter)
-}
+    /// Sets a logger with two layers (stdout and a file)
+    fn init_subcommand_logger(&self) -> Result<()> {
+        let level_filter: LevelFilter = self.log_level.to_owned().into();
+        tracing_subscriber::registry()
+            .with(self.get_stdout_layer(level_filter))
+            .with(self.get_logfile_layer(level_filter))
+            .init();
 
-fn get_stdout_layer<S>(level_filter: LevelFilter) -> impl Layer<S>
-where
-    S: Subscriber + for<'span> LookupSpan<'span>,
-{
-    fmt::layer()
-        .event_format(Format::default().with_source_location(false).without_time())
-        .fmt_fields(PrettyFields::new())
-        .with_target(false)
-        .with_filter(
-            // ensures at least INFO messages when logging to console
-            if level_filter == LevelFilter::ERROR {
-                LevelFilter::INFO
-            } else {
-                level_filter
-            },
-        )
+        Ok(())
+    }
+
+    fn get_logfile_layer<S>(&self, level_filter: LevelFilter) -> impl Layer<S>
+    where
+        S: Subscriber + for<'span> LookupSpan<'span>,
+        P: AsRef<Path>,
+    {
+        fmt::layer()
+            .with_writer(rolling::daily(self.path.as_ref(), "log.log"))
+            .with_ansi(false)
+            .with_filter(level_filter)
+    }
+
+    fn get_stdout_layer<S>(&self, level_filter: LevelFilter) -> impl Layer<S>
+    where
+        S: Subscriber + for<'span> LookupSpan<'span>,
+    {
+        fmt::layer()
+            .event_format(Format::default().with_source_location(false).without_time())
+            .fmt_fields(PrettyFields::new())
+            .with_target(false)
+            .with_filter(
+                // ensures at least INFO messages when logging to console
+                if level_filter == LevelFilter::ERROR {
+                    LevelFilter::INFO
+                } else {
+                    level_filter
+                },
+            )
+    }
 }
 
 impl From<LogLevel> for LevelFilter {

@@ -1,5 +1,6 @@
 use super::Footer;
 use crate::screens::ScreenSize;
+use cl_core::resources::metadata::MAIN_PKG_METADATA;
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -79,7 +80,7 @@ where
         let block = Block::default()
             .borders(Borders::ALL)
             .style(Style::default())
-            .title(format!(" cl {} ", env!("CARGO_PKG_VERSION")))
+            .title(format!(" {} ", MAIN_PKG_METADATA.to_string()))
             .title_alignment(Alignment::Right)
             .border_type(BorderType::Plain);
 

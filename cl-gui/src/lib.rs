@@ -2,12 +2,18 @@ mod entities;
 mod key_handlers;
 mod screens;
 
+use anyhow::Result;
+use cl_core::resources::config::Config;
 use tui::style::Color;
 
 pub const DEFAULT_TEXT_COLOR: Color = Color::Rgb(229, 229, 229);
 pub const DEFAULT_SELECTED_COLOR: Color = Color::Rgb(201, 165, 249);
 
-pub mod core {
+pub async fn start_gui(config: Config) -> Result<()> {
+    core::init(config).await
+}
+
+mod core {
     use super::entities::terminal::Terminal;
     use crate::{
         entities::{
