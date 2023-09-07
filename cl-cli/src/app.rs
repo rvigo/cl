@@ -6,16 +6,23 @@ const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 #[derive(Parser)]
 #[clap(
     name = PKG_NAME,
-    version,
     about,
     long_about = None,
     propagate_version = false,
     dont_collapse_args_in_usage = true,
-    args_conflicts_with_subcommands = true
+    args_conflicts_with_subcommands = true,
 )]
 pub struct App {
     #[clap(subcommand)]
     pub subcommands: Option<Subcommands>,
+    #[clap(
+        short,
+        long,
+        required = false,
+        action,
+        help = "Print version info and exit"
+    )]
+    pub version: bool,
 }
 
 impl App {

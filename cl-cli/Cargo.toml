@@ -9,8 +9,8 @@ repository.workspace = true
 
 [dependencies]
 cl-core.workspace = true
-
 anyhow.workspace = true
+
 clap = { version = "4.4.2", features = ["derive"] }
 dirs = "5.0.1"
 itertools.workspace = true

@@ -2,6 +2,7 @@ pub mod commands_file_service;
 pub mod config;
 pub mod errors;
 pub mod logger;
+pub mod metadata;
 
 /// Loads a `Commands` instance from a command file at the given path
 #[macro_export]
