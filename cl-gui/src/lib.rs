@@ -26,10 +26,7 @@ mod core {
         screens::Screens,
     };
     use anyhow::{Context, Result};
-    use cl_core::resources::{
-        commands_file_service::CommandsFileService, config::Config,
-        logger::interceptor::ErrorInterceptor,
-    };
+    use cl_core::resources::{commands_file_service::CommandsFileService, config::Config};
     use log::debug;
     use parking_lot::Mutex;
     use std::{
@@ -48,11 +45,10 @@ mod core {
         let file_service = CommandsFileService::new(config.get_command_file_path()).validate()?;
         let commands = file_service
             .load()
-            .context("Cannot load commands from file")
-            .log_error()?;
+            .context("Cannot load commands from file")?;
 
         debug!("creating terminal");
-        let mut terminal = Terminal::new().log_error()?;
+        let mut terminal = Terminal::new()?;
 
         let size = terminal.size();
 
@@ -81,7 +77,6 @@ mod core {
             screens,
         )
         .await
-        .log_error()
         .and_then(|mut tui| tui.shutdown())
     }
 

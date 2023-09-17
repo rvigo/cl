@@ -2,11 +2,10 @@ pub mod command_args;
 
 use self::command_args::CommandArg;
 use super::Subcommand;
-
 use anyhow::{anyhow, bail, Context, Result};
 use cl_core::{
     load_commands,
-    resources::{config::Config, errors::CommandError, logger::interceptor::ErrorInterceptor},
+    resources::{config::Config, errors::CommandError},
 };
 use clap::Parser;
 use command_args::CommandArgs;
@@ -70,7 +69,7 @@ pub struct Exec {
 
 impl Subcommand for Exec {
     fn run(&self, config: Config) -> Result<()> {
-        let commands = load_commands!(config.get_command_file_path()).log_error()?;
+        let commands = load_commands!(config.get_command_file_path())?;
         let alias = &self.alias;
         let namespace = &self.namespace;
         let args = &self.command_args;
@@ -79,14 +78,12 @@ impl Subcommand for Exec {
         let mut command_item = commands.find_command(alias.to_owned(), namespace.to_owned())?;
 
         command_item.command = prepare_command(command_item.command, args.to_owned())
-            .context("Cannot prepare the command to be executed")
-            .log_error()?;
+            .context("Cannot prepare the command to be executed")?;
 
         debug!("command to be executed: {}", command_item.command);
         commands
             .exec_command(&command_item, dry_run, quiet_mode)
             .context("Cannot run the command")
-            .log_error()
     }
 }
 

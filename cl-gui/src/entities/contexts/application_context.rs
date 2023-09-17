@@ -7,10 +7,7 @@ use crate::entities::clipboard::Clipboard;
 use anyhow::Result;
 use cl_core::{
     command::Command,
-    resources::{
-        commands_file_service::CommandsFileService, config::Options,
-        logger::interceptor::ErrorInterceptor,
-    },
+    resources::{commands_file_service::CommandsFileService, config::Options},
 };
 use tui::widgets::ListState;
 
@@ -28,7 +25,7 @@ impl ApplicationContext {
         config_options: Options,
     ) -> ApplicationContext {
         let namespaces = commands.iter().map(|c| c.namespace.to_owned()).collect();
-        let clipboard = Clipboard::new().log_error().ok();
+        let clipboard = Clipboard::new().ok();
 
         ApplicationContext {
             namespaces_context: NamespacesContext::new(namespaces),
