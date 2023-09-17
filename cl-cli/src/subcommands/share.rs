@@ -3,10 +3,7 @@ use anyhow::{Context, Result};
 use cl_core::{
     command::Command,
     commands::Commands,
-    resources::{
-        commands_file_service::CommandsFileService, config::Config,
-        logger::interceptor::ErrorInterceptor,
-    },
+    resources::{commands_file_service::CommandsFileService, config::Config},
 };
 use clap::{Parser, ValueEnum};
 use log::{info, warn};
@@ -50,7 +47,7 @@ impl Subcommand for Share {
 
         let commands_file_service =
             CommandsFileService::new(config.get_command_file_path()).validate()?;
-        let command_list = commands_file_service.load().log_error()?;
+        let command_list = commands_file_service.load()?;
         let commands = Commands::init(command_list);
 
         match self.mode {

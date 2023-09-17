@@ -1,10 +1,6 @@
 use super::Subcommand;
 use anyhow::Result;
-use cl_core::{
-    command::Command,
-    load_commands,
-    resources::{config::Config, logger::interceptor::ErrorInterceptor},
-};
+use cl_core::{command::Command, load_commands, resources::config::Config};
 use clap::Parser;
 use owo_colors::{colors::CustomColor, OwoColorize};
 use std::collections::HashSet;
@@ -23,7 +19,7 @@ pub struct Misc {
 
 impl Subcommand for Misc {
     fn run(&self, config: Config) -> Result<()> {
-        let commands = load_commands!(config.get_command_file_path()).log_error()?;
+        let commands = load_commands!(config.get_command_file_path())?;
 
         if self.description {
             if let Some(alias) = &self.alias {
