@@ -1,0 +1,22 @@
+[package]
+name = "cl-cli"
+version = "0.1.0"
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cl-core.workspace = true
+anyhow.workspace = true
+
+clap = { version = "4.4.2", features = ["derive"] }
+dirs = "5.0.1"
+itertools.workspace = true
+log.workspace = true
+owo-colors = "3.5.0"
+regex = "1.9.5"
+serde = { version = "1.0.188", features = ["derive"] }
+strfmt = "0.2.4"
+thiserror = "1.0.48"

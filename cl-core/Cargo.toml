@@ -1,0 +1,22 @@
+[package]
+name = "cl-core"
+version.workspace = true
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow.workspace = true
+cargo_metadata = "0.17.0"
+dirs = "5.0.1"
+itertools.workspace = true
+lazy_static = "1.4.0"
+log.workspace = true
+serde = { version = "1.0.160", features = ["derive"] }
+thiserror = "1.0.40"
+toml = "0.7.3"
+tracing = "0.1"
+tracing-appender = "0.2.2"
+tracing-subscriber = "0.3"
