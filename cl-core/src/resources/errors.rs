@@ -47,3 +47,27 @@ pub enum FileError {
         cause: std::io::Error,
     },
 }
+
+pub(super) mod panic_handler {
+    use log::error;
+    use std::panic::PanicInfo;
+
+    pub fn setup_panic_hook() {
+        std::panic::set_hook(Box::new(format_panic_message));
+    }
+
+    fn format_panic_message(panic_info: &PanicInfo) {
+        let mut message = String::from("The application crashed\n");
+        let payload = panic_info
+            .payload()
+            .downcast_ref::<String>()
+            .map(String::as_str)
+            .or_else(|| panic_info.payload().downcast_ref::<&str>().cloned())
+            .unwrap_or("Box<Any>");
+        message.push_str("Cause:\n");
+        for line in payload.lines() {
+            message.push_str(&format!("    {line}\n"))
+        }
+        error!("{message}")
+    }
+}
