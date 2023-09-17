@@ -1,3 +1,4 @@
+use super::errors::panic_handler;
 use crate::resources::config::LogLevel;
 use anyhow::Result;
 use std::path::Path;
@@ -72,7 +73,7 @@ where
             LoggerType::Subcommand => self.init_subcommand_logger()?,
         }
 
-        self::panic_handler::setup_panic_hook();
+        panic_handler::setup_panic_hook();
         Ok(())
     }
 
@@ -134,29 +135,5 @@ impl From<LogLevel> for LevelFilter {
             LogLevel::Info => LevelFilter::INFO,
             LogLevel::Error => LevelFilter::ERROR,
         }
-    }
-}
-
-pub(super) mod panic_handler {
-    use log::error;
-    use std::panic::PanicInfo;
-
-    pub fn setup_panic_hook() {
-        std::panic::set_hook(Box::new(format_panic_message));
-    }
-
-    fn format_panic_message(panic_info: &PanicInfo) {
-        let mut message = String::from("The application crashed\n");
-        let payload = panic_info
-            .payload()
-            .downcast_ref::<String>()
-            .map(String::as_str)
-            .or_else(|| panic_info.payload().downcast_ref::<&str>().cloned())
-            .unwrap_or("Box<Any>");
-        message.push_str("cause:\n");
-        for line in payload.lines() {
-            message.push_str(&format!("    {line}\n"))
-        }
-        error!("{message}")
     }
 }
