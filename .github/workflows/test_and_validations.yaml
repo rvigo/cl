@@ -41,6 +41,6 @@ jobs:
         uses: dtolnay/rust-toolchain@1.70.0
       - name: Unit Test
         run: |
-          cargo test
+          cargo test --workspace
         env:
           RUST_BACKTRACE: 1
