@@ -2,7 +2,7 @@ use super::display::DisplayWidget;
 use itertools::Itertools;
 use tui::{
     style::{Modifier, Style},
-    text::{Span, Spans},
+    text::{Line, Span},
 };
 
 pub trait Highlight<'a> {
@@ -42,7 +42,7 @@ impl<'a> Highlight<'a> for DisplayWidget<'a> {
                 highlight_string,
                 Style::default().add_modifier(Modifier::UNDERLINED),
             );
-            self.set_highlighted_content(Some(vec![Spans::from(span)]));
+            self.set_highlighted_content(Some(Line::from(span)));
             return self;
         }
 
@@ -52,7 +52,7 @@ impl<'a> Highlight<'a> for DisplayWidget<'a> {
 
         let spans = grouped
             .into_iter()
-            .map(|sv| {
+            .flat_map(|sv| {
                 sv.iter()
                     .map(|i| {
                         let style = if self.contains_ignore_case(&highlight_string, i) {
@@ -65,10 +65,9 @@ impl<'a> Highlight<'a> for DisplayWidget<'a> {
                     })
                     .collect_vec()
             })
-            .map(Spans::from)
             .collect_vec();
 
-        self.set_highlighted_content(Some(spans));
+        self.set_highlighted_content(Some(Line::from(spans)));
 
         self
     }

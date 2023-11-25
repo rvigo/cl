@@ -23,7 +23,7 @@ impl CacheInfo {
         command_list.into_iter().for_each(|c| {
             namespace_map
                 .entry(c.namespace.to_owned())
-                .or_insert(Vec::new())
+                .or_default()
                 .push(c);
         });
         let mut cache_info = CacheInfo {
@@ -47,7 +47,7 @@ impl CacheInfo {
         let new_namespace = &new_command_item.namespace;
 
         debug!("updating {new_namespace} cache entries with the new command");
-        let commands = self.cache.entry(new_namespace.to_owned()).or_insert(vec![]);
+        let commands = self.cache.entry(new_namespace.to_owned()).or_default();
         commands.push(new_command_item.to_owned());
 
         self.remove_entry(old_command_item);
