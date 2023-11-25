@@ -13,7 +13,6 @@ use crate::{
     },
 };
 use tui::{
-    backend::Backend,
     layout::{Constraint, Direction, Layout},
     widgets::Block,
     Frame,
@@ -31,13 +30,10 @@ impl FormScreen {
 
 impl WidgetExt for FormScreen {}
 
-impl<B> Screen<B> for FormScreen
-where
-    B: Backend,
-{
+impl Screen for FormScreen {
     fn render(
         &mut self,
-        frame: &mut Frame<B>,
+        frame: &mut Frame,
         _: &mut ApplicationContext,
         ui_context: &mut UIContext,
     ) {
@@ -54,7 +50,7 @@ where
         let screen_size = frame.size().as_terminal_size().into();
 
         if screen_size != self.screen_size {
-            <FormScreen as Screen<B>>::set_screen_size(self, screen_size);
+            <FormScreen as Screen>::set_screen_size(self, screen_size);
         }
 
         match self.screen_size {
@@ -92,10 +88,7 @@ where
     }
 }
 
-fn render_medium_form<B>(frame: &mut Frame<B>, ui_context: &mut UIContext, block: Block)
-where
-    B: Backend,
-{
+fn render_medium_form(frame: &mut Frame, ui_context: &mut UIContext, block: Block) {
     ui_context.update_screen_size(frame.size().as_terminal_size());
 
     let chunks = Layout::default()
@@ -150,10 +143,7 @@ where
     })
 }
 
-fn render_small_form<B>(frame: &mut Frame<B>, ui_context: &mut UIContext, block: Block)
-where
-    B: Backend,
-{
+fn render_small_form(frame: &mut Frame, ui_context: &mut UIContext, block: Block) {
     ui_context.update_screen_size(frame.size().as_terminal_size());
 
     let form_chunks = Layout::default()

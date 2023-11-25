@@ -18,14 +18,11 @@ impl CommandArgs {
 
     pub fn push(&mut self, command_arg: CommandArg) {
         if self.named_parameters.contains(&command_arg.arg) {
-            self.command_args
-                .entry(true)
-                .or_insert(Vec::new())
-                .push(command_arg);
+            self.command_args.entry(true).or_default().push(command_arg);
         } else {
             self.command_args
                 .entry(false)
-                .or_insert(Vec::new())
+                .or_default()
                 .push(command_arg);
         }
     }

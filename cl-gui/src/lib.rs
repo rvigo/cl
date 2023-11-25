@@ -101,7 +101,7 @@ mod core {
         ui_context: Arc<Mutex<UIContext<'a>>>,
         context: Arc<Mutex<ApplicationContext>>,
         terminal: Terminal<CrosstermBackend<Stdout>>,
-        screens: Screens<'a, CrosstermBackend<Stdout>>,
+        screens: Screens<'a>,
     ) -> Result<TuiApplication<'a>> {
         debug!("starting ui");
         let mut tui = TuiApplication::create(
