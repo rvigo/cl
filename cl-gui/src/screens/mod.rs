@@ -8,7 +8,7 @@ use super::entities::{
 };
 use crate::screens::{form_screen::FormScreen, main_screen::MainScreen};
 use std::collections::HashMap;
-use tui::{backend::Backend, Frame};
+use tui::Frame;
 
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub enum ScreenSize {
@@ -53,35 +53,26 @@ impl From<ScreenType> for ViewMode {
 }
 
 /// Represents a Screen of `B` where `B` is a Tui `Backend`
-pub trait Screen<B>
-where
-    B: Backend,
-{
+pub trait Screen {
     fn set_screen_size(&mut self, screen_size: ScreenSize);
 
     fn get_screen_size(&self) -> ScreenSize;
 
     fn render(
         &mut self,
-        frame: &mut Frame<B>,
+        frame: &mut Frame,
         application_context: &mut ApplicationContext,
         ui_context: &mut UIContext,
     );
 }
 
 /// Screens aggregator
-pub struct Screens<'a, B>
-where
-    B: Backend,
-{
-    screens: HashMap<ScreenType, Box<dyn Screen<B> + 'a>>,
+pub struct Screens<'a> {
+    screens: HashMap<ScreenType, Box<dyn Screen + 'a>>,
 }
 
-impl<'a, B> Screens<'a, B>
-where
-    B: Backend,
-{
-    pub fn new<I>(size: I) -> Screens<'a, B>
+impl<'a> Screens<'a> {
+    pub fn new<I>(size: I) -> Screens<'a>
     where
         I: Into<ScreenSize>,
     {
@@ -103,12 +94,12 @@ where
 
     pub fn register<S>(&mut self, screen_type: ScreenType, screen: S)
     where
-        S: Screen<B> + 'a,
+        S: Screen + 'a,
     {
         self.screens.insert(screen_type, Box::new(screen));
     }
 
-    pub fn get_screen<I>(&mut self, screen_type: I) -> Option<&mut Box<dyn Screen<B> + 'a>>
+    pub fn get_screen<I>(&mut self, screen_type: I) -> Option<&mut Box<dyn Screen + 'a>>
     where
         I: Into<ScreenType>,
     {

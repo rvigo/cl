@@ -15,7 +15,6 @@ use super::Screen;
 use crate::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crossterm::event::KeyEvent;
 use tui::{
-    backend::Backend,
     layout::Alignment,
     style::{Color, Style},
     widgets::{Block, BorderType, Borders, Widget},
@@ -62,11 +61,8 @@ macro_rules! centered_rect {
 pub trait Footer: Clone + Widget {}
 
 /// Extension for `Screen`
-pub trait ScreenExt<B>: Screen<B>
-where
-    B: Backend,
-{
-    fn render_base<F, H>(&self, frame: &mut Frame<B>, footer: Option<&F>, help_footer: H)
+pub trait ScreenExt: Screen {
+    fn render_base<F, H>(&self, frame: &mut Frame, footer: Option<&F>, help_footer: H)
     where
         F: Footer,
         H: Footer,
@@ -77,12 +73,7 @@ where
     }
 }
 
-impl<T, B> ScreenExt<B> for T
-where
-    T: Screen<B>,
-    B: Backend,
-{
-}
+impl<T> ScreenExt for T where T: Screen {}
 
 /// Widget extension functions and defaults
 pub trait WidgetExt {

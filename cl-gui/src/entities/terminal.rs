@@ -69,7 +69,7 @@ impl Terminal<CrosstermBackend<Stdout>> {
         &mut self,
         ui_context: &mut Arc<Mutex<UIContext>>,
         app_context: &mut Arc<Mutex<ApplicationContext>>,
-        screen: &mut dyn Screen<CrosstermBackend<Stdout>>,
+        screen: &mut dyn Screen,
     ) -> Result<()> {
         self.tui_terminal
             .draw(|frame| screen.render(frame, &mut app_context.lock(), &mut ui_context.lock()))?;

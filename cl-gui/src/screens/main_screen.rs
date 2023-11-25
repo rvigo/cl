@@ -17,10 +17,9 @@ use crate::{
 };
 use cl_core::command::{Command, CommandBuilder};
 use tui::{
-    backend::Backend,
     layout::{Constraint, Direction, Layout},
     style::{Modifier, Style},
-    text::{Span, Spans},
+    text::Span,
     widgets::{ListState, Tabs},
     Frame,
 };
@@ -62,15 +61,15 @@ impl MainScreen {
 
     fn create_tab_menu_widget<'a>(&self, namespaces_context: &NamespacesContext) -> Tabs<'a> {
         let namespaces = namespaces_context.namespaces();
-        let tab_menu: Vec<Spans> = namespaces
+        let tab_menu = namespaces
             .iter()
             .cloned()
-            .map(|tab| Spans::from(vec![Span::styled(tab, Style::default())]))
+            .map(|tab| Span::from(tab))
             .collect();
+
         Tabs::new(tab_menu)
             .select(namespaces_context.get_selected_namespace_idx())
             .block(self.default_block("Namespaces"))
-            .style(Style::default())
             .highlight_style(
                 Style::default()
                     .fg(DEFAULT_SELECTED_COLOR)
@@ -129,13 +128,10 @@ impl MainScreen {
 
 impl WidgetExt for MainScreen {}
 
-impl<B> Screen<B> for MainScreen
-where
-    B: Backend,
-{
+impl Screen for MainScreen {
     fn render(
         &mut self,
-        frame: &mut Frame<B>,
+        frame: &mut Frame,
         context: &mut ApplicationContext,
         ui_context: &mut UIContext,
     ) {
@@ -218,17 +214,15 @@ where
     }
 }
 
-fn render_form_medium<B>(
-    frame: &mut Frame<B>,
+fn render_form_medium(
+    frame: &mut Frame,
     tabs: Tabs,
     command: DisplayWidget,
     commands: ListWidget,
     namespace: DisplayWidget,
     tags: DisplayWidget,
     description: DisplayWidget,
-) where
-    B: Backend,
-{
+) {
     let constraints = [
         Constraint::Length(3),
         Constraint::Length(5),
@@ -264,14 +258,7 @@ fn render_form_medium<B>(
     frame.render_widget(description, chunks[1]);
 }
 
-fn render_form_small<B>(
-    frame: &mut Frame<B>,
-    tabs: Tabs,
-    commands: ListWidget,
-    command: DisplayWidget,
-) where
-    B: Backend,
-{
+fn render_form_small(frame: &mut Frame, tabs: Tabs, commands: ListWidget, command: DisplayWidget) {
     let constraints = [Constraint::Length(3), Constraint::Min(5)];
     let chunks = Layout::default()
         .direction(Direction::Vertical)

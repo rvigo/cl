@@ -26,7 +26,7 @@ pub struct TuiApplication<'a> {
     should_quit: Arc<AtomicBool>,
     ui_context: Arc<Mutex<UIContext<'a>>>,
     context: Arc<Mutex<ApplicationContext>>,
-    screens: Screens<'a, CrosstermBackend<Stdout>>,
+    screens: Screens<'a>,
 }
 
 impl<'a> TuiApplication<'a> {
@@ -36,7 +36,7 @@ impl<'a> TuiApplication<'a> {
         ui_context: Arc<Mutex<UIContext<'a>>>,
         context: Arc<Mutex<ApplicationContext>>,
         terminal: Terminal<CrosstermBackend<Stdout>>,
-        screens: Screens<'a, CrosstermBackend<Stdout>>,
+        screens: Screens<'a>,
     ) -> Result<TuiApplication<'a>> {
         let tui = TuiApplication {
             terminal,

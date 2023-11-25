@@ -7,11 +7,11 @@ use crate::{
     DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR,
 };
 use log::{error, warn};
-use std::fmt;
+use std::{fmt, rc::Rc};
 use tui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Modifier, Style},
-    text::{Span, Spans},
+    text::Span,
     widgets::{Block, Borders, Clear, Paragraph, StatefulWidget, Tabs, Widget, Wrap},
 };
 
@@ -71,7 +71,7 @@ impl Popup {
         self.message_type.clone()
     }
 
-    fn create_buttom_area(&self, area: Rect) -> Vec<Rect> {
+    fn create_buttom_area(&self, area: Rect) -> Rc<[Rect]> {
         let layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Percentage(100)].as_ref())
@@ -90,7 +90,7 @@ impl Popup {
 
     //TODO center buttons in the popup
     // uses the lower right space to render buttons
-    fn create_buttom_layout(&self, area: Rect) -> Vec<Rect> {
+    fn create_buttom_layout(&self, area: Rect) -> Rc<[Rect]> {
         let layout = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(
@@ -149,15 +149,14 @@ impl StatefulWidget for Popup {
 
         p.render(area, buf);
 
-        let tab_menu: Vec<Spans> = self
+        let tab_menu = self
             .choices
             .iter()
-            .map(|tab| Spans::from(vec![Span::styled(tab.to_string(), Style::default())]))
+            .map(|tab| Span::from(tab.to_string()))
             .collect();
 
         let tabs = Tabs::new(tab_menu)
             .block(Block::default().borders(Borders::NONE))
-            .style(Style::default())
             .select(state.selected().unwrap_or(0))
             .highlight_style(
                 Style::default()
