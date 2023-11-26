@@ -20,7 +20,10 @@ impl<'a> ListWidget<'a> {
         let items: Vec<ListItem> = commands
             .into_iter()
             .map(|c| {
-                ListItem::new(Span::styled(c.alias,Style::default().fg(DEFAULT_TEXT_COLOR)))
+                ListItem::new(Span::styled(
+                    c.alias,
+                    Style::default().fg(DEFAULT_TEXT_COLOR),
+                ))
             })
             .collect();
 
