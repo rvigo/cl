@@ -42,7 +42,7 @@ impl<'a> Fields<'a> {
         let command = TextFieldBuilder::default()
             .field_type(FieldType::Command)
             .in_focus(false)
-            .in_focus(true)
+            .multiline(true)
             .build();
         let description = TextFieldBuilder::default()
             .field_type(FieldType::Description)
