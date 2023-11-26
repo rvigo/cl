@@ -79,17 +79,15 @@ where
                         .to_owned()
                         .render(right_inner_area, buf);
                 }
-            } else {
-                if let Some(right_statusbar_item) = &self.right_statusbar_item {
-                    let statusbar_layout = Layout::default()
-                        .direction(Direction::Horizontal)
-                        .constraints([Constraint::Percentage(100)].as_ref())
-                        .split(chunks[3]);
+            } else if let Some(right_statusbar_item) = &self.right_statusbar_item {
+                let statusbar_layout = Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints([Constraint::Percentage(100)].as_ref())
+                    .split(chunks[3]);
 
-                    right_statusbar_item
-                        .to_owned()
-                        .render(statusbar_layout[0], buf);
-                }
+                right_statusbar_item
+                    .to_owned()
+                    .render(statusbar_layout[0], buf);
             }
         }
 

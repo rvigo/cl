@@ -9,7 +9,7 @@ use tui::{
 };
 use tui_textarea::TextArea;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct QueryBox<'a> {
     text_area: TextArea<'a>,
     on_focus: bool,
@@ -17,16 +17,6 @@ pub struct QueryBox<'a> {
 }
 
 impl<'a> StatusBarItem for QueryBox<'a> {}
-
-impl<'a> Default for QueryBox<'a> {
-    fn default() -> Self {
-        Self {
-            text_area: TextArea::default(),
-            on_focus: false,
-            buffer: String::default(),
-        }
-    }
-}
 
 impl<'a> QueryBox<'a> {
     pub fn activate_focus(&mut self) {
