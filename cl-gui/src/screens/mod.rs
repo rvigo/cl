@@ -2,6 +2,8 @@ mod form_screen;
 mod main_screen;
 pub(super) mod widgets;
 
+use self::widgets::{base_widget::BaseWidget, statusbar::StatusBarItem};
+
 use super::entities::{
     contexts::{application_context::ApplicationContext, ui_context::UIContext},
     states::ui_state::ViewMode,
@@ -52,7 +54,7 @@ impl From<ScreenType> for ViewMode {
     }
 }
 
-/// Represents a Screen of `B` where `B` is a Tui `Backend`
+/// Represents a Screen
 pub trait Screen {
     fn set_screen_size(&mut self, screen_size: ScreenSize);
 
@@ -107,3 +109,24 @@ impl<'a> Screens<'a> {
         self.screens.get_mut(&st)
     }
 }
+
+/// Extension for `Screen`
+pub trait ScreenExt: Screen {
+    fn render_base<F, H>(
+        &self,
+        frame: &mut Frame,
+        left_statusbar_item: Option<&F>,
+        right_statusbar_item: Option<H>,
+    ) where
+        F: StatusBarItem,
+        H: StatusBarItem,
+    {
+        let terminal_size = self.get_screen_size();
+        let var_name = BaseWidget::new(&terminal_size, left_statusbar_item, right_statusbar_item);
+        let base_widget = var_name;
+
+        frame.render_widget(base_widget, frame.size());
+    }
+}
+
+impl<T> ScreenExt for T where T: Screen {}

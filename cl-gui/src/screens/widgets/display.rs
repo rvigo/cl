@@ -53,11 +53,6 @@ impl<'a> DisplayWidget<'a> {
         self.block = Some(block);
         self
     }
-
-    pub fn alignment(mut self, alignment: Alignment) -> DisplayWidget<'a> {
-        self.alignment = alignment;
-        self
-    }
 }
 
 impl<'a> Widget for DisplayWidget<'a> {

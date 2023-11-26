@@ -1,24 +1,20 @@
-mod base_widget;
-pub(super) mod display;
+pub mod base_widget;
+pub mod display;
 pub mod fields;
-pub(super) mod help_footer;
-pub(super) mod help_popup;
-pub(super) mod highlight;
-pub(super) mod list;
-pub(super) mod navigation_footer;
+pub mod help_popup;
+pub mod highlight;
+pub mod list;
 pub mod popup;
-pub mod querybox;
+pub mod statusbar;
 pub mod text_field;
 
-use self::base_widget::BaseWidget;
-use super::Screen;
+use self::statusbar::StatusBarItem;
 use crate::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crossterm::event::KeyEvent;
 use tui::{
     layout::Alignment,
     style::{Color, Style},
     widgets::{Block, BorderType, Borders, Widget},
-    Frame,
 };
 
 #[macro_export]
@@ -56,24 +52,6 @@ macro_rules! centered_rect {
         centered_area($width, $height, $area)
     }};
 }
-
-/// Marks the struct as a `Footer`
-pub trait Footer: Clone + Widget {}
-
-/// Extension for `Screen`
-pub trait ScreenExt: Screen {
-    fn render_base<F, H>(&self, frame: &mut Frame, footer: Option<&F>, help_footer: H)
-    where
-        F: Footer,
-        H: Footer,
-    {
-        let screen_size = self.get_screen_size();
-        let base_widget = BaseWidget::new(&screen_size, footer, help_footer);
-        frame.render_widget(base_widget, frame.size());
-    }
-}
-
-impl<T> ScreenExt for T where T: Screen {}
 
 /// Widget extension functions and defaults
 pub trait WidgetExt {

@@ -11,7 +11,7 @@ use crate::{
     screens::{
         widgets::{
             popup::{Answer, Popup},
-            querybox::QueryBox,
+            statusbar::querybox::QueryBox,
             text_field::{FieldType, TextField},
             WidgetKeyHandler,
         },
