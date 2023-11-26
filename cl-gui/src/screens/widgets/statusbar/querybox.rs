@@ -1,29 +1,27 @@
-use super::{Footer, WidgetKeyHandler};
-use crate::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
+use super::StatusBarItem;
+use crate::{screens::widgets::WidgetKeyHandler, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crossterm::event::{KeyCode, KeyEvent};
 use tui::{
     buffer::Buffer,
-    layout::{Alignment, Rect},
+    layout::Rect,
     style::{Color, Modifier, Style},
-    widgets::{Block, BorderType, Borders, Widget},
+    widgets::{Block, Widget},
 };
 use tui_textarea::TextArea;
 
 #[derive(Clone)]
 pub struct QueryBox<'a> {
     text_area: TextArea<'a>,
-    title: String,
     on_focus: bool,
     buffer: String,
 }
 
-impl<'a> Footer for QueryBox<'a> {}
+impl<'a> StatusBarItem for QueryBox<'a> {}
 
 impl<'a> Default for QueryBox<'a> {
     fn default() -> Self {
         Self {
             text_area: TextArea::default(),
-            title: String::from("Find"),
             on_focus: false,
             buffer: String::default(),
         }
@@ -85,18 +83,12 @@ impl<'a> Widget for QueryBox<'a> {
             self.text_area.set_cursor_style(Style::default());
         };
 
-        self.text_area.set_block(
-            Block::default()
-                .borders(Borders::ALL)
-                .style(if !self.on_focus {
-                    Style::default().fg(DEFAULT_TEXT_COLOR)
-                } else {
-                    Style::default()
-                })
-                .title(format!(" {} ", self.title))
-                .border_type(BorderType::Plain),
-        );
-        self.text_area.set_alignment(Alignment::Left);
+        self.text_area
+            .set_block(Block::default().style(if !self.on_focus {
+                Style::default().fg(DEFAULT_TEXT_COLOR)
+            } else {
+                Style::default()
+            }));
         self.text_area.set_style(style);
 
         self.text_area.widget().render(area, buf)
