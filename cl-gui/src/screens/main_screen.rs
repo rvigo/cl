@@ -61,11 +61,7 @@ impl MainScreen {
 
     fn create_tab_menu_widget<'a>(&self, namespaces_context: &NamespacesContext) -> Tabs<'a> {
         let namespaces = namespaces_context.namespaces();
-        let tab_menu = namespaces
-            .iter()
-            .cloned()
-            .map(|tab| Span::from(tab))
-            .collect();
+        let tab_menu = namespaces.iter().cloned().map(Span::from).collect();
 
         Tabs::new(tab_menu)
             .select(namespaces_context.get_selected_namespace_idx())
