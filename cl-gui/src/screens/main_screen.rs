@@ -1,9 +1,9 @@
 use super::{
     widgets::{
-        display::DisplayWidget, help_footer::HelpFooter, help_popup::HelpPopup,
-        highlight::Highlight, list::ListWidget, ScreenExt, WidgetExt,
+        display::DisplayWidget, help_popup::HelpPopup, highlight::Highlight, list::ListWidget,
+        statusbar::help::Help, WidgetExt,
     },
-    Screen, ScreenSize, ScreenType,
+    Screen, ScreenExt, ScreenSize, ScreenType,
 };
 use crate::{
     centered_rect,
@@ -136,11 +136,11 @@ impl Screen for MainScreen {
         ui_context: &mut UIContext,
     ) {
         let filtered_commands = context.filter_commands(ui_context.get_querybox_input());
-        let query_box = ui_context.querybox();
-        let help_footer = HelpFooter::new();
+        let querybox = ui_context.querybox();
+        let help = Help::new();
 
         //
-        self.render_base(frame, Some(query_box), help_footer);
+        self.render_base(frame, Some(querybox), Some(help));
 
         let selected_idx = context.get_selected_command_idx();
         let selected_command = self.get_selected_command(selected_idx, &filtered_commands);

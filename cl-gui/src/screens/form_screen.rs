@@ -1,9 +1,11 @@
 use super::{
     widgets::{
-        help_footer::HelpFooter, help_popup::HelpPopup, navigation_footer::NavigationFooter,
-        text_field::FieldType, ScreenExt, WidgetExt,
+        help_popup::HelpPopup,
+        statusbar::{help::Help, navigation_info::NavigationInfo},
+        text_field::FieldType,
+        WidgetExt,
     },
-    Screen, ScreenSize,
+    Screen, ScreenExt, ScreenSize,
 };
 use crate::{
     centered_rect,
@@ -37,9 +39,10 @@ impl Screen for FormScreen {
         _: &mut ApplicationContext,
         ui_context: &mut UIContext,
     ) {
-        let navigation_footer = NavigationFooter::new();
-        let help_footer = HelpFooter::new();
-        self.render_base(frame, Some(&navigation_footer), help_footer);
+        let navigation_info = NavigationInfo::new();
+        let help = Help::new();
+
+        self.render_base(frame, Some(&navigation_info), Some(help));
 
         let block = self.default_block(if ui_context.is_form_modified() {
             format!(" {} MODIFIED ", ui_context.view_mode())
