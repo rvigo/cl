@@ -213,20 +213,12 @@ impl<'a> UIContext<'a> {
         self.query_box.deactivate_focus()
     }
 
-    pub fn querybox(&self) -> &QueryBox {
+    pub fn querybox_ref(&self) -> &QueryBox {
         &self.query_box
     }
 
     pub fn handle_querybox_input(&mut self, key_event: KeyEvent) {
         self.query_box.handle_input(key_event)
-    }
-
-    pub fn querybox_focus(&self) -> bool {
-        self.ui_state.querybox_focus()
-    }
-
-    pub fn set_querybox_focus(&mut self, focus: bool) {
-        self.ui_state.set_querybox_focus(focus)
     }
 
     ///
