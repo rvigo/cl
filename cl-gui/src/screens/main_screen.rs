@@ -132,7 +132,7 @@ impl Screen for MainScreen {
         ui_context: &mut UIContext,
     ) {
         let filtered_commands = context.filter_commands(ui_context.get_querybox_input());
-        let querybox = ui_context.querybox();
+        let querybox = ui_context.querybox_ref();
         let help = Help::new();
 
         //
@@ -145,7 +145,7 @@ impl Screen for MainScreen {
         ui_context.select_command(Some(selected_command.to_owned()));
 
         let should_highlight = context.should_highligh();
-        let query = ui_context.querybox().get_input();
+        let query = ui_context.querybox_ref().get_input();
         let namespaces_context = context.namespaces_context();
         let command_state = context.get_commands_state();
         let tags_str = &selected_command.tags_as_string();

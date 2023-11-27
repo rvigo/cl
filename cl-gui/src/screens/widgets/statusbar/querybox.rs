@@ -12,19 +12,23 @@ use tui_textarea::TextArea;
 #[derive(Clone, Default)]
 pub struct QueryBox<'a> {
     text_area: TextArea<'a>,
-    on_focus: bool,
+    focus: bool,
     buffer: String,
 }
 
 impl<'a> StatusBarItem for QueryBox<'a> {}
 
 impl<'a> QueryBox<'a> {
+    pub fn focus(&self) -> bool {
+        self.focus
+    }
+
     pub fn activate_focus(&mut self) {
-        self.on_focus = true
+        self.focus = true
     }
 
     pub fn deactivate_focus(&mut self) {
-        self.on_focus = false
+        self.focus = false
     }
 
     pub fn get_input(&self) -> String {
@@ -38,7 +42,7 @@ impl WidgetKeyHandler for QueryBox<'_> {
             KeyEvent {
                 code: KeyCode::Esc | KeyCode::Enter | KeyCode::Down | KeyCode::Up,
                 ..
-            } => self.on_focus = false,
+            } => self.focus = false,
             input => {
                 self.text_area.input(input);
                 self.buffer = self.text_area.lines()[0].clone()
@@ -49,19 +53,19 @@ impl WidgetKeyHandler for QueryBox<'_> {
 
 impl<'a> Widget for QueryBox<'a> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
-        let style = if self.on_focus {
+        let style = if self.focus {
             Style::default().fg(Color::Black).bg(DEFAULT_SELECTED_COLOR)
-        } else if !self.on_focus && !self.text_area.is_empty() {
+        } else if !self.focus && !self.text_area.is_empty() {
             Style::default().fg(DEFAULT_SELECTED_COLOR)
         } else {
             Style::default().fg(DEFAULT_TEXT_COLOR)
         };
 
-        if self.buffer.is_empty() && !self.on_focus {
+        if self.buffer.is_empty() && !self.focus {
             self.text_area = TextArea::from(vec!["Press <F> to find commands"])
         }
 
-        if self.on_focus {
+        if self.focus {
             self.text_area.set_cursor_line_style(Style::default());
             self.text_area.set_cursor_style(
                 Style::default()
@@ -74,7 +78,7 @@ impl<'a> Widget for QueryBox<'a> {
         };
 
         self.text_area
-            .set_block(Block::default().style(if !self.on_focus {
+            .set_block(Block::default().style(if !self.focus {
                 Style::default().fg(DEFAULT_TEXT_COLOR)
             } else {
                 Style::default()

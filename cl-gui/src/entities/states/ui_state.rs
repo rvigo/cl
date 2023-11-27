@@ -45,7 +45,6 @@ pub struct UiState {
     screen_size: ScreenSize,
     show_popup: bool,
     show_help: bool,
-    querybox_focus: bool,
 }
 
 impl UiState {
@@ -55,16 +54,7 @@ impl UiState {
             screen_size: screen_size.to_owned(),
             show_popup: false,
             show_help: false,
-            querybox_focus: false,
         }
-    }
-
-    pub fn querybox_focus(&self) -> bool {
-        self.querybox_focus
-    }
-
-    pub fn set_querybox_focus(&mut self, focus: bool) {
-        self.querybox_focus = focus
     }
 
     pub fn view_mode(&self) -> ViewMode {
