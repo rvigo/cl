@@ -58,8 +58,8 @@ impl<'a> EventHandler<'a> {
                         match c.add_command(command) {
                             Ok(()) => {
                                 ui.set_view_mode(ViewMode::Main);
-                                c.reload_contexts();
                                 ui.reset_form_field_selected_field();
+                                c.reload_contexts();
                             }
                             Err(error) => {
                                 ui.set_show_popup(true);
@@ -74,7 +74,11 @@ impl<'a> EventHandler<'a> {
                         let edited_command = ui.edit_command();
                         if let Some(current_command) = ui.get_selected_command() {
                             match c.add_edited_command(edited_command, current_command) {
-                                Ok(()) => ui.set_view_mode(ViewMode::Main),
+                                Ok(()) => {
+                                    ui.set_view_mode(ViewMode::Main);
+                                    ui.reset_form_field_selected_field();
+                                    c.reload_contexts()
+                                }
                                 Err(err) => {
                                     ui.set_show_popup(true);
                                     ui.set_error_popup(err.to_string());
@@ -101,6 +105,7 @@ impl<'a> EventHandler<'a> {
                     RenderEvent::Main => {
                         let mut c = self.app_context.lock();
                         let mut ui = self.ui_context.lock();
+                        c.reload_contexts();
                         if ui.is_form_modified() {
                             ui.set_dialog_popup(
                                 "Wait, you didn't save your changes! Are you sure you want to quit?"
@@ -110,7 +115,6 @@ impl<'a> EventHandler<'a> {
                             ui.set_show_popup(true)
                         } else {
                             ui.set_view_mode(ViewMode::Main);
-                            c.reload_contexts();
                             ui.reset_form_field_selected_field();
                         }
                     }
@@ -213,21 +217,16 @@ impl<'a> EventHandler<'a> {
                     PopupEvent::NextChoice => self.ui_context.lock().next_choice(),
                     PopupEvent::PreviousChoice => self.ui_context.lock().previous_choice(),
                 },
-                AppEvent::QueryBox(event) => match event {
-                    QueryboxEvent::Active => {
-                        let mut ui = self.ui_context.lock();
-                        ui.activate_querybox_focus();
-                        ui.set_querybox_focus(true);
+                AppEvent::QueryBox(event) => {
+                    let mut ui = self.ui_context.lock();
+                    match event {
+                        QueryboxEvent::Active => ui.activate_querybox_focus(),
+
+                        QueryboxEvent::Deactive => ui.deactivate_querybox_focus(),
+
+                        QueryboxEvent::Input(key_event) => ui.handle_querybox_input(key_event),
                     }
-                    QueryboxEvent::Deactive => {
-                        let mut ui = self.ui_context.lock();
-                        ui.deactivate_querybox_focus();
-                        ui.set_querybox_focus(false);
-                    }
-                    QueryboxEvent::Input(key_event) => {
-                        self.ui_context.lock().handle_querybox_input(key_event)
-                    }
-                },
+                }
                 AppEvent::Screen(screen) => match screen {
                     ScreenEvent::Main(main_screen) => {
                         let mut c = self.app_context.lock();

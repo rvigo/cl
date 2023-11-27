@@ -75,6 +75,7 @@ impl InputHandler {
 
     fn handle_input(&mut self, key_event: KeyEvent) -> Result<Option<AppEvent>> {
         let ui_context = self.ui_context.lock();
+        let querybox_focus = ui_context.querybox_ref().focus();
 
         let handled_event = if ui_context.show_popup() {
             self.popup_handler
@@ -82,7 +83,7 @@ impl InputHandler {
             self.popup_handler.handle(key_event)
         } else if ui_context.show_help() {
             self.help_popup_handler.handle(key_event)
-        } else if ui_context.querybox_focus() {
+        } else if querybox_focus {
             self.querybox_handler.handle(key_event)
         } else {
             let handler = self.get_handler(&ui_context.view_mode());
