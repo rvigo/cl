@@ -81,28 +81,36 @@ impl<'a> FieldContext<'a> {
     }
 
     pub fn build_edited_command(&mut self) -> Command {
-        if let Some(command) = self.selected_command.as_mut() {
-            self.fields
-                .iter_mut()
-                .for_each(|(field_type, field)| match field_type {
-                    FieldType::Alias => command.alias = field.text(),
-                    FieldType::Command => command.command = field.text(),
-                    FieldType::Namespace => command.namespace = field.text(),
-                    FieldType::Description => command.description = field.text().to_option(),
-                    FieldType::Tags => {
-                        command.tags = field
+        let mut edited = CommandBuilder::default();
+        self.fields
+            .iter()
+            .for_each(|(field_type, field)| match field_type {
+                FieldType::Alias => {
+                    edited.alias(field.text());
+                }
+                FieldType::Command => {
+                    edited.command(field.text());
+                }
+                FieldType::Namespace => {
+                    edited.namespace(field.text());
+                }
+                FieldType::Description => {
+                    edited.description(field.text().to_option());
+                }
+                FieldType::Tags => {
+                    edited.tags(
+                        field
                             .text()
                             .split(',')
                             .map(|tag| String::from(tag.trim()))
                             .filter(|tag| !tag.is_empty())
                             .collect_vec()
-                            .to_option();
-                    }
-                });
+                            .to_option(),
+                    );
+                }
+            });
 
-            return command.to_owned();
-        }
-        Command::default()
+        edited.build()
     }
 
     pub fn selected_command(&self) -> Option<&Command> {
