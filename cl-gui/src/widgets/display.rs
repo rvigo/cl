@@ -80,8 +80,9 @@ impl<'a> Widget for DisplayWidget<'a> {
 
 #[cfg(test)]
 mod test {
+    use crate::widgets::highlight::Highlight;
+
     use super::{DisplayWidget, *};
-    use crate::screens::widgets::highlight::Highlight;
     use tui::{
         style::Modifier,
         text::{Line, Span},

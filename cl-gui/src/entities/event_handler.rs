@@ -6,7 +6,7 @@ use super::{
     },
     states::ui_state::ViewMode,
 };
-use crate::screens::widgets::popup::Answer;
+use crate::widgets::popup::{option::Choice, popup_type::PopupType as PopupMessageType};
 use log::debug;
 use parking_lot::Mutex;
 use std::sync::{
@@ -63,7 +63,11 @@ impl<'a> EventHandler<'a> {
                             }
                             Err(error) => {
                                 ui.set_show_popup(true);
-                                ui.set_error_popup(error.to_string());
+                                ui.set_popup(
+                                    PopupMessageType::Error,
+                                    error.to_string(),
+                                    PopupCallbackAction::None,
+                                );
                             }
                         }
                     }
@@ -79,9 +83,13 @@ impl<'a> EventHandler<'a> {
                                     ui.reset_form_field_selected_field();
                                     c.reload_contexts()
                                 }
-                                Err(err) => {
+                                Err(error) => {
                                     ui.set_show_popup(true);
-                                    ui.set_error_popup(err.to_string());
+                                    ui.set_popup(
+                                        PopupMessageType::Error,
+                                        error.to_string(),
+                                        PopupCallbackAction::None,
+                                    );
                                 }
                             }
                         }
@@ -96,7 +104,11 @@ impl<'a> EventHandler<'a> {
                                 .copy_text_to_clipboard(&command.command)
                             {
                                 ui.set_show_popup(true);
-                                ui.set_error_popup(error.to_string())
+                                ui.set_popup(
+                                    PopupMessageType::Error,
+                                    error.to_string(),
+                                    PopupCallbackAction::None,
+                                );
                             }
                         }
                     }
@@ -107,7 +119,7 @@ impl<'a> EventHandler<'a> {
                         let mut ui = self.ui_context.lock();
                         c.reload_contexts();
                         if ui.is_form_modified() {
-                            ui.set_dialog_popup(
+                            ui.set_popup(PopupMessageType::Warning,
                                 "Wait, you didn't save your changes! Are you sure you want to quit?"
                                     .to_owned(),
                                 PopupCallbackAction::Render(RenderEvent::Main),
@@ -151,7 +163,7 @@ impl<'a> EventHandler<'a> {
                                 callback_action,
                             } => {
                                 ui.set_show_popup(true);
-                                ui.set_dialog_popup(message, callback_action);
+                                ui.set_popup(PopupMessageType::Warning, message, callback_action);
                             }
                         }
                     }
@@ -159,45 +171,46 @@ impl<'a> EventHandler<'a> {
                         let mut ui = self.ui_context.lock();
                         if let Some(answer) = ui.get_selected_choice() {
                             match answer {
-                                Answer::Ok => {
+                                Choice::Ok => {
                                     let mut c = self.app_context.lock();
-
-                                    if let Some(popup) = ui.popup() {
-                                        match popup.callback() {
-                                            PopupCallbackAction::DeleteCommand => {
-                                                if let Some(command) = ui.get_selected_command() {
-                                                    match c.delete_selected_command(command) {
-                                                        Ok(()) => {
-                                                            ui.clear_popup_context();
-                                                            c.reload_contexts();
-                                                        }
-                                                        Err(error) => {
-                                                            ui.set_show_popup(true);
-                                                            ui.set_error_popup(error.to_string());
-                                                        }
+                                    match &ui.popup_container.callback {
+                                        PopupCallbackAction::DeleteCommand => {
+                                            if let Some(command) = ui.get_selected_command() {
+                                                match c.delete_selected_command(command) {
+                                                    Ok(()) => {
+                                                        ui.clear_popup_context();
+                                                        c.reload_contexts();
+                                                    }
+                                                    Err(error) => {
+                                                        ui.set_show_popup(true);
+                                                        ui.set_popup(
+                                                            PopupMessageType::Error,
+                                                            error.to_string(),
+                                                            PopupCallbackAction::None,
+                                                        );
                                                     }
                                                 }
                                             }
-                                            PopupCallbackAction::None => {
+                                        }
+                                        PopupCallbackAction::None => {
+                                            ui.clear_popup_context();
+                                            ui.set_show_popup(false);
+                                        }
+                                        PopupCallbackAction::Render(screen) => match screen {
+                                            RenderEvent::Main => {
+                                                ui.set_view_mode(ViewMode::Main);
+                                                c.reload_contexts();
+                                                ui.reset_form_field_selected_field();
                                                 ui.clear_popup_context();
                                                 ui.set_show_popup(false);
                                             }
-                                            PopupCallbackAction::Render(screen) => match screen {
-                                                RenderEvent::Main => {
-                                                    ui.set_view_mode(ViewMode::Main);
-                                                    c.reload_contexts();
-                                                    ui.reset_form_field_selected_field();
-                                                    ui.clear_popup_context();
-                                                    ui.set_show_popup(false);
-                                                }
-                                                RenderEvent::Edit | RenderEvent::Insert => {
-                                                    todo!()
-                                                }
-                                            },
-                                        }
+                                            RenderEvent::Edit | RenderEvent::Insert => {
+                                                todo!()
+                                            }
+                                        },
                                     }
                                 }
-                                Answer::Cancel => {
+                                Choice::Cancel => {
                                     ui.clear_popup_context();
                                 }
                             };
@@ -221,9 +234,7 @@ impl<'a> EventHandler<'a> {
                     let mut ui = self.ui_context.lock();
                     match event {
                         QueryboxEvent::Active => ui.activate_querybox_focus(),
-
                         QueryboxEvent::Deactive => ui.deactivate_querybox_focus(),
-
                         QueryboxEvent::Input(key_event) => ui.handle_querybox_input(key_event),
                     }
                 }

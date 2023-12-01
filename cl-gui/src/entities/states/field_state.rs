@@ -1,5 +1,5 @@
 use super::State;
-use crate::screens::widgets::text_field::{FieldType, TextField};
+use crate::widgets::text_field::{FieldType, TextField};
 use std::collections::HashMap;
 
 #[derive(Default, Clone)]

@@ -1,14 +1,14 @@
 mod form_screen;
 mod main_screen;
-pub(super) mod widgets;
-
-use self::widgets::{base_widget::BaseWidget, statusbar::StatusBarItem};
 
 use super::entities::{
     contexts::{application_context::ApplicationContext, ui_context::UIContext},
     states::ui_state::ViewMode,
 };
-use crate::screens::{form_screen::FormScreen, main_screen::MainScreen};
+use crate::{
+    screens::{form_screen::FormScreen, main_screen::MainScreen},
+    widgets::{base_widget::BaseWidget, statusbar::StatusBarItem},
+};
 use std::collections::HashMap;
 use tui::Frame;
 
