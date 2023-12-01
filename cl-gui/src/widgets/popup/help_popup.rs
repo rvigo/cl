@@ -1,6 +1,7 @@
+use super::{popup_type::PopupType, Popup};
 use crate::{
-    centered_rect,
-    {entities::states::ui_state::ViewMode, screens::ScreenSize, DEFAULT_SELECTED_COLOR},
+    entities::states::popup_state::PopupState,
+    {entities::states::ui_state::ViewMode, DEFAULT_SELECTED_COLOR},
 };
 use tui::{
     buffer::Buffer,
@@ -10,26 +11,22 @@ use tui::{
 };
 
 pub struct HelpPopup<'a> {
-    content: Vec<Vec<Cell<'a>>>,
-    screen_size: ScreenSize,
+    content: Vec<Pair<Cell<'a>>>,
 }
 
 impl<'a> HelpPopup<'a> {
-    pub fn new(view_mode: &ViewMode, terminal_size: ScreenSize) -> HelpPopup<'a> {
+    pub fn new(view_mode: &ViewMode) -> HelpPopup<'a> {
         let content = match view_mode {
             ViewMode::Main => main_options(),
             ViewMode::Edit => edit_options(),
             ViewMode::Insert => insert_options(),
         };
-        HelpPopup {
-            content,
-            screen_size: terminal_size,
-        }
+        HelpPopup { content }
     }
 }
 
-impl<'a> Widget for HelpPopup<'a> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+impl Popup for HelpPopup<'_> {
+    fn render(self, area: Rect, buf: &mut Buffer, _: Option<&mut PopupState>) {
         let rows = self
             .content
             .clone()
@@ -40,24 +37,24 @@ impl<'a> Widget for HelpPopup<'a> {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .title(" Help ")
+                    .title(format!(" {} ", PopupType::Help.to_string()))
                     .title_alignment(Alignment::Center)
                     .border_type(BorderType::Plain),
             )
             .widths(&[Constraint::Percentage(50), Constraint::Percentage(50)]);
 
-        let width = if self.screen_size.eq(&ScreenSize::Small) {
-            100
-        } else {
-            50
-        };
+        let render_position = self.get_render_position(area);
 
-        let dynamic_height = (100 * (self.content.len() as u16 * 2)) / area.height;
-        let height = std::cmp::max(dynamic_height, area.height);
-        let centered_rect = centered_rect!(width, height, area);
+        Clear::render(Clear, render_position, buf);
+        table.render(render_position, buf)
+    }
 
-        Clear::render(Clear, centered_rect, buf);
-        table.render(centered_rect, buf)
+    fn content_height(&self) -> u16 {
+        self.content.len() as u16
+    }
+
+    fn content_width(&self) -> u16 {
+        75
     }
 }
 
@@ -75,92 +72,142 @@ macro_rules! styled_cell {
     };
 }
 
-fn main_options<'a>() -> Vec<Vec<Cell<'a>>> {
+fn main_options<'a>() -> Vec<Pair<Cell<'a>>> {
     vec![
-        vec![
+        Pair::new(
             styled_cell!("<Q/Esc/Ctrl + C>", key_style()),
             styled_cell!("Quit"),
-        ],
-        vec![
+        ),
+        Pair::new(
             styled_cell!("<I/Insert>", key_style()),
             styled_cell!("Create new command"),
-        ],
-        vec![
+        ),
+        Pair::new(
             styled_cell!("<D/Delete>", key_style()),
             styled_cell!("Delete selected command"),
-        ],
-        vec![
+        ),
+        Pair::new(
             styled_cell!("<E>", key_style()),
             styled_cell!("Edit selected command"),
-        ],
-        vec![
+        ),
+        Pair::new(
             styled_cell!("<L/→/Tab>", key_style()),
             styled_cell!("Move to next namespace"),
-        ],
-        vec![
+        ),
+        Pair::new(
             styled_cell!("<H/←/Shift + Tab>", key_style()),
             styled_cell!("Move to previous namespace"),
-        ],
-        vec![styled_cell!("<K/↑>", key_style()), styled_cell!("Move up")],
-        vec![
+        ),
+        Pair::new(styled_cell!("<K/↑>", key_style()), styled_cell!("Move up")),
+        Pair::new(
             styled_cell!("<J/↓>", key_style()),
             styled_cell!("Move down"),
-        ],
-        vec![
+        ),
+        Pair::new(
             styled_cell!("<Y>", key_style()),
             styled_cell!("Copy selected command"),
-        ],
-        vec![
+        ),
+        Pair::new(
             styled_cell!("<F//>", key_style()),
             styled_cell!("Find stored commands"),
-        ],
-        vec![
+        ),
+        Pair::new(
             styled_cell!("<F1/?>", key_style()),
             styled_cell!("Show help"),
-        ],
+        ),
     ]
 }
 
-fn edit_options<'a>() -> Vec<Vec<Cell<'a>>> {
+fn edit_options<'a>() -> Vec<Pair<Cell<'a>>> {
     vec![
-        vec![
+        Pair::new(
             styled_cell!("<Esc/Ctrl + C>", key_style()),
             styled_cell!("Return"),
-        ],
-        vec![
+        ),
+        Pair::new(
             styled_cell!("<Tab>", key_style()),
             styled_cell!("Next Field"),
-        ],
-        vec![
+        ),
+        Pair::new(
             styled_cell!("<Shift + Tab>", key_style()),
             styled_cell!("Previous Field"),
-        ],
-        vec![
+        ),
+        Pair::new(
             styled_cell!("<Enter/ Ctrl + S>", key_style()),
             styled_cell!("Update command"),
-        ],
-        vec![styled_cell!("<F1>", key_style()), styled_cell!("Help")],
+        ),
+        Pair::new(styled_cell!("<F1>", key_style()), styled_cell!("Help")),
     ]
 }
 
-fn insert_options<'a>() -> Vec<Vec<Cell<'a>>> {
+fn insert_options<'a>() -> Vec<Pair<Cell<'a>>> {
     vec![
-        vec![
+        Pair::new(
             styled_cell!("<Esc/Ctrl + C>", key_style()),
             styled_cell!("Return"),
-        ],
-        vec![
+        ),
+        Pair::new(
             styled_cell!("<Tab>", key_style()),
             styled_cell!("Next Field"),
-        ],
-        vec![
+        ),
+        Pair::new(
             styled_cell!("<Shift + Tab>", key_style()),
             styled_cell!("Previous Field"),
-        ],
-        vec![
+        ),
+        Pair::new(
             styled_cell!("<Enter/ Ctrl + S>", key_style()),
             styled_cell!("Create command"),
-        ],
-        vec![styled_cell!("<F1>", key_style()), styled_cell!("Help")],
+        ),
+        Pair::new(styled_cell!("<F1>", key_style()), styled_cell!("Help")),
     ]
+}
+
+#[derive(Clone)]
+pub struct Pair<T> {
+    first: T,
+    second: T,
+}
+
+impl<T> Pair<T> {
+    pub fn new(first: T, second: T) -> Pair<T> {
+        Self { first, second }
+    }
+}
+
+impl<T> Iterator for PairIterator<T>
+where
+    T: Clone,
+{
+    type Item = T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let result = match self.index {
+            0 => Some(self.pair.first.to_owned()),
+            1 => Some(self.pair.second.to_owned()),
+            _ => None,
+        };
+        self.index += 1;
+        result
+    }
+}
+
+impl<T> IntoIterator for Pair<T>
+where
+    T: Clone,
+{
+    type Item = T;
+
+    type IntoIter = PairIterator<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        PairIterator {
+            pair: self,
+            index: 0,
+        }
+    }
+}
+
+pub struct PairIterator<T> {
+    pair: Pair<T>,
+    index: usize,
 }

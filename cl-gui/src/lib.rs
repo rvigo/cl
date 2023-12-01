@@ -1,6 +1,7 @@
 mod entities;
 mod key_handlers;
 mod screens;
+mod widgets;
 
 use anyhow::Result;
 use cl_core::resources::config::Config;

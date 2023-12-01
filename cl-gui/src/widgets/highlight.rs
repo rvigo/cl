@@ -10,7 +10,7 @@ pub trait Highlight<'a> {
     where
         T: Into<String>;
 
-    fn split_preserve_chars(&self, content: &'a str, pattern: &'a str) -> Vec<&'a str>; // TODO is this the correct place for these aux methods?
+    fn split_preserve_chars(&self, content: &'a str, pattern: &'a str) -> Vec<&'a str>;
 
     fn group_by_newline(&self, input: &'a [&str]) -> Vec<Vec<String>>;
 
