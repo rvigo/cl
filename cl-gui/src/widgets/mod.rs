@@ -1,9 +1,8 @@
+pub mod alias_list;
 pub mod base_widget;
 pub mod display;
 pub mod fields;
-pub mod help_popup;
 pub mod highlight;
-pub mod list;
 pub mod popup;
 pub mod statusbar;
 pub mod text_field;
@@ -12,9 +11,10 @@ use self::statusbar::StatusBarItem;
 use crate::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crossterm::event::KeyEvent;
 use tui::{
-    layout::Alignment,
+    buffer::Buffer,
+    layout::{Alignment, Rect},
     style::{Color, Style},
-    widgets::{Block, BorderType, Borders, Widget},
+    widgets::{Block, BorderType, Borders, Clear, Widget},
 };
 
 #[macro_export]
@@ -74,6 +74,10 @@ pub trait WidgetExt {
         } else {
             Style::default().fg(DEFAULT_TEXT_COLOR)
         }
+    }
+
+    fn clear_area(&self, area: Rect, buf: &mut Buffer) {
+        Clear::render(Clear, area, buf);
     }
 }
 

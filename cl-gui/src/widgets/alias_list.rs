@@ -5,22 +5,22 @@ use tui::{
     buffer::Buffer,
     layout::Rect,
     style::{Color, Modifier, Style},
-    text::Span,
+    text::Line,
     widgets::{List, ListItem, ListState, StatefulWidget, Widget},
 };
 
 #[derive(Clone)]
-pub struct ListWidget<'a> {
+pub struct AliasListWidget<'a> {
     items: Vec<ListItem<'a>>,
     state: ListState,
 }
 
-impl<'a> ListWidget<'a> {
-    pub fn new(commands: Vec<Command>, state: ListState) -> ListWidget<'a> {
+impl<'a> AliasListWidget<'a> {
+    pub fn new(commands: Vec<Command>, state: ListState) -> AliasListWidget<'a> {
         let items: Vec<ListItem> = commands
             .into_iter()
             .map(|c| {
-                ListItem::new(Span::styled(
+                ListItem::new(Line::styled(
                     c.alias,
                     Style::default().fg(DEFAULT_TEXT_COLOR),
                 ))
@@ -31,13 +31,13 @@ impl<'a> ListWidget<'a> {
     }
 }
 
-impl<'a> Widget for ListWidget<'a> {
+impl<'a> Widget for AliasListWidget<'a> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
         StatefulWidget::render(self.to_owned(), area, buf, &mut self.state)
     }
 }
 
-impl<'a> StatefulWidget for ListWidget<'a> {
+impl<'a> StatefulWidget for AliasListWidget<'a> {
     type State = ListState;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {

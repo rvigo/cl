@@ -46,7 +46,7 @@ impl InputHandler {
             main_screen_handler: MainScreenHandler,
             insert_screen_handler: InsertScreenHandler,
             edit_screen_handler: EditScreenHandler,
-            popup_handler: PopupHandler::new(None),
+            popup_handler: PopupHandler,
             help_popup_handler: HelpPopupHandler,
             querybox_handler: QueryboxHandler,
         };
@@ -78,8 +78,8 @@ impl InputHandler {
         let querybox_focus = ui_context.querybox_ref().focus();
 
         let handled_event = if ui_context.show_popup() {
-            self.popup_handler
-                .update_message_type(ui_context.popup().and_then(|popup| popup.message_type()));
+            // self.popup_handler
+            //     .update_message_type(ui_context.popup().and_then(|popup| popup.message_type()));
             self.popup_handler.handle(key_event)
         } else if ui_context.show_help() {
             self.help_popup_handler.handle(key_event)

@@ -3,29 +3,59 @@ use crate::{
     entities::{
         events::app_events::PopupCallbackAction,
         states::{
-            answer_state::AnswerState,
+            popup_state::PopupState,
             ui_state::{UiState, ViewMode},
             State,
         },
     },
-    screens::{
-        widgets::{
-            popup::{Answer, Popup},
-            statusbar::querybox::QueryBox,
-            text_field::{FieldType, TextField},
-            WidgetKeyHandler,
-        },
-        ScreenSize,
+    screens::ScreenSize,
+    widgets::{
+        popup::{option::Choice, popup_type::PopupType},
+        statusbar::querybox::QueryBox,
+        text_field::{FieldType, TextField},
+        WidgetKeyHandler,
     },
 };
 use cl_core::command::Command;
 use crossterm::event::KeyEvent;
+
+pub struct PopupInfoContainer {
+    pub title: String,
+    pub message: String,
+    pub popup_type: PopupType,
+    pub callback: PopupCallbackAction,
+}
+
+impl PopupInfoContainer {
+    pub fn new() -> PopupInfoContainer {
+        Self {
+            title: String::default(),
+            message: String::default(),
+            popup_type: PopupType::Error,
+            callback: PopupCallbackAction::None,
+        }
+    }
+
+    pub fn set<T: Into<String>>(
+        &mut self,
+        title: T,
+        popup_type: PopupType,
+        message: String,
+        callback: PopupCallbackAction,
+    ) {
+        self.title = title.into();
+        self.popup_type = popup_type;
+        self.callback = callback;
+        self.message = message
+    }
+}
 
 pub struct UIContext<'a> {
     form_fields_context: FieldContext<'a>,
     popup_context: PopupContext,
     ui_state: UiState,
     query_box: QueryBox<'a>,
+    pub popup_container: PopupInfoContainer,
 }
 
 impl<'a> UIContext<'a> {
@@ -35,6 +65,7 @@ impl<'a> UIContext<'a> {
             popup_context: PopupContext::new(),
             ui_state: UiState::new(&size),
             query_box: QueryBox::default(),
+            popup_container: PopupInfoContainer::new(),
         };
 
         context.sort_fields(size);
@@ -44,24 +75,24 @@ impl<'a> UIContext<'a> {
     }
 
     //// popup
-    pub fn set_dialog_popup(&mut self, message: String, callback_action: PopupCallbackAction) {
-        self.set_popup(Some(Popup::from_warning(message, callback_action)))
+    pub fn set_popup(
+        &mut self,
+        popup_type: PopupType,
+        message: String,
+        callback_action: PopupCallbackAction,
+    ) {
+        let answers = match popup_type {
+            PopupType::Error => Choice::confirm(),
+            PopupType::Warning => Choice::dialog(),
+            PopupType::Help => Choice::empty(),
+        };
+        self.popup_context.set_available_choices(answers);
+        self.popup_container
+            .set(popup_type.to_string(), popup_type, message, callback_action);
     }
 
-    pub fn set_error_popup(&mut self, message: String) {
-        self.set_popup(Some(Popup::from_error(message, None)))
-    }
-
-    pub fn popup(&self) -> Option<Popup> {
-        self.popup_context.get_popup()
-    }
-
-    pub fn set_popup(&mut self, popup: Option<Popup>) {
-        self.popup_context.set_popup(popup);
-    }
-
-    pub fn get_popup_answer(&self) -> Option<Answer> {
-        self.popup_context.answer()
+    pub fn get_available_choices(&self) -> Vec<Choice> {
+        self.popup_context.get_available_choices()
     }
 
     pub fn clear_popup_context(&mut self) {
@@ -76,15 +107,14 @@ impl<'a> UIContext<'a> {
         self.popup_context.previous()
     }
 
-    pub fn get_selected_choice(&self) -> Option<Answer> {
-        if let Some(choice) = self.popup_context.state().selected() {
-            self.popup().map(|popup| popup.choices()[choice].to_owned())
-        } else {
-            None
-        }
+    pub fn get_selected_choice(&self) -> Option<Choice> {
+        self.popup_context
+            .state()
+            .selected()
+            .map(|choice| self.popup_context.get_available_choices()[choice].to_owned())
     }
 
-    pub fn get_choices_state_mut(&mut self) -> &mut AnswerState {
+    pub fn get_choices_state_mut(&mut self) -> &mut PopupState {
         self.popup_context.state_mut()
     }
 

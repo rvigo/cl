@@ -1,13 +1,11 @@
 use super::Selectable;
 use crate::{
     entities::states::{field_state::FieldState, State},
-    screens::{
-        widgets::{
-            fields::Fields,
-            text_field::{FieldType, TextField},
-            WidgetKeyHandler,
-        },
-        ScreenSize,
+    screens::ScreenSize,
+    widgets::{
+        fields::Fields,
+        text_field::{FieldType, TextField},
+        WidgetKeyHandler,
     },
 };
 use cl_core::command::{Command, CommandBuilder};
@@ -270,7 +268,6 @@ impl ToOption for Vec<String> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::screens::widgets::WidgetKeyHandler;
     use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
     fn create_fields() -> Fields<'static> {

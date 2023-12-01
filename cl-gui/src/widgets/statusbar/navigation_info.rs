@@ -1,5 +1,6 @@
+use crate::widgets::display::DisplayWidget;
+
 use super::StatusBarItem;
-use crate::screens::widgets::display::DisplayWidget;
 use tui::{buffer::Buffer, layout::Rect, widgets::Widget};
 
 #[derive(Clone)]

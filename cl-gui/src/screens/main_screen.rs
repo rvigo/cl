@@ -1,19 +1,18 @@
-use super::{
-    widgets::{
-        display::DisplayWidget, help_popup::HelpPopup, highlight::Highlight, list::ListWidget,
-        statusbar::help::Help, WidgetExt,
-    },
-    Screen, ScreenExt, ScreenSize, ScreenType,
-};
+use super::{Screen, ScreenExt, ScreenSize, ScreenType};
 use crate::{
-    centered_rect,
-    {
-        entities::contexts::{
-            application_context::ApplicationContext, namespaces_context::NamespacesContext,
-            ui_context::UIContext,
-        },
-        DEFAULT_SELECTED_COLOR,
+    entities::contexts::{
+        application_context::ApplicationContext, namespaces_context::NamespacesContext,
+        ui_context::UIContext,
     },
+    widgets::{
+        alias_list::AliasListWidget,
+        display::DisplayWidget,
+        highlight::Highlight,
+        popup::{help_popup::HelpPopup, question_popup::QuestionPopup, RenderPopup},
+        statusbar::help::Help,
+        WidgetExt,
+    },
+    DEFAULT_SELECTED_COLOR,
 };
 use cl_core::command::{Command, CommandBuilder};
 use tui::{
@@ -78,8 +77,8 @@ impl MainScreen {
         &self,
         commands: Vec<Command>,
         state: ListState,
-    ) -> ListWidget<'a> {
-        ListWidget::new(commands, state)
+    ) -> AliasListWidget<'a> {
+        AliasListWidget::new(commands, state)
     }
 
     fn create_command_details_widget<'a>(
@@ -173,31 +172,18 @@ impl Screen for MainScreen {
 
         //
         if ui_context.show_help() {
-            frame.render_widget(
-                HelpPopup::new(
-                    &self.screen_type.clone().into(),
-                    self.screen_size.to_owned(),
-                ),
-                frame.size(),
-            );
+            let help_popup = HelpPopup::new(&self.screen_type.clone().into());
+            frame.render_popup(help_popup, frame.size());
         }
 
         //
-        if ui_context.popup().is_some() && ui_context.get_popup_answer().is_none() {
-            if let Some(popup) = &ui_context.popup() {
-                //TODO move this to `UiContext`
-                let area = if !ScreenSize::Small.eq(&self.screen_size) {
-                    centered_rect!(45, 40, frame.size())
-                } else {
-                    frame.size()
-                };
-
-                frame.render_stateful_widget(
-                    popup.to_owned(),
-                    area,
-                    ui_context.get_choices_state_mut(),
-                );
-            }
+        if ui_context.show_popup() {
+            let popup = QuestionPopup::new(
+                ui_context.popup_container.message.to_owned(),
+                ui_context.get_available_choices(),
+                ui_context.popup_container.popup_type.to_owned(),
+            );
+            frame.render_stateful_popup(popup, frame.size(), ui_context.get_choices_state_mut());
         }
     }
 
@@ -214,7 +200,7 @@ fn render_form_medium(
     frame: &mut Frame,
     tabs: Tabs,
     command: DisplayWidget,
-    commands: ListWidget,
+    commands: AliasListWidget,
     namespace: DisplayWidget,
     tags: DisplayWidget,
     description: DisplayWidget,
@@ -254,7 +240,12 @@ fn render_form_medium(
     frame.render_widget(description, chunks[1]);
 }
 
-fn render_form_small(frame: &mut Frame, tabs: Tabs, commands: ListWidget, command: DisplayWidget) {
+fn render_form_small(
+    frame: &mut Frame,
+    tabs: Tabs,
+    commands: AliasListWidget,
+    command: DisplayWidget,
+) {
     let constraints = [Constraint::Length(3), Constraint::Min(5)];
     let chunks = Layout::default()
         .direction(Direction::Vertical)

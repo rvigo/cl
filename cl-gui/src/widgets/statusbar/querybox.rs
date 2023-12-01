@@ -1,5 +1,6 @@
+use crate::{widgets::WidgetKeyHandler, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
+
 use super::StatusBarItem;
-use crate::{screens::widgets::WidgetKeyHandler, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crossterm::event::{KeyCode, KeyEvent};
 use tui::{
     buffer::Buffer,

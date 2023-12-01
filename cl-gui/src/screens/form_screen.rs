@@ -1,17 +1,17 @@
-use super::{
-    widgets::{
-        help_popup::HelpPopup,
-        statusbar::{help::Help, navigation_info::NavigationInfo},
-        text_field::FieldType,
-        WidgetExt,
-    },
-    Screen, ScreenExt, ScreenSize,
-};
+use super::{Screen, ScreenExt, ScreenSize};
 use crate::{
     centered_rect,
     entities::{
         contexts::{application_context::ApplicationContext, ui_context::UIContext},
         terminal::TerminalSizeExt,
+    },
+    widgets::{
+        popup::{
+            help_popup::HelpPopup, option::Choice, question_popup::QuestionPopup, RenderPopup,
+        },
+        statusbar::{help::Help, navigation_info::NavigationInfo},
+        text_field::FieldType,
+        WidgetExt,
     },
 };
 use tui::{
@@ -63,22 +63,23 @@ impl Screen for FormScreen {
         }
 
         if ui_context.show_help() {
-            frame.render_widget(
-                HelpPopup::new(&ui_context.view_mode(), self.screen_size.to_owned()),
-                frame.size(),
-            );
+            let hp = HelpPopup::new(&ui_context.view_mode());
+            frame.render_popup(hp, frame.size());
         }
 
-        if ui_context.popup().is_some() && ui_context.get_popup_answer().is_none() {
-            if let Some(popup) = ui_context.popup() {
-                let area = if !ScreenSize::Small.eq(&self.screen_size) {
-                    centered_rect!(45, 40, frame.size())
-                } else {
-                    frame.size()
-                };
+        if ui_context.show_popup() {
+            let area = if !ScreenSize::Small.eq(&self.screen_size) {
+                centered_rect!(45, 40, frame.size())
+            } else {
+                frame.size()
+            };
 
-                frame.render_stateful_widget(popup, area, ui_context.get_choices_state_mut());
-            }
+            let p = QuestionPopup::new(
+                ui_context.popup_container.message.clone(),
+                Choice::dialog(),
+                ui_context.popup_container.popup_type.to_owned(),
+            );
+            frame.render_stateful_popup(p, area, ui_context.get_choices_state_mut());
         }
     }
 
