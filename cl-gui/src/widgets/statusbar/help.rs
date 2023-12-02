@@ -1,7 +1,10 @@
-use crate::widgets::display::DisplayWidget;
-
 use super::StatusBarItem;
-use tui::{buffer::Buffer, layout::Rect, widgets::Widget};
+use crate::widgets::display::DisplayWidget;
+use tui::{
+    buffer::Buffer,
+    layout::{Alignment, Rect},
+    widgets::Widget,
+};
 
 #[derive(Clone)]
 pub struct Help {
@@ -20,7 +23,7 @@ impl StatusBarItem for Help {}
 
 impl Widget for Help {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let display = DisplayWidget::new(self.content, true, false);
+        let display = DisplayWidget::new(self.content, true, false).alignment(Alignment::Right);
 
         display.render(area, buf)
     }

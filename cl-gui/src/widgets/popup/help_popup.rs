@@ -26,6 +26,16 @@ impl<'a> HelpPopup<'a> {
 }
 
 impl Popup for HelpPopup<'_> {
+    fn content_height(&self) -> u16 {
+        self.content.len() as u16
+    }
+
+    fn content_width(&self) -> u16 {
+        const FIXED_WIDTH: u16 = 75;
+
+        FIXED_WIDTH
+    }
+
     fn render(self, area: Rect, buf: &mut Buffer, _: Option<&mut PopupState>) {
         let rows = self
             .content
@@ -47,14 +57,6 @@ impl Popup for HelpPopup<'_> {
 
         Clear::render(Clear, render_position, buf);
         table.render(render_position, buf)
-    }
-
-    fn content_height(&self) -> u16 {
-        self.content.len() as u16
-    }
-
-    fn content_width(&self) -> u16 {
-        75
     }
 }
 

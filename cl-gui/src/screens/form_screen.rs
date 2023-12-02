@@ -9,7 +9,7 @@ use crate::{
         popup::{
             help_popup::HelpPopup, option::Choice, question_popup::QuestionPopup, RenderPopup,
         },
-        statusbar::{help::Help, navigation_info::NavigationInfo},
+        statusbar::{help::Help, info::Info, navigation_info::NavigationInfo},
         text_field::FieldType,
         WidgetExt,
     },
@@ -39,16 +39,7 @@ impl Screen for FormScreen {
         _: &mut ApplicationContext,
         ui_context: &mut UIContext,
     ) {
-        let navigation_info = NavigationInfo::new();
-        let help = Help::new();
-
-        self.render_base(frame, Some(&navigation_info), Some(help));
-
-        let block = self.default_block(if ui_context.is_form_modified() {
-            format!(" {} MODIFIED ", ui_context.view_mode())
-        } else {
-            format!(" {} ", ui_context.view_mode())
-        });
+        let block = self.default_block(format!(" {} ", ui_context.view_mode()));
 
         let screen_size = frame.size().as_terminal_size().into();
 
@@ -81,6 +72,16 @@ impl Screen for FormScreen {
             );
             frame.render_stateful_popup(p, area, ui_context.get_choices_state_mut());
         }
+
+        let center = if ui_context.is_form_modified() {
+            Some(Info::new("MODIFIED"))
+        } else {
+            None
+        };
+
+        let help = Help::new();
+
+        self.render_base(frame, Some(&NavigationInfo::new()), center, Some(help));
     }
 
     fn set_screen_size(&mut self, screen_size: ScreenSize) {

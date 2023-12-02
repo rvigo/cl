@@ -3,6 +3,7 @@ use crate::{
     entities::{
         events::app_events::PopupCallbackAction,
         states::{
+            clipboard_state::ClipboardState,
             popup_state::PopupState,
             ui_state::{UiState, ViewMode},
             State,
@@ -56,6 +57,7 @@ pub struct UIContext<'a> {
     ui_state: UiState,
     query_box: QueryBox<'a>,
     pub popup_container: PopupInfoContainer,
+    pub clipboard_state: ClipboardState,
 }
 
 impl<'a> UIContext<'a> {
@@ -66,6 +68,7 @@ impl<'a> UIContext<'a> {
             ui_state: UiState::new(&size),
             query_box: QueryBox::default(),
             popup_container: PopupInfoContainer::new(),
+            clipboard_state: ClipboardState::default(),
         };
 
         context.sort_fields(size);

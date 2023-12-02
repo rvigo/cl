@@ -95,7 +95,6 @@ impl<'a> EventHandler<'a> {
                         }
                     }
                     CommandEvent::Copy => {
-                        // TODO should it trigger a visual event???
                         let mut ui = self.ui_context.lock();
                         if let Some(command) = ui.get_selected_command() {
                             if let Err(error) = self
@@ -109,6 +108,8 @@ impl<'a> EventHandler<'a> {
                                     error.to_string(),
                                     PopupCallbackAction::None,
                                 );
+                            } else {
+                                ui.clipboard_state.start()
                             }
                         }
                     }
