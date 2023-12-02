@@ -1,5 +1,4 @@
-use super::WidgetExt;
-use crate::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
+use crate::{default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use cl_core::command::Command;
 use tui::{
     buffer::Buffer,
@@ -43,7 +42,7 @@ impl<'a> StatefulWidget for AliasListWidget<'a> {
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         StatefulWidget::render(
             List::new(self.items.to_owned())
-                .block(self.default_block("Aliases"))
+                .block(default_block!("Aliases"))
                 .highlight_style(
                     Style::default()
                         .fg(Color::Black)

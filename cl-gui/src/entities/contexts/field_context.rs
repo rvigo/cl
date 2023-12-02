@@ -1,7 +1,9 @@
 use super::Selectable;
 use crate::{
-    entities::states::{field_state::FieldState, State},
-    screens::ScreenSize,
+    entities::{
+        states::{field_state::FieldState, State},
+        terminal::TerminalSize,
+    },
     widgets::{
         fields::Fields,
         text_field::{FieldType, TextField},
@@ -19,7 +21,7 @@ pub struct FieldContext<'a> {
 }
 
 impl<'a> FieldContext<'a> {
-    pub fn new(size: &ScreenSize) -> Self {
+    pub fn new(size: &TerminalSize) -> Self {
         Self {
             fields: Fields::new(size),
             state: FieldState::default(),
@@ -27,8 +29,8 @@ impl<'a> FieldContext<'a> {
         }
     }
 
-    pub fn sort_field_by_size(&mut self, size: &ScreenSize) {
-        self.fields.sort_by_screen_size(size);
+    pub fn sort_field_by_size(&mut self, size: &TerminalSize) {
+        self.fields.sort_by_terminal_size(size);
     }
 
     pub fn get_fields_iter(&self) -> impl Iterator<Item = TextField<'_>> {
@@ -268,6 +270,7 @@ impl ToOption for Vec<String> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::entities::terminal::TerminalSize;
     use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
     fn create_fields() -> Fields<'static> {
@@ -318,7 +321,7 @@ mod test {
 
     #[test]
     fn should_move_to_next_field() {
-        let mut field_context = FieldContext::new(&ScreenSize::Medium);
+        let mut field_context = FieldContext::new(&TerminalSize::Medium);
         field_context.state.select(Some(FieldType::Alias));
 
         field_context.next();
@@ -337,7 +340,7 @@ mod test {
 
     #[test]
     fn should_move_to_previous_field() {
-        let mut field_context = FieldContext::new(&ScreenSize::Medium);
+        let mut field_context = FieldContext::new(&TerminalSize::Medium);
         field_context.state.select(Some(FieldType::Alias));
 
         field_context.previous();
@@ -356,7 +359,7 @@ mod test {
 
     #[test]
     fn should_return_the_selected_field() {
-        let mut field_context = FieldContext::new(&ScreenSize::Medium);
+        let mut field_context = FieldContext::new(&TerminalSize::Medium);
 
         field_context.state.select(Some(FieldType::Namespace));
         let selected_field = field_context.selected_field_mut();
@@ -365,7 +368,7 @@ mod test {
 
     #[test]
     fn should_build_a_new_command() {
-        let mut field_context = FieldContext::new(&ScreenSize::Medium);
+        let mut field_context = FieldContext::new(&TerminalSize::Medium);
 
         field_context.fields = create_fields();
         let command = field_context.build_new_command();
@@ -380,7 +383,7 @@ mod test {
 
     #[test]
     fn should_set_input_based_at_selected_command() {
-        let mut field_context = FieldContext::new(&ScreenSize::Medium);
+        let mut field_context = FieldContext::new(&TerminalSize::Medium);
         let selected_command = Command {
             alias: String::from("alias"),
             command: String::from("command"),

@@ -1,14 +1,14 @@
-use super::{option::Choice, popup_type::PopupType, Popup, WithOptions};
+use super::{choice::Choice, popup_type::PopupType, Popup, WithOptions};
 use crate::{
+    default_block,
     entities::states::{popup_state::PopupState, State},
-    widgets::WidgetExt,
     DEFAULT_TEXT_COLOR,
 };
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
     style::Style,
-    widgets::{Paragraph, Widget, Wrap},
+    widgets::{Clear, Paragraph, Widget, Wrap},
 };
 
 #[derive(Clone, Debug)]
@@ -49,7 +49,7 @@ impl Popup for QuestionPopup {
 
     fn render(self, area: Rect, buf: &mut Buffer, state: Option<&mut PopupState>) {
         if let Some(state) = state {
-            let block = self.default_block(self.popup_type.to_string());
+            let block = default_block!(self.popup_type.to_string());
 
             let paragraph = Paragraph::new(self.content.to_owned())
                 .style(Style::default().fg(DEFAULT_TEXT_COLOR))
@@ -59,7 +59,7 @@ impl Popup for QuestionPopup {
 
             let render_position = self.get_render_position(area);
 
-            self.clear_area(render_position, buf);
+            Clear::render(Clear, render_position, buf);
             paragraph.render(render_position, buf);
 
             let options = self.button_widget(state.selected().unwrap_or(0));
@@ -70,5 +70,3 @@ impl Popup for QuestionPopup {
 }
 
 impl WithOptions for QuestionPopup {}
-
-impl WidgetExt for QuestionPopup {}

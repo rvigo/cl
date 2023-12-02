@@ -1,9 +1,9 @@
+pub mod choice;
 pub mod help_popup;
-pub mod option;
 pub mod popup_type;
 pub mod question_popup;
 
-use self::option::Choice;
+use self::choice::Choice;
 use crate::{centered_rect, entities::states::popup_state::PopupState, DEFAULT_SELECTED_COLOR};
 use std::{rc::Rc, vec};
 use tui::{
@@ -132,4 +132,18 @@ impl RenderPopup for Frame<'_> {
     {
         popup.render(area, self.buffer_mut(), Some(state))
     }
+}
+
+#[macro_export]
+macro_rules! popup {
+    (question => $ui_context:expr) => {
+        QuestionPopup::new(
+            $ui_context.popup_container.message.to_owned(),
+            $ui_context.get_available_choices(),
+            $ui_context.popup_container.popup_type.to_owned(),
+        )
+    };
+    (help => $view_mode:expr) => {
+        HelpPopup::new($view_mode)
+    };
 }

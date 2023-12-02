@@ -38,11 +38,11 @@ impl<'a> Highlight<'a> for DisplayWidget<'a> {
         }
 
         if highlight_string.eq(&self.content()) {
-            let span = Span::styled(
+            let line = Line::styled(
                 highlight_string,
                 Style::default().add_modifier(Modifier::UNDERLINED),
             );
-            self.set_highlighted_content(Some(Line::from(span)));
+            self.set_highlighted_content(Some(line));
             return self;
         }
 

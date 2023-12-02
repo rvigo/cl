@@ -1,4 +1,3 @@
-use crate::{entities::terminal::TerminalSize, screens::ScreenSize};
 use std::fmt;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -19,39 +18,17 @@ impl fmt::Display for ViewMode {
     }
 }
 
-impl From<&TerminalSize> for &ScreenSize {
-    fn from(value: &TerminalSize) -> Self {
-        match value {
-            TerminalSize::Small => &ScreenSize::Small,
-            TerminalSize::Medium => &ScreenSize::Medium,
-            TerminalSize::Large => &ScreenSize::Large,
-        }
-    }
-}
-
-impl From<TerminalSize> for ScreenSize {
-    fn from(value: TerminalSize) -> Self {
-        match value {
-            TerminalSize::Small => ScreenSize::Small,
-            TerminalSize::Medium => ScreenSize::Medium,
-            TerminalSize::Large => ScreenSize::Large,
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct UiState {
     view_mode: ViewMode,
-    screen_size: ScreenSize,
     show_popup: bool,
     show_help: bool,
 }
 
 impl UiState {
-    pub fn new(screen_size: &ScreenSize) -> UiState {
+    pub fn new() -> UiState {
         Self {
             view_mode: ViewMode::Main,
-            screen_size: screen_size.to_owned(),
             show_popup: false,
             show_help: false,
         }
@@ -63,14 +40,6 @@ impl UiState {
 
     pub fn set_view_mode(&mut self, view_mode: ViewMode) {
         self.view_mode = view_mode
-    }
-
-    pub fn screen_size(&self) -> ScreenSize {
-        self.screen_size.to_owned()
-    }
-
-    pub fn set_screen_size(&mut self, screen_size: ScreenSize) {
-        self.screen_size = screen_size
     }
 
     pub fn show_popup(&self) -> bool {

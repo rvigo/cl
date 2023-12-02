@@ -124,7 +124,7 @@ impl ApplicationContext {
     }
 
     // other
-    pub fn should_highligh(&mut self) -> bool {
+    pub fn should_highlight(&mut self) -> bool {
         self.config_options.get_highlight()
     }
 

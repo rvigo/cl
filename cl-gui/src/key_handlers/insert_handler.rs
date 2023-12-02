@@ -1,14 +1,13 @@
-use super::KeyEventHandler;
+use super::{AppEventResult, KeyEventHandler};
 use crate::entities::events::app_events::{
     AppEvent, CommandEvent, FormScreenEvent, PopupEvent, PopupType, RenderEvent, ScreenEvent,
 };
-use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub struct InsertScreenHandler;
 
 impl KeyEventHandler for InsertScreenHandler {
-    fn handle(&self, key_event: KeyEvent) -> Result<Option<AppEvent>> {
+    fn handle(&self, key_event: KeyEvent) -> AppEventResult {
         match key_event {
             KeyEvent {
                 code: KeyCode::Esc,

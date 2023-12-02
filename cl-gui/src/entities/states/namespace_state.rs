@@ -7,6 +7,7 @@ pub struct NamespaceState {
 
 impl State for NamespaceState {
     type Output = usize;
+
     fn selected(&self) -> usize {
         self.selected
     }

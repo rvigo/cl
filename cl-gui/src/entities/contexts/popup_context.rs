@@ -1,23 +1,24 @@
 use super::Selectable;
 use crate::{
     entities::states::{popup_state::PopupState, State},
-    widgets::popup::option::Choice,
+    widgets::popup::choice::Choice,
 };
 
 #[derive(Default)]
 pub struct PopupContext {
-    selected_choice: Option<Choice>,
     state: PopupState,
+    selected_choice: Option<Choice>,
     available_choices: Vec<Choice>,
 }
 
 impl PopupContext {
     pub fn new() -> PopupContext {
         let mut context = Self {
-            selected_choice: None,
             state: PopupState::default(),
+            selected_choice: None,
             available_choices: vec![],
         };
+
         context.state.select(Some(0));
 
         context
@@ -41,7 +42,6 @@ impl PopupContext {
 
     pub fn clear(&mut self) {
         self.selected_choice = None;
-
         self.state.select(Some(0));
     }
 }

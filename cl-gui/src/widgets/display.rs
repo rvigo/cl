@@ -67,14 +67,14 @@ impl<'a> DisplayWidget<'a> {
 
 impl<'a> Widget for DisplayWidget<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        // if there is no highlighted content, transforms the content in a `Vec<Spans>`
+        // if there is no highlighted content, transforms the content in a `Line`
         let content = if let Some(styled) = self.highlighted_content {
             Text::from(styled)
         } else {
             Text::from(self.content)
         };
 
-        let p = Paragraph::new(content)
+        let paragraph = Paragraph::new(content)
             .style(self.style)
             .alignment(self.alignment)
             .wrap(Wrap { trim: self.trim })
@@ -84,7 +84,7 @@ impl<'a> Widget for DisplayWidget<'a> {
                 Block::default()
             });
 
-        p.render(area, buf)
+        paragraph.render(area, buf)
     }
 }
 
@@ -108,7 +108,7 @@ mod test {
 
         assert!(result.highlighted_content.is_some());
 
-        let expected_spans = Line::from(vec![
+        let expected_line = Line::from(vec![
             Span::styled("s", Style::default().add_modifier(Modifier::UNDERLINED)),
             Span::styled("a", Style::default().add_modifier(Modifier::UNDERLINED)),
             Span::styled("n", Style::default().add_modifier(Modifier::UNDERLINED)),
@@ -122,7 +122,7 @@ mod test {
         ]);
 
         let actual = result.highlighted_content.unwrap();
-        assert_eq!(actual, expected_spans);
+        assert_eq!(actual, expected_line);
     }
 
     #[test]
@@ -132,7 +132,7 @@ mod test {
 
         let d = DisplayWidget::new(content, false, true);
 
-        let expected_spans = Line::from(vec![
+        let expected_line = Line::from(vec![
             Span::from("thi"),
             Span::styled("s", Style::default().add_modifier(Modifier::UNDERLINED)),
             Span::from(" i"),
@@ -152,7 +152,7 @@ mod test {
         assert!(result.highlighted_content.is_some());
 
         let actual = result.highlighted_content.unwrap();
-        assert_eq!(actual, expected_spans);
+        assert_eq!(actual, expected_line);
     }
 
     #[test]
@@ -160,7 +160,8 @@ mod test {
         let content = "change location";
         let pattern = "cl";
         let d = DisplayWidget::new(content, false, true);
-        let expected_spans = Line::from(vec![
+
+        let expected_line = Line::from(vec![
             Span::styled("c", Style::default().add_modifier(Modifier::UNDERLINED)),
             Span::from("hange "),
             Span::styled("l", Style::default().add_modifier(Modifier::UNDERLINED)),
@@ -174,7 +175,7 @@ mod test {
         assert!(result.highlighted_content.is_some());
 
         let actual = result.highlighted_content.unwrap();
-        assert_eq!(actual, expected_spans);
+        assert_eq!(actual, expected_line);
     }
 
     #[test]
