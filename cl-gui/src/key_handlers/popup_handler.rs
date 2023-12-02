@@ -1,12 +1,11 @@
-use super::KeyEventHandler;
+use super::{AppEventResult, KeyEventHandler};
 use crate::entities::events::app_events::{AppEvent, PopupEvent};
-use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 
 pub struct PopupHandler;
 
 impl KeyEventHandler for PopupHandler {
-    fn handle(&self, key_event: KeyEvent) -> Result<Option<AppEvent>> {
+    fn handle(&self, key_event: KeyEvent) -> AppEventResult {
         match key_event {
             KeyEvent {
                 code: KeyCode::Right,

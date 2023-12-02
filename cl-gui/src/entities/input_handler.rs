@@ -4,30 +4,31 @@ use crate::{
     key_handlers::{
         edit_handler::EditScreenHandler, help_popup_handler::HelpPopupHandler,
         insert_handler::InsertScreenHandler, main_handler::MainScreenHandler,
-        popup_handler::PopupHandler, querybox_handler::QueryboxHandler, KeyEventHandler,
+        popup_handler::PopupHandler, querybox_handler::QueryboxHandler, HandlerType,
+        KeyEventHandler,
     },
 };
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use crossterm::event::KeyEvent;
 use log::debug;
 use parking_lot::Mutex;
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
+use std::{
+    collections::HashMap,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
 };
 use tokio::sync::mpsc::{error::SendError, Receiver, Sender};
+
+type ThreadSafeKeyEventHandler<'a> = &'a (dyn KeyEventHandler + Send + Sync);
 
 pub struct InputHandler {
     input_rx: Receiver<InputMessages>,
     app_sx: Sender<AppEvent>,
     ui_context: Arc<Mutex<UIContext<'static>>>,
     should_quit: Arc<AtomicBool>,
-    main_screen_handler: MainScreenHandler,
-    insert_screen_handler: InsertScreenHandler,
-    edit_screen_handler: EditScreenHandler,
-    popup_handler: PopupHandler,
-    help_popup_handler: HelpPopupHandler,
-    querybox_handler: QueryboxHandler,
+    handlers: HashMap<HandlerType, ThreadSafeKeyEventHandler<'static>>,
 }
 
 impl InputHandler {
@@ -37,18 +38,21 @@ impl InputHandler {
         ui_context: Arc<Mutex<UIContext<'static>>>,
         should_quit: Arc<AtomicBool>,
     ) -> Result<()> {
+        let mut handlers: HashMap<HandlerType, ThreadSafeKeyEventHandler<'static>> = HashMap::new();
+
+        handlers.insert(HandlerType::Popup, &PopupHandler);
+        handlers.insert(HandlerType::Help, &HelpPopupHandler);
+        handlers.insert(HandlerType::Main, &MainScreenHandler);
+        handlers.insert(HandlerType::Insert, &InsertScreenHandler);
+        handlers.insert(HandlerType::Edit, &EditScreenHandler);
+        handlers.insert(HandlerType::QueryBox, &QueryboxHandler);
+
         let mut handler = Self {
             input_rx,
             app_sx,
             ui_context,
             should_quit,
-            // key handlers
-            main_screen_handler: MainScreenHandler,
-            insert_screen_handler: InsertScreenHandler,
-            edit_screen_handler: EditScreenHandler,
-            popup_handler: PopupHandler,
-            help_popup_handler: HelpPopupHandler,
-            querybox_handler: QueryboxHandler,
+            handlers,
         };
 
         handler.start().await
@@ -75,22 +79,13 @@ impl InputHandler {
 
     fn handle_input(&mut self, key_event: KeyEvent) -> Result<Option<AppEvent>> {
         let ui_context = self.ui_context.lock();
-        let querybox_focus = ui_context.querybox_ref().focus();
 
-        let handled_event = if ui_context.show_popup() {
-            // self.popup_handler
-            //     .update_message_type(ui_context.popup().and_then(|popup| popup.message_type()));
-            self.popup_handler.handle(key_event)
-        } else if ui_context.show_help() {
-            self.help_popup_handler.handle(key_event)
-        } else if querybox_focus {
-            self.querybox_handler.handle(key_event)
-        } else {
-            let handler = self.get_handler(&ui_context.view_mode());
-            handler.handle(key_event)
-        };
+        let handler_type = self.get_handler_type(&ui_context);
 
-        handled_event
+        match self.handlers.get(&handler_type) {
+            Some(handler) => handler.handle(key_event),
+            None => Err(anyhow!("Key handler not found for {:?}", handler_type)),
+        }
     }
 
     async fn send_event(&self, event: AppEvent) -> Result<(), SendError<AppEvent>> {
@@ -98,11 +93,19 @@ impl InputHandler {
         self.app_sx.send(event).await
     }
 
-    fn get_handler(&self, view_mode: &ViewMode) -> &dyn KeyEventHandler {
-        match view_mode {
-            ViewMode::Main => &self.main_screen_handler,
-            ViewMode::Insert => &self.insert_screen_handler,
-            ViewMode::Edit => &self.edit_screen_handler,
+    fn get_handler_type(&self, ui_context: &UIContext<'static>) -> HandlerType {
+        if ui_context.show_popup() {
+            HandlerType::Popup
+        } else if ui_context.show_help() {
+            HandlerType::Help
+        } else if ui_context.querybox_ref().focus() {
+            HandlerType::QueryBox
+        } else {
+            match &ui_context.view_mode() {
+                ViewMode::Main => HandlerType::Main,
+                ViewMode::Insert => HandlerType::Insert,
+                ViewMode::Edit => HandlerType::Edit,
+            }
         }
     }
 }

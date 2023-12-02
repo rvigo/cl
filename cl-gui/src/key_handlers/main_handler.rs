@@ -1,15 +1,14 @@
-use super::KeyEventHandler;
+use super::{AppEventResult, KeyEventHandler};
 use crate::entities::events::app_events::{
     AppEvent, CommandEvent, MainScreenEvent, PopupCallbackAction, PopupEvent, PopupType,
     QueryboxEvent, RenderEvent, ScreenEvent,
 };
-use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub struct MainScreenHandler;
 
 impl KeyEventHandler for MainScreenHandler {
-    fn handle(&self, key_event: KeyEvent) -> Result<Option<AppEvent>> {
+    fn handle(&self, key_event: KeyEvent) -> AppEventResult {
         match key_event {
             KeyEvent {
                 code: KeyCode::Char('f'),

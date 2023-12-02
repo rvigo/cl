@@ -6,19 +6,12 @@ use super::entities::{
     states::ui_state::ViewMode,
 };
 use crate::{
+    entities::terminal::TerminalSizeExt,
     screens::{form_screen::FormScreen, main_screen::MainScreen},
     widgets::{base_widget::BaseWidget, statusbar::StatusBarItem},
 };
 use std::collections::HashMap;
 use tui::Frame;
-
-#[derive(Clone, Debug, PartialEq, Eq, Default)]
-pub enum ScreenSize {
-    Small,
-    #[default]
-    Medium,
-    Large,
-}
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub enum ScreenType {
@@ -56,10 +49,6 @@ impl From<ScreenType> for ViewMode {
 
 /// Represents a Screen
 pub trait Screen {
-    fn set_screen_size(&mut self, screen_size: ScreenSize);
-
-    fn get_screen_size(&self) -> ScreenSize;
-
     fn render(
         &mut self,
         frame: &mut Frame,
@@ -74,14 +63,10 @@ pub struct Screens<'a> {
 }
 
 impl<'a> Screens<'a> {
-    pub fn new<I>(size: I) -> Screens<'a>
-    where
-        I: Into<ScreenSize>,
-    {
-        let size = size.into();
-        let main_screen = MainScreen::new(size.clone());
-        let insert_screen = FormScreen::new(size.clone());
-        let edit_screen = FormScreen::new(size);
+    pub fn new() -> Screens<'a> {
+        let main_screen = MainScreen;
+        let insert_screen = FormScreen;
+        let edit_screen = FormScreen;
 
         let mut screens = Self {
             screens: HashMap::new(),
@@ -111,7 +96,7 @@ impl<'a> Screens<'a> {
 }
 
 /// Extension for `Screen`
-pub trait ScreenExt: Screen {
+pub trait ScreenExt {
     fn render_base<L, C, R>(
         &self,
         frame: &mut Frame,
@@ -123,8 +108,9 @@ pub trait ScreenExt: Screen {
         C: StatusBarItem,
         R: StatusBarItem,
     {
-        let terminal_size = self.get_screen_size();
+        let size = frame.size();
 
+        let terminal_size = size.as_terminal_size();
         let base_widget = BaseWidget::new(
             &terminal_size,
             left_statusbar_item,
@@ -132,7 +118,7 @@ pub trait ScreenExt: Screen {
             right_statusbar_item,
         );
 
-        frame.render_widget(base_widget, frame.size());
+        frame.render_widget(base_widget, size);
     }
 }
 

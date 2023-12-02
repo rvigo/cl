@@ -8,10 +8,10 @@ use crate::{
             ui_state::{UiState, ViewMode},
             State,
         },
+        terminal::TerminalSize,
     },
-    screens::ScreenSize,
     widgets::{
-        popup::{option::Choice, popup_type::PopupType},
+        popup::{choice::Choice, popup_type::PopupType},
         statusbar::querybox::QueryBox,
         text_field::{FieldType, TextField},
         WidgetKeyHandler,
@@ -61,11 +61,11 @@ pub struct UIContext<'a> {
 }
 
 impl<'a> UIContext<'a> {
-    pub fn new(size: ScreenSize) -> UIContext<'a> {
+    pub fn new(size: TerminalSize) -> UIContext<'a> {
         let mut context = UIContext {
             form_fields_context: FieldContext::new(&size),
             popup_context: PopupContext::new(),
-            ui_state: UiState::new(&size),
+            ui_state: UiState::new(),
             query_box: QueryBox::default(),
             popup_container: PopupInfoContainer::new(),
             clipboard_state: ClipboardState::default(),
@@ -201,36 +201,13 @@ impl<'a> UIContext<'a> {
         self.form_fields_context.is_modified()
     }
 
-    pub fn sort_fields<I>(&mut self, screen_size: I)
+    pub fn sort_fields<I>(&mut self, terminal_size: I)
     where
-        I: Into<ScreenSize>,
+        I: Into<TerminalSize>,
     {
-        let s = screen_size.into();
-        if self.screen_size() != s {
-            self.form_fields_context.sort_field_by_size(&s)
-        }
-    }
+        let s = terminal_size.into();
 
-    pub fn screen_size(&self) -> ScreenSize {
-        self.ui_state.screen_size()
-    }
-
-    pub fn set_screen_size<I>(&mut self, screen_size: I)
-    where
-        I: Into<ScreenSize>,
-    {
-        self.ui_state.set_screen_size(screen_size.into())
-    }
-
-    pub fn update_screen_size<I>(&mut self, screen_size: I)
-    where
-        I: Into<ScreenSize>,
-    {
-        let s: ScreenSize = screen_size.into();
-        if s != self.screen_size() {
-            self.sort_fields(s.clone());
-            self.set_screen_size(s)
-        }
+        self.form_fields_context.sort_field_by_size(&s)
     }
 
     // querybox
@@ -266,11 +243,13 @@ impl<'a> UIContext<'a> {
 
 #[cfg(test)]
 mod tests {
+    use crate::entities::terminal::TerminalSize;
+
     use super::*;
 
     #[test]
     fn should_clear_input_when_enter_insert_screen() {
-        let mut ui = UIContext::new(ScreenSize::Medium);
+        let mut ui = UIContext::new(TerminalSize::Medium);
         let command = Command::default();
 
         // enters edit mode

@@ -59,12 +59,8 @@ impl<'a> TuiApplication<'a> {
                     .draw(&mut self.ui_context, &mut self.context, &mut **screen)?;
 
                 if event::poll(Duration::from_millis(50))? {
-                    if let Ok(event) = event::read() {
-                        if let Event::Key(key) = event {
-                            self.input_sx.send(InputMessages::KeyPress(key)).await?;
-                        } else if let Event::Resize(_, _) = event {
-                            screen.set_screen_size(self.terminal.size().into())
-                        }
+                    if let Ok(Event::Key(key)) = event::read() {
+                        self.input_sx.send(InputMessages::KeyPress(key)).await?;
                     }
                 }
             }

@@ -1,5 +1,5 @@
 use super::StatusBarItem;
-use crate::screens::ScreenSize;
+use crate::entities::terminal::TerminalSize;
 use cl_core::resources::metadata::MAIN_PKG_METADATA;
 use tui::{
     buffer::Buffer,
@@ -14,7 +14,7 @@ where
     C: StatusBarItem,
     R: StatusBarItem,
 {
-    terminal_size: &'a ScreenSize,
+    terminal_size: &'a TerminalSize,
     left_statusbar_item: Option<&'a L>,
     center_statusbar_item: Option<R>,
     right_statusbar_item: Option<C>,
@@ -27,7 +27,7 @@ where
     R: StatusBarItem,
 {
     pub fn new(
-        terminal_size: &'a ScreenSize,
+        terminal_size: &'a TerminalSize,
         left_statusbar_item: Option<&'a L>,
         center_statusbar_item: Option<R>,
         right_statusbar_item: Option<C>,
@@ -139,9 +139,9 @@ where
 {
     fn render(self, area: Rect, buf: &mut Buffer) {
         match self.terminal_size {
-            ScreenSize::Small => self.render_small_screen(area, buf),
-            ScreenSize::Medium => self.render_medium_screen(area, buf),
-            ScreenSize::Large => self.render_big_screen(area, buf),
+            TerminalSize::Small => self.render_small_screen(area, buf),
+            TerminalSize::Medium => self.render_medium_screen(area, buf),
+            TerminalSize::Large => self.render_big_screen(area, buf),
         }
     }
 }

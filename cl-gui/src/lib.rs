@@ -55,7 +55,7 @@ mod core {
 
         debug!("creating contexts");
         let should_quit: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
-        let ui_context = Arc::new(Mutex::new(UIContext::new(size.clone().into())));
+        let ui_context = Arc::new(Mutex::new(UIContext::new(size.clone())));
         let context = Arc::new(Mutex::new(ApplicationContext::init(
             commands,
             file_service,
@@ -63,7 +63,7 @@ mod core {
         )));
 
         debug!("creating screens with size {size:?}");
-        let screens = Screens::new(size);
+        let screens = Screens::new();
 
         debug!("starting components");
         start_input_handler(input_rx, &app_sx, &ui_context, &should_quit).await;

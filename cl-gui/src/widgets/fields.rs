@@ -1,5 +1,6 @@
+use crate::entities::terminal::TerminalSize;
+
 use super::text_field::{FieldType, TextField, TextFieldBuilder};
-use crate::screens::ScreenSize;
 use std::{
     collections::HashMap,
     ops::{Deref, DerefMut},
@@ -28,7 +29,7 @@ pub struct Fields<'a> {
 }
 
 impl<'a> Fields<'a> {
-    pub fn new(size: &ScreenSize) -> Self {
+    pub fn new(size: &TerminalSize) -> Self {
         let alias = TextFieldBuilder::default()
             .field_type(FieldType::Alias)
             .in_focus(true)
@@ -63,8 +64,8 @@ impl<'a> Fields<'a> {
         Fields {
             items: map,
             sequence: match size {
-                ScreenSize::Small => SMALL_SIZE_FIELD_SEQUENCE.to_owned(),
-                ScreenSize::Medium | ScreenSize::Large => MEDIUM_SIZE_FIELD_SEQUENCE.to_owned(),
+                TerminalSize::Small => SMALL_SIZE_FIELD_SEQUENCE.to_owned(),
+                TerminalSize::Medium | TerminalSize::Large => MEDIUM_SIZE_FIELD_SEQUENCE.to_owned(),
             },
         }
     }
@@ -81,10 +82,10 @@ impl<'a> Fields<'a> {
         sorted_fields.into_iter()
     }
 
-    pub fn sort_by_screen_size(&mut self, size: &ScreenSize) {
+    pub fn sort_by_terminal_size(&mut self, size: &TerminalSize) {
         let sequence = match size {
-            ScreenSize::Small => SMALL_SIZE_FIELD_SEQUENCE.to_owned(),
-            ScreenSize::Medium | ScreenSize::Large => MEDIUM_SIZE_FIELD_SEQUENCE.to_owned(),
+            TerminalSize::Small => SMALL_SIZE_FIELD_SEQUENCE.to_owned(),
+            TerminalSize::Medium | TerminalSize::Large => MEDIUM_SIZE_FIELD_SEQUENCE.to_owned(),
         };
 
         self.sequence = sequence

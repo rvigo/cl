@@ -1,5 +1,5 @@
-use super::{WidgetExt, WidgetKeyHandler};
-use crate::DEFAULT_TEXT_COLOR;
+use super::WidgetKeyHandler;
+use crate::{default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::{
     fmt::{Debug, Display},
@@ -9,7 +9,7 @@ use std::{
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
-    style::{Modifier, Style},
+    style::{Color, Modifier, Style},
     widgets::Widget,
 };
 use tui_textarea::{
@@ -124,6 +124,14 @@ impl<'a> TextField<'a> {
         );
         text_area
     }
+
+    fn get_style(&self, in_focus: bool) -> Style {
+        if in_focus {
+            Style::default().fg(Color::Black).bg(DEFAULT_SELECTED_COLOR)
+        } else {
+            Style::default().fg(DEFAULT_TEXT_COLOR)
+        }
+    }
 }
 
 impl<'a> Drop for TextField<'a> {
@@ -169,7 +177,7 @@ impl<'a> Widget for TextField<'a> {
             self.text_area.set_cursor_style(Style::default());
         };
         let title = self.title.clone();
-        let default_block = self.default_block(title);
+        let default_block = default_block!(title);
 
         self.text_area.set_block(default_block);
 
