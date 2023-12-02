@@ -1,12 +1,11 @@
-use super::KeyEventHandler;
+use super::{AppEventResult, KeyEventHandler};
 use crate::entities::events::app_events::{AppEvent, QueryboxEvent};
-use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 
 pub struct QueryboxHandler;
 
 impl KeyEventHandler for QueryboxHandler {
-    fn handle(&self, key_event: KeyEvent) -> Result<Option<AppEvent>> {
+    fn handle(&self, key_event: KeyEvent) -> AppEventResult {
         match key_event {
             KeyEvent {
                 code: KeyCode::Esc | KeyCode::Enter | KeyCode::Down | KeyCode::Up,

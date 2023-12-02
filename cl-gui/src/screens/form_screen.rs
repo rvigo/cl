@@ -1,17 +1,15 @@
-use super::{Screen, ScreenExt, ScreenSize};
+use super::{Screen, ScreenExt};
 use crate::{
-    centered_rect,
+    default_block,
     entities::{
         contexts::{application_context::ApplicationContext, ui_context::UIContext},
-        terminal::TerminalSizeExt,
+        terminal::{TerminalSize, TerminalSizeExt},
     },
+    popup,
     widgets::{
-        popup::{
-            help_popup::HelpPopup, option::Choice, question_popup::QuestionPopup, RenderPopup,
-        },
+        popup::{help_popup::HelpPopup, question_popup::QuestionPopup, RenderPopup},
         statusbar::{help::Help, info::Info, navigation_info::NavigationInfo},
         text_field::FieldType,
-        WidgetExt,
     },
 };
 use tui::{
@@ -20,17 +18,7 @@ use tui::{
     Frame,
 };
 
-pub struct FormScreen {
-    screen_size: ScreenSize,
-}
-
-impl FormScreen {
-    pub fn new(screen_size: ScreenSize) -> Self {
-        Self { screen_size }
-    }
-}
-
-impl WidgetExt for FormScreen {}
+pub struct FormScreen;
 
 impl Screen for FormScreen {
     fn render(
@@ -39,38 +27,27 @@ impl Screen for FormScreen {
         _: &mut ApplicationContext,
         ui_context: &mut UIContext,
     ) {
-        let block = self.default_block(format!(" {} ", ui_context.view_mode()));
+        let block = default_block!(format!(" {} ", ui_context.view_mode()));
 
-        let screen_size = frame.size().as_terminal_size().into();
+        let terminal_size = frame.size().as_terminal_size();
 
-        if screen_size != self.screen_size {
-            <FormScreen as Screen>::set_screen_size(self, screen_size);
-        }
+        ui_context.sort_fields(terminal_size.to_owned());
 
-        match self.screen_size {
-            ScreenSize::Medium => render_medium_form(frame, ui_context, block),
-            ScreenSize::Large => render_medium_form(frame, ui_context, block),
-            ScreenSize::Small => render_small_form(frame, ui_context, block),
+        match terminal_size {
+            TerminalSize::Medium => render_medium_form(frame, ui_context, block),
+            TerminalSize::Large => render_medium_form(frame, ui_context, block),
+            TerminalSize::Small => render_small_form(frame, ui_context, block),
         }
 
         if ui_context.show_help() {
-            let hp = HelpPopup::new(&ui_context.view_mode());
-            frame.render_popup(hp, frame.size());
+            let help_popup = popup!(help => &ui_context.view_mode());
+            frame.render_popup(help_popup, frame.size());
         }
 
         if ui_context.show_popup() {
-            let area = if !ScreenSize::Small.eq(&self.screen_size) {
-                centered_rect!(45, 40, frame.size())
-            } else {
-                frame.size()
-            };
+            let popup = popup!(question => ui_context);
 
-            let p = QuestionPopup::new(
-                ui_context.popup_container.message.clone(),
-                Choice::dialog(),
-                ui_context.popup_container.popup_type.to_owned(),
-            );
-            frame.render_stateful_popup(p, area, ui_context.get_choices_state_mut());
+            frame.render_stateful_popup(popup, frame.size(), ui_context.get_choices_state_mut());
         }
 
         let center = if ui_context.is_form_modified() {
@@ -79,23 +56,16 @@ impl Screen for FormScreen {
             None
         };
 
-        let help = Help::new();
-
-        self.render_base(frame, Some(&NavigationInfo::new()), center, Some(help));
-    }
-
-    fn set_screen_size(&mut self, screen_size: ScreenSize) {
-        self.screen_size = screen_size
-    }
-
-    fn get_screen_size(&self) -> ScreenSize {
-        self.screen_size.to_owned()
+        self.render_base(
+            frame,
+            Some(&NavigationInfo::new()),
+            center,
+            Some(Help::new()),
+        );
     }
 }
 
 fn render_medium_form(frame: &mut Frame, ui_context: &mut UIContext, block: Block) {
-    ui_context.update_screen_size(frame.size().as_terminal_size());
-
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -149,8 +119,6 @@ fn render_medium_form(frame: &mut Frame, ui_context: &mut UIContext, block: Bloc
 }
 
 fn render_small_form(frame: &mut Frame, ui_context: &mut UIContext, block: Block) {
-    ui_context.update_screen_size(frame.size().as_terminal_size());
-
     let form_chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)

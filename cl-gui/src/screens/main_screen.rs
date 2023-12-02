@@ -1,16 +1,20 @@
-use super::{Screen, ScreenExt, ScreenSize, ScreenType};
+use super::{Screen, ScreenExt};
 use crate::{
-    entities::contexts::{
-        application_context::ApplicationContext, namespaces_context::NamespacesContext,
-        ui_context::UIContext,
+    default_block,
+    entities::{
+        contexts::{
+            application_context::ApplicationContext, namespaces_context::NamespacesContext,
+            ui_context::UIContext,
+        },
+        terminal::{TerminalSize, TerminalSizeExt},
     },
+    popup,
     widgets::{
         alias_list::AliasListWidget,
         display::DisplayWidget,
         highlight::Highlight,
         popup::{help_popup::HelpPopup, question_popup::QuestionPopup, RenderPopup},
         statusbar::{help::Help, info::Info},
-        WidgetExt,
     },
     DEFAULT_SELECTED_COLOR,
 };
@@ -18,24 +22,14 @@ use cl_core::command::{Command, CommandBuilder};
 use tui::{
     layout::{Constraint, Direction, Layout},
     style::{Modifier, Style},
-    text::Span,
+    text::{Line, Span},
     widgets::{ListState, Tabs},
     Frame,
 };
 
-pub struct MainScreen {
-    screen_size: ScreenSize,
-    screen_type: ScreenType,
-}
+pub struct MainScreen;
 
 impl MainScreen {
-    pub fn new(screen_size: ScreenSize) -> Self {
-        Self {
-            screen_size,
-            screen_type: ScreenType::Main,
-        }
-    }
-
     fn get_selected_command(
         &self,
         selected_command_index: usize,
@@ -60,11 +54,11 @@ impl MainScreen {
 
     fn create_tab_menu_widget<'a>(&self, namespaces_context: &NamespacesContext) -> Tabs<'a> {
         let namespaces = namespaces_context.namespaces();
-        let tab_menu = namespaces.iter().cloned().map(Span::from).collect();
+        let tab_menu = namespaces.iter().cloned().map(Line::from).collect();
 
         Tabs::new(tab_menu)
             .select(namespaces_context.get_selected_namespace_idx())
-            .block(self.default_block("Namespaces"))
+            .block(default_block!("Namespaces"))
             .highlight_style(
                 Style::default()
                     .fg(DEFAULT_SELECTED_COLOR)
@@ -117,11 +111,9 @@ impl MainScreen {
         content: &str,
         should_highligh: bool,
     ) -> DisplayWidget<'a> {
-        DisplayWidget::new(content, true, should_highligh).block(self.default_block(title))
+        DisplayWidget::new(content, true, should_highligh).block(default_block!(title))
     }
 }
-
-impl WidgetExt for MainScreen {}
 
 impl Screen for MainScreen {
     fn render(
@@ -137,7 +129,7 @@ impl Screen for MainScreen {
         //
         ui_context.select_command(Some(selected_command.to_owned()));
 
-        let should_highlight = context.should_highligh();
+        let should_highlight = context.should_highlight();
         let query = ui_context.querybox_ref().get_input();
         let namespaces_context = context.namespaces_context();
         let command_state = context.get_commands_state();
@@ -154,29 +146,25 @@ impl Screen for MainScreen {
         let commands = self.create_command_items_widget(filtered_commands, command_state);
 
         //
-        match self.screen_size {
-            ScreenSize::Medium => {
+        match frame.size().as_terminal_size() {
+            TerminalSize::Medium => {
                 render_form_medium(frame, tabs, command, commands, namespace, tags, description)
             }
-            ScreenSize::Large => {
+            TerminalSize::Large => {
                 render_form_medium(frame, tabs, command, commands, namespace, tags, description)
             }
-            ScreenSize::Small => render_form_small(frame, tabs, commands, command),
+            TerminalSize::Small => render_form_small(frame, tabs, commands, command),
         }
 
         //
         if ui_context.show_help() {
-            let help_popup = HelpPopup::new(&self.screen_type.clone().into());
+            let help_popup = popup!(help => &ui_context.view_mode());
             frame.render_popup(help_popup, frame.size());
         }
 
         //
         if ui_context.show_popup() {
-            let popup = QuestionPopup::new(
-                ui_context.popup_container.message.to_owned(),
-                ui_context.get_available_choices(),
-                ui_context.popup_container.popup_type.to_owned(),
-            );
+            let popup = popup!(question => ui_context);
             frame.render_stateful_popup(popup, frame.size(), ui_context.get_choices_state_mut());
         }
 
@@ -193,14 +181,6 @@ impl Screen for MainScreen {
         let help = Help::new();
         //
         self.render_base(frame, Some(querybox), center, Some(help));
-    }
-
-    fn set_screen_size(&mut self, screen_size: ScreenSize) {
-        self.screen_size = screen_size
-    }
-
-    fn get_screen_size(&self) -> ScreenSize {
-        self.screen_size.to_owned()
     }
 }
 
