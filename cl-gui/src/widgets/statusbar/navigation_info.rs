@@ -1,6 +1,5 @@
-use crate::widgets::display::DisplayWidget;
-
 use super::StatusBarItem;
+use crate::widgets::display::DisplayWidget;
 use tui::{buffer::Buffer, layout::Rect, widgets::Widget};
 
 #[derive(Clone)]
@@ -13,7 +12,7 @@ impl StatusBarItem for NavigationInfo {}
 impl NavigationInfo {
     pub fn new() -> NavigationInfo {
         Self {
-            content: String::from("<Tab> Move rigth | <Shift + Tab> Move left | <Ctrl + S> Save item | <Esc> Return to main screen" ),
+            content: String::from("<Tab> Rigth <S+Tab> Left <C+S> Save <Esc> Return"),
         }
     }
 }

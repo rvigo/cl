@@ -8,29 +8,34 @@ use tui::{
     widgets::{Block, BorderType, Borders, Widget},
 };
 
-pub struct BaseWidget<'a, F, H>
+pub struct BaseWidget<'a, L, C, R>
 where
-    F: StatusBarItem,
-    H: StatusBarItem,
+    L: StatusBarItem,
+    C: StatusBarItem,
+    R: StatusBarItem,
 {
     terminal_size: &'a ScreenSize,
-    left_statusbar_item: Option<&'a F>,
-    right_statusbar_item: Option<H>,
+    left_statusbar_item: Option<&'a L>,
+    center_statusbar_item: Option<R>,
+    right_statusbar_item: Option<C>,
 }
 
-impl<'a, F, H> BaseWidget<'a, F, H>
+impl<'a, L, C, R> BaseWidget<'a, L, C, R>
 where
-    F: StatusBarItem,
-    H: StatusBarItem,
+    L: StatusBarItem,
+    C: StatusBarItem,
+    R: StatusBarItem,
 {
     pub fn new(
         terminal_size: &'a ScreenSize,
-        left_statusbar_item: Option<&'a F>,
-        right_statusbar_item: Option<H>,
-    ) -> BaseWidget<'a, F, H> {
+        left_statusbar_item: Option<&'a L>,
+        center_statusbar_item: Option<R>,
+        right_statusbar_item: Option<C>,
+    ) -> BaseWidget<'a, L, C, R> {
         BaseWidget {
             terminal_size,
             left_statusbar_item,
+            center_statusbar_item,
             right_statusbar_item,
         }
     }
@@ -41,9 +46,10 @@ where
 
     fn render_medium_screen(&self, area: Rect, buf: &mut Buffer) {
         let has_left_item = self.left_statusbar_item.is_some();
+        let has_center_item = self.center_statusbar_item.is_some();
         let has_right_item = self.right_statusbar_item.is_some();
 
-        if has_left_item || has_right_item {
+        if has_left_item || has_right_item || has_center_item {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .margin(1)
@@ -58,36 +64,51 @@ where
                 )
                 .split(area);
 
-            if let Some(left_statusbar_item) = self.left_statusbar_item {
-                let statusbar_layout = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints([Constraint::Min(28), Constraint::Length(18)].as_ref())
-                    .split(chunks[3]);
+            let statusbar_layout = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints(
+                    [
+                        Constraint::Percentage(33),
+                        Constraint::Percentage(33),
+                        Constraint::Percentage(33),
+                    ]
+                    .as_ref(),
+                )
+                .split(chunks[3]);
 
+            if let Some(left_statusbar_item) = self.left_statusbar_item {
                 let block = Block::default()
                     .borders(Borders::ALL)
                     .border_type(BorderType::Plain);
 
-                let right_inner_area = block.inner(statusbar_layout[1]);
                 let left_inner_area = block.inner(statusbar_layout[0]);
 
                 block.render(chunks[3], buf);
                 left_statusbar_item.to_owned().render(left_inner_area, buf);
+            }
 
-                if let Some(right_statusbar_item) = &self.right_statusbar_item {
-                    right_statusbar_item
-                        .to_owned()
-                        .render(right_inner_area, buf);
-                }
-            } else if let Some(right_statusbar_item) = &self.right_statusbar_item {
-                let statusbar_layout = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints([Constraint::Percentage(100)].as_ref())
-                    .split(chunks[3]);
+            if let Some(center_statusbar_item) = &self.center_statusbar_item {
+                let block = Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Plain);
 
+                let center_inner_area = block.inner(statusbar_layout[1]);
+
+                block.render(chunks[3], buf);
+                center_statusbar_item
+                    .to_owned()
+                    .render(center_inner_area, buf);
+            }
+
+            if let Some(right_statusbar_item) = &self.right_statusbar_item {
+                let block = Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Plain);
+
+                let right_inner_area = block.inner(statusbar_layout[2]);
                 right_statusbar_item
                     .to_owned()
-                    .render(statusbar_layout[0], buf);
+                    .render(right_inner_area, buf);
             }
         }
 
@@ -110,10 +131,11 @@ where
     }
 }
 
-impl<'a, F, H> Widget for BaseWidget<'a, F, H>
+impl<'a, L, C, R> Widget for BaseWidget<'a, L, C, R>
 where
-    F: StatusBarItem,
-    H: StatusBarItem,
+    L: StatusBarItem,
+    C: StatusBarItem,
+    R: StatusBarItem,
 {
     fn render(self, area: Rect, buf: &mut Buffer) {
         match self.terminal_size {
