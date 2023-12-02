@@ -112,18 +112,25 @@ impl<'a> Screens<'a> {
 
 /// Extension for `Screen`
 pub trait ScreenExt: Screen {
-    fn render_base<F, H>(
+    fn render_base<L, C, R>(
         &self,
         frame: &mut Frame,
-        left_statusbar_item: Option<&F>,
-        right_statusbar_item: Option<H>,
+        left_statusbar_item: Option<&L>,
+        center_statusbar_item: Option<R>,
+        right_statusbar_item: Option<C>,
     ) where
-        F: StatusBarItem,
-        H: StatusBarItem,
+        L: StatusBarItem,
+        C: StatusBarItem,
+        R: StatusBarItem,
     {
         let terminal_size = self.get_screen_size();
-        let var_name = BaseWidget::new(&terminal_size, left_statusbar_item, right_statusbar_item);
-        let base_widget = var_name;
+
+        let base_widget = BaseWidget::new(
+            &terminal_size,
+            left_statusbar_item,
+            center_statusbar_item,
+            right_statusbar_item,
+        );
 
         frame.render_widget(base_widget, frame.size());
     }

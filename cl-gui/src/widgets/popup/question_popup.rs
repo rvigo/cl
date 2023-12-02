@@ -41,12 +41,10 @@ impl Popup for QuestionPopup {
     }
 
     fn content_height(&self) -> u16 {
+        const MIN_HEIGHT: usize = 5;
+
         let lines = self.content.lines().count();
-        if lines < 5 {
-            5
-        } else {
-            lines as u16
-        }
+        MIN_HEIGHT.max(lines) as u16
     }
 
     fn render(self, area: Rect, buf: &mut Buffer, state: Option<&mut PopupState>) {

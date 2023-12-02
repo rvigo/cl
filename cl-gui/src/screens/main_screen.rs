@@ -9,7 +9,7 @@ use crate::{
         display::DisplayWidget,
         highlight::Highlight,
         popup::{help_popup::HelpPopup, question_popup::QuestionPopup, RenderPopup},
-        statusbar::help::Help,
+        statusbar::{help::Help, info::Info},
         WidgetExt,
     },
     DEFAULT_SELECTED_COLOR,
@@ -131,12 +131,6 @@ impl Screen for MainScreen {
         ui_context: &mut UIContext,
     ) {
         let filtered_commands = context.filter_commands(ui_context.get_querybox_input());
-        let querybox = ui_context.querybox_ref();
-        let help = Help::new();
-
-        //
-        self.render_base(frame, Some(querybox), Some(help));
-
         let selected_idx = context.get_selected_command_idx();
         let selected_command = self.get_selected_command(selected_idx, &filtered_commands);
 
@@ -185,6 +179,20 @@ impl Screen for MainScreen {
             );
             frame.render_stateful_popup(popup, frame.size(), ui_context.get_choices_state_mut());
         }
+
+        let center = if ui_context.clipboard_state.yanked() {
+            let info = Info::new("Command copied to clipboard!");
+            ui_context.clipboard_state.check();
+
+            Some(info)
+        } else {
+            None
+        };
+
+        let querybox = ui_context.querybox_ref();
+        let help = Help::new();
+        //
+        self.render_base(frame, Some(querybox), center, Some(help));
     }
 
     fn set_screen_size(&mut self, screen_size: ScreenSize) {
