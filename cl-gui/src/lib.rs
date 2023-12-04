@@ -4,7 +4,7 @@ mod screens;
 mod widgets;
 
 use anyhow::Result;
-use cl_core::resources::config::Config;
+use cl_core::config::Config;
 use tui::style::Color;
 
 pub const DEFAULT_TEXT_COLOR: Color = Color::Rgb(229, 229, 229);
@@ -27,7 +27,7 @@ mod core {
         screens::Screens,
     };
     use anyhow::{Context, Result};
-    use cl_core::resources::{commands_file_service::CommandsFileService, config::Config};
+    use cl_core::{config::Config, resources::commands_file_service::CommandsFileService};
     use log::debug;
     use parking_lot::Mutex;
     use std::{
@@ -43,7 +43,7 @@ mod core {
         let (input_sx, input_rx) = channel::<InputMessages>(16);
 
         debug!("loading commands from file");
-        let file_service = CommandsFileService::new(config.get_command_file_path()).validate()?;
+        let file_service = CommandsFileService::new(config.command_file_path()).validate()?;
         let commands = file_service
             .load()
             .context("Cannot load commands from file")?;
@@ -59,7 +59,7 @@ mod core {
         let context = Arc::new(Mutex::new(ApplicationContext::init(
             commands,
             file_service,
-            config.get_options(),
+            config.preferences(),
         )));
 
         debug!("creating screens with size {size:?}");

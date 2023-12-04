@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
 use cl_cli::{app::App, print_metadata, run_subcommands};
-use cl_core::resources::{
+use cl_core::{
     config::Config,
-    logger::{LoggerBuilder, LoggerType},
+    resources::logger::{LoggerBuilder, LoggerType},
 };
 use cl_gui::start_gui;
 
@@ -11,7 +11,7 @@ async fn main() -> Result<()> {
     let config = Config::load().context("Cannot load the config file")?;
 
     let logger = LoggerBuilder::default()
-        .with_log_level(config.get_log_level())
+        .with_log_level(config.preferences().get_log_level())
         .with_path(config.get_root_dir());
 
     let app = App::parse_app();
