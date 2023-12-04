@@ -1,5 +1,5 @@
 use super::errors::panic_handler;
-use crate::resources::config::LogLevel;
+use crate::config::LogLevel;
 use anyhow::Result;
 use std::path::Path;
 use tracing::{metadata::LevelFilter, Subscriber};
