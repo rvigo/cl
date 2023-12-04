@@ -20,43 +20,11 @@ use crate::{
 use cl_core::command::Command;
 use crossterm::event::KeyEvent;
 
-pub struct PopupInfoContainer {
-    pub title: String,
-    pub message: String,
-    pub popup_type: PopupType,
-    pub callback: PopupCallbackAction,
-}
-
-impl PopupInfoContainer {
-    pub fn new() -> PopupInfoContainer {
-        Self {
-            title: String::default(),
-            message: String::default(),
-            popup_type: PopupType::Error,
-            callback: PopupCallbackAction::None,
-        }
-    }
-
-    pub fn set<T: Into<String>>(
-        &mut self,
-        title: T,
-        popup_type: PopupType,
-        message: String,
-        callback: PopupCallbackAction,
-    ) {
-        self.title = title.into();
-        self.popup_type = popup_type;
-        self.callback = callback;
-        self.message = message
-    }
-}
-
 pub struct UIContext<'a> {
     form_fields_context: FieldContext<'a>,
     popup_context: PopupContext,
     ui_state: UiState,
     query_box: QueryBox<'a>,
-    pub popup_container: PopupInfoContainer,
     pub clipboard_state: ClipboardState,
 }
 
@@ -67,7 +35,6 @@ impl<'a> UIContext<'a> {
             popup_context: PopupContext::new(),
             ui_state: UiState::new(),
             query_box: QueryBox::default(),
-            popup_container: PopupInfoContainer::new(),
             clipboard_state: ClipboardState::default(),
         };
 
@@ -77,7 +44,10 @@ impl<'a> UIContext<'a> {
         context
     }
 
-    //// popup
+    pub fn popup_state_mut(&mut self) -> &mut PopupState {
+        self.popup_context.state_mut()
+    }
+
     pub fn set_popup(
         &mut self,
         popup_type: PopupType,
@@ -90,8 +60,12 @@ impl<'a> UIContext<'a> {
             PopupType::Help => Choice::empty(),
         };
         self.popup_context.set_available_choices(answers);
-        self.popup_container
-            .set(popup_type.to_string(), popup_type, message, callback_action);
+        self.popup_context.state_mut().set(
+            popup_type.to_string(),
+            popup_type,
+            message,
+            callback_action,
+        );
     }
 
     pub fn get_available_choices(&self) -> Vec<Choice> {
