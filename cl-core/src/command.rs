@@ -1,4 +1,4 @@
-use crate::resources::errors::CommandError;
+use crate::resource::errors::CommandError;
 use anyhow::{ensure, Result};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};

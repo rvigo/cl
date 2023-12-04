@@ -75,8 +75,7 @@ pub struct Widget {
 impl Subcommand for Config {
     fn run(&self, mut config: AppConfig) -> Result<()> {
         if let Some(ConfigSubcommand::ZshWidget(_)) = self.subcommand {
-            return install_zsh_widget(config.get_root_dir())
-                .context("Failed to install zsh widget");
+            return install_zsh_widget(config.root_dir()).context("Failed to install zsh widget");
         }
 
         if let Some(quiet) = self.quiet_mode {

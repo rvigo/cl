@@ -1,7 +1,6 @@
-use super::errors::panic_handler;
-use crate::config::LogLevel;
+use crate::{config::LogLevel, resource::errors::panic_handler};
 use anyhow::Result;
-use std::path::Path;
+use std::path::PathBuf;
 use tracing::{metadata::LevelFilter, Subscriber};
 use tracing_appender::rolling;
 use tracing_subscriber::{
@@ -23,32 +22,32 @@ pub enum LoggerType {
 }
 
 #[derive(Default)]
-pub struct LoggerBuilder<P> {
+pub struct LoggerBuilder {
     log_level: LogLevel,
     logger_type: LoggerType,
-    path: P,
+    path: PathBuf,
 }
 
-impl<P> LoggerBuilder<P>
-where
-    P: AsRef<Path>,
-{
-    pub fn with_log_level(mut self, log_level: LogLevel) -> LoggerBuilder<P> {
+impl LoggerBuilder {
+    pub fn with_log_level(mut self, log_level: LogLevel) -> LoggerBuilder {
         self.log_level = log_level;
         self
     }
 
-    pub fn with_path(mut self, path: P) -> LoggerBuilder<P> {
-        self.path = path;
+    pub fn with_path<P>(mut self, path: P) -> LoggerBuilder
+    where
+        P: Into<PathBuf>,
+    {
+        self.path = path.into();
         self
     }
 
-    pub fn with_logger_type(mut self, logger_type: LoggerType) -> LoggerBuilder<P> {
+    pub fn with_logger_type(mut self, logger_type: LoggerType) -> LoggerBuilder {
         self.logger_type = logger_type;
         self
     }
 
-    pub fn build(self) -> Logger<P> {
+    pub fn build(self) -> Logger {
         Logger {
             log_level: self.log_level,
             logger_type: self.logger_type,
@@ -57,19 +56,16 @@ where
     }
 }
 
-pub struct Logger<P> {
+pub struct Logger {
     log_level: LogLevel,
     logger_type: LoggerType,
-    path: P,
+    path: PathBuf,
 }
 
-impl<P> Logger<P>
-where
-    P: AsRef<Path>,
-{
+impl Logger {
     pub fn init(&self) -> Result<()> {
         match self.logger_type {
-            LoggerType::MainApp => self.init_main_app_logger()?,
+            LoggerType::MainApp => self.init_app_logger()?,
             LoggerType::Subcommand => self.init_subcommand_logger()?,
         }
 
@@ -78,10 +74,10 @@ where
     }
 
     /// Sets a logger with a single layer
-    fn init_main_app_logger(&self) -> Result<()> {
+    fn init_app_logger(&self) -> Result<()> {
         let level_filter: LevelFilter = self.log_level.to_owned().into();
         tracing_subscriber::registry()
-            .with(self.get_logfile_layer(level_filter))
+            .with(self.file_layer(level_filter))
             .init();
 
         Ok(())
@@ -91,29 +87,29 @@ where
     fn init_subcommand_logger(&self) -> Result<()> {
         let level_filter: LevelFilter = self.log_level.to_owned().into();
         tracing_subscriber::registry()
-            .with(self.get_stdout_layer(level_filter))
-            .with(self.get_logfile_layer(level_filter))
+            .with(self.stdout_layer(level_filter))
+            .with(self.file_layer(level_filter))
             .init();
 
         Ok(())
     }
 
-    fn get_logfile_layer<S>(&self, level_filter: LevelFilter) -> impl Layer<S>
+    fn file_layer<S>(&self, level_filter: LevelFilter) -> impl Layer<S>
     where
         S: Subscriber + for<'span> LookupSpan<'span>,
-        P: AsRef<Path>,
     {
         fmt::layer()
-            .with_writer(rolling::daily(self.path.as_ref(), "log.log"))
+            .with_writer(rolling::daily(self.path.to_owned().join("log"), "log.log"))
             .with_ansi(false)
             .with_filter(level_filter)
     }
 
-    fn get_stdout_layer<S>(&self, level_filter: LevelFilter) -> impl Layer<S>
+    fn stdout_layer<S>(&self, level_filter: LevelFilter) -> impl Layer<S>
     where
         S: Subscriber + for<'span> LookupSpan<'span>,
     {
         fmt::layer()
+            .without_time()
             .event_format(Format::default().with_source_location(false).without_time())
             .fmt_fields(PrettyFields::new())
             .with_target(false)

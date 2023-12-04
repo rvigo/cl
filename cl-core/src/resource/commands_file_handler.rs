@@ -1,18 +1,20 @@
-use super::{fs_wrapper, toml::TomlFileHandler};
-use crate::{command::Command, resources::errors::FileError};
+use super::{fs_wrapper::macros::write, toml::TomlFileHandler};
+use crate::{command::Command, resource::errors::FileError};
 use anyhow::Result;
 use log::debug;
 use std::path::{Path, PathBuf};
 
-pub struct CommandsFileService {
+pub struct CommandsFileHandler {
     command_file_path: PathBuf,
+    toml: TomlFileHandler,
 }
 
-impl TomlFileHandler for CommandsFileService {}
-
-impl CommandsFileService {
-    pub fn new(command_file_path: PathBuf) -> CommandsFileService {
-        Self { command_file_path }
+impl CommandsFileHandler {
+    pub fn new(command_file_path: PathBuf) -> CommandsFileHandler {
+        Self {
+            command_file_path,
+            toml: TomlFileHandler,
+        }
     }
 
     pub fn validate(self) -> Result<Self> {
@@ -29,27 +31,28 @@ impl CommandsFileService {
     }
 
     pub fn save(&self, commands: &Vec<Command>) -> Result<(), FileError> {
-        let toml = self.generate_toml_from_commands(commands)?;
-        fs_wrapper::write(self.command_file_path.as_path(), toml)
+        let toml = self.toml.generate_file_from_commands(commands)?;
+        write!(self.command_file_path.as_path(), toml)
     }
 
     pub fn save_at<P>(&self, commands: &Vec<Command>, path: P) -> Result<(), FileError>
     where
         P: AsRef<Path>,
     {
-        let toml = self.generate_toml_from_commands(commands)?;
-        fs_wrapper::write(path.as_ref(), toml)
+        let toml = self.toml.generate_file_from_commands(commands)?;
+        write!(path.as_ref(), toml)
     }
 
     pub fn load(&self) -> Result<Vec<Command>> {
-        self.generate_commands_from_toml(&self.command_file_path)
+        self.toml
+            .generate_commands_from_file(&self.command_file_path)
     }
 
     pub fn load_from<P>(&self, path: P) -> Result<Vec<Command>>
     where
         P: AsRef<Path>,
     {
-        self.generate_commands_from_toml(path)
+        self.toml.generate_commands_from_file(path)
     }
 }
 
@@ -64,7 +67,7 @@ mod test {
         let content = vec![Command::default()];
         let dir = temp_dir();
         let path = dir.join("test.toml");
-        let file_service = CommandsFileService::new(path.clone()).validate()?;
+        let file_service = CommandsFileHandler::new(path.to_owned()).validate()?;
 
         let result = file_service.save(&content);
         assert!(result.is_ok());
@@ -80,7 +83,7 @@ mod test {
     fn should_return_an_error() -> Result<()> {
         let dir = temp_dir();
         let path = dir.join("nonexistent/test.toml"); // .save() should not create any dir, so it will fail
-        let result = CommandsFileService::new(path.clone()).validate();
+        let result = CommandsFileHandler::new(path.to_owned()).validate();
 
         assert!(result.is_err());
 

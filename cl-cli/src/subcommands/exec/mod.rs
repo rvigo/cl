@@ -3,7 +3,7 @@ pub mod command_args;
 use self::command_args::CommandArg;
 use super::Subcommand;
 use anyhow::{anyhow, bail, Context, Result};
-use cl_core::{config::Config, load_commands, resources::errors::CommandError};
+use cl_core::{config::Config, load_commands, resource::errors::CommandError};
 use clap::Parser;
 use command_args::CommandArgs;
 use itertools::Itertools;
