@@ -1,9 +1,15 @@
 use std::collections::HashMap;
 
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub enum CommandArgType {
+    NamedParameter,
+    NonNamedParameter,
+}
+
 #[derive(Debug, Default)]
 pub struct CommandArgs {
-    /// Hashmap with two groups (true - named parameters / false - non named parameters)
-    command_args: HashMap<bool, Vec<CommandArg>>,
+    /// Hashmap with two groups (named parameters / non named parameters)
+    command_args: HashMap<CommandArgType, Vec<CommandArg>>,
     /// Reference list with collected named parameters keys
     named_parameters: Vec<String>,
 }
@@ -18,21 +24,24 @@ impl CommandArgs {
 
     pub fn push(&mut self, command_arg: CommandArg) {
         if self.named_parameters.contains(&command_arg.arg) {
-            self.command_args.entry(true).or_default().push(command_arg);
+            self.command_args
+                .entry(CommandArgType::NamedParameter)
+                .or_default()
+                .push(command_arg);
         } else {
             self.command_args
-                .entry(false)
+                .entry(CommandArgType::NonNamedParameter)
                 .or_default()
                 .push(command_arg);
         }
     }
 
     pub fn named_parameters(&self) -> Option<&Vec<CommandArg>> {
-        self.command_args.get(&true)
+        self.command_args.get(&CommandArgType::NamedParameter)
     }
 
     pub fn options(&self) -> Option<&Vec<CommandArg>> {
-        self.command_args.get(&false)
+        self.command_args.get(&CommandArgType::NonNamedParameter)
     }
 
     pub fn has_named_parameters(&self) -> bool {

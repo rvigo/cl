@@ -1,6 +1,6 @@
 use super::StatusBarItem;
 use crate::entities::terminal::TerminalSize;
-use cl_core::resources::metadata::MAIN_PKG_METADATA;
+use cl_core::resource::metadata::MAIN_PKG_METADATA;
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Direction, Layout, Rect},

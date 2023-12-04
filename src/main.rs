@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use cl_cli::{app::App, print_metadata, run_subcommands};
 use cl_core::{
     config::Config,
-    resources::logger::{LoggerBuilder, LoggerType},
+    logger::{LoggerBuilder, LoggerType},
 };
 use cl_gui::start_gui;
 
@@ -12,21 +12,25 @@ async fn main() -> Result<()> {
 
     let logger = LoggerBuilder::default()
         .with_log_level(config.preferences().get_log_level())
-        .with_path(config.get_root_dir());
+        .with_path(config.root_dir());
 
     let app = App::parse_app();
 
     if app.version {
         print_metadata()
     } else if let Some(subcommands) = app.subcommands {
-        let _ = logger
+        logger
             .with_logger_type(LoggerType::Subcommand)
             .build()
-            .init();
+            .init()?;
 
         run_subcommands(subcommands, config)
     } else {
-        let _ = logger.with_logger_type(LoggerType::MainApp).build().init();
+        logger
+            .with_logger_type(LoggerType::MainApp)
+            .build()
+            .init()?;
+
         start_gui(config).await
     }
 }

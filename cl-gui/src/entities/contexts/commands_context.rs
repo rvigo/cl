@@ -3,7 +3,7 @@ use crate::entities::fuzzy::Fuzzy;
 use super::{namespaces_context::DEFAULT_NAMESPACE, Selectable};
 use anyhow::Result;
 use cl_core::{
-    command::Command, commands::Commands, resources::commands_file_service::CommandsFileService,
+    command::Command, commands::Commands, resource::commands_file_handler::CommandsFileHandler,
 };
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
@@ -93,12 +93,12 @@ pub struct CommandsContext {
     to_be_executed: Option<Command>,
     commands_cache: CacheInfo,
     matcher: SkimMatcherV2,
-    commands_file_service: CommandsFileService,
+    commands_file_service: CommandsFileHandler,
     filtered_commands: Vec<Command>,
 }
 
 impl CommandsContext {
-    pub fn new(commands: Vec<Command>, commands_file_service: CommandsFileService) -> Self {
+    pub fn new(commands: Vec<Command>, commands_file_service: CommandsFileHandler) -> Self {
         let mut context = Self {
             commands: Commands::init(commands.clone()),
             state: ListState::default(),
@@ -319,7 +319,7 @@ mod test {
         let commands = commands_builder(n_of_commands);
         CommandsContext::new(
             commands,
-            CommandsFileService::new(temp_dir().join("commands.toml")),
+            CommandsFileHandler::new(temp_dir().join("commands.toml")),
         )
     }
 
@@ -482,7 +482,7 @@ mod test {
 
         let mut context = CommandsContext::new(
             commands,
-            CommandsFileService::new(temp_dir().join("commands.toml")),
+            CommandsFileHandler::new(temp_dir().join("commands.toml")),
         );
 
         context.filter_commands(DEFAULT_NAMESPACE, "git");
