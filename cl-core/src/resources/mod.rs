@@ -1,5 +1,4 @@
 pub mod commands_file_service;
-pub mod config;
 pub mod errors;
 pub mod logger;
 pub mod metadata;
@@ -12,15 +11,13 @@ macro_rules! load_commands {
         use std::path::PathBuf;
         use $crate::{commands::Commands, resources::commands_file_service::CommandsFileService};
 
-        fn load(command_file_path: PathBuf) -> Result<Commands> {
-            let file_service = CommandsFileService::new(command_file_path).validate()?;
-            let command_list = file_service
-                .load()
-                .context("Could not load the commands from file")?;
-            let commands = Commands::init(command_list);
-            Ok(commands)
-        }
-        load($command_file_path)
+        let file_service = CommandsFileService::new($command_file_path).validate()?;
+        let command_list = file_service
+            .load()
+            .context("Could not load the commands from file")?;
+        let commands = Commands::init(command_list);
+
+        Ok::<Commands, anyhow::Error>(commands)
     }};
 }
 

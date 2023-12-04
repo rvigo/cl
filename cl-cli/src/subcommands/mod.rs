@@ -4,7 +4,7 @@ pub mod misc;
 pub mod share;
 
 use anyhow::Result;
-use cl_core::resources::config::Config;
+use cl_core::config::Config;
 
 /// Represents a CLI Subcommand
 pub trait Subcommand {

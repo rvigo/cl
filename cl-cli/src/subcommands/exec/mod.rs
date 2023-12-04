@@ -3,10 +3,7 @@ pub mod command_args;
 use self::command_args::CommandArg;
 use super::Subcommand;
 use anyhow::{anyhow, bail, Context, Result};
-use cl_core::{
-    load_commands,
-    resources::{config::Config, errors::CommandError},
-};
+use cl_core::{config::Config, load_commands, resources::errors::CommandError};
 use clap::Parser;
 use command_args::CommandArgs;
 use itertools::Itertools;
@@ -69,12 +66,12 @@ pub struct Exec {
 
 impl Subcommand for Exec {
     fn run(&self, config: Config) -> Result<()> {
-        let commands = load_commands!(config.get_command_file_path())?;
+        let commands = load_commands!(config.command_file_path())?;
         let alias = &self.alias;
         let namespace = &self.namespace;
         let args = &self.command_args;
         let dry_run = self.dry_run;
-        let quiet_mode = self.quiet || config.get_quiet_mode();
+        let quiet_mode = self.quiet || config.preferences().get_quiet_mode();
         let mut command_item = commands.find_command(alias.to_owned(), namespace.to_owned())?;
 
         command_item.command = prepare_command(command_item.command, args.to_owned())

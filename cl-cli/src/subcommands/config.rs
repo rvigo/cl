@@ -1,6 +1,6 @@
 use super::Subcommand;
 use anyhow::{bail, Context, Result};
-use cl_core::resources::config::{Config as AppConfig, LogLevel as ConfigLogLevel};
+use cl_core::config::{Config as AppConfig, LogLevel as ConfigLogLevel};
 use clap::{Parser, Subcommand as ClapSubcommand, ValueEnum};
 use dirs::home_dir;
 use log::info;
@@ -75,20 +75,24 @@ pub struct Widget {
 impl Subcommand for Config {
     fn run(&self, mut config: AppConfig) -> Result<()> {
         if let Some(ConfigSubcommand::ZshWidget(_)) = self.subcommand {
-            install_zsh_widget(config.get_root_dir()).context("Failed to install zsh widget")
-        } else if let Some(quiet) = self.quiet_mode {
+            return install_zsh_widget(config.get_root_dir())
+                .context("Failed to install zsh widget");
+        }
+
+        if let Some(quiet) = self.quiet_mode {
             config
-                .set_quiet_mode(quiet)
+                .change_and_save(|c| c.preferences_mut().set_quiet_mode(quiet))
                 .if_ok(|| info!("quiet mode set to {quiet}"))
         } else if let Some(log_level) = self.log_level {
             config
-                .set_log_level(log_level.as_config_enum())
-                .context("Failed to set log level")
+                .change_and_save(|c| {
+                    c.preferences_mut()
+                        .set_log_level(log_level.as_config_enum())
+                })
                 .if_ok(|| info!("log level set to {log_level:?}"))
         } else if let Some(highlight) = self.highlight_matches {
             config
-                .set_highlight(highlight)
-                .context("Failed to set highlight")
+                .change_and_save(|c| c.preferences_mut().set_highlight(highlight))
                 .if_ok(|| info!("highlight matches set to {highlight}"))
         } else {
             println!("{}", config.printable());
@@ -145,6 +149,32 @@ fn validate_fzf() -> Result<()> {
     }
 }
 
+trait PrintableAppConfig {
+    /// Represents a kind of pretty printable version of the AppConfig struct
+    fn printable(&self) -> String;
+}
+
+impl PrintableAppConfig for AppConfig {
+    fn printable(&self) -> String {
+        let mut result = String::new();
+        result.push_str(&format!("config-file: {:?}\n", self.config_file_path()));
+        result.push_str(&format!("command-file: {:?}\n", self.command_file_path()));
+        let preferences = self.preferences();
+        result.push_str("preferences:\n");
+        result.push_str(&format!("  quiet-mode: {}\n", preferences.get_quiet_mode()));
+        result.push_str(&format!(
+            "  log-level: {}\n",
+            String::from(&preferences.get_log_level())
+        ));
+        result.push_str(&format!(
+            "  highlight-matches: {}\n",
+            preferences.get_highlight()
+        ));
+
+        result
+    }
+}
+
 trait IfOk<T> {
     fn if_ok<F>(self, f: F) -> Result<T>
     where
@@ -166,30 +196,6 @@ impl<T> IfOk<T> for Result<T> {
             }
             Err(err) => Err(err),
         }
-    }
-}
-
-trait PrintableAppConfig {
-    /// Represents a kind of pretty printable version of the AppConfig struct
-    fn printable(&self) -> String;
-}
-
-impl PrintableAppConfig for AppConfig {
-    fn printable(&self) -> String {
-        let mut result = String::new();
-        result.push_str(&format!("config-file: {:?}\n", self.get_config_file_path()));
-        result.push_str(&format!(
-            "command-file: {:?}\n",
-            self.get_command_file_path()
-        ));
-        result.push_str("options:\n");
-        result.push_str(&format!("  quiet-mode: {}\n", self.get_quiet_mode()));
-        result.push_str(&format!(
-            "  log-level: {}\n",
-            String::from(&self.get_log_level())
-        ));
-        result.push_str(&format!("  highlight-matches: {}\n", self.get_highlight()));
-        result
     }
 }
 
