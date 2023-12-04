@@ -12,6 +12,21 @@ pub struct PopupState {
     pub callback: PopupCallbackAction,
 }
 
+impl PopupState {
+    pub fn set<T: Into<String>>(
+        &mut self,
+        title: T,
+        popup_type: PopupType,
+        message: String,
+        callback: PopupCallbackAction,
+    ) {
+        self.title = title.into();
+        self.popup_type = popup_type;
+        self.callback = callback;
+        self.message = message
+    }
+}
+
 impl State for PopupState {
     type Output = Option<usize>;
 

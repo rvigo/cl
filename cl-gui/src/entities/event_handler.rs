@@ -170,7 +170,7 @@ impl<'a> EventHandler<'a> {
                             match answer {
                                 Choice::Ok => {
                                     let mut c = self.app_context.lock();
-                                    match &ui.popup_container.callback {
+                                    match &ui.popup_state_mut().callback {
                                         PopupCallbackAction::DeleteCommand => {
                                             if let Some(command) = ui.get_selected_command() {
                                                 match c.delete_selected_command(command) {
