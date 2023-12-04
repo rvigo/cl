@@ -134,16 +134,18 @@ impl RenderPopup for Frame<'_> {
     }
 }
 
-#[macro_export]
-macro_rules! popup {
-    (question => $ui_context:expr) => {
-        QuestionPopup::new(
-            $ui_context.popup_container.message.to_owned(),
-            $ui_context.get_available_choices(),
-            $ui_context.popup_container.popup_type.to_owned(),
-        )
-    };
-    (help => $view_mode:expr) => {
-        HelpPopup::new($view_mode)
-    };
+pub mod macros {
+    #[macro_export]
+    macro_rules! popup {
+        (question => $ui_context:expr) => {
+            QuestionPopup::new(
+                $ui_context.popup_state_mut().message.to_owned(),
+                $ui_context.get_available_choices(),
+                $ui_context.popup_state_mut().popup_type.to_owned(),
+            )
+        };
+        (help => $view_mode:expr) => {
+            HelpPopup::new($view_mode)
+        };
+    }
 }
