@@ -2,7 +2,7 @@ use super::Subcommand;
 use anyhow::{Context, Result};
 use cl_core::{
     command::Command, commands::Commands, config::Config,
-    resources::commands_file_service::CommandsFileService,
+    resource::commands_file_handler::CommandsFileHandler,
 };
 use clap::{Parser, ValueEnum};
 use log::{info, warn};
@@ -45,7 +45,7 @@ impl Subcommand for Share {
         let namespaces = &self.namespace;
 
         let commands_file_service =
-            CommandsFileService::new(config.command_file_path()).validate()?;
+            CommandsFileHandler::new(config.command_file_path()).validate()?;
         let command_list = commands_file_service.load()?;
         let commands = Commands::init(command_list);
 

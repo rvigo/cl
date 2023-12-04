@@ -7,7 +7,7 @@ use crate::entities::clipboard::Clipboard;
 use anyhow::Result;
 use cl_core::{
     command::Command, preferences::Preferences,
-    resources::commands_file_service::CommandsFileService,
+    resource::commands_file_handler::CommandsFileHandler,
 };
 use tui::widgets::ListState;
 
@@ -21,7 +21,7 @@ pub struct ApplicationContext {
 impl ApplicationContext {
     pub fn init(
         commands: Vec<Command>,
-        commands_file_service: CommandsFileService,
+        commands_file_service: CommandsFileHandler,
         config_options: Preferences,
     ) -> ApplicationContext {
         let namespaces = commands.iter().map(|c| c.namespace.to_owned()).collect();

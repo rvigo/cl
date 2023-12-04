@@ -1,4 +1,4 @@
-use crate::{command::Command, resources::errors::CommandError};
+use crate::{command::Command, resource::errors::CommandError};
 use anyhow::{bail, ensure, Context, Result};
 use std::env;
 
@@ -100,6 +100,7 @@ impl Commands {
                 eprintln!("Warning: $SHELL not found! Using sh");
                 String::from("sh")
             });
+
             std::process::Command::new(shell)
                 .env_clear()
                 .envs(env::vars())

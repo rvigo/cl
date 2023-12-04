@@ -1,6 +1,6 @@
 use anyhow::Result;
 use app::Subcommands;
-use cl_core::{config::Config, resources::metadata::METADATA};
+use cl_core::{config::Config, resource::metadata::METADATA};
 use subcommands::Subcommand;
 
 pub mod app;

@@ -48,7 +48,7 @@ pub enum FileError {
     },
 }
 
-pub(super) mod panic_handler {
+pub mod panic_handler {
     use log::error;
     use std::panic::PanicInfo;
 

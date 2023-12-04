@@ -27,7 +27,7 @@ mod core {
         screens::Screens,
     };
     use anyhow::{Context, Result};
-    use cl_core::{config::Config, resources::commands_file_service::CommandsFileService};
+    use cl_core::{config::Config, resource::commands_file_handler::CommandsFileHandler};
     use log::debug;
     use parking_lot::Mutex;
     use std::{
@@ -43,7 +43,7 @@ mod core {
         let (input_sx, input_rx) = channel::<InputMessages>(16);
 
         debug!("loading commands from file");
-        let file_service = CommandsFileService::new(config.command_file_path()).validate()?;
+        let file_service = CommandsFileHandler::new(config.command_file_path()).validate()?;
         let commands = file_service
             .load()
             .context("Cannot load commands from file")?;

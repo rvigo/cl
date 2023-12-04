@@ -1,5 +1,7 @@
-use super::resources::fs_wrapper;
-use crate::preferences::Preferences;
+use crate::{
+    preferences::Preferences,
+    resource::fs_wrapper::macros::{create_dir_all, read_to_string, write},
+};
 use anyhow::{Context, Result};
 use dirs::home_dir;
 use serde::{Deserialize, Serialize};
@@ -49,7 +51,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn get_root_dir(&self) -> PathBuf {
+    pub fn root_dir(&self) -> PathBuf {
         self.root_dir.to_owned()
     }
 
@@ -66,18 +68,18 @@ impl Config {
     pub fn command_file_path(&self) -> PathBuf {
         self.commands_file_path
             .as_ref()
-            .map_or_else(|| self.get_root_dir().join(COMMAND_FILE), |p| p.to_owned())
+            .map_or_else(|| self.root_dir().join(COMMAND_FILE), |p| p.to_owned())
     }
 
     pub fn config_file_path(&self) -> PathBuf {
-        self.get_root_dir().join(CONFIG_FILE)
+        self.root_dir().join(CONFIG_FILE)
     }
 
     /// Loads the config file
     pub fn load() -> Result<Self> {
         let home = home_dir().context("Could not find home directory")?;
         let config_file_path = home.join(ROOT_DIR).join(CONFIG_FILE);
-        if let Ok(config_data) = fs_wrapper::read_to_string(config_file_path) {
+        if let Ok(config_data) = read_to_string!(config_file_path) {
             if !config_data.is_empty() {
                 let config: Self = toml::from_str(&config_data)?;
                 return Ok(config);
@@ -108,11 +110,10 @@ impl Config {
     }
 
     fn save(&self) -> Result<()> {
-        let app_home_dir = self.get_root_dir();
+        let app_home_dir = self.root_dir();
 
         if !app_home_dir.exists() {
-            fs_wrapper::create_dir_all(&app_home_dir)
-                .context(format!("Cannot create {app_home_dir:?}"))?
+            create_dir_all!(&app_home_dir).context(format!("Cannot create {app_home_dir:?}"))?
         }
 
         let config_file_path = app_home_dir.join(self.config_file_path());
@@ -120,7 +121,7 @@ impl Config {
 
         config_data.insert_str(0, DEFAULT_FILE_MESSAGE);
 
-        fs_wrapper::write(config_file_path, config_data)?;
+        write!(config_file_path, config_data)?;
         Ok(())
     }
 }
