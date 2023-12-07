@@ -17,5 +17,5 @@ crossterm = "0.27.0"
 fuzzy-matcher = "0.3.7"
 parking_lot = "0.12.1"
 thiserror = "1.0.47"
-tui = { package = "ratatui", version= "0.24.0" }
-tui-textarea = "0.4.0" 
+tui = { package = "ratatui", version = "0.24.0" }
+tui-textarea = "0.4.0"
