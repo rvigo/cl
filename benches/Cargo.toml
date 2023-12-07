@@ -1,0 +1,30 @@
+[package]
+name = "benches"
+version.workspace = true
+edition.workspace = true
+homepage.workspace = true
+repository.workspace = true
+readme.workspace = true
+description.workspace = true
+
+[lib]
+test = false
+bench = false
+
+[dependencies]
+cl-core.workspace = true
+cl-cli = { path = "../cl-cli", version = "0.1.0" }
+cl-gui = { path = "../cl-gui", version = "0.1.0" }
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "core"
+path = "src/core.rs"
+harness = false
+
+[[bench]]
+name = "gui"
+path = "src/gui.rs"
+harness = false

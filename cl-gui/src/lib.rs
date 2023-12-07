@@ -1,7 +1,7 @@
-mod entities;
-mod key_handlers;
-mod screens;
-mod widgets;
+pub mod entities;
+pub mod key_handlers;
+pub mod screens;
+pub mod widgets;
 
 use anyhow::Result;
 use cl_core::config::Config;

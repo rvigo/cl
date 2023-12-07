@@ -1,5 +1,5 @@
 mod clipboard;
-pub(super) mod contexts;
+pub mod contexts;
 pub(super) mod event_handler;
 pub(super) mod events;
 mod fuzzy;

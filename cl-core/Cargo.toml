@@ -7,14 +7,19 @@ repository.workspace = true
 
 [dependencies]
 anyhow.workspace = true
+log.workspace = true
+itertools.workspace = true
+
 cargo_metadata = "0.17.0"
 dirs = "5.0.1"
-itertools.workspace = true
-lazy_static = "1.4.0"
-log.workspace = true
 serde = { version = "1.0.160", features = ["derive"] }
 thiserror = "1.0.40"
 toml = "0.7.3"
 tracing = "0.1"
 tracing-appender = "0.2.2"
 tracing-subscriber = "0.3"
+
+[profile.bench]
+opt-level = 3
+strip = "symbols"
+lto = "thin"
