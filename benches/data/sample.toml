@@ -1,0 +1,7937 @@
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "b"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "c"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "cr"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "d"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker run"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "docker-compose up -d"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "git log"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "npm"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "rust"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "dc"
+namespace = "bash"
+command = "whoami"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cargo test"
+description = "some description"
+tags = ["utility"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["cl"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["dir"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["docker"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["git"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["js"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["linux"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["rust"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "a better one description"
+tags = ["utility"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["cl"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["dir"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["docker"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["git"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["js"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["linux"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["rust"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["terminal"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "another desc"
+tags = ["utility"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["cl"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["dir"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["docker"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["git"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["js"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["linux"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["rust"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["terminal"]
+
+[[bash]]
+alias = "g"
+namespace = "bash"
+command = "cl"
+description = "some description"
+tags = ["utility"]

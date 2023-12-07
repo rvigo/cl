@@ -1,6 +1,6 @@
 use crate::entities::fuzzy::Fuzzy;
 
-use super::{namespaces_context::DEFAULT_NAMESPACE, Selectable};
+use super::{cache_info::CacheInfo, namespaces_context::DEFAULT_NAMESPACE, Selectable};
 use anyhow::Result;
 use cl_core::{
     command::Command, commands::Commands, resource::commands_file_handler::CommandsFileHandler,
@@ -8,83 +8,8 @@ use cl_core::{
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
 use log::debug;
-use std::{cmp::Reverse, collections::HashMap, thread, time::Duration};
+use std::{cmp::Reverse, thread, time::Duration};
 use tui::widgets::ListState;
-
-/// Caches a `Command` list using the namespace as a key for faster search
-#[derive(Default)]
-struct CacheInfo {
-    cache: HashMap<String, Vec<Command>>,
-}
-
-impl CacheInfo {
-    pub fn new(command_list: Vec<Command>) -> CacheInfo {
-        let mut namespace_map: HashMap<String, Vec<Command>> = HashMap::new();
-        command_list.into_iter().for_each(|c| {
-            namespace_map
-                .entry(c.namespace.to_owned())
-                .or_default()
-                .push(c);
-        });
-        let mut cache_info = CacheInfo {
-            cache: namespace_map,
-        };
-
-        cache_info.sort_cached_values();
-        cache_info
-    }
-
-    #[inline]
-    pub fn get_entry(&mut self, namespace: &str) -> Vec<Command> {
-        self.cache
-            .get(namespace)
-            .unwrap_or(&Vec::default())
-            .to_owned()
-    }
-
-    #[inline]
-    pub fn update_entry(&mut self, new_command_item: &Command, old_command_item: &Command) {
-        let new_namespace = &new_command_item.namespace;
-
-        debug!("updating {new_namespace} cache entries with the new command");
-        let commands = self.cache.entry(new_namespace.to_owned()).or_default();
-        commands.push(new_command_item.to_owned());
-
-        self.remove_entry(old_command_item);
-
-        self.sort_cached_values()
-    }
-
-    #[inline]
-    fn remove_entry(&mut self, command_item: &Command) {
-        let namespace = &command_item.namespace;
-        if let Some(commands) = self.cache.get_mut(namespace) {
-            if let Some(index) = commands.iter().position(|c| c.eq(command_item)) {
-                debug!("removing old cache entry from {namespace}");
-                commands.remove(index);
-            }
-        }
-    }
-
-    #[inline]
-    pub fn insert_entry(&mut self, command_item: Command) {
-        let namespace = &command_item.namespace;
-        if let Some(commands) = self.cache.get_mut(namespace) {
-            commands.push(command_item)
-        } else {
-            self.cache.insert(namespace.to_string(), vec![command_item]);
-        }
-
-        self.sort_cached_values()
-    }
-
-    #[inline]
-    fn sort_cached_values(&mut self) {
-        for commands in self.cache.values_mut() {
-            commands.sort_by_key(|c| c.alias.to_lowercase());
-        }
-    }
-}
 
 /// Groups all `Command`'s related stuff
 pub struct CommandsContext {
@@ -93,19 +18,19 @@ pub struct CommandsContext {
     to_be_executed: Option<Command>,
     commands_cache: CacheInfo,
     matcher: SkimMatcherV2,
-    commands_file_service: CommandsFileHandler,
+    commands_file_handler: CommandsFileHandler,
     filtered_commands: Vec<Command>,
 }
 
 impl CommandsContext {
-    pub fn new(commands: Vec<Command>, commands_file_service: CommandsFileHandler) -> Self {
+    pub fn new(commands: Vec<Command>, commands_file_handler: CommandsFileHandler) -> Self {
         let mut context = Self {
             commands: Commands::init(commands.clone()),
             state: ListState::default(),
             to_be_executed: None,
             commands_cache: CacheInfo::new(commands),
             matcher: SkimMatcherV2::default(),
-            commands_file_service,
+            commands_file_handler,
             filtered_commands: vec![],
         };
         context.state.select(Some(0));
@@ -153,7 +78,7 @@ impl CommandsContext {
         let commands = self.commands.add_command(new_command)?;
 
         self.commands_cache.insert_entry(new_command.to_owned());
-        self.commands_file_service.save(&commands)?;
+        self.commands_file_handler.save(&commands)?;
         Ok(())
     }
 
@@ -169,7 +94,7 @@ impl CommandsContext {
             .add_edited_command(edited_command, current_command)?;
         self.commands_cache
             .update_entry(edited_command, current_command);
-        self.commands_file_service.save(&commands)?;
+        self.commands_file_handler.save(&commands)?;
         Ok(())
     }
 
@@ -177,7 +102,7 @@ impl CommandsContext {
     pub fn remove_command(&mut self, command: &Command) -> Result<()> {
         let commands = self.commands.remove(command)?;
         self.commands_cache.remove_entry(command);
-        self.commands_file_service.save(&commands)?;
+        self.commands_file_handler.save(&commands)?;
         Ok(())
     }
 
@@ -383,7 +308,6 @@ mod test {
 
         let result = context.add_command(&invalid_command);
         assert!(result.is_err());
-        assert!(context.commands_cache.cache.get(namespace).is_none())
     }
 
     #[test]

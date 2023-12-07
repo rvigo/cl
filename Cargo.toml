@@ -1,5 +1,5 @@
 [workspace]
-members = ["cl-core", "cl-cli", "cl-gui"]
+members = ["cl-core", "cl-cli", "cl-gui", "benches"]
 
 [workspace.package]
 version = "0.9.2"
@@ -41,3 +41,8 @@ panic = "abort"
 
 [profile.dev]
 panic = "abort"
+
+[profile.bench]
+opt-level = 3
+strip = "symbols"
+lto = "thin"
