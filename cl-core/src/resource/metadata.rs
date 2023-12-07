@@ -1,11 +1,5 @@
 use cargo_metadata::{semver::Version as CargoVersion, MetadataCommand, Package as CargoPackage};
 use itertools::Itertools;
-use lazy_static::lazy_static;
-
-lazy_static! {
-    pub static ref METADATA: Metadata = Metadata::load();
-    pub static ref MAIN_PKG_METADATA: Package = METADATA.main_package_metadata();
-}
 
 const PKG_NAME: &str = "cl";
 const CORE_PKG_NAME: &str = "cl-core";
@@ -77,7 +71,7 @@ impl Metadata {
         self.packages.clone()
     }
 
-    fn load() -> Metadata {
+    pub fn load() -> Metadata {
         Metadata {
             packages: Self::extract_packages(),
         }
@@ -97,4 +91,20 @@ impl Metadata {
 
         packages
     }
+}
+
+#[macro_export]
+macro_rules! metadata {
+    () => {{
+        use $crate::resource::metadata::Metadata;
+        Metadata::load().main_package_metadata()
+    }};
+}
+
+#[macro_export]
+macro_rules! pkgs_metadata {
+    () => {{
+        use $crate::resource::metadata::Metadata;
+        Metadata::load().packages_metadata()
+    }};
 }
