@@ -19,6 +19,7 @@ use crossterm::event::KeyEvent;
 
 pub struct UI<'ui> {
     fields_context: Fields<'ui>,
+    selected_command: Option<Command>,
     popup_context: PopupContext,
     query_box: QueryBox<'ui>,
     pub clipboard_state: ClipboardState,
@@ -31,6 +32,7 @@ impl<'ui> UI<'ui> {
     pub fn new(size: TerminalSize) -> UI<'ui> {
         UI {
             fields_context: Fields::new(&size),
+            selected_command: None,
             popup_context: PopupContext::new(),
             query_box: QueryBox::default(),
             clipboard_state: ClipboardState::default(),
@@ -89,16 +91,18 @@ impl<'ui> UI<'ui> {
         self.show_help = should_show
     }
 
-    pub fn get_selected_command(&self) -> Option<&Command> {
-        self.fields_context.selected_command()
+    pub fn set_selected_command_input(&mut self) {
+        if let Some(command) = self.selected_command.as_ref() {
+            self.fields_context.popuplate_form(command);
+        }
     }
 
-    pub fn set_selected_command_input(&mut self) {
-        self.fields_context.popuplate_form();
+    pub fn selected_command(&self) -> Option<&Command> {
+        self.selected_command.as_ref()
     }
 
     pub fn select_command(&mut self, selected_command: Option<Command>) {
-        self.fields_context.select_command(selected_command)
+        self.selected_command = selected_command
     }
 
     // form
