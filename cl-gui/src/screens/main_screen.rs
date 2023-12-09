@@ -2,10 +2,7 @@ use super::{Screen, ScreenExt};
 use crate::{
     default_block,
     entities::{
-        contexts::{
-            application_context::ApplicationContext, namespaces_context::NamespacesContext,
-            ui_context::UIContext,
-        },
+        contexts::{application_context::ApplicationContext, namespaces::Namespaces, ui::UI},
         terminal::{TerminalSize, TerminalSizeExt},
     },
     popup,
@@ -13,7 +10,7 @@ use crate::{
         alias_list::AliasListWidget,
         display::DisplayWidget,
         highlight::Highlight,
-        popup::{help_popup::HelpPopup, question_popup::QuestionPopup, RenderPopup},
+        popup::{help_popup::HelpPopup, RenderPopup},
         statusbar::{help::Help, info::Info},
     },
     DEFAULT_SELECTED_COLOR,
@@ -52,12 +49,12 @@ impl MainScreen {
             .highlight(query)
     }
 
-    fn create_tab_menu_widget<'a>(&self, namespaces_context: &NamespacesContext) -> Tabs<'a> {
+    fn create_tab_menu_widget<'a>(&self, namespaces_context: &Namespaces) -> Tabs<'a> {
         let namespaces = namespaces_context.namespaces();
         let tab_menu = namespaces.iter().cloned().map(Line::from).collect();
 
         Tabs::new(tab_menu)
-            .select(namespaces_context.get_selected_namespace_idx())
+            .select(namespaces_context.get_selected_idx())
             .block(default_block!("Namespaces"))
             .highlight_style(
                 Style::default()
@@ -116,12 +113,7 @@ impl MainScreen {
 }
 
 impl Screen for MainScreen {
-    fn render(
-        &mut self,
-        frame: &mut Frame,
-        context: &mut ApplicationContext,
-        ui_context: &mut UIContext,
-    ) {
+    fn render(&mut self, frame: &mut Frame, context: &mut ApplicationContext, ui_context: &mut UI) {
         let filtered_commands = context.filter_commands(ui_context.get_querybox_input());
         let selected_idx = context.get_selected_command_idx();
         let selected_command = self.get_selected_command(selected_idx, &filtered_commands);
@@ -158,14 +150,15 @@ impl Screen for MainScreen {
 
         //
         if ui_context.show_help() {
-            let help_popup = popup!(help => &ui_context.view_mode());
+            let help_popup = popup!(&ui_context.view_mode());
             frame.render_popup(help_popup, frame.size());
         }
 
         //
+        let info = ui_context.popup_info_mut().to_owned();
         if ui_context.show_popup() {
-            let popup = popup!(question => ui_context);
-            frame.render_stateful_popup(popup, frame.size(), ui_context.get_choices_state_mut());
+            let popup = popup!(info, ui_context.popup_context_mut().get_available_choices());
+            frame.render_stateful_popup(popup, frame.size(), ui_context.popup_context_mut());
         }
 
         let center = if ui_context.clipboard_state.yanked() {
@@ -178,7 +171,7 @@ impl Screen for MainScreen {
         };
 
         let querybox = ui_context.querybox_ref();
-        let help = Help::new();
+        let help = Help::default();
         //
         self.render_base(frame, Some(querybox), center, Some(help));
     }

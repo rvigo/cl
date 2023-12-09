@@ -1,31 +1,35 @@
 use super::Selectable;
 use crate::{
-    entities::{
-        states::{field_state::FieldState, State},
-        terminal::TerminalSize,
-    },
+    entities::{states::State, terminal::TerminalSize},
     widgets::{
-        fields::Fields,
+        field_state::FieldState,
         text_field::{FieldType, TextField},
-        WidgetKeyHandler,
     },
 };
-use cl_core::command::{Command, CommandBuilder};
+use cl_core::{
+    command::{Command, CommandBuilder},
+    hashmap,
+};
 use crossterm::event::KeyEvent;
 use itertools::Itertools;
+use std::collections::HashMap;
 
-pub struct FieldContext<'a> {
-    fields: Fields<'a>,
-    state: FieldState,
-    selected_command: Option<Command>,
+pub struct Fields<'fields> {
+    fields: FieldState<'fields>,
+    selected_command: Option<Command>, // TODO should be moved
+    selected_field: Option<FieldType>,
+    original_fields: HashMap<FieldType, String>,
+    edited_fields: HashMap<FieldType, String>,
 }
 
-impl<'a> FieldContext<'a> {
+impl<'fields> Fields<'fields> {
     pub fn new(size: &TerminalSize) -> Self {
         Self {
-            fields: Fields::new(size),
-            state: FieldState::default(),
+            fields: FieldState::new(size),
             selected_command: None,
+            selected_field: None,
+            original_fields: hashmap!(),
+            edited_fields: hashmap!(),
         }
     }
 
@@ -37,18 +41,14 @@ impl<'a> FieldContext<'a> {
         self.fields.get_fields_iter()
     }
 
-    pub fn get_field_state_mut(&mut self) -> &mut FieldState {
-        &mut self.state
-    }
-
-    pub fn selected_field_mut(&mut self) -> Option<&mut TextField<'a>> {
-        self.state
-            .selected()
-            .and_then(|selected| self.fields.get_mut(&selected))
+    pub fn selected_field_mut(&mut self) -> Option<&mut TextField<'fields>> {
+        self.selected()
+            .and_then(|field| self.fields.get_mut(&field))
     }
 
     pub fn build_new_command(&mut self) -> Command {
         let mut command_builder = CommandBuilder::default();
+
         self.fields
             .iter_mut()
             .for_each(|(field_type, field)| match field_type {
@@ -82,6 +82,7 @@ impl<'a> FieldContext<'a> {
 
     pub fn build_edited_command(&mut self) -> Command {
         let mut edited = CommandBuilder::default();
+
         self.fields
             .iter()
             .for_each(|(field_type, field)| match field_type {
@@ -122,80 +123,106 @@ impl<'a> FieldContext<'a> {
     }
 
     pub fn popuplate_form(&mut self) {
-        if let Some(current_command) = self.selected_command.as_ref() {
-            self.fields.iter_mut().for_each(|(field_type, field)| {
-                match field_type {
-                    FieldType::Alias => {
-                        field.set_text(current_command.alias.to_owned());
-                    }
-                    FieldType::Command => {
-                        field.set_text(
-                            current_command
-                                .command
-                                .lines()
-                                .map(String::from)
-                                .collect::<Vec<String>>(),
-                        );
-                    }
-                    FieldType::Namespace => {
-                        field.set_text(current_command.namespace.to_owned());
-                    }
-                    FieldType::Description => {
-                        field.set_text(
-                            current_command
-                                .description
-                                .as_ref()
-                                .unwrap_or(&String::from(""))
-                                .lines()
-                                .map(String::from)
-                                .collect::<Vec<String>>(),
-                        );
-                    }
-                    FieldType::Tags => {
-                        field.set_text(current_command.tags.as_ref().unwrap_or(&vec![]).join(", "));
-                    }
-                };
-                field.move_cursor_to_end_of_text();
-                self.state.update_field(field);
-            });
+        if let Some(current_command) = self.selected_command.to_owned() {
+            self.fields
+                .to_owned()
+                .iter_mut()
+                .for_each(|(field_type, field)| {
+                    match field_type {
+                        FieldType::Alias => {
+                            field.set_text(current_command.alias.to_owned());
+                        }
+                        FieldType::Command => {
+                            field.set_text(
+                                current_command
+                                    .command
+                                    .lines()
+                                    .map(String::from)
+                                    .collect::<Vec<String>>(),
+                            );
+                        }
+                        FieldType::Namespace => {
+                            field.set_text(current_command.namespace.to_owned());
+                        }
+                        FieldType::Description => {
+                            field.set_text(
+                                current_command
+                                    .description
+                                    .as_ref()
+                                    .unwrap_or(&String::from(""))
+                                    .lines()
+                                    .map(String::from)
+                                    .collect::<Vec<String>>(),
+                            );
+                        }
+                        FieldType::Tags => {
+                            field.set_text(
+                                current_command.tags.as_ref().unwrap_or(&vec![]).join(", "),
+                            );
+                        }
+                    };
+                    field.move_cursor_to_end_of_text();
+                    self.update_field(field);
+                });
         }
     }
 
     pub fn handle_input(&mut self, input: KeyEvent) {
-        if let Some(selected) = self.state.selected() {
-            if let Some(field) = self.fields.get_mut(&selected) {
-                field.handle_input(input);
-                self.state.updated_edited_field(&field.to_owned())
-            }
+        if let Some(selected) = self.selected() {
+            self.fields.handle_input(&selected, input);
+
+            self.fields
+                .get(&selected)
+                .map(|field| self.edited_fields.insert(selected, field.text()));
         }
     }
 
     pub fn clear_inputs(&mut self) {
-        self.reset_edition_state();
+        let mut default_map = hashmap!();
+
+        for field_type in FieldType::iter() {
+            default_map.insert(field_type.to_owned(), String::default());
+        }
+
+        self.original_fields = default_map.to_owned();
+        self.edited_fields = default_map;
+
         self.fields.clear_inputs()
     }
 
-    pub fn clear_selection(&mut self) {
-        if let Some(selected) = self.selected_field_mut() {
-            selected.deactivate_focus()
-        }
+    pub fn reset(&mut self) {
+        self.selected_field_mut().map(TextField::deactivate_focus);
+        self.select(Some(FieldType::default()));
+        self.selected_field_mut().map(TextField::activate_focus);
+    }
+
+    pub fn update_field(&mut self, field: &TextField) {
+        self.original_fields
+            .insert(field.field_type(), field.text());
+
+        self.edited_fields.insert(field.field_type(), field.text());
     }
 
     pub fn is_modified(&self) -> bool {
-        self.state.is_modified()
-    }
-
-    fn reset_edition_state(&mut self) {
-        self.state.reset_fields_edition_state()
+        for (field_type, original_value) in self.original_fields.iter() {
+            if let Some(edited_value) = self.edited_fields.get(field_type) {
+                if edited_value.ne(original_value) {
+                    return true;
+                }
+            } else {
+                return true;
+            }
+        }
+        false
     }
 }
 
-impl Selectable for FieldContext<'_> {
+impl Selectable for Fields<'_> {
     fn next(&mut self) {
-        if let Some(current_field_type) = self.state.selected() {
-            if let Some(field) = self.fields.get_field_mut(&current_field_type) {
-                field.deactivate_focus()
-            }
+        if let Some(current_field_type) = self.selected() {
+            self.fields
+                .get_field_mut(&current_field_type)
+                .map(TextField::deactivate_focus);
 
             let sequence = self.fields.get_sequence();
 
@@ -204,18 +231,17 @@ impl Selectable for FieldContext<'_> {
                 let new_field_type = self.fields.get_sequence()[new_field_idx].to_owned();
 
                 // selects the new field type
-                self.state.select(Some(new_field_type));
-                if let Some(new_field_type) = self.state.selected() {
-                    if let Some(field) = self.fields.get_field_mut(&new_field_type) {
-                        field.activate_focus()
-                    }
-                }
+                self.select(Some(new_field_type));
+
+                self.selected()
+                    .and_then(|selected| self.fields.get_field_mut(&selected))
+                    .map(TextField::activate_focus);
             };
         }
     }
 
     fn previous(&mut self) {
-        if let Some(current_field_type) = self.state.selected() {
+        if let Some(current_field_type) = self.selected() {
             if let Some(field) = self.fields.get_field_mut(&current_field_type) {
                 field.deactivate_focus()
             }
@@ -226,14 +252,25 @@ impl Selectable for FieldContext<'_> {
                 let new_field_type = self.fields.get_sequence()[new_field_idx].to_owned();
 
                 // selects the new field type
-                self.state.select(Some(new_field_type));
-                if let Some(new_field_type) = self.state.selected() {
-                    if let Some(field) = self.fields.get_field_mut(&new_field_type) {
-                        field.activate_focus()
-                    }
-                }
+                self.select(Some(new_field_type));
+
+                self.selected()
+                    .and_then(|selected| self.fields.get_field_mut(&selected))
+                    .map(TextField::activate_focus);
             }
         }
+    }
+}
+
+impl State for Fields<'_> {
+    type Output = Option<FieldType>;
+
+    fn selected(&self) -> Option<FieldType> {
+        self.selected_field.to_owned()
+    }
+
+    fn select(&mut self, field_type: Option<FieldType>) {
+        self.selected_field = field_type;
     }
 }
 
@@ -270,10 +307,10 @@ impl ToOption for Vec<String> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::entities::terminal::TerminalSize;
+    use crate::{entities::terminal::TerminalSize, widgets::WidgetKeyHandler};
     use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-    fn create_fields() -> Fields<'static> {
+    fn create_fields() -> FieldState<'static> {
         let mut alias = TextField::new(String::from("alias"), FieldType::Alias, true, false);
         let mut command = TextField::new(String::from("command"), FieldType::Command, false, true);
         let mut namespace = TextField::new(
@@ -316,21 +353,21 @@ mod test {
         ]
         .to_vec();
 
-        Fields::from((map, order))
+        FieldState::from((map, order))
     }
 
     #[test]
     fn should_move_to_next_field() {
-        let mut field_context = FieldContext::new(&TerminalSize::Medium);
-        field_context.state.select(Some(FieldType::Alias));
+        let mut field_context = Fields::new(&TerminalSize::Medium);
+        field_context.select(Some(FieldType::Alias));
 
         field_context.next();
-        assert_eq!(field_context.state.selected(), Some(FieldType::Namespace));
+        assert_eq!(field_context.selected(), Some(FieldType::Namespace));
         assert_eq!(field_context.fields[&FieldType::Alias].in_focus(), false);
         assert_eq!(field_context.fields[&FieldType::Namespace].in_focus(), true);
 
         field_context.next();
-        assert_eq!(field_context.state.selected(), Some(FieldType::Command));
+        assert_eq!(field_context.selected(), Some(FieldType::Command));
         assert_eq!(
             field_context.fields[&FieldType::Namespace].in_focus(),
             false
@@ -340,16 +377,16 @@ mod test {
 
     #[test]
     fn should_move_to_previous_field() {
-        let mut field_context = FieldContext::new(&TerminalSize::Medium);
-        field_context.state.select(Some(FieldType::Alias));
+        let mut field_context = Fields::new(&TerminalSize::Medium);
+        field_context.select(Some(FieldType::Alias));
 
         field_context.previous();
-        assert_eq!(field_context.state.selected(), Some(FieldType::Tags));
+        assert_eq!(field_context.selected(), Some(FieldType::Tags));
         assert_eq!(field_context.fields[&FieldType::Alias].in_focus(), false);
         assert_eq!(field_context.fields[&FieldType::Tags].in_focus(), true);
 
         field_context.previous();
-        assert_eq!(field_context.state.selected(), Some(FieldType::Description));
+        assert_eq!(field_context.selected(), Some(FieldType::Description));
         assert_eq!(field_context.fields[&FieldType::Tags].in_focus(), false);
         assert_eq!(
             field_context.fields[&FieldType::Description].in_focus(),
@@ -359,16 +396,16 @@ mod test {
 
     #[test]
     fn should_return_the_selected_field() {
-        let mut field_context = FieldContext::new(&TerminalSize::Medium);
+        let mut field_context = Fields::new(&TerminalSize::Medium);
 
-        field_context.state.select(Some(FieldType::Namespace));
+        field_context.select(Some(FieldType::Namespace));
         let selected_field = field_context.selected_field_mut();
         assert_eq!(selected_field.unwrap().field_type(), FieldType::Namespace);
     }
 
     #[test]
     fn should_build_a_new_command() {
-        let mut field_context = FieldContext::new(&TerminalSize::Medium);
+        let mut field_context = Fields::new(&TerminalSize::Medium);
 
         field_context.fields = create_fields();
         let command = field_context.build_new_command();
@@ -383,7 +420,7 @@ mod test {
 
     #[test]
     fn should_set_input_based_at_selected_command() {
-        let mut field_context = FieldContext::new(&TerminalSize::Medium);
+        let mut field_context = Fields::new(&TerminalSize::Medium);
         let selected_command = Command {
             alias: String::from("alias"),
             command: String::from("command"),

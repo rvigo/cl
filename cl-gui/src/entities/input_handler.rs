@@ -1,4 +1,4 @@
-use super::{contexts::ui_context::UIContext, states::ui_state::ViewMode};
+use super::{contexts::ui::UI, view_mode::ViewMode};
 use crate::{
     entities::events::{app_events::AppEvent, input_events::InputMessages},
     key_handlers::{
@@ -7,8 +7,10 @@ use crate::{
         popup_handler::PopupHandler, querybox_handler::QueryboxHandler, HandlerType,
         KeyEventHandler,
     },
+    register,
 };
 use anyhow::{anyhow, Result};
+use cl_core::hashmap;
 use crossterm::event::KeyEvent;
 use log::debug;
 use parking_lot::Mutex;
@@ -26,7 +28,7 @@ type ThreadSafeKeyEventHandler<'a> = &'a (dyn KeyEventHandler + Send + Sync);
 pub struct InputHandler {
     input_rx: Receiver<InputMessages>,
     app_sx: Sender<AppEvent>,
-    ui_context: Arc<Mutex<UIContext<'static>>>,
+    ui_context: Arc<Mutex<UI<'static>>>,
     should_quit: Arc<AtomicBool>,
     handlers: HashMap<HandlerType, ThreadSafeKeyEventHandler<'static>>,
 }
@@ -35,17 +37,20 @@ impl InputHandler {
     pub async fn init(
         input_rx: Receiver<InputMessages>,
         app_sx: Sender<AppEvent>,
-        ui_context: Arc<Mutex<UIContext<'static>>>,
+        ui_context: Arc<Mutex<UI<'static>>>,
         should_quit: Arc<AtomicBool>,
     ) -> Result<()> {
-        let mut handlers: HashMap<HandlerType, ThreadSafeKeyEventHandler<'static>> = HashMap::new();
+        let mut handlers: HashMap<HandlerType, ThreadSafeKeyEventHandler<'static>> = hashmap!();
 
-        handlers.insert(HandlerType::Popup, &PopupHandler);
-        handlers.insert(HandlerType::Help, &HelpPopupHandler);
-        handlers.insert(HandlerType::Main, &MainScreenHandler);
-        handlers.insert(HandlerType::Insert, &InsertScreenHandler);
-        handlers.insert(HandlerType::Edit, &EditScreenHandler);
-        handlers.insert(HandlerType::QueryBox, &QueryboxHandler);
+        register!(
+            handlers,
+            HandlerType::Popup => &PopupHandler,
+            HandlerType::Help => &HelpPopupHandler,
+            HandlerType::Main => &MainScreenHandler,
+            HandlerType::Insert => &InsertScreenHandler,
+            HandlerType::Edit => &EditScreenHandler,
+            HandlerType::QueryBox => &QueryboxHandler
+        );
 
         let mut handler = Self {
             input_rx,
@@ -93,7 +98,7 @@ impl InputHandler {
         self.app_sx.send(event).await
     }
 
-    fn get_handler_type(&self, ui_context: &UIContext<'static>) -> HandlerType {
+    fn get_handler_type(&self, ui_context: &UI<'static>) -> HandlerType {
         if ui_context.show_popup() {
             HandlerType::Popup
         } else if ui_context.show_help() {

@@ -18,8 +18,3 @@ toml = "0.7.3"
 tracing = "0.1"
 tracing-appender = "0.2.2"
 tracing-subscriber = "0.3"
-
-[profile.bench]
-opt-level = 3
-strip = "symbols"
-lto = "thin"

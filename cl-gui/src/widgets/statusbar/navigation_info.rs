@@ -24,3 +24,9 @@ impl Widget for NavigationInfo {
         display.render(area, buf)
     }
 }
+
+impl Default for NavigationInfo {
+    fn default() -> Self {
+        Self::new()
+    }
+}

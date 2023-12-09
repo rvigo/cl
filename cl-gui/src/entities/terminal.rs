@@ -1,4 +1,4 @@
-use super::contexts::{application_context::ApplicationContext, ui_context::UIContext};
+use super::contexts::{application_context::ApplicationContext, ui::UI};
 use crate::screens::Screen;
 use anyhow::Result;
 use crossterm::{
@@ -67,7 +67,7 @@ impl Terminal<CrosstermBackend<Stdout>> {
 
     pub fn draw(
         &mut self,
-        ui_context: &mut Arc<Mutex<UIContext>>,
+        ui_context: &mut Arc<Mutex<UI>>,
         app_context: &mut Arc<Mutex<ApplicationContext>>,
         screen: &mut dyn Screen,
     ) -> Result<()> {

@@ -1,6 +1,10 @@
-use crate::entities::terminal::TerminalSize;
+use crossterm::event::KeyEvent;
 
-use super::text_field::{FieldType, TextField, TextFieldBuilder};
+use super::{
+    text_field::{FieldType, TextField, TextFieldBuilder},
+    WidgetKeyHandler,
+};
+use crate::{create_fields_map, entities::terminal::TerminalSize};
 use std::{
     collections::HashMap,
     ops::{Deref, DerefMut},
@@ -23,50 +27,48 @@ const MEDIUM_SIZE_FIELD_SEQUENCE: &[FieldType] = &[
 ];
 
 #[derive(Clone)]
-pub struct Fields<'a> {
+pub struct FieldState<'a> {
     items: HashMap<FieldType, TextField<'a>>,
     sequence: Vec<FieldType>,
 }
 
-impl<'a> Fields<'a> {
+impl<'a> FieldState<'a> {
     pub fn new(size: &TerminalSize) -> Self {
-        let alias = TextFieldBuilder::default()
-            .field_type(FieldType::Alias)
-            .in_focus(true)
-            .multiline(false)
-            .build();
-        let namespace = TextFieldBuilder::default()
-            .field_type(FieldType::Namespace)
-            .in_focus(false)
-            .multiline(false)
-            .build();
-        let command = TextFieldBuilder::default()
-            .field_type(FieldType::Command)
-            .in_focus(false)
-            .multiline(true)
-            .build();
-        let description = TextFieldBuilder::default()
-            .field_type(FieldType::Description)
-            .in_focus(false)
-            .multiline(true)
-            .build();
-        let tags = TextFieldBuilder::default()
-            .field_type(FieldType::Tags)
-            .in_focus(false)
-            .multiline(false)
-            .build();
+        let items = create_fields_map! {
+            FieldType::Alias: {
+                focus = true,
+                multiline = false
+                },
+            FieldType::Namespace: {
+                focus = false,
+                multiline = false
+                },
+            FieldType::Command: {
+                focus = false,
+                multiline = true
+            },
+            FieldType::Description: {
+                focus = false,
+                multiline = true
+                },
+            FieldType::Tags: {
+                focus = false,
+                multiline = false
+                }
+        };
 
-        let map = vec![alias, namespace, command, description, tags]
-            .into_iter()
-            .map(|f| (f.field_type(), f))
-            .collect();
-
-        Fields {
-            items: map,
+        FieldState {
+            items,
             sequence: match size {
                 TerminalSize::Small => SMALL_SIZE_FIELD_SEQUENCE.to_owned(),
                 TerminalSize::Medium | TerminalSize::Large => MEDIUM_SIZE_FIELD_SEQUENCE.to_owned(),
             },
+        }
+    }
+
+    pub fn handle_input(&mut self, selected: &FieldType, input: KeyEvent) {
+        if let Some(text_field) = self.items.get_mut(selected) {
+            text_field.handle_input(input)
         }
     }
 
@@ -106,13 +108,13 @@ impl<'a> Fields<'a> {
     }
 }
 
-impl<'a> From<(HashMap<FieldType, TextField<'a>>, Vec<FieldType>)> for Fields<'a> {
+impl<'a> From<(HashMap<FieldType, TextField<'a>>, Vec<FieldType>)> for FieldState<'a> {
     fn from((items, sequence): (HashMap<FieldType, TextField<'a>>, Vec<FieldType>)) -> Self {
-        Fields { items, sequence }
+        FieldState { items, sequence }
     }
 }
 
-impl<'a> Deref for Fields<'a> {
+impl<'a> Deref for FieldState<'a> {
     type Target = HashMap<FieldType, TextField<'a>>;
 
     fn deref(&self) -> &Self::Target {
@@ -120,7 +122,7 @@ impl<'a> Deref for Fields<'a> {
     }
 }
 
-impl DerefMut for Fields<'_> {
+impl DerefMut for FieldState<'_> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.items
     }

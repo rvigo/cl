@@ -1,5 +1,5 @@
 use super::{errors::FileError, fs_wrapper::macros::read_to_string};
-use crate::command::Command;
+use crate::{command::Command, hashmap};
 use anyhow::Result;
 use std::{collections::HashMap, path::Path};
 
@@ -25,7 +25,7 @@ impl TomlFileHandler {
         &self,
         commands: &Vec<Command>,
     ) -> Result<String, FileError> {
-        let mut map: HashMap<String, Vec<Command>> = HashMap::new();
+        let mut map: HashMap<String, Vec<Command>> = hashmap!();
         for command in commands {
             let item = command.to_owned();
             if let Some(commands) = map.get_mut(&item.namespace) {
