@@ -44,7 +44,7 @@ impl<'a> EventHandler<'a> {
             match message {
                 AppEvent::Run(command_event) => match command_event {
                     CommandEvent::Execute => {
-                        if let Some(command) = self.ui_context.lock().get_selected_command() {
+                        if let Some(command) = self.ui_context.lock().selected_command() {
                             self.app_context
                                 .lock()
                                 .set_current_command_as_callback(command);
@@ -76,7 +76,7 @@ impl<'a> EventHandler<'a> {
                         let mut ui = self.ui_context.lock();
 
                         let edited_command = ui.edit_command();
-                        if let Some(current_command) = ui.get_selected_command() {
+                        if let Some(current_command) = ui.selected_command() {
                             match c.add_edited_command(edited_command, current_command) {
                                 Ok(()) => {
                                     ui.set_view_mode(ViewMode::Main);
@@ -96,7 +96,7 @@ impl<'a> EventHandler<'a> {
                     }
                     CommandEvent::Copy => {
                         let mut ui = self.ui_context.lock();
-                        if let Some(command) = ui.get_selected_command() {
+                        if let Some(command) = ui.selected_command() {
                             if let Err(error) = self
                                 .app_context
                                 .lock()
@@ -134,7 +134,7 @@ impl<'a> EventHandler<'a> {
                     RenderEvent::Edit => {
                         let mut ui = self.ui_context.lock();
                         ui.set_view_mode(ViewMode::Edit);
-                        if ui.get_selected_command().is_some() {
+                        if ui.selected_command().is_some() {
                             ui.reset_form_field_selected_field();
                             ui.clear_form_fields();
                             ui.set_selected_command_input();
@@ -175,7 +175,7 @@ impl<'a> EventHandler<'a> {
                                 let mut c = self.app_context.lock();
                                 match &ui.popup_info_mut().callback {
                                     PopupCallbackAction::DeleteCommand => {
-                                        if let Some(command) = ui.get_selected_command() {
+                                        if let Some(command) = ui.selected_command() {
                                             match c.delete_selected_command(command) {
                                                 Ok(()) => {
                                                     ui.clear_popup_context();
