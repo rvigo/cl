@@ -1,9 +1,5 @@
-use super::{choice::Choice, popup_type::PopupType, Popup, WithOptions};
-use crate::{
-    default_block,
-    entities::states::{popup_state::PopupState, State},
-    DEFAULT_TEXT_COLOR,
-};
+use super::{choice::Choice, popup_type::PopupType, Popup, WithChoices};
+use crate::{default_block, entities::contexts::popup_context::PopupContext, DEFAULT_TEXT_COLOR};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -13,20 +9,20 @@ use tui::{
 
 #[derive(Clone, Debug)]
 pub struct QuestionPopup {
-    pub content: String,
+    content: String,
     popup_type: PopupType,
     choices: Vec<Choice>,
 }
 
 impl QuestionPopup {
-    pub fn new<T>(message: T, answers: Vec<Choice>, popup_type: PopupType) -> QuestionPopup
+    pub fn new<T>(message: T, choices: &Vec<Choice>, popup_type: PopupType) -> QuestionPopup
     where
         T: Into<String>,
     {
         Self {
             content: message.into(),
             popup_type,
-            choices: answers,
+            choices: choices.to_owned(),
         }
     }
 }
@@ -47,7 +43,7 @@ impl Popup for QuestionPopup {
         MIN_HEIGHT.max(lines) as u16
     }
 
-    fn render(self, area: Rect, buf: &mut Buffer, state: Option<&mut PopupState>) {
+    fn render(self, area: Rect, buf: &mut Buffer, state: Option<&mut PopupContext>) {
         if let Some(state) = state {
             let block = default_block!(self.popup_type.to_string());
 
@@ -62,11 +58,11 @@ impl Popup for QuestionPopup {
             Clear::render(Clear, render_position, buf);
             paragraph.render(render_position, buf);
 
-            let options = self.button_widget(state.selected().unwrap_or(0));
+            let options = self.button_widget(state.selected_choice());
             let buttom_area = self.create_buttom_area(render_position);
             options.render(buttom_area, buf);
         }
     }
 }
 
-impl WithOptions for QuestionPopup {}
+impl WithChoices for QuestionPopup {}

@@ -1,7 +1,7 @@
 use super::{popup_type::PopupType, Popup};
 use crate::{
-    entities::states::popup_state::PopupState,
-    {entities::states::ui_state::ViewMode, DEFAULT_SELECTED_COLOR},
+    entities::{contexts::popup_context::PopupContext, view_mode::ViewMode},
+    DEFAULT_SELECTED_COLOR,
 };
 use tui::{
     buffer::Buffer,
@@ -36,7 +36,7 @@ impl Popup for HelpPopup<'_> {
         FIXED_WIDTH
     }
 
-    fn render(self, area: Rect, buf: &mut Buffer, _: Option<&mut PopupState>) {
+    fn render(self, area: Rect, buf: &mut Buffer, _: Option<&mut PopupContext>) {
         let rows = self
             .content
             .clone()

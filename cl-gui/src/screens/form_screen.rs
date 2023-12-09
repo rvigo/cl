@@ -2,12 +2,12 @@ use super::{Screen, ScreenExt};
 use crate::{
     default_block,
     entities::{
-        contexts::{application_context::ApplicationContext, ui_context::UIContext},
+        contexts::{application_context::ApplicationContext, ui::UI},
         terminal::{TerminalSize, TerminalSizeExt},
     },
     popup,
     widgets::{
-        popup::{help_popup::HelpPopup, question_popup::QuestionPopup, RenderPopup},
+        popup::{help_popup::HelpPopup, RenderPopup},
         statusbar::{help::Help, info::Info, navigation_info::NavigationInfo},
         text_field::FieldType,
     },
@@ -21,12 +21,7 @@ use tui::{
 pub struct FormScreen;
 
 impl Screen for FormScreen {
-    fn render(
-        &mut self,
-        frame: &mut Frame,
-        _: &mut ApplicationContext,
-        ui_context: &mut UIContext,
-    ) {
+    fn render(&mut self, frame: &mut Frame, _: &mut ApplicationContext, ui_context: &mut UI) {
         let block = default_block!(format!(" {} ", ui_context.view_mode()));
 
         let terminal_size = frame.size().as_terminal_size();
@@ -40,14 +35,15 @@ impl Screen for FormScreen {
         }
 
         if ui_context.show_help() {
-            let help_popup = popup!(help => &ui_context.view_mode());
+            let help_popup = popup!(&ui_context.view_mode());
             frame.render_popup(help_popup, frame.size());
         }
 
+        let info = ui_context.popup_info_mut().to_owned();
         if ui_context.show_popup() {
-            let popup = popup!(question => ui_context);
+            let popup = popup!(info, ui_context.popup_context_mut().get_available_choices());
 
-            frame.render_stateful_popup(popup, frame.size(), ui_context.get_choices_state_mut());
+            frame.render_stateful_popup(popup, frame.size(), ui_context.popup_context_mut());
         }
 
         let center = if ui_context.is_form_modified() {
@@ -58,14 +54,14 @@ impl Screen for FormScreen {
 
         self.render_base(
             frame,
-            Some(&NavigationInfo::new()),
+            Some(&NavigationInfo::default()),
             center,
-            Some(Help::new()),
+            Some(Help::default()),
         );
     }
 }
 
-fn render_medium_form(frame: &mut Frame, ui_context: &mut UIContext, block: Block) {
+fn render_medium_form(frame: &mut Frame, ui_context: &mut UI, block: Block) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)
@@ -118,7 +114,7 @@ fn render_medium_form(frame: &mut Frame, ui_context: &mut UIContext, block: Bloc
     })
 }
 
-fn render_small_form(frame: &mut Frame, ui_context: &mut UIContext, block: Block) {
+fn render_small_form(frame: &mut Frame, ui_context: &mut UI, block: Block) {
     let form_chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(1)

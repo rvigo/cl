@@ -1,12 +1,10 @@
 mod form_screen;
 mod main_screen;
 
-use super::entities::{
-    contexts::{application_context::ApplicationContext, ui_context::UIContext},
-    states::ui_state::ViewMode,
-};
+use super::entities::contexts::{application_context::ApplicationContext, ui::UI};
 use crate::{
-    entities::terminal::TerminalSizeExt,
+    entities::{terminal::TerminalSizeExt, view_mode::ViewMode},
+    register,
     screens::{form_screen::FormScreen, main_screen::MainScreen},
     widgets::{base_widget::BaseWidget, statusbar::StatusBarItem},
 };
@@ -53,45 +51,43 @@ pub trait Screen {
         &mut self,
         frame: &mut Frame,
         application_context: &mut ApplicationContext,
-        ui_context: &mut UIContext,
+        ui_context: &mut UI,
     );
 }
 
+type ScreenRegistrar<'screen> = HashMap<ScreenType, Box<dyn Screen + 'screen>>;
+
 /// Screens aggregator
-pub struct Screens<'a> {
-    screens: HashMap<ScreenType, Box<dyn Screen + 'a>>,
+pub struct Screens<'screen> {
+    screens: ScreenRegistrar<'screen>,
 }
 
-impl<'a> Screens<'a> {
-    pub fn new() -> Screens<'a> {
-        let main_screen = MainScreen;
-        let insert_screen = FormScreen;
-        let edit_screen = FormScreen;
+impl<'screen> Screens<'screen> {
+    pub fn new() -> Screens<'screen> {
+        let mut screens: ScreenRegistrar<'screen> = ScreenRegistrar::new();
 
-        let mut screens = Self {
-            screens: HashMap::new(),
-        };
+        register!(
+            screens,
+            ScreenType::Main => Box::new(MainScreen),
+            ScreenType::Form(Operation::Insert) => Box::new(FormScreen),
+            ScreenType::Form(Operation::Edit) => Box::new(FormScreen)
+        );
 
-        screens.register(ScreenType::Main, main_screen);
-        screens.register(ScreenType::Form(Operation::Insert), insert_screen);
-        screens.register(ScreenType::Form(Operation::Edit), edit_screen);
-
-        screens
+        Self { screens }
     }
 
-    pub fn register<S>(&mut self, screen_type: ScreenType, screen: S)
-    where
-        S: Screen + 'a,
-    {
-        self.screens.insert(screen_type, Box::new(screen));
-    }
-
-    pub fn get_screen<I>(&mut self, screen_type: I) -> Option<&mut Box<dyn Screen + 'a>>
+    pub fn get_screen<I>(&mut self, screen_type: I) -> Option<&mut Box<dyn Screen + 'screen>>
     where
         I: Into<ScreenType>,
     {
         let st: ScreenType = screen_type.into();
         self.screens.get_mut(&st)
+    }
+}
+
+impl Default for Screens<'_> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

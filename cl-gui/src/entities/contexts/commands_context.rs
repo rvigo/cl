@@ -1,6 +1,6 @@
 use crate::entities::fuzzy::Fuzzy;
 
-use super::{cache_info::CacheInfo, namespaces_context::DEFAULT_NAMESPACE, Selectable};
+use super::{cache_info::CacheInfo, namespaces::DEFAULT_NAMESPACE, Selectable};
 use anyhow::Result;
 use cl_core::{
     command::Command, commands::Commands, resource::commands_file_handler::CommandsFileHandler,
@@ -26,7 +26,7 @@ impl CommandsContext {
     pub fn new(commands: Vec<Command>, commands_file_handler: CommandsFileHandler) -> Self {
         let mut context = Self {
             commands: Commands::init(commands.clone()),
-            state: ListState::default(),
+            state: ListState::default(), // TODO move this to another place
             to_be_executed: None,
             commands_cache: CacheInfo::new(commands),
             matcher: SkimMatcherV2::default(),
@@ -74,11 +74,13 @@ impl CommandsContext {
     /// Adds a new command and then saves the updated `commands.toml` file
     pub fn add_command(&mut self, new_command: &Command) -> Result<()> {
         new_command.validate()?;
+
         debug!("new command validated: {new_command:?}");
         let commands = self.commands.add_command(new_command)?;
 
         self.commands_cache.insert_entry(new_command.to_owned());
         self.commands_file_handler.save(&commands)?;
+
         Ok(())
     }
 
@@ -89,20 +91,24 @@ impl CommandsContext {
         current_command: &Command,
     ) -> Result<()> {
         edited_command.validate()?;
+
         let commands = self
             .commands
             .add_edited_command(edited_command, current_command)?;
         self.commands_cache
             .update_entry(edited_command, current_command);
         self.commands_file_handler.save(&commands)?;
+
         Ok(())
     }
 
     /// Removes a command and then saves the updated `commands.toml` file
     pub fn remove_command(&mut self, command: &Command) -> Result<()> {
         let commands = self.commands.remove(command)?;
+
         self.commands_cache.remove_entry(command);
         self.commands_file_handler.save(&commands)?;
+
         Ok(())
     }
 

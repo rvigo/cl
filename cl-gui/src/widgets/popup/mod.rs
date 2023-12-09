@@ -4,7 +4,9 @@ pub mod popup_type;
 pub mod question_popup;
 
 use self::choice::Choice;
-use crate::{centered_rect, entities::states::popup_state::PopupState, DEFAULT_SELECTED_COLOR};
+use crate::{
+    centered_rect, entities::contexts::popup_context::PopupContext, DEFAULT_SELECTED_COLOR,
+};
 use std::{rc::Rc, vec};
 use tui::{
     buffer::Buffer,
@@ -19,7 +21,7 @@ pub trait Popup
 where
     Self: Sized + Send + Sync,
 {
-    fn render(self, area: Rect, buf: &mut Buffer, state: Option<&mut PopupState>);
+    fn render(self, area: Rect, buf: &mut Buffer, state: Option<&mut PopupContext>);
 
     fn content_height(&self) -> u16;
 
@@ -39,17 +41,17 @@ where
     }
 }
 
-pub trait WithOptions: Popup {
-    fn button_widget(&self, selected_option: usize) -> Tabs<'_> {
-        let options = self
+pub trait WithChoices: Popup {
+    fn button_widget(&self, selected: usize) -> Tabs<'_> {
+        let choices = self
             .choices()
             .iter()
             .map(|tab| Line::from(tab.to_string()))
             .collect();
 
-        Tabs::new(options)
+        Tabs::new(choices)
             .block(Block::default().borders(Borders::NONE))
-            .select(selected_option)
+            .select(selected)
             .highlight_style(
                 Style::default()
                     .fg(DEFAULT_SELECTED_COLOR)
@@ -113,7 +115,7 @@ pub trait RenderPopup {
     where
         P: Popup;
 
-    fn render_stateful_popup<P>(&mut self, popup: P, area: Rect, state: &mut PopupState)
+    fn render_stateful_popup<P>(&mut self, popup: P, area: Rect, state: &mut PopupContext)
     where
         P: Popup;
 }
@@ -126,7 +128,7 @@ impl RenderPopup for Frame<'_> {
         popup.render(area, self.buffer_mut(), None);
     }
 
-    fn render_stateful_popup<P>(&mut self, popup: P, area: Rect, state: &mut PopupState)
+    fn render_stateful_popup<P>(&mut self, popup: P, area: Rect, state: &mut PopupContext)
     where
         P: Popup,
     {
@@ -137,15 +139,18 @@ impl RenderPopup for Frame<'_> {
 pub mod macros {
     #[macro_export]
     macro_rules! popup {
-        (question => $ui_context:expr) => {
-            QuestionPopup::new(
-                $ui_context.popup_state_mut().message.to_owned(),
-                $ui_context.get_available_choices(),
-                $ui_context.popup_state_mut().popup_type.to_owned(),
-            )
-        };
-        (help => $view_mode:expr) => {
+        ($view_mode:expr) => {
             HelpPopup::new($view_mode)
         };
+
+        ($info:expr, $choiches:expr) => {{
+            use $crate::widgets::popup::question_popup::QuestionPopup;
+
+            QuestionPopup::new(
+                $info.message.to_owned(),
+                $choiches,
+                $info.popup_type.to_owned(),
+            )
+        }};
     }
 }

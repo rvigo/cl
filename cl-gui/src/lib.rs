@@ -18,7 +18,7 @@ mod core {
     use super::entities::terminal::Terminal;
     use crate::{
         entities::{
-            contexts::{application_context::ApplicationContext, ui_context::UIContext},
+            contexts::{application_context::ApplicationContext, ui::UI},
             event_handler::EventHandler,
             events::{app_events::AppEvent, input_events::InputMessages},
             input_handler::InputHandler,
@@ -55,7 +55,7 @@ mod core {
 
         debug!("creating contexts");
         let should_quit: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
-        let ui_context = Arc::new(Mutex::new(UIContext::new(size.clone())));
+        let ui_context = Arc::new(Mutex::new(UI::new(size.clone())));
         let context = Arc::new(Mutex::new(ApplicationContext::init(
             commands,
             file_service,
@@ -63,7 +63,7 @@ mod core {
         )));
 
         debug!("creating screens with size {size:?}");
-        let screens = Screens::new();
+        let screens = Screens::default();
 
         debug!("starting components");
         start_input_handler(input_rx, &app_sx, &ui_context, &should_quit).await;
@@ -84,7 +84,7 @@ mod core {
     async fn start_event_handler(
         app_rx: Receiver<AppEvent>,
         context: &Arc<Mutex<ApplicationContext>>,
-        ui_context: &Arc<Mutex<UIContext<'static>>>,
+        ui_context: &Arc<Mutex<UI<'static>>>,
         should_quit: &Arc<AtomicBool>,
     ) {
         debug!("starting event listener");
@@ -99,7 +99,7 @@ mod core {
     async fn start_ui<'a>(
         input_sx: Sender<InputMessages>,
         should_quit: Arc<AtomicBool>,
-        ui_context: Arc<Mutex<UIContext<'a>>>,
+        ui_context: Arc<Mutex<UI<'a>>>,
         context: Arc<Mutex<ApplicationContext>>,
         terminal: Terminal<CrosstermBackend<Stdout>>,
         screens: Screens<'a>,
@@ -122,7 +122,7 @@ mod core {
     async fn start_input_handler(
         input_rx: Receiver<InputMessages>,
         app_sx: &Sender<AppEvent>,
-        ui_context: &Arc<Mutex<UIContext<'static>>>,
+        ui_context: &Arc<Mutex<UI<'static>>>,
         should_quit: &Arc<AtomicBool>,
     ) {
         debug!("starting input handler");

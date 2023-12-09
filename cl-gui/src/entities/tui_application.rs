@@ -1,8 +1,8 @@
 use super::{
-    contexts::{application_context::ApplicationContext, ui_context::UIContext},
+    contexts::{application_context::ApplicationContext, ui::UI},
     events::input_events::InputMessages,
-    states::ui_state::ViewMode,
     terminal::Terminal,
+    view_mode::ViewMode,
 };
 use crate::screens::Screens;
 use anyhow::{Context, Result};
@@ -20,29 +20,29 @@ use std::{
 use tokio::sync::mpsc::Sender;
 use tui::backend::CrosstermBackend;
 
-pub struct TuiApplication<'a> {
+pub struct TuiApplication<'tui> {
     terminal: Terminal<CrosstermBackend<Stdout>>,
     input_sx: Sender<InputMessages>,
     should_quit: Arc<AtomicBool>,
-    ui_context: Arc<Mutex<UIContext<'a>>>,
+    ui: Arc<Mutex<UI<'tui>>>,
     context: Arc<Mutex<ApplicationContext>>,
-    screens: Screens<'a>,
+    screens: Screens<'tui>,
 }
 
-impl<'a> TuiApplication<'a> {
+impl<'tui> TuiApplication<'tui> {
     pub fn create(
         input_sx: Sender<InputMessages>,
         should_quit: Arc<AtomicBool>,
-        ui_context: Arc<Mutex<UIContext<'a>>>,
+        ui: Arc<Mutex<UI<'tui>>>,
         context: Arc<Mutex<ApplicationContext>>,
         terminal: Terminal<CrosstermBackend<Stdout>>,
-        screens: Screens<'a>,
-    ) -> Result<TuiApplication<'a>> {
+        screens: Screens<'tui>,
+    ) -> Result<TuiApplication<'tui>> {
         let tui = TuiApplication {
             terminal,
             input_sx,
             should_quit,
-            ui_context,
+            ui,
             context,
             screens,
         };
@@ -52,11 +52,11 @@ impl<'a> TuiApplication<'a> {
 
     pub async fn render(&mut self) -> Result<()> {
         while !self.should_quit.load(Ordering::SeqCst) {
-            let view_mode = self.get_current_screen_type();
+            let view_mode = self.current_view_mode();
 
             if let Some(screen) = self.screens.get_screen(view_mode) {
                 self.terminal
-                    .draw(&mut self.ui_context, &mut self.context, &mut **screen)?;
+                    .draw(&mut self.ui, &mut self.context, &mut **screen)?;
 
                 if event::poll(Duration::from_millis(50))? {
                     if let Ok(Event::Key(key)) = event::read() {
@@ -81,9 +81,8 @@ impl<'a> TuiApplication<'a> {
             })
     }
 
-    fn get_current_screen_type(&self) -> ViewMode {
-        let ui_context = self.ui_context.lock();
-        ui_context.view_mode()
+    fn current_view_mode(&self) -> ViewMode {
+        self.ui.lock().view_mode()
     }
 
     fn callback(&self) -> Result<()> {

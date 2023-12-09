@@ -1,6 +1,6 @@
 use super::{
     commands_context::CommandsContext,
-    namespaces_context::{NamespacesContext, DEFAULT_NAMESPACE},
+    namespaces::{Namespaces, DEFAULT_NAMESPACE},
     Selectable,
 };
 use crate::entities::clipboard::Clipboard;
@@ -12,7 +12,7 @@ use cl_core::{
 use tui::widgets::ListState;
 
 pub struct ApplicationContext {
-    namespaces_context: NamespacesContext,
+    namespaces_context: Namespaces,
     commands_context: CommandsContext,
     config_options: Preferences,
     clipboard: Option<Clipboard>,
@@ -28,7 +28,7 @@ impl ApplicationContext {
         let clipboard = Clipboard::new().ok();
 
         ApplicationContext {
-            namespaces_context: NamespacesContext::new(namespaces),
+            namespaces_context: Namespaces::new(namespaces),
             commands_context: CommandsContext::new(commands, commands_file_service),
             config_options,
             clipboard,
@@ -46,7 +46,7 @@ impl ApplicationContext {
     }
 
     // namespaces context
-    pub fn namespaces_context(&self) -> &NamespacesContext {
+    pub fn namespaces_context(&self) -> &Namespaces {
         &self.namespaces_context
     }
 
@@ -130,7 +130,7 @@ impl ApplicationContext {
 
     /// Filters the command list using the querybox input as query
     pub fn filter_commands(&mut self, query_string: String) -> Vec<Command> {
-        let current_namespace = self.namespaces_context.current_namespace();
+        let current_namespace = self.namespaces_context.current();
         self.commands_context
             .filter_commands(&current_namespace, &query_string);
         self.commands_context.filtered_commands()
@@ -144,7 +144,6 @@ impl ApplicationContext {
             .iter()
             .map(|c| c.namespace.to_owned())
             .collect();
-        self.namespaces_context
-            .update_namespaces(filtered_namespaces);
+        self.namespaces_context.update(filtered_namespaces);
     }
 }
