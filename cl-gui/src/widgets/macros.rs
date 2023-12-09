@@ -48,3 +48,12 @@ macro_rules! default_block {
             .border_type(BorderType::Plain)
     }};
 }
+
+#[macro_export]
+macro_rules! register {
+    ($what:ident, $($key:expr => $value:expr),+ $(,)*) => {
+       $(
+            $what.insert($key, $value);
+        )+
+    };
+}

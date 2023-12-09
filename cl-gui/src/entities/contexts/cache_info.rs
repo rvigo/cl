@@ -1,4 +1,4 @@
-use cl_core::command::Command;
+use cl_core::{command::Command, hashmap};
 use log::debug;
 use std::collections::HashMap;
 
@@ -8,9 +8,11 @@ pub struct CacheInfo {
     cache: HashMap<String, Vec<Command>>,
 }
 
+// TODO should it go to core????
 impl CacheInfo {
     pub fn new(command_list: Vec<Command>) -> CacheInfo {
-        let mut namespace_map: HashMap<String, Vec<Command>> = HashMap::new();
+        let mut namespace_map: HashMap<String, Vec<Command>> = hashmap!();
+
         command_list.into_iter().for_each(|c| {
             namespace_map
                 .entry(c.namespace.to_owned())
@@ -50,6 +52,7 @@ impl CacheInfo {
     #[inline]
     pub fn remove_entry(&mut self, command_item: &Command) {
         let namespace = &command_item.namespace;
+
         if let Some(commands) = self.cache.get_mut(namespace) {
             if let Some(index) = commands.iter().position(|c| c.eq(command_item)) {
                 debug!("removing old cache entry from {namespace}");

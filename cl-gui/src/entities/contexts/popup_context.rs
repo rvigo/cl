@@ -1,63 +1,66 @@
 use super::Selectable;
 use crate::{
-    entities::states::{popup_state::PopupState, State},
+    entities::{popup_info::PopupInfo, states::State},
     widgets::popup::choice::Choice,
 };
 
 #[derive(Default)]
 pub struct PopupContext {
-    state: PopupState,
-    selected_choice: Option<Choice>,
+    pub info: PopupInfo,
+    selected_choice_idx: usize,
     available_choices: Vec<Choice>,
 }
 
 impl PopupContext {
     pub fn new() -> PopupContext {
-        let mut context = Self {
-            state: PopupState::default(),
-            selected_choice: None,
+        Self {
+            info: PopupInfo::default(),
+            selected_choice_idx: 0,
             available_choices: vec![],
-        };
-
-        context.state.select(Some(0));
-
-        context
+        }
     }
 
     pub fn set_available_choices(&mut self, choices: Vec<Choice>) {
         self.available_choices = choices
     }
 
-    pub fn get_available_choices(&self) -> Vec<Choice> {
-        self.available_choices.clone()
+    pub fn get_available_choices(&self) -> &Vec<Choice> {
+        &self.available_choices
     }
 
-    pub fn state(&self) -> &PopupState {
-        &self.state
-    }
-
-    pub fn state_mut(&mut self) -> &mut PopupState {
-        &mut self.state
+    pub fn selected_choice(&self) -> usize {
+        self.selected_choice_idx
     }
 
     pub fn clear(&mut self) {
-        self.selected_choice = None;
-        self.state.select(Some(0));
+        self.selected_choice_idx = 0;
     }
 }
 
 impl Selectable for PopupContext {
     fn next(&mut self) {
-        let current = self.state.selected().unwrap_or(0);
+        let current = self.selected_choice_idx;
         let next = (current + 1) % self.available_choices.len();
 
-        self.state.select(Some(next));
+        self.selected_choice_idx = next;
     }
 
     fn previous(&mut self) {
-        let current = self.state.selected().unwrap_or(0);
+        let current = self.selected_choice_idx;
         let previous = (current + self.available_choices.len() - 1) % self.available_choices.len();
 
-        self.state.select(Some(previous));
+        self.selected_choice_idx = previous;
+    }
+}
+
+impl State for PopupContext {
+    type Output = usize;
+
+    fn selected(&self) -> usize {
+        self.selected_choice_idx
+    }
+
+    fn select(&mut self, index: usize) {
+        self.selected_choice_idx = index;
     }
 }

@@ -28,3 +28,9 @@ impl Widget for Help {
         display.render(area, buf)
     }
 }
+
+impl Default for Help {
+    fn default() -> Self {
+        Self::new()
+    }
+}
