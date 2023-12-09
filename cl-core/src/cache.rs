@@ -1,16 +1,16 @@
-use cl_core::{command::Command, hashmap};
 use log::debug;
 use std::collections::HashMap;
 
+use crate::{command::Command, hashmap};
+
 /// Caches a `Command` list using the namespace as a key for faster search
 #[derive(Default)]
-pub struct CacheInfo {
+pub struct Cache {
     cache: HashMap<String, Vec<Command>>,
 }
 
-// TODO should it go to core????
-impl CacheInfo {
-    pub fn new(command_list: Vec<Command>) -> CacheInfo {
+impl Cache {
+    pub fn new(command_list: Vec<Command>) -> Cache {
         let mut namespace_map: HashMap<String, Vec<Command>> = hashmap!();
 
         command_list.into_iter().for_each(|c| {
@@ -20,7 +20,7 @@ impl CacheInfo {
                 .push(c);
         });
 
-        let mut cache_info = CacheInfo {
+        let mut cache_info = Cache {
             cache: namespace_map,
         };
 

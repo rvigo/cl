@@ -1,5 +1,4 @@
 pub mod application_context;
-pub mod cache_info;
 pub mod commands_context;
 mod fields;
 pub mod namespaces;

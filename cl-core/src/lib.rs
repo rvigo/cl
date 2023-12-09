@@ -1,3 +1,4 @@
+pub mod cache;
 pub mod command;
 pub mod commands;
 pub mod config;
