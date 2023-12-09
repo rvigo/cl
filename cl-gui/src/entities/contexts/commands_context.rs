@@ -1,9 +1,9 @@
+use super::{namespaces::DEFAULT_NAMESPACE, Selectable};
 use crate::entities::fuzzy::Fuzzy;
-
-use super::{cache_info::CacheInfo, namespaces::DEFAULT_NAMESPACE, Selectable};
 use anyhow::Result;
 use cl_core::{
-    command::Command, commands::Commands, resource::commands_file_handler::CommandsFileHandler,
+    cache::Cache, command::Command, commands::Commands,
+    resource::commands_file_handler::CommandsFileHandler,
 };
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
@@ -16,7 +16,7 @@ pub struct CommandsContext {
     commands: Commands,
     state: ListState,
     to_be_executed: Option<Command>,
-    commands_cache: CacheInfo,
+    cache: Cache,
     matcher: SkimMatcherV2,
     commands_file_handler: CommandsFileHandler,
     filtered_commands: Vec<Command>,
@@ -28,7 +28,7 @@ impl CommandsContext {
             commands: Commands::init(commands.clone()),
             state: ListState::default(), // TODO move this to another place
             to_be_executed: None,
-            commands_cache: CacheInfo::new(commands),
+            cache: Cache::new(commands),
             matcher: SkimMatcherV2::default(),
             commands_file_handler,
             filtered_commands: vec![],
@@ -78,7 +78,7 @@ impl CommandsContext {
         debug!("new command validated: {new_command:?}");
         let commands = self.commands.add_command(new_command)?;
 
-        self.commands_cache.insert_entry(new_command.to_owned());
+        self.cache.insert_entry(new_command.to_owned());
         self.commands_file_handler.save(&commands)?;
 
         Ok(())
@@ -95,8 +95,7 @@ impl CommandsContext {
         let commands = self
             .commands
             .add_edited_command(edited_command, current_command)?;
-        self.commands_cache
-            .update_entry(edited_command, current_command);
+        self.cache.update_entry(edited_command, current_command);
         self.commands_file_handler.save(&commands)?;
 
         Ok(())
@@ -106,7 +105,7 @@ impl CommandsContext {
     pub fn remove_command(&mut self, command: &Command) -> Result<()> {
         let commands = self.commands.remove(command)?;
 
-        self.commands_cache.remove_entry(command);
+        self.cache.remove_entry(command);
         self.commands_file_handler.save(&commands)?;
 
         Ok(())
@@ -149,7 +148,7 @@ impl CommandsContext {
     ///
     fn filter(&mut self, current_namespace: &str, query_string: &str) -> Vec<Command> {
         let commands = if !current_namespace.is_empty() && current_namespace != DEFAULT_NAMESPACE {
-            self.commands_cache.get_entry(current_namespace)
+            self.cache.get_entry(current_namespace)
         } else {
             let command_list = self.commands.command_list().to_owned();
 
@@ -304,7 +303,7 @@ mod test {
 
         let result = context.add_command(&new_command);
         assert!(result.is_ok());
-        assert_eq!(context.commands_cache.get_entry(namespace).len(), 1);
+        assert_eq!(context.cache.get_entry(namespace).len(), 1);
 
         // invalid command
         let namespace = "invalid_namespace";
