@@ -1,5 +1,10 @@
 use cargo_metadata::{semver::Version as CargoVersion, MetadataCommand, Package as CargoPackage};
 use itertools::Itertools;
+use once_cell::sync::Lazy;
+
+static METADATA: Lazy<Metadata> = Lazy::new(|| Metadata::load());
+pub static MAIN_PACKAGE_METADATA: Lazy<Package> = Lazy::new(|| METADATA.main_package_metadata());
+pub static PACKAGES_METADATA: Lazy<Vec<Package>> = Lazy::new(|| METADATA.packages_metadata());
 
 const PKG_NAME: &str = "cl";
 const CORE_PKG_NAME: &str = "cl-core";
@@ -91,20 +96,4 @@ impl Metadata {
 
         packages
     }
-}
-
-#[macro_export]
-macro_rules! metadata {
-    () => {{
-        use $crate::resource::metadata::Metadata;
-        Metadata::load().main_package_metadata()
-    }};
-}
-
-#[macro_export]
-macro_rules! pkgs_metadata {
-    () => {{
-        use $crate::resource::metadata::Metadata;
-        Metadata::load().packages_metadata()
-    }};
 }
