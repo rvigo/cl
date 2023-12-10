@@ -1,6 +1,6 @@
 use super::StatusBarItem;
 use crate::entities::terminal::TerminalSize;
-use cl_core::metadata;
+use cl_core::resource::metadata::MAIN_PACKAGE_METADATA;
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -123,7 +123,7 @@ where
         let block = Block::default()
             .borders(Borders::ALL)
             .style(Style::default())
-            .title(format!(" {} ", metadata!().to_string()))
+            .title(format!(" {} ", MAIN_PACKAGE_METADATA.to_string()))
             .title_alignment(Alignment::Right)
             .border_type(BorderType::Plain);
 
