@@ -27,7 +27,9 @@ mod core {
         screens::Screens,
     };
     use anyhow::{Context, Result};
-    use cl_core::{config::Config, resource::commands_file_handler::CommandsFileHandler};
+    use cl_core::{
+        commands::Commands, config::Config, resource::commands_file_handler::CommandsFileHandler,
+    };
     use log::debug;
     use parking_lot::Mutex;
     use std::{
@@ -47,6 +49,7 @@ mod core {
         let commands = file_service
             .load()
             .context("Cannot load commands from file")?;
+        let commands = Commands::init(commands);
 
         debug!("creating terminal");
         let mut terminal = Terminal::new()?;

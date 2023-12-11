@@ -20,7 +20,7 @@ pub struct Misc {
 impl Subcommand for Misc {
     fn run(&self, config: Config) -> Result<()> {
         let commands = load_commands!(config.command_file_path())?;
-
+        let command_vec = commands.command_as_list();
         if self.description {
             if let Some(alias) = &self.alias {
                 let namespace = &self.namespace;
@@ -28,9 +28,8 @@ impl Subcommand for Misc {
                 println!("{}", command.to_color_string());
             }
         } else if self.fzf {
-            let mut seen = HashSet::with_capacity(commands.command_list().len());
-            let duplicated: Vec<String> = commands
-                .command_list()
+            let mut seen = HashSet::with_capacity(command_vec.len());
+            let duplicated: Vec<String> = command_vec
                 .iter()
                 .filter_map(|c| {
                     if seen.contains(&c.alias) {
@@ -42,7 +41,7 @@ impl Subcommand for Misc {
                 })
                 .collect();
 
-            commands.command_list().iter().for_each(|c| {
+            command_vec.iter().for_each(|c| {
                 if duplicated.contains(&c.alias) {
                     println!(
                         "{} ({})",
@@ -54,8 +53,7 @@ impl Subcommand for Misc {
                 }
             })
         } else {
-            commands
-                .command_list()
+            command_vec
                 .iter()
                 .for_each(|c| println!("{}", c.sumarize()));
         }

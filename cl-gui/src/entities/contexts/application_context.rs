@@ -6,7 +6,9 @@ use super::{
 use crate::entities::clipboard::Clipboard;
 use anyhow::Result;
 use cl_core::{
-    command::Command, preferences::Preferences,
+    command::Command,
+    commands::{Commands, Namespace},
+    preferences::Preferences,
     resource::commands_file_handler::CommandsFileHandler,
 };
 use tui::widgets::ListState;
@@ -20,11 +22,15 @@ pub struct ApplicationContext {
 
 impl ApplicationContext {
     pub fn init(
-        commands: Vec<Command>,
+        commands: Commands,
         commands_file_service: CommandsFileHandler,
         config_options: Preferences,
     ) -> ApplicationContext {
-        let namespaces = commands.iter().map(|c| c.namespace.to_owned()).collect();
+        let namespaces = commands
+            .commands()
+            .keys()
+            .map(|n| n.to_owned())
+            .collect::<Vec<Namespace>>();
         let clipboard = Clipboard::new().ok();
 
         ApplicationContext {
