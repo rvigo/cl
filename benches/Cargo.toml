@@ -24,7 +24,7 @@ name = "core"
 path = "src/core.rs"
 harness = false
 
-[[bench]]
-name = "gui"
-path = "src/gui.rs"
-harness = false
+# [[bench]]
+# name = "gui"
+# path = "src/gui.rs"
+# harness = false

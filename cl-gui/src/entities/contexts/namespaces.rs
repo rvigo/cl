@@ -1,3 +1,5 @@
+use cl_core::commands::Namespace;
+
 use super::Selectable;
 use crate::entities::states::State;
 use std::collections::HashSet;
@@ -5,7 +7,7 @@ use std::collections::HashSet;
 pub const DEFAULT_NAMESPACE: &str = "All";
 
 pub struct Namespaces {
-    namespaces: Vec<String>,
+    namespaces: Vec<Namespace>,
     selected_idx: usize,
 }
 
