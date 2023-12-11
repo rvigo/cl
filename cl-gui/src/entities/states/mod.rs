@@ -1,4 +1,5 @@
 pub mod clipboard_state;
+pub mod namespaces_state;
 
 pub trait State {
     type Output;
