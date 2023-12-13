@@ -1,4 +1,3 @@
-use super::StatusBarItem;
 use crate::{widgets::WidgetKeyHandler, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crossterm::event::{KeyCode, KeyEvent};
 use tui::{
@@ -10,15 +9,13 @@ use tui::{
 use tui_textarea::TextArea;
 
 #[derive(Clone, Default)]
-pub struct QueryBox<'a> {
-    text_area: TextArea<'a>,
+pub struct QueryBox<'querybox> {
+    text_area: TextArea<'querybox>,
     focus: bool,
     buffer: String,
 }
 
-impl<'a> StatusBarItem for QueryBox<'a> {}
-
-impl<'a> QueryBox<'a> {
+impl<'querybox> QueryBox<'querybox> {
     pub fn focus(&self) -> bool {
         self.focus
     }
@@ -51,7 +48,7 @@ impl WidgetKeyHandler for QueryBox<'_> {
     }
 }
 
-impl<'a> Widget for QueryBox<'a> {
+impl<'querybox> Widget for QueryBox<'querybox> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
         let style = if self.focus {
             Style::default().fg(Color::Black).bg(DEFAULT_SELECTED_COLOR)
