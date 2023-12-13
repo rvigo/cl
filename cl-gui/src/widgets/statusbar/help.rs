@@ -1,4 +1,3 @@
-use super::StatusBarItem;
 use crate::widgets::display::DisplayWidget;
 use tui::{
     buffer::Buffer,
@@ -18,8 +17,6 @@ impl Help {
         }
     }
 }
-
-impl StatusBarItem for Help {}
 
 impl Widget for Help {
     fn render(self, area: Rect, buf: &mut Buffer) {

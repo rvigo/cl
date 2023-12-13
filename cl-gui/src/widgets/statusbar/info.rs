@@ -1,4 +1,3 @@
-use super::StatusBarItem;
 use crate::{widgets::display::DisplayWidget, DEFAULT_SELECTED_COLOR};
 use tui::{
     buffer::Buffer,
@@ -29,5 +28,3 @@ impl Widget for Info {
         display.render(area, buf)
     }
 }
-
-impl StatusBarItem for Info {}
