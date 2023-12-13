@@ -1,4 +1,3 @@
-use super::StatusBarItem;
 use crate::widgets::display::DisplayWidget;
 use tui::{buffer::Buffer, layout::Rect, widgets::Widget};
 
@@ -6,8 +5,6 @@ use tui::{buffer::Buffer, layout::Rect, widgets::Widget};
 pub struct NavigationInfo {
     content: String,
 }
-
-impl StatusBarItem for NavigationInfo {}
 
 impl NavigationInfo {
     pub fn new() -> NavigationInfo {
