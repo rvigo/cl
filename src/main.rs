@@ -11,7 +11,7 @@ async fn main() -> Result<()> {
     let config = Config::load().context("Cannot load the config file")?;
 
     let logger = LoggerBuilder::default()
-        .with_log_level(config.preferences().get_log_level())
+        .with_log_level(config.preferences().log_level())
         .with_path(config.root_dir());
 
     let app = App::parse_app();

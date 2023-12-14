@@ -1,5 +1,5 @@
 use super::{fs_wrapper::macros::write, toml::TomlFileHandler};
-use crate::{commands::CommandMap, hashmap, resource::errors::FileError};
+use crate::{hashmap, resource::errors::FileError, CommandMap};
 use anyhow::Result;
 use log::debug;
 use std::path::{Path, PathBuf};

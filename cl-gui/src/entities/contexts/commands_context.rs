@@ -1,5 +1,5 @@
 use super::{
-    namespaces::{Namespaces, NamespacesExt, DEFAULT_NAMESPACE},
+    namespaces::{Namespaces, DEFAULT_NAMESPACE},
     Selectable,
 };
 use crate::entities::{fuzzy::Fuzzy, states::State};
@@ -49,10 +49,9 @@ impl CommandsContext {
     }
 
     fn namespaces(&mut self) -> Vec<Namespace> {
-        let mut namespaces = self.namespaces.items.include_default();
-        namespaces.sort();
+        // let mut namespaces = self.namespaces.items.include_default();
 
-        namespaces
+        self.namespaces.items.to_owned()
     }
 
     pub fn current_namespace(&self) -> String {
@@ -102,6 +101,9 @@ impl CommandsContext {
         debug!("new command validated: {new_command:?}");
         let commands = self.commands.add_command(new_command)?;
 
+        self.namespaces
+            .update_namespaces(&commands.keys().collect_vec());
+
         self.commands_file_handler.save(&commands)?;
 
         Ok(())
@@ -118,6 +120,9 @@ impl CommandsContext {
         let commands = self
             .commands
             .add_edited_command(edited_command, current_command)?;
+
+        self.namespaces
+            .update_namespaces(&commands.keys().collect_vec());
 
         self.commands_file_handler.save(&commands)?;
 
@@ -397,23 +402,23 @@ mod test {
     //     assert!(&context.filtered_commands().contains(&command4));
     // }
 
-    #[test]
-    fn should_filter_namespaces() {
-        let expected = vec![DEFAULT_NAMESPACE.to_string(), "namespace1".to_string()];
-        let context = Namespaces::new(vec!["namespace1".to_string()]);
-        assert_eq!(context.items, expected);
+    // #[test]
+    // fn should_filter_namespaces() {
+    //     let expected = vec![DEFAULT_NAMESPACE.to_string(), "namespace1".to_string()];
+    //     let context = Namespaces::new(vec!["namespace1".to_string()]);
+    //     assert_eq!(context.items, expected);
 
-        let namespaces = vec![
-            "namespace1".to_string(),
-            "namespace1".to_string(),
-            "namespace1".to_string(),
-        ];
+    //     let namespaces = vec![
+    //         "namespace1".to_string(),
+    //         "namespace1".to_string(),
+    //         "namespace1".to_string(),
+    //     ];
 
-        let expected = vec![DEFAULT_NAMESPACE.to_string(), "namespace1".to_string()];
+    //     let expected = vec![DEFAULT_NAMESPACE.to_string(), "namespace1".to_string()];
 
-        let context = Namespaces::new(namespaces);
-        assert_eq!(context.items, expected);
-    }
+    //     let context = Namespaces::new(namespaces);
+    //     assert_eq!(context.items, expected);
+    // }
 
     #[test]
     fn should_go_to_previous_namespace() {

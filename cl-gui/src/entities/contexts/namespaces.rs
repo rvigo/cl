@@ -1,4 +1,5 @@
 use cl_core::Namespace;
+use itertools::Itertools;
 
 use crate::entities::states::namespaces_state::NamespacesState;
 
@@ -20,8 +21,13 @@ impl Namespaces {
         }
     }
 
-    pub fn update_namespaces(&mut self, mut namespaces: Vec<Namespace>) {
-        let mut namespaces = namespaces.include_default();
+    pub fn update_namespaces(&mut self, namespaces: &[&Namespace]) {
+        let mut namespaces = namespaces
+            .iter()
+            .copied()
+            .map(|n| n.to_owned())
+            .collect_vec()
+            .include_default();
         namespaces.sort();
 
         self.items = namespaces
@@ -36,5 +42,13 @@ impl NamespacesExt for Vec<Namespace> {
     fn include_default(&mut self) -> Vec<Namespace> {
         self.insert(0, DEFAULT_NAMESPACE.to_owned());
         self.to_owned()
+    }
+}
+
+impl NamespacesExt for Vec<&Namespace> {
+    fn include_default(&mut self) -> Vec<Namespace> {
+        let mut namespaces = self.iter_mut().map(|n| n.to_owned()).collect::<Vec<_>>();
+        namespaces.insert(0, DEFAULT_NAMESPACE.to_owned());
+        namespaces
     }
 }
