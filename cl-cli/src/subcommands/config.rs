@@ -160,14 +160,14 @@ impl PrintableAppConfig for AppConfig {
         result.push_str(&format!("command-file: {:?}\n", self.command_file_path()));
         let preferences = self.preferences();
         result.push_str("preferences:\n");
-        result.push_str(&format!("  quiet-mode: {}\n", preferences.get_quiet_mode()));
+        result.push_str(&format!("  quiet-mode: {}\n", preferences.quiet_mode()));
         result.push_str(&format!(
             "  log-level: {}\n",
-            String::from(&preferences.get_log_level())
+            String::from(&preferences.log_level())
         ));
         result.push_str(&format!(
             "  highlight-matches: {}\n",
-            preferences.get_highlight()
+            preferences.highlight()
         ));
 
         result
