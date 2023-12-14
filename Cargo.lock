@@ -283,6 +283,7 @@ dependencies = [
  "itertools 0.11.0",
  "log",
  "once_cell",
+ "regex",
  "serde",
  "thiserror",
  "toml",

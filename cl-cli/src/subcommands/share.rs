@@ -2,7 +2,7 @@ use super::Subcommand;
 use anyhow::{Context, Result};
 use cl_core::{
     command::Command, commands::Commands, config::Config,
-    resource::commands_file_handler::CommandsFileHandler,
+    resource::commands_file_handler::CommandsFileHandler, CommandMapExt, CommandVecExt,
 };
 use clap::{Parser, ValueEnum};
 use log::{info, warn};
@@ -51,9 +51,10 @@ impl Subcommand for Share {
 
         match self.mode {
             Mode::Import => {
-                let mut stored_commands = commands.command_list().to_owned();
-                let commands_from_file: Vec<Command> =
-                    commands_file_service.load_from(&self.file_location)?;
+                let mut stored_commands = commands.command_as_list().to_owned();
+                let commands_from_file: Vec<Command> = commands_file_service
+                    .load_from(&self.file_location)?
+                    .to_vec();
 
                 let namespaces_set: HashSet<String> =
                     namespaces.to_owned().map_or(HashSet::new(), |n| {
@@ -101,7 +102,7 @@ impl Subcommand for Share {
                 if !commands_from_file.is_empty() {
                     stored_commands.extend(commands_from_file.to_owned());
                     commands_file_service
-                        .save(&stored_commands)
+                        .save(&stored_commands.to_command_map())
                         .context("Could not import the aliases")?;
                     info!(
                         "Successfully imported {} aliases",
@@ -118,7 +119,7 @@ impl Subcommand for Share {
                     for namespace in namespaces.iter() {
                         command_list.append(
                             &mut commands
-                                .command_list()
+                                .command_as_list()
                                 .iter()
                                 .filter(|c| c.namespace.eq(namespace))
                                 .map(|c| c.to_owned())
@@ -126,11 +127,11 @@ impl Subcommand for Share {
                         );
                     }
                 } else {
-                    command_list = commands.command_list().to_owned();
+                    command_list = commands.command_as_list().to_owned();
                 }
 
                 commands_file_service
-                    .save_at(&command_list, file_location)
+                    .save_at(&command_list.to_command_map(), file_location)
                     .context("Could not export the aliases")?;
                 info!("Exported {} aliases", command_list.len())
             }
