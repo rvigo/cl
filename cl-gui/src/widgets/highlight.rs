@@ -5,14 +5,14 @@ use tui::{
     text::{Line, Span},
 };
 
-pub trait Highlight<'a> {
+pub trait Highlight<'hl> {
     fn highlight<T>(self, highlight_input: T) -> Self
     where
         T: Into<String>;
 
-    fn split_preserve_chars(&self, content: &'a str, pattern: &'a str) -> Vec<&'a str>;
+    fn split_preserve_chars(&self, content: &'hl str, pattern: &'hl str) -> Vec<&'hl str>;
 
-    fn group_by_newline(&self, input: &'a [&str]) -> Vec<Vec<String>>;
+    fn group_by_newline(&self, input: &'hl [&str]) -> Vec<Vec<String>>;
 
     #[inline]
     fn contains_ignore_case(&self, v1: &str, v2: &str) -> bool {
@@ -23,7 +23,7 @@ pub trait Highlight<'a> {
     }
 }
 
-impl<'a> Highlight<'a> for DisplayWidget<'a> {
+impl<'hl> Highlight<'hl> for DisplayWidget<'hl> {
     /// Highlights the `content` based on the given input
     ///
     /// If the input is empty, returns `Self` without any modification
@@ -80,7 +80,7 @@ impl<'a> Highlight<'a> for DisplayWidget<'a> {
     ///
     /// the output should be `["thi", "s", " i", "s", " ", "a", " ", "s", "a", "n", "d", "box"]`
     #[inline]
-    fn split_preserve_chars(&self, content: &'a str, pattern: &'a str) -> Vec<&'a str> {
+    fn split_preserve_chars(&self, content: &'hl str, pattern: &'hl str) -> Vec<&'hl str> {
         let mut idxs = Vec::default();
 
         for p in pattern.chars().unique() {
@@ -113,7 +113,7 @@ impl<'a> Highlight<'a> for DisplayWidget<'a> {
     ///
     /// If the content is  `["multiline\n", "input"]`, the output should be `[["multiline"], ["input"]]`
     #[inline]
-    fn group_by_newline(&self, input: &'a [&str]) -> Vec<Vec<String>> {
+    fn group_by_newline(&self, input: &'hl [&str]) -> Vec<Vec<String>> {
         let mut result = Vec::new();
         let mut sub_vec = Vec::new();
 
@@ -136,7 +136,7 @@ impl<'a> Highlight<'a> for DisplayWidget<'a> {
         }
 
         result
-            .into_iter()
+            .iter()
             .filter(|sub_vec| !sub_vec.is_empty())
             .map(|sub_vec| sub_vec.iter().cloned().map(String::from).collect_vec())
             .collect()

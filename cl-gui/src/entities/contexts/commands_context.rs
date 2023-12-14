@@ -1,8 +1,12 @@
-use super::{namespaces::DEFAULT_NAMESPACE, Selectable};
-use crate::entities::fuzzy::Fuzzy;
+use super::{
+    namespaces::{Namespaces, NamespacesExt, DEFAULT_NAMESPACE},
+    Selectable,
+};
+use crate::entities::{fuzzy::Fuzzy, states::State};
 use anyhow::Result;
 use cl_core::{
     command::Command, commands::Commands, resource::commands_file_handler::CommandsFileHandler,
+    CommandVec, CommandVecExt, Namespace,
 };
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
@@ -14,27 +18,45 @@ use tui::widgets::ListState;
 pub struct CommandsContext {
     commands: Commands,
     state: ListState,
+    pub namespaces: Namespaces,
     to_be_executed: Option<Command>,
-    // cache: Cache,
     matcher: SkimMatcherV2,
     commands_file_handler: CommandsFileHandler,
-    filtered_commands: Vec<Command>,
+    filtered_commands: CommandVec,
 }
 
 impl CommandsContext {
     pub fn new(commands: Commands, commands_file_handler: CommandsFileHandler) -> Self {
+        let namespaces = commands
+            .command_as_list()
+            .iter()
+            .map(|c| c.namespace.to_owned())
+            .collect_vec();
+
         let mut context = Self {
             commands,
+            namespaces: Namespaces::new(namespaces),
             state: ListState::default(), // TODO move this to another place
             to_be_executed: None,
-            // cache: Cache::new(commands),
             matcher: SkimMatcherV2::default(),
             commands_file_handler,
             filtered_commands: vec![],
         };
+
         context.state.select(Some(0));
 
         context
+    }
+
+    fn namespaces(&mut self) -> Vec<Namespace> {
+        let mut namespaces = self.namespaces.items.include_default();
+        namespaces.sort();
+
+        namespaces
+    }
+
+    pub fn current_namespace(&self) -> String {
+        self.namespaces.items[self.namespaces.state.selected()].to_owned()
     }
 
     /// Returns a `ListState`, representing the state of the command list in the app
@@ -47,7 +69,7 @@ impl CommandsContext {
         self.to_be_executed = command
     }
 
-    pub fn get_selected_command_idx(&self) -> usize {
+    pub fn selected_command_idx(&self) -> usize {
         self.state.selected().unwrap_or(0)
     }
 
@@ -56,17 +78,20 @@ impl CommandsContext {
         self.select_command_idx(0)
     }
 
-    pub fn filter_commands(&mut self, current_namespace: &str, query_string: &str) {
+    pub fn filter_commands(&mut self, current_namespace: &str, query_string: &str) -> CommandVec {
         let commands = self.filter(current_namespace, query_string);
 
-        if self.get_selected_command_idx() >= commands.len() {
+        if self.selected_command_idx() >= commands.len() {
             self.reset_selected_command_idx()
         }
 
-        self.filtered_commands = commands;
+        self.filtered_commands = commands.to_owned();
+        self.namespaces.items = self.namespaces();
+
+        self.filtered_commands.to_owned()
     }
 
-    pub fn filtered_commands(&self) -> Vec<Command> {
+    pub fn filtered_commands(&self) -> CommandVec {
         self.filtered_commands.to_owned()
     }
 
@@ -77,7 +102,6 @@ impl CommandsContext {
         debug!("new command validated: {new_command:?}");
         let commands = self.commands.add_command(new_command)?;
 
-        // self.cache.insert_entry(new_command.to_owned());
         self.commands_file_handler.save(&commands)?;
 
         Ok(())
@@ -94,7 +118,7 @@ impl CommandsContext {
         let commands = self
             .commands
             .add_edited_command(edited_command, current_command)?;
-        // self.cache.update_entry(edited_command, current_command);
+
         self.commands_file_handler.save(&commands)?;
 
         Ok(())
@@ -145,40 +169,40 @@ impl CommandsContext {
     /// * `current_namespace` - A &str representing the app current namespace
     /// * `query_string` - A &str representing the user's query string
     ///
-    fn filter(&mut self, current_namespace: &str, query_string: &str) -> Vec<Command> {
-        let commands = if !current_namespace.is_empty() && current_namespace != DEFAULT_NAMESPACE {
-            self.commands
-                .commands()
-                .get(current_namespace)
-                .unwrap_or(&vec![])
-                .to_owned()
-        } else {
-            let command_list = self.commands.command_as_list();
+    fn filter(&mut self, current_namespace: &str, query_string: &str) -> CommandVec {
+        let mut commands = {
+            let commands =
+                if !current_namespace.is_empty() && current_namespace != DEFAULT_NAMESPACE {
+                    self.commands
+                        .commands()
+                        .get(current_namespace)
+                        .unwrap_or(&vec![])
+                        .to_owned()
+                } else {
+                    let command_list = self.commands.command_as_list();
 
-            if command_list.is_empty() {
-                vec![Command::default()]
+                    if command_list.is_empty() {
+                        vec![Command::default()]
+                    } else {
+                        command_list
+                    }
+                };
+
+            if !commands.is_empty() && !query_string.is_empty() {
+                self.fuzzy_find(current_namespace, query_string, commands)
             } else {
-                command_list
+                commands
             }
         };
 
-        if !commands.is_empty() && !query_string.is_empty() {
-            self.fuzzy_find(current_namespace, query_string, commands)
-        } else {
-            commands
-        }
+        commands.sort_and_return()
     }
 
     /// Does a fuzzy search in the given vec
     ///
     /// Tries to return an ordered vec based on the score
     #[inline(always)]
-    fn fuzzy_find(
-        &self,
-        namespace: &str,
-        query_string: &str,
-        commands: Vec<Command>,
-    ) -> Vec<Command> {
+    fn fuzzy_find(&self, namespace: &str, query_string: &str, commands: CommandVec) -> CommandVec {
         if commands.is_empty() {
             return commands;
         }
@@ -211,7 +235,7 @@ impl CommandsContext {
 
 impl Selectable for CommandsContext {
     fn next(&mut self) {
-        let i = self.get_selected_command_idx();
+        let i = self.selected_command_idx();
         let filtered_commands = &self.filtered_commands;
         let next = (i + 1) % filtered_commands.len();
 
@@ -219,7 +243,7 @@ impl Selectable for CommandsContext {
     }
 
     fn previous(&mut self) {
-        let i = self.get_selected_command_idx();
+        let i = self.selected_command_idx();
         let filtered_commands = &self.filtered_commands;
         let previous = (i + filtered_commands.len() - 1) % filtered_commands.len();
 
@@ -227,193 +251,136 @@ impl Selectable for CommandsContext {
     }
 }
 
+impl Selectable for Namespaces {
+    fn next(&mut self) {
+        let current = self.state.selected();
+        let next = (current + 1) % self.items.len();
+
+        self.state.select(next);
+    }
+
+    fn previous(&mut self) {
+        let current = self.state.selected();
+        let previous = (current + self.items.len() - 1) % self.items.len();
+
+        self.state.select(previous);
+    }
+}
+
 #[cfg(test)]
 mod test {
-    // use super::*;
-    // use cl_core::command::CommandBuilder;
-    // use std::env::temp_dir;
+    use super::*;
+    use std::env::temp_dir;
 
-    // fn commands_builder(n_of_commands: usize) -> Vec<Command> {
-    //     let mut commands = vec![];
-    //     for i in 0..n_of_commands {
-    //         commands.push(Command {
-    //             namespace: format!("namespace{}", (i + 1)),
-    //             command: "command".to_string(),
-    //             description: None,
-    //             alias: "alias".to_string(),
-    //             tags: None,
-    //         })
-    //     }
-
-    //     commands
+    // macro_rules! create_command {
+    //     ($alias:expr, $command:expr, $namespace:expr, $description:expr, $tags:expr) => {
+    //         Command {
+    //             alias: $alias.to_owned(),
+    //             namespace: $namespace.to_owned(),
+    //             command: $command.to_owned(),
+    //             description: $description,
+    //             tags: $tags,
+    //         }
+    //     };
     // }
 
-    // fn commands_context_builder(n_of_commands: usize) -> CommandsContext {
-    //     let commands = commands_builder(n_of_commands);
-    //     CommandsContext::new(
-    //         commands,
-    //         CommandsFileHandler::new(temp_dir().join("commands.toml")),
-    //     )
-    // }
+    fn commands_builder(n_of_commands: usize) -> CommandVec {
+        let mut commands = vec![];
+        for i in 0..n_of_commands {
+            commands.push(Command {
+                namespace: format!("namespace{}", (i + 1)),
+                command: "command".to_string(),
+                description: None,
+                alias: "alias".to_string(),
+                tags: None,
+            })
+        }
 
-    // #[test]
-    // fn should_go_to_next() {
-    //     let mut context = commands_context_builder(3);
-    //     let current_namespace = DEFAULT_NAMESPACE;
-    //     let query_string = "";
-    //     context.filter_commands(current_namespace, query_string);
+        commands
+    }
 
-    //     assert_eq!(context.state.selected(), Some(0));
+    fn commands_context_builder(n_of_commands: usize) -> CommandsContext {
+        let commands = commands_builder(n_of_commands);
+        CommandsContext::new(
+            Commands::init(commands.to_command_map()),
+            CommandsFileHandler::new(temp_dir().join("commands.toml")),
+        )
+    }
 
-    //     context.next();
-    //     assert_eq!(context.state().selected(), Some(1));
+    #[test]
+    fn should_go_to_next() {
+        let mut context = commands_context_builder(3);
+        let current_namespace = DEFAULT_NAMESPACE;
+        let query_string = "";
+        context.filter_commands(current_namespace, query_string);
 
-    //     context.next();
-    //     assert_eq!(context.state().selected(), Some(2));
+        assert_eq!(context.state.selected(), Some(0));
 
-    //     context.next();
-    //     assert_eq!(context.state().selected(), Some(0));
-    // }
+        context.next();
+        assert_eq!(context.state().selected(), Some(1));
 
-    // #[test]
-    // fn should_go_to_previous_command() {
-    //     let mut context = commands_context_builder(3);
-    //     let current_namespace = DEFAULT_NAMESPACE;
-    //     let query_string = "";
-    //     context.filter_commands(current_namespace, query_string);
+        context.next();
+        assert_eq!(context.state().selected(), Some(2));
 
-    //     assert_eq!(context.state().selected(), Some(0));
+        context.next();
+        assert_eq!(context.state().selected(), Some(0));
+    }
 
-    //     context.previous();
-    //     assert_eq!(context.state().selected(), Some(2));
+    #[test]
+    fn should_go_to_previous_command() {
+        let mut context = commands_context_builder(3);
+        let current_namespace = DEFAULT_NAMESPACE;
+        let query_string = "";
+        context.filter_commands(current_namespace, query_string);
 
-    //     context.previous();
-    //     assert_eq!(context.state().selected(), Some(1));
-    // }
+        assert_eq!(context.state().selected(), Some(0));
 
-    // #[test]
-    // fn should_add_a_command() {
-    //     let mut context = commands_context_builder(3);
+        context.previous();
+        assert_eq!(context.state().selected(), Some(2));
 
-    //     // valid command
-    //     let namespace = "new_namespace";
-    //     let mut builder = CommandBuilder::default();
-    //     builder
-    //         .alias("new_command")
-    //         .namespace(namespace)
-    //         .command("command");
-    //     let new_command = builder.build();
+        context.previous();
+        assert_eq!(context.state().selected(), Some(1));
+    }
 
-    //     let result = context.add_command(&new_command);
-    //     assert!(result.is_ok());
-    //     assert_eq!(context.cache.get_entry(namespace).len(), 1);
+    #[test]
+    fn should_filter_commands() {
+        let mut context = commands_context_builder(4);
+        context.filter_commands(DEFAULT_NAMESPACE, "");
+        context.next();
+        context.next();
+        assert_eq!(context.selected_command_idx(), 2);
 
-    //     // invalid command
-    //     let namespace = "invalid_namespace";
-    //     let mut builder = CommandBuilder::default();
-    //     builder.alias("new_command").namespace(namespace);
-    //     let invalid_command = builder.build();
+        context.filter_commands(DEFAULT_NAMESPACE, "4");
 
-    //     let result = context.add_command(&invalid_command);
-    //     assert!(result.is_err());
-    // }
+        assert_eq!(context.filtered_commands().len(), 1);
+        let command = &context.filtered_commands()[0];
 
-    // #[test]
-    // fn should_remove_a_command() {
-    //     let mut context = commands_context_builder(0);
-
-    //     let mut builder = CommandBuilder::default();
-    //     builder
-    //         .alias("new_command")
-    //         .namespace("namespace")
-    //         .command("command");
-    //     let command = builder.build();
-
-    //     assert_eq!(context.commands.command_as_list().len(), 0);
-    //     assert!(context.add_command(&command).is_ok());
-
-    //     assert_eq!(context.commands.command_as_list().len(), 1);
-    //     assert!(context.remove_command(&command).is_ok());
-
-    //     assert_eq!(context.commands.command_as_list().len(), 0);
-    // }
-
-    // #[test]
-    // fn should_add_an_edited_command() {
-    //     let mut context = commands_context_builder(1);
-
-    //     let current_command_idx = context.get_selected_command_idx();
-    //     let mut command_list = context.commands.command_as_list().to_owned();
-    //     let current_command = command_list.get_mut(current_command_idx).unwrap();
-    //     let mut edited_command = current_command.clone();
-    //     edited_command.alias = "Edited_Alias".to_string();
-
-    //     assert_eq!(context.commands.command_as_list().len(), 1);
-    //     assert!(context
-    //         .add_edited_command(&edited_command, current_command)
-    //         .is_ok());
-    //     assert_eq!(context.commands.command_as_list().len(), 1);
-    //     assert!(context.commands.command_as_list().contains(&edited_command));
-    //     assert!(!context.commands.command_as_list().contains(current_command))
-    // }
-
-    // #[test]
-    // fn should_filter_commands() {
-    //     let mut context = commands_context_builder(4);
-    //     context.filter_commands(DEFAULT_NAMESPACE, "");
-    //     context.next();
-    //     context.next();
-    //     assert_eq!(context.get_selected_command_idx(), 2);
-
-    //     context.filter_commands(DEFAULT_NAMESPACE, "4");
-
-    //     assert_eq!(context.filtered_commands().len(), 1);
-    //     let command = &context.filtered_commands()[0];
-
-    //     assert_eq!(command.namespace, "namespace4");
-    //     assert_eq!(context.get_selected_command_idx(), 0)
-    // }
+        assert_eq!(command.namespace, "namespace4");
+        assert_eq!(context.selected_command_idx(), 0)
+    }
 
     // #[test]
     // fn should_fuzzy_find_commands() {
-    //     let command1 = Command {
-    //         namespace: "git".to_owned(),
-    //         command: "git log --oneline".to_owned(),
-    //         description: None,
-    //         alias: "gl".to_owned(),
-    //         tags: None,
-    //     };
-    //     let command2 = Command {
-    //         namespace: "git".to_owned(),
-    //         command: "git fetch".to_owned(),
-    //         description: None,
-    //         alias: "gf".to_owned(),
-    //         tags: None,
-    //     };
-    //     let command3 = Command {
-    //         namespace: "cl".to_owned(),
-    //         command: "cl --version".to_owned(),
-    //         description: None,
-    //         alias: "clv".to_owned(),
-    //         tags: None,
-    //     };
-    //     let command4 = Command {
-    //         namespace: "test".to_owned(),
-    //         command: "command".to_owned(),
-    //         description: Some("git mock command".to_owned()),
-    //         alias: "some_string_with_c_and_l".to_owned(),
-    //         tags: None,
-    //     };
+    //     let command1 = create_command!("cl", "git log --oneline", "git", None, None);
+    //     let command2 = create_command!("gf", "git fetch", "git", None, None);
+    //     let command3 = create_command!("clv", "cl --version", "cl", None, None);
+    //     let command4 = create_command!(
+    //         "some_string_with_c_and_l",
+    //         "command",
+    //         "test",
+    //         Some("git_mock_command".to_owned()),
+    //         None
+    //     );
 
     //     let commands = vec![
-    //         command1.clone(),
-    //         command2.clone(),
-    //         command3.clone(),
-    //         command4.clone(),
+    //         command1.to_owned(),
+    //         command2.to_owned(),
+    //         command3.to_owned(),
+    //         command4.to_owned(),
     //     ];
 
     //     let mut context = CommandsContext::new(
-    //         commands,
+    //         Commands::init(commands.to_command_map()),
     //         CommandsFileHandler::new(temp_dir().join("commands.toml")),
     //     );
 
@@ -429,4 +396,54 @@ mod test {
     //     assert!(&context.filtered_commands().contains(&command3));
     //     assert!(&context.filtered_commands().contains(&command4));
     // }
+
+    #[test]
+    fn should_filter_namespaces() {
+        let expected = vec![DEFAULT_NAMESPACE.to_string(), "namespace1".to_string()];
+        let context = Namespaces::new(vec!["namespace1".to_string()]);
+        assert_eq!(context.items, expected);
+
+        let namespaces = vec![
+            "namespace1".to_string(),
+            "namespace1".to_string(),
+            "namespace1".to_string(),
+        ];
+
+        let expected = vec![DEFAULT_NAMESPACE.to_string(), "namespace1".to_string()];
+
+        let context = Namespaces::new(namespaces);
+        assert_eq!(context.items, expected);
+    }
+
+    #[test]
+    fn should_go_to_previous_namespace() {
+        let mut context = commands_context_builder(2);
+
+        assert_eq!(context.current_namespace(), DEFAULT_NAMESPACE);
+
+        context.namespaces.previous();
+        assert_eq!(context.current_namespace(), "namespace2");
+
+        context.namespaces.previous();
+        assert_eq!(context.current_namespace(), "namespace1");
+
+        context.namespaces.previous();
+        assert_eq!(context.current_namespace(), DEFAULT_NAMESPACE);
+    }
+
+    #[test]
+    fn should_go_to_next_namespace() {
+        let mut context = commands_context_builder(2);
+
+        assert_eq!(context.current_namespace(), DEFAULT_NAMESPACE);
+
+        context.namespaces.next();
+        assert_eq!(context.current_namespace(), "namespace1");
+
+        context.namespaces.next();
+        assert_eq!(context.current_namespace(), "namespace2");
+
+        context.namespaces.next();
+        assert_eq!(context.current_namespace(), DEFAULT_NAMESPACE);
+    }
 }

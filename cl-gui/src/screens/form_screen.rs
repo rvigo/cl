@@ -5,7 +5,7 @@ use crate::{
         contexts::{application_context::ApplicationContext, ui::UI},
         terminal::{TerminalSize, TerminalSizeExt},
     },
-    popup,
+    popup, render,
     widgets::{
         popup::{help_popup::HelpPopup, RenderPopup},
         statusbar::{help::Help, info::Info, navigation_info::NavigationInfo},
@@ -99,7 +99,7 @@ fn render_medium_form(frame: &mut Frame, ui_context: &mut UI, block: Block) {
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
         .split(form_chunks[2]);
 
-    frame.render_widget(block, chunks[0]);
+    render!(frame, {block, form_chunks[0]});
 
     let fields = ui_context.get_form_fields_iter();
     fields.for_each(|field| {
@@ -110,7 +110,7 @@ fn render_medium_form(frame: &mut Frame, ui_context: &mut UI, block: Block) {
             FieldType::Description => third_row[0],
             FieldType::Tags => third_row[1],
         };
-        frame.render_widget(field.clone(), area);
+        render!(frame, { field, area} );
     })
 }
 
@@ -141,7 +141,7 @@ fn render_small_form(frame: &mut Frame, ui_context: &mut UI, block: Block) {
         .constraints([Constraint::Percentage(100)].as_ref())
         .split(form_chunks[2]);
 
-    frame.render_widget(block, form_chunks[0]);
+    render!(frame, {block, form_chunks[0]});
 
     let fields = ui_context.get_form_fields_iter();
 
@@ -153,6 +153,6 @@ fn render_small_form(frame: &mut Frame, ui_context: &mut UI, block: Block) {
             FieldType::Tags => second_row[1],
             FieldType::Command => third_row[0],
         };
-        frame.render_widget(field.clone(), area);
+        render!(frame, { field, area} );
     })
 }

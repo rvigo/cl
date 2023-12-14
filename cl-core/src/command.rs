@@ -1,6 +1,7 @@
 use crate::resource::errors::CommandError;
 use anyhow::{ensure, Result};
 use itertools::Itertools;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialOrd, Ord)]
@@ -34,12 +35,6 @@ impl Command {
             .to_string()
     }
 
-    pub fn is_incomplete(&self) -> bool {
-        self.namespace.trim().is_empty()
-            || self.alias.trim().is_empty()
-            || self.command.trim().is_empty()
-    }
-
     pub fn validate(&self) -> Result<()> {
         ensure!(!self.is_incomplete(), CommandError::EmptyCommand);
         ensure!(
@@ -54,7 +49,22 @@ impl Command {
     }
 
     pub fn has_named_parameter(&self) -> bool {
-        self.command.contains("#{")
+        let re = Regex::new(r"#\{[^}]*\}").unwrap();
+
+        re.is_match(&self.command)
+    }
+
+    pub fn has_changes(&self, new: &Command) -> bool {
+        new.alias != self.alias
+            || new.command != self.command
+            || new.description != self.description
+            || new.tags != self.tags
+    }
+
+    fn is_incomplete(&self) -> bool {
+        self.namespace.trim().is_empty()
+            || self.alias.trim().is_empty()
+            || self.command.trim().is_empty()
     }
 }
 
@@ -230,7 +240,7 @@ mod test {
     }
 
     #[test]
-    fn should_return_a_boolean_based_on_named_parameters() {
+    fn should_validate_if_command_has_named_parameters() {
         let mut command = build_default_command();
 
         assert!(!command.has_named_parameter());

@@ -57,3 +57,26 @@ macro_rules! register {
         )+
     };
 }
+
+#[macro_export]
+macro_rules! render {
+    ($frame:ident, $({ $what:ident, $_where:expr}),* $(,)?) => {
+        $(
+            $frame.render_widget($what, $_where);
+        )+
+    };
+}
+
+#[macro_export]
+macro_rules! display_widget {
+    ($title:expr, $content:expr, $trim:expr, $highlight:expr) => {
+        $crate::widgets::display::DisplayWidget::new($content, $trim, $highlight)
+            .block(default_block!($title))
+    };
+
+    ($title:expr, $content:expr, $trim:expr, $highlight:expr, $query:expr) => {
+        $crate::widgets::display::DisplayWidget::new($content, $trim, $highlight)
+            .block(default_block!($title))
+            .highlight($query)
+    };
+}

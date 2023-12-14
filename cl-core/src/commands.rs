@@ -1,10 +1,8 @@
-use crate::{command::Command, resource::errors::CommandError};
+use crate::{
+    command::Command, resource::errors::CommandError, CommandMap, CommandMapExt, CommandVec,
+};
 use anyhow::{bail, ensure, Context, Result};
-use std::{collections::HashMap, env};
-
-pub type Namespace = String;
-pub type CommandVec = Vec<Command>;
-pub type CommandMap = HashMap<Namespace, CommandVec>;
+use std::env;
 
 #[derive(Default)]
 pub struct Commands {
@@ -20,7 +18,7 @@ impl Commands {
         self.commands.to_owned()
     }
 
-    pub fn command_as_list(&self) -> Vec<Command> {
+    pub fn command_as_list(&self) -> CommandVec {
         self.commands.to_vec()
     }
 
@@ -42,18 +40,21 @@ impl Commands {
 
     pub fn add_edited_command(
         &mut self,
-        edited_command: &Command,
+        new_command: &Command,
         old_command: &Command,
     ) -> Result<CommandMap> {
-        if let Some(commands) = self.commands.get_mut(&edited_command.namespace) {
+        if let Some(commands) = self.commands.get_mut(&new_command.namespace) {
             let same_alias = commands
                 .iter()
-                .any(|command| command.alias.eq(&edited_command.alias));
+                .any(|command| command.alias.eq(&new_command.alias));
+
+            let has_changed = old_command.has_changes(new_command);
+
             ensure!(
-                !same_alias,
+                !same_alias || has_changed,
                 CommandError::CommandAlreadyExists {
-                    alias: edited_command.alias.to_owned(),
-                    namespace: edited_command.namespace.to_owned()
+                    alias: new_command.alias.to_owned(),
+                    namespace: new_command.namespace.to_owned()
                 }
             );
         }
@@ -63,8 +64,9 @@ impl Commands {
         }
 
         self.commands
-            .entry(edited_command.namespace.to_owned())
-            .or_insert_with(|| vec![edited_command.to_owned()]);
+            .entry(new_command.namespace.to_owned())
+            .and_modify(|commands| commands.push(new_command.to_owned()))
+            .or_insert_with(|| vec![new_command.to_owned()]);
 
         if let Some(commands) = self.commands.get(&old_command.namespace) {
             if commands.is_empty() {
@@ -180,44 +182,6 @@ impl Commands {
         } else {
             false
         }
-    }
-}
-
-pub trait CommandVecExt {
-    fn sort_and_return(&mut self) -> Vec<Command>;
-
-    fn to_command_map(&self) -> CommandMap;
-}
-
-impl CommandVecExt for CommandVec {
-    fn sort_and_return(&mut self) -> CommandVec {
-        self.sort_by_key(|c| c.alias.to_lowercase());
-        self.iter_mut()
-            .map(|c| c.to_owned())
-            .collect::<CommandVec>()
-    }
-
-    fn to_command_map(&self) -> CommandMap {
-        let mut command_map = CommandMap::new();
-        for command in self {
-            command_map
-                .entry(command.namespace.to_owned())
-                .or_insert_with(|| vec![command.to_owned()]);
-        }
-        command_map
-    }
-}
-
-pub trait CommandMapExt {
-    fn to_vec(&self) -> CommandVec;
-}
-
-impl CommandMapExt for CommandMap {
-    fn to_vec(&self) -> CommandVec {
-        self.iter()
-            .flat_map(|(_, commands)| commands)
-            .cloned()
-            .collect()
     }
 }
 

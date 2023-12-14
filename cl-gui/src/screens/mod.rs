@@ -4,7 +4,7 @@ mod main_screen;
 use super::entities::contexts::{application_context::ApplicationContext, ui::UI};
 use crate::{
     entities::{terminal::TerminalSizeExt, view_mode::ViewMode},
-    register,
+    register, render,
     screens::{form_screen::FormScreen, main_screen::MainScreen},
     widgets::{base_widget::BaseWidget, statusbar::StatusBarItem},
 };
@@ -104,9 +104,9 @@ pub trait ScreenExt {
         C: StatusBarItem,
         R: StatusBarItem,
     {
-        let size = frame.size();
+        let area = frame.size();
 
-        let terminal_size = size.as_terminal_size();
+        let terminal_size = area.as_terminal_size();
         let base_widget = BaseWidget::new(
             &terminal_size,
             left_statusbar_item,
@@ -114,7 +114,7 @@ pub trait ScreenExt {
             right_statusbar_item,
         );
 
-        frame.render_widget(base_widget, size);
+        render!(frame, { base_widget, area });
     }
 }
 
