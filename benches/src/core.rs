@@ -1,5 +1,5 @@
 use benches::load_command_handler;
-use cl_core::commands::CommandMap;
+use cl_core::CommandMap;
 use criterion::{criterion_group, criterion_main};
 
 fn load_command_file() -> CommandMap {

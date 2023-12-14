@@ -26,7 +26,7 @@ impl Preferences {
         }
     }
 
-    pub fn get_highlight(&self) -> bool {
+    pub fn highlight(&self) -> bool {
         self.highlight_matches.unwrap_or(DEFAULT_HIGHLIGHT_MATCHES)
     }
 
@@ -34,7 +34,7 @@ impl Preferences {
         self.highlight_matches = Some(highlight);
     }
 
-    pub fn get_log_level(&self) -> LogLevel {
+    pub fn log_level(&self) -> LogLevel {
         self.log_level
             .as_ref()
             .unwrap_or(DEFAULT_LOG_LEVEL)
@@ -45,7 +45,7 @@ impl Preferences {
         self.log_level = Some(log_level);
     }
 
-    pub fn get_quiet_mode(&self) -> bool {
+    pub fn quiet_mode(&self) -> bool {
         self.quiet_mode.unwrap_or(DEFAULT_QUIET_MODE)
     }
 
@@ -62,11 +62,11 @@ mod test {
     fn should_set_default_quiet_mode() {
         let mut preferences = Preferences::default();
 
-        assert_eq!(preferences.get_quiet_mode(), false);
+        assert_eq!(preferences.quiet_mode(), false);
 
         preferences.set_quiet_mode(true);
 
-        assert_eq!(preferences.get_quiet_mode(), true);
+        assert_eq!(preferences.quiet_mode(), true);
     }
 
     #[test]
@@ -74,14 +74,14 @@ mod test {
         let mut preferences = Preferences::default();
 
         assert_eq!(
-            String::from(&preferences.get_log_level()),
+            String::from(&preferences.log_level()),
             String::from(&LogLevel::Error)
         );
 
         preferences.set_log_level(LogLevel::Debug);
 
         assert_eq!(
-            String::from(&preferences.get_log_level()),
+            String::from(&preferences.log_level()),
             String::from(&LogLevel::Debug)
         );
     }
@@ -90,10 +90,10 @@ mod test {
     fn should_set_highlight() {
         let mut preferences = Preferences::default();
 
-        assert_eq!(preferences.get_highlight(), true);
+        assert_eq!(preferences.highlight(), true);
 
         preferences.set_highlight(false);
 
-        assert_eq!(preferences.get_highlight(), false);
+        assert_eq!(preferences.highlight(), false);
     }
 }

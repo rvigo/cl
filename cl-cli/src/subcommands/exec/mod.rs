@@ -71,7 +71,7 @@ impl Subcommand for Exec {
         let namespace = &self.namespace;
         let args = &self.command_args;
         let dry_run = self.dry_run;
-        let quiet_mode = self.quiet || config.preferences().get_quiet_mode();
+        let quiet_mode = self.quiet || config.preferences().quiet_mode();
         let mut command_item = commands.find_command(alias.to_owned(), namespace.to_owned())?;
 
         command_item.command = prepare_command(command_item.command, args.to_owned())

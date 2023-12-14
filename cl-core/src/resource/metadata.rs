@@ -2,7 +2,7 @@ use cargo_metadata::{semver::Version as CargoVersion, MetadataCommand, Package a
 use itertools::Itertools;
 use once_cell::sync::Lazy;
 
-static METADATA: Lazy<Metadata> = Lazy::new(|| Metadata::load());
+static METADATA: Lazy<Metadata> = Lazy::new(Metadata::load);
 pub static MAIN_PACKAGE_METADATA: Lazy<Package> = Lazy::new(|| METADATA.main_package_metadata());
 pub static PACKAGES_METADATA: Lazy<Vec<Package>> = Lazy::new(|| METADATA.packages_metadata());
 

@@ -72,7 +72,7 @@ impl<'a> FieldState<'a> {
         }
     }
 
-    pub fn get_fields_iter(&self) -> impl Iterator<Item = TextField<'a>> {
+    pub fn fields_iter(&self) -> impl Iterator<Item = TextField<'a>> {
         let mut sorted_fields = vec![];
 
         self.sequence.iter().for_each(|i| {
@@ -84,7 +84,7 @@ impl<'a> FieldState<'a> {
         sorted_fields.into_iter()
     }
 
-    pub fn sort_by_terminal_size(&mut self, size: &TerminalSize) {
+    pub fn sort(&mut self, size: &TerminalSize) {
         let sequence = match size {
             TerminalSize::Small => SMALL_SIZE_FIELD_SEQUENCE.to_owned(),
             TerminalSize::Medium | TerminalSize::Large => MEDIUM_SIZE_FIELD_SEQUENCE.to_owned(),

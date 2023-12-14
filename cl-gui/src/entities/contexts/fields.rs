@@ -31,12 +31,12 @@ impl<'fields> Fields<'fields> {
         }
     }
 
-    pub fn sort_field_by_size(&mut self, size: &TerminalSize) {
-        self.fields.sort_by_terminal_size(size);
+    pub fn sort(&mut self, size: &TerminalSize) {
+        self.fields.sort(size);
     }
 
-    pub fn get_fields_iter(&self) -> impl Iterator<Item = TextField<'_>> {
-        self.fields.get_fields_iter()
+    pub fn fields_iter(&self) -> impl Iterator<Item = TextField<'_>> {
+        self.fields.fields_iter()
     }
 
     pub fn selected_field_mut(&mut self) -> Option<&mut TextField<'fields>> {
@@ -45,25 +45,25 @@ impl<'fields> Fields<'fields> {
     }
 
     pub fn build_new_command(&mut self) -> Command {
-        let mut command_builder = CommandBuilder::default();
+        let mut new = CommandBuilder::default();
 
         self.fields
             .iter_mut()
             .for_each(|(field_type, field)| match field_type {
                 FieldType::Alias => {
-                    command_builder.alias(field.text());
+                    new.alias(field.text());
                 }
                 FieldType::Command => {
-                    command_builder.command(field.text());
+                    new.command(field.text());
                 }
                 FieldType::Description => {
-                    command_builder.description(field.text().to_option());
+                    new.description(field.text().to_option());
                 }
                 FieldType::Namespace => {
-                    command_builder.namespace(field.text());
+                    new.namespace(field.text());
                 }
                 FieldType::Tags => {
-                    command_builder.tags(
+                    new.tags(
                         field
                             .text()
                             .split(',')
@@ -75,7 +75,7 @@ impl<'fields> Fields<'fields> {
                 }
             });
 
-        command_builder.build()
+        new.build()
     }
 
     pub fn build_edited_command(&mut self) -> Command {

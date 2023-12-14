@@ -34,32 +34,25 @@ where
 }
 
 pub mod macros {
-
     #[macro_export]
     macro_rules! write {
-        ($path:expr, $contents:expr) => {{
-            use $crate::resource::fs_wrapper;
-
-            fs_wrapper::write($path, $contents)
-        }};
+        ($path:expr, $contents:expr) => {
+            $crate::resource::fs_wrapper::write($path, $contents)
+        };
     }
 
     #[macro_export]
     macro_rules! read_to_string {
-        ($path:expr) => {{
-            use $crate::resource::fs_wrapper;
-
-            fs_wrapper::read_to_string($path)
-        }};
+        ($path:expr) => {
+            $crate::resource::fs_wrapper::read_to_string($path)
+        };
     }
 
     #[macro_export]
     macro_rules! create_dir_all {
-        ($path:expr) => {{
-            use $crate::resource::fs_wrapper;
-
-            fs_wrapper::create_dir_all($path)
-        }};
+        ($path:expr) => {
+            $crate::resource::fs_wrapper::create_dir_all($path)
+        };
     }
 
     pub use create_dir_all;

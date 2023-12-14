@@ -1,42 +1,29 @@
-use super::{
-    commands_context::CommandsContext,
-    namespaces::{Namespaces, DEFAULT_NAMESPACE},
-    Selectable,
-};
+use super::{commands_context::CommandsContext, namespaces::DEFAULT_NAMESPACE};
 use crate::entities::clipboard::Clipboard;
 use anyhow::Result;
 use cl_core::{
-    command::Command,
-    commands::{Commands, Namespace},
-    preferences::Preferences,
-    resource::commands_file_handler::CommandsFileHandler,
+    command::Command, commands::Commands, preferences::Preferences,
+    resource::commands_file_handler::CommandsFileHandler, CommandVec,
 };
 use tui::widgets::ListState;
 
 pub struct ApplicationContext {
-    namespaces_context: Namespaces,
-    commands_context: CommandsContext,
-    config_options: Preferences,
+    pub commands_context: CommandsContext,
+    preferences: Preferences,
     clipboard: Option<Clipboard>,
 }
 
 impl ApplicationContext {
     pub fn init(
         commands: Commands,
-        commands_file_service: CommandsFileHandler,
-        config_options: Preferences,
+        commands_file_handler: CommandsFileHandler,
+        preferences: Preferences,
     ) -> ApplicationContext {
-        let namespaces = commands
-            .commands()
-            .keys()
-            .map(|n| n.to_owned())
-            .collect::<Vec<Namespace>>();
         let clipboard = Clipboard::new().ok();
 
         ApplicationContext {
-            namespaces_context: Namespaces::new(namespaces),
-            commands_context: CommandsContext::new(commands, commands_file_service),
-            config_options,
+            commands_context: CommandsContext::new(commands, commands_file_handler),
+            preferences,
             clipboard,
         }
     }
@@ -51,45 +38,10 @@ impl ApplicationContext {
         Ok(())
     }
 
-    // namespaces context
-    pub fn namespaces_context(&self) -> &Namespaces {
-        &self.namespaces_context
-    }
-
-    pub fn reload_contexts(&mut self) {
-        self.reload_commands_context();
-        self.reload_namespaces_context();
-    }
-
     /// Reloads the command context, filtering all commands and reseting the select command idx
-    fn reload_commands_context(&mut self) {
+    pub fn reload(&mut self) {
         self.commands_context.filter_commands(DEFAULT_NAMESPACE, "");
         self.commands_context.reset_selected_command_idx();
-    }
-
-    /// Reloads the namespace context, updating the availble namespaces
-    fn reload_namespaces_context(&mut self) {
-        self.filter_namespaces();
-        self.namespaces_context.reset_context();
-    }
-
-    pub fn next_namespace(&mut self) {
-        self.namespaces_context.next();
-        self.commands_context.reset_selected_command_idx();
-    }
-
-    pub fn previous_namespace(&mut self) {
-        self.namespaces_context.previous();
-        self.commands_context.reset_selected_command_idx();
-    }
-
-    // commands context
-    pub fn next_command(&mut self) {
-        self.commands_context.next();
-    }
-
-    pub fn previous_command(&mut self) {
-        self.commands_context.previous();
     }
 
     pub fn add_command(&mut self, command: Command) -> Result<()> {
@@ -118,38 +70,22 @@ impl ApplicationContext {
     /// Executes the callback command
     pub fn execute_callback_command(&self) -> Result<()> {
         self.commands_context
-            .execute_command(self.config_options.get_quiet_mode())
+            .execute_command(self.preferences.quiet_mode())
     }
 
     pub fn get_commands_state(&self) -> ListState {
         self.commands_context.state()
     }
 
-    pub fn get_selected_command_idx(&self) -> usize {
-        self.commands_context.get_selected_command_idx()
-    }
-
     // other
     pub fn should_highlight(&mut self) -> bool {
-        self.config_options.get_highlight()
+        self.preferences.highlight()
     }
 
     /// Filters the command list using the querybox input as query
-    pub fn filter_commands(&mut self, query_string: String) -> Vec<Command> {
-        let current_namespace = self.namespaces_context.current();
+    pub fn filter_commands(&mut self, query_string: &str) -> CommandVec {
+        let current_namespace = self.commands_context.current_namespace();
         self.commands_context
-            .filter_commands(&current_namespace, &query_string);
-        self.commands_context.filtered_commands()
-    }
-
-    /// Filters the namespaces based on a filtered command list
-    pub fn filter_namespaces(&mut self) {
-        let filtered_namespaces: Vec<String> = self
-            .commands_context
-            .filtered_commands()
-            .iter()
-            .map(|c| c.namespace.to_owned())
-            .collect();
-        self.namespaces_context.update(filtered_namespaces);
+            .filter_commands(&current_namespace, query_string)
     }
 }
