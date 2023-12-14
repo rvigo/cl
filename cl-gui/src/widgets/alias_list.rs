@@ -1,5 +1,5 @@
 use crate::{default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
-use cl_core::command::Command;
+use cl_core::CommandVec;
 use tui::{
     buffer::Buffer,
     layout::Rect,
@@ -15,7 +15,7 @@ pub struct AliasListWidget<'a> {
 }
 
 impl<'a> AliasListWidget<'a> {
-    pub fn new(commands: Vec<Command>, state: ListState) -> AliasListWidget<'a> {
+    pub fn new(commands: CommandVec, state: ListState) -> AliasListWidget<'a> {
         let items: Vec<ListItem> = commands
             .into_iter()
             .map(|c| {

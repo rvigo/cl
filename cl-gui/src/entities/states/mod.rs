@@ -1,3 +1,4 @@
+mod alias_list_state;
 pub mod clipboard_state;
 pub mod namespaces_state;
 

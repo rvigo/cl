@@ -21,7 +21,7 @@ pub struct UI<'ui> {
     fields_context: Fields<'ui>,
     selected_command: Option<Command>,
     popup_context: PopupContext,
-    query_box: QueryBox<'ui>,
+    pub query_box: QueryBox<'ui>,
     pub clipboard_state: ClipboardState,
     view_mode: ViewMode,
     show_popup: bool,
@@ -115,7 +115,7 @@ impl<'ui> UI<'ui> {
     }
 
     pub fn get_form_fields_iter(&self) -> impl Iterator<Item = TextField> {
-        self.fields_context.get_fields_iter()
+        self.fields_context.fields_iter()
     }
 
     pub fn edit_command(&mut self) -> Command {
@@ -151,13 +151,7 @@ impl<'ui> UI<'ui> {
     where
         I: Into<TerminalSize>,
     {
-        self.fields_context
-            .sort_field_by_size(&terminal_size.into())
-    }
-
-    // querybox
-    pub fn get_querybox_input(&self) -> String {
-        self.query_box.get_input()
+        self.fields_context.sort(&terminal_size.into())
     }
 
     pub fn activate_querybox_focus(&mut self) {

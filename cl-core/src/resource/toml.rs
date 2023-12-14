@@ -1,5 +1,5 @@
 use super::{errors::FileError, fs_wrapper::macros::read_to_string};
-use crate::commands::CommandMap;
+use crate::CommandMap;
 use anyhow::Result;
 use std::path::Path;
 
