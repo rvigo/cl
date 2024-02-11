@@ -1,4 +1,5 @@
 project_name: cl
+
 builds:
   - env:
       - CGO_ENABLED=0
@@ -8,16 +9,19 @@ builds:
     goarch:
       - amd64
       - arm64
+    goamd64:
+      - v1
     main: .github/utils/dummy.go
     binary: cl
     hooks:
       post:
         - sh .github/utils/post_build.sh
+
 archives:
   - files:
       - README.md
       - completions/**/*
-    rlcp: true
+
 brews:
   - name: cl
     description: |
@@ -29,7 +33,7 @@ brews:
       If not, add the following line to your ~/.zshrc, BEFORE any call to compinit:
       FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
     homepage: https://github.com/rvigo/cl
-    tap:
+    repository:
       owner: rvigo
       name: homebrew-cl
     commit_author:
@@ -39,16 +43,20 @@ brews:
     install: |-
       bin.install "cl"
       zsh_completion.install "completions/zsh/_cl" => "_cl"
+
 checksum:
   name_template: "checksums.txt"
+
 release:
   github:
     owner: rvigo
     name: cl
   prerelease: auto
   draft: false
+
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
+
 changelog:
   sort: asc
   filters:
