@@ -1,19 +1,13 @@
 use cargo_metadata::{semver::Version as CargoVersion, MetadataCommand, Package as CargoPackage};
-use itertools::Itertools;
 use once_cell::sync::Lazy;
 
 static METADATA: Lazy<Metadata> = Lazy::new(Metadata::load);
-pub static MAIN_PACKAGE_METADATA: Lazy<Package> = Lazy::new(|| METADATA.main_package_metadata());
-pub static PACKAGES_METADATA: Lazy<Vec<Package>> = Lazy::new(|| METADATA.packages_metadata());
+pub static MAIN_PACKAGE_METADATA: Lazy<Package> = Lazy::new(|| METADATA.package.to_owned());
 
 const PKG_NAME: &str = "cl";
-const CORE_PKG_NAME: &str = "cl-core";
-const CLI_PKG_NAME: &str = "cl-cli";
-const GUI_PKG_NAME: &str = "cl-gui";
-const PKGS_NAME: &[&str] = &[PKG_NAME, CORE_PKG_NAME, CLI_PKG_NAME, GUI_PKG_NAME];
 
 pub struct Metadata {
-    packages: Vec<Package>,
+    package: Package,
 }
 
 #[derive(Clone)]
@@ -61,39 +55,32 @@ impl ToString for Version {
 }
 
 impl Metadata {
-    pub fn main_package_metadata(&self) -> Package {
-        self.packages
-            .iter()
-            .cloned()
-            .find_or_first(|package| package.name == PKG_NAME)
-            .unwrap_or_else(|| Package {
-                name: PKG_NAME.to_owned(),
-                version: Version::default(),
-            })
-    }
-
-    pub fn packages_metadata(&self) -> Vec<Package> {
-        self.packages.clone()
-    }
-
     pub fn load() -> Metadata {
         Metadata {
-            packages: Self::extract_packages(),
+            package: Self::extract_package(),
         }
     }
 
-    fn extract_packages() -> Vec<Package> {
+    fn extract_package() -> Package {
         let metadata = MetadataCommand::new()
             .exec()
             .expect("Failed to retrieve metadata");
 
-        let packages: Vec<Package> = metadata
-            .packages
-            .iter()
-            .filter(|package| PKGS_NAME.contains(&package.name.as_str()))
+        let packages = metadata
+            .workspace_packages()
+            .into_iter()
+            .filter(|package| PKG_NAME == package.name.as_str())
             .map(|package| Package::from(package.to_owned()))
-            .collect();
+            .collect::<Vec<_>>();
 
-        packages
+        // TODO since Package::default doesnt work, it should be lazy, but how?
+        let default = Package {
+            name: PKG_NAME.to_owned(),
+            version: Version::default(),
+        };
+
+        let packages = packages.first().unwrap_or(&default).to_owned();
+
+        packages.to_owned()
     }
 }
