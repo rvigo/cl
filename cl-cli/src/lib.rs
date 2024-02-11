@@ -1,6 +1,6 @@
 use anyhow::Result;
 use app::Subcommands;
-use cl_core::{config::Config, resource::metadata::PACKAGES_METADATA};
+use cl_core::{config::Config, resource::metadata::MAIN_PACKAGE_METADATA};
 use subcommands::Subcommand;
 
 pub mod app;
@@ -16,8 +16,6 @@ pub fn run_subcommands(subcommands: Subcommands, config: Config) -> Result<()> {
 }
 
 pub fn print_metadata() -> Result<()> {
-    PACKAGES_METADATA
-        .iter()
-        .for_each(|package| println!("{}", package.to_string()));
+    println!("{}", MAIN_PACKAGE_METADATA.to_string());
     Ok(())
 }
