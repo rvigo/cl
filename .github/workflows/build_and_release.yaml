@@ -67,16 +67,12 @@ jobs:
         include:
           - target: x86_64-apple-darwin
             os: macos
-            binary_name: cl_${{ github.ref_name }}_darwin_amd64
           - target: x86_64-unknown-linux-gnu
             os: ubuntu
-            binary_name: cl_${{ github.ref_name }}_linux_amd64
           - target: aarch64-unknown-linux-gnu
             os: ubuntu
-            binary_name: cl_${{ github.ref_name }}_linux_arm64
           - target: aarch64-apple-darwin
             os: macos
-            binary_name: cl_${{ github.ref_name }}_darwin_arm64
     steps:
       - name: Install toolchain for ${{ matrix.target }}
         uses: dtolnay/rust-toolchain@1.73.0
@@ -97,21 +93,31 @@ jobs:
         if: ${{ matrix.os != 'ubuntu' }}
         run: |
             cargo build --release --bins --target ${{ matrix.target }}
+
+      - name: extract binary name
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          TARGET=${{ matrix.target }}
+          BINARY_NAME=cl_${VERSION}_${TARGET}
+
+          echo $BINARY_NAME
+
+          echo "BINARY_NAME=$BINARY_NAME" >> $GITHUB_ENV
       - name: rename binary
         run: |
-            mv target/${{ matrix.target }}/release/cl target/${{ matrix.target }}/release/cl-${{ matrix.binary_name }}
+            mv target/${{ matrix.target }}/release/cl target/${{ matrix.target }}/release/${BINARY_NAME}
 
       - name: check binary name 
         run: ls -latr target/${{ matrix.target }}/release
 
       - name: Create tar.gz file
         run: |
-          tar -czvf target/${{ matrix.target }}/release/cl-${{ matrix.binary_name }}.tar.gz target/${{ matrix.target }}/release/cl-${{ matrix.binary_name }}
+          tar -czvf target/${{ matrix.target }}/release/${BINARY_NAME}.tar.gz -C target/${{ matrix.target }}/release/ ${BINARY_NAME}
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: cl-${{ matrix.binary_name }}.tar.gz
-          path: target/${{ matrix.target }}/release/cl-${{ matrix.binary_name }}.tar.gz
+          name: ${{ env.BINARY_NAME }}.tar.gz
+          path: target/${{ matrix.target }}/release/${{ env.BINARY_NAME }}.tar.gz
           if-no-files-found: error
 
   release:
@@ -127,6 +133,7 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
+          merge-multiple: true
           path: target/artifacts
 
       - name: check artifacts
