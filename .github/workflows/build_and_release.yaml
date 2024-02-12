@@ -110,9 +110,10 @@ jobs:
       - name: check binary name 
         run: ls -latr target/${{ matrix.target }}/release
 
-      - name: Create tar.gz file
+      - name: Compress file 
         run: |
           tar -czvf target/${{ matrix.target }}/release/${BINARY_NAME}.tar.gz -C target/${{ matrix.target }}/release/ ${BINARY_NAME}
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -135,6 +136,13 @@ jobs:
         with:
           merge-multiple: true
           path: target/artifacts
+
+      - name: Create checksum
+        run: |
+          cd target/artifacts
+          for file in *; do
+            shasum -a 256 $file > $(basename $file .tar.gz).sha256
+          done
 
       - name: check artifacts
         run: ls -latr target/artifacts 
