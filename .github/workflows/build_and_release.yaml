@@ -1,147 +1,147 @@
-name: Build & Release
+# name: Build & Release
 
-permissions:
-  contents: write
+# permissions:
+#   contents: write
 
-on:
-  push:
-    tags:
-      - "v*"
+# on:
+#   push:
+#     tags:
+#       - "v*"
 
-jobs:
-  format:
-    name: fmt
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Install toolchain
-        uses: dtolnay/rust-toolchain@1.73.0
-        with:
-          components: rustfmt
-      - name: Check formatting
-        run: |
-          cargo fmt --all -- --check
-  clippy:
-    name: clippy
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Install toolchain
-        uses: dtolnay/rust-toolchain@1.73.0
-        with:
-          components: clippy
-      - name: Check the lints
-        run: |
-          cargo clippy -- -D warnings
-  test:
-    name: test
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Install toolchain
-        uses: dtolnay/rust-toolchain@1.73.0
-      - name: Unit Test
-        run: |
-          cargo test --workspace
-        env:
-          RUST_BACKTRACE: 1
+# jobs:
+#   format:
+#     name: fmt
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+#       - name: Install toolchain
+#         uses: dtolnay/rust-toolchain@1.73.0
+#         with:
+#           components: rustfmt
+#       - name: Check formatting
+#         run: |
+#           cargo fmt --all -- --check
+#   clippy:
+#     name: clippy
+#     runs-on: ubuntu-20.04
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+#       - name: Install toolchain
+#         uses: dtolnay/rust-toolchain@1.73.0
+#         with:
+#           components: clippy
+#       - name: Check the lints
+#         run: |
+#           cargo clippy -- -D warnings
+#   test:
+#     name: test
+#     runs-on: ubuntu-20.04
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+#       - name: Install toolchain
+#         uses: dtolnay/rust-toolchain@1.73.0
+#       - name: Unit Test
+#         run: |
+#           cargo test --workspace
+#         env:
+#           RUST_BACKTRACE: 1
 
-  build:
-    name: Build and release
-    needs: [format, clippy, test]
-    runs-on: ${{ matrix.os }}-latest
-    strategy:
-      matrix:
-        target:
-          [
-            x86_64-apple-darwin,
-            aarch64-unknown-linux-gnu,
-            x86_64-unknown-linux-gnu,
-            aarch64-apple-darwin,
-          ]
+#   build:
+#     name: Build and release
+#     needs: [format, clippy, test]
+#     runs-on: ${{ matrix.os }}-latest
+#     strategy:
+#       matrix:
+#         target:
+#           [
+#             x86_64-apple-darwin,
+#             aarch64-unknown-linux-gnu,
+#             x86_64-unknown-linux-gnu,
+#             aarch64-apple-darwin,
+#           ]
 
-        include:
-          - target: x86_64-apple-darwin
-            os: macos
-          - target: x86_64-unknown-linux-gnu
-            os: ubuntu
-          - target: aarch64-unknown-linux-gnu
-            os: ubuntu
-          - target: aarch64-apple-darwin
-            os: macos
-    steps:
-      - name: Install toolchain for ${{ matrix.target }}
-        uses: dtolnay/rust-toolchain@1.73.0
-        with:
-          targets: ${{ matrix.target }}
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Install Cross
-        if: ${{ matrix.os == 'ubuntu' }}
-        run: cargo install cross
-      - name: Build with Cross
-        if: ${{ matrix.os == 'ubuntu' }}
-        run: |
-            cross build --release --bins --target ${{ matrix.target }}
-      - name: Build
-        if: ${{ matrix.os != 'ubuntu' }}
-        run: |
-            cargo build --release --bins --target ${{ matrix.target }}
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: cl-${{ matrix.target }}
-          path: target/${{ matrix.target }}/release/
+#         include:
+#           - target: x86_64-apple-darwin
+#             os: macos
+#           - target: x86_64-unknown-linux-gnu
+#             os: ubuntu
+#           - target: aarch64-unknown-linux-gnu
+#             os: ubuntu
+#           - target: aarch64-apple-darwin
+#             os: macos
+#     steps:
+#       - name: Install toolchain for ${{ matrix.target }}
+#         uses: dtolnay/rust-toolchain@1.73.0
+#         with:
+#           targets: ${{ matrix.target }}
+#       - name: Checkout
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
+#       - name: Install Cross
+#         if: ${{ matrix.os == 'ubuntu' }}
+#         run: cargo install cross
+#       - name: Build with Cross
+#         if: ${{ matrix.os == 'ubuntu' }}
+#         run: |
+#             cross build --release --bins --target ${{ matrix.target }}
+#       - name: Build
+#         if: ${{ matrix.os != 'ubuntu' }}
+#         run: |
+#             cargo build --release --bins --target ${{ matrix.target }}
+#       - name: Upload artifacts
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: cl-${{ matrix.target }}
+#           path: target/${{ matrix.target }}/release/cl
+#           if-no-files-found: error
 
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+#   release:
+#     needs: build
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
 
-      - name: Download darwin_aarch64
-        uses: actions/download-artifact@v4
-        with:
-          name: cl-aarch64-apple-darwin
-          path: target/aarch64-apple-darwin/release/
+#       - name: Download darwin_aarch64
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: cl-aarch64-apple-darwin
+#           path: target/aarch64-apple-darwin/release/
           
-      - name: Download darwin_x86_64
-        uses: actions/download-artifact@v4
-        with:
-          name: cl-x86_64-apple-darwin
-          path: target/x86_64-apple-darwin/release/
+#       - name: Download darwin_x86_64
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: cl-x86_64-apple-darwin
+#           path: target/x86_64-apple-darwin/release/
 
-      - name: Download linux_aarch64
-        uses: actions/download-artifact@v4
-        with:
-          name: cl-aarch64-unknown-linux-gnu
-          path: target/aarch64-unknown-linux-gnu/release/
+#       - name: Download linux_aarch64
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: cl-aarch64-unknown-linux-gnu
+#           path: target/aarch64-unknown-linux-gnu/release/
 
-      - name: Download linux_x86_64
-        uses: actions/download-artifact@v4
-        with:
-          name: cl-x86_64-unknown-linux-gnu
-          path: target/x86_64-unknown-linux-gnu/release/
+#       - name: Download linux_x86_64
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: cl-x86_64-unknown-linux-gnu
+#           path: target/x86_64-unknown-linux-gnu/release/
       
-      - name: Set up Go
-        uses: actions/setup-go@v4
+#       - name: Set up Go
+#         uses: actions/setup-go@v5
 
-      - name: Release binaries
-        uses: goreleaser/goreleaser-action@v5
-        with:
-          version: latest
-          args: release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-      - name: Check Result
-      
-        run: |
-          cat result.done
+#       - name: Release binaries
+#         uses: goreleaser/goreleaser-action@v5
+#         with:
+#           version: latest
+#           args: release
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+#       - name: Check Result
+#         run: |
+#           cat result.done
