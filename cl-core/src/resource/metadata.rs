@@ -63,6 +63,7 @@ impl Metadata {
 
     fn extract_package() -> Package {
         let metadata = MetadataCommand::new()
+            .current_dir(env!("CARGO_MANIFEST_DIR"))
             .exec()
             .expect("Failed to retrieve metadata");
 

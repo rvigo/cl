@@ -13,8 +13,8 @@ bench = false
 
 [dependencies]
 cl-core.workspace = true
-cl-cli = { path = "../cl-cli", version = "0.1.0" }
-cl-gui = { path = "../cl-gui", version = "0.1.0" }
+cl-cli = { path = "../cl-cli" }
+cl-gui = { path = "../cl-gui" }
 
 [dev-dependencies]
 criterion = "0.5.1"
