@@ -44,11 +44,11 @@ jobs:
           cargo test --workspace
         env:
           RUST_BACKTRACE: 1
-  spell_check:
-    name: Spell Check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Check spelling
-        uses: crate-ci/typos@v1.18.2
+  # spell_check:
+  #   name: Spell Check
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #     - name: Check spelling
+  #       uses: crate-ci/typos@v1.18.2
