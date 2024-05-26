@@ -108,6 +108,7 @@ jobs:
       - name: Build releaser
         run: |
             cargo build --release 
+            sudo cp -R ./target/release/rustreleaser /usr/local/bin/. 
       - name: Checkout
         uses: actions/checkout@v4
         with:
