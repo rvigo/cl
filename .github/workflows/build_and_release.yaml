@@ -101,6 +101,13 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout releaser
+        uses: actions/checkout@v4
+        with:
+          repository: rvigo/rustreleaser
+      - name: Build releaser
+        run: |
+            cargo build --release 
       - name: Checkout
         uses: actions/checkout@v4
         with:
