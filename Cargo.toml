@@ -2,7 +2,7 @@
 members = ["cl-core", "cl-cli", "cl-gui", "benches"]
 
 [workspace.package]
-version = "0.9.3"
+version = "0.9.6"
 edition = "2021"
 homepage = "https://github.com/rvigo/cl"
 repository = "https://github.com/rvigo/cl"

@@ -1,7 +1,6 @@
 pub mod commands_file_handler;
 pub mod errors;
 pub mod fs_wrapper;
-pub mod metadata;
 pub mod toml;
 
 /// Loads a `Commands` instance from a command file at the given path
