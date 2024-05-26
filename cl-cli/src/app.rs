@@ -2,12 +2,14 @@ use super::subcommands::{config::Config, exec::Exec, misc::Misc, share::Share};
 use clap::{Parser, Subcommand as ClapSubcommand};
 
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
+const PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[derive(Parser)]
 #[clap(
     name = PKG_NAME,
     about,
     long_about = None,
+    version = PKG_VERSION,
     propagate_version = false,
     dont_collapse_args_in_usage = true,
     args_conflicts_with_subcommands = true,
@@ -15,14 +17,6 @@ const PKG_NAME: &str = env!("CARGO_PKG_NAME");
 pub struct App {
     #[clap(subcommand)]
     pub subcommands: Option<Subcommands>,
-    #[clap(
-        short,
-        long,
-        required = false,
-        action,
-        help = "Print version info and exit"
-    )]
-    pub version: bool,
 }
 
 impl App {

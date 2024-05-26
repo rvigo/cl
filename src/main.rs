@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use cl_cli::{app::App, print_metadata, run_subcommands};
+use cl_cli::{app::App, run_subcommands};
 use cl_core::{
     config::Config,
     logger::{LoggerBuilder, LoggerType},
@@ -16,9 +16,7 @@ async fn main() -> Result<()> {
 
     let app = App::parse_app();
 
-    if app.version {
-        print_metadata()
-    } else if let Some(subcommands) = app.subcommands {
+    if let Some(subcommands) = app.subcommands {
         logger
             .with_logger_type(LoggerType::Subcommand)
             .build()
