@@ -12,7 +12,7 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@1.73.0
+        uses: dtolnay/rust-toolchain@1.76.0
         with:
           components: rustfmt
       - name: Check formatting
@@ -20,12 +20,12 @@ jobs:
           cargo fmt --all -- --check
   clippy:
     name: clippy
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@1.73.0
+        uses: dtolnay/rust-toolchain@1.76.0
         with:
           components: clippy
       - name: Check the lints
@@ -33,14 +33,22 @@ jobs:
           cargo clippy -- -D warnings
   test:
     name: test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@1.73.0
+        uses: dtolnay/rust-toolchain@1.76.0
       - name: Unit Test
         run: |
           cargo test --workspace
         env:
           RUST_BACKTRACE: 1
+  spell_check:
+    name: Spell Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check spelling
+        uses: crate-ci/typos@v1.18.2
