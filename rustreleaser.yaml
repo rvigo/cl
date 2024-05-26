@@ -19,6 +19,7 @@ release:
   repo: cl
   prerelease: false
   draft: false
+  target_branch: main
 
 brew:
   name: cl
