@@ -199,7 +199,7 @@ mod test {
         let mut invalid_command = CommandBuilder::default();
         invalid_command
             .tags(Some(vec!["tag1"]))
-            .alias("invalid lias")
+            .alias("invalid alias")
             .namespace("namespace")
             .description(Some("description"))
             .command("command");

@@ -72,7 +72,7 @@ impl Subcommand for Exec {
         let args = &self.command_args;
         let dry_run = self.dry_run;
         let quiet_mode = self.quiet || config.preferences().quiet_mode();
-        let mut command_item = commands.find_command(alias.to_owned(), namespace.to_owned())?;
+        let mut command_item = commands.find_command(alias, namespace.to_owned())?;
 
         command_item.command = prepare_command(command_item.command, args.to_owned())
             .context("Cannot prepare the command to be executed")?;
@@ -88,10 +88,7 @@ impl Subcommand for Exec {
 fn prepare_command(mut command: String, args: Vec<String>) -> Result<CommandString> {
     // checks if cmd has named_parameters
     let matches = get_named_parameters(&command)?;
-    let named_parameters = matches
-        .iter()
-        .map(|m| clean_named_parameter(m))
-        .collect_vec();
+    let named_parameters = matches.iter().map(clean_named_parameter).collect_vec();
 
     let mut command_args = CommandArgs::init(named_parameters);
 
@@ -193,7 +190,7 @@ fn prepare_command(mut command: String, args: Vec<String>) -> Result<CommandStri
             validate_named_parameters(&named_parameters, &command)
                 .context("Cannot validate the named parameters")?;
 
-            command = replace_placeholders(command, &named_parameters)
+            command = replace_placeholders(&command, &named_parameters)
                 .context("Cannot replace the placeholders with the provided args")?;
         } else {
             bail!(CommandError::CannotRunCommand {
@@ -239,11 +236,11 @@ fn append_options(command: &str, options: Vec<String>) -> CommandString {
 }
 
 fn replace_placeholders(
-    mut command: CommandString,
+    command: &str,
     named_parameters: &HashMap<String, String>,
 ) -> Result<CommandString> {
-    command = command.replace('#', "");
-    let parse_result = match strfmt(&command, named_parameters) {
+    let new_command = command.replace('#', "");
+    let parse_result = match strfmt(&new_command, named_parameters) {
         Ok(c) => c,
         Err(error) => {
             let res = match error {
@@ -261,8 +258,9 @@ fn replace_placeholders(
     Ok(parse_result)
 }
 
-fn clean_named_parameter(arg: &str) -> CommandString {
-    arg.trim_matches(|c| c == '#' || c == '{' || c == '}')
+fn clean_named_parameter(arg: impl Into<String>) -> CommandString {
+    arg.into()
+        .trim_matches(|c| c == '#' || c == '{' || c == '}')
         .to_owned()
 }
 

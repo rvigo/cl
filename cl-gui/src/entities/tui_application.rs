@@ -54,9 +54,9 @@ impl<'tui> TuiApplication<'tui> {
         while !self.should_quit.load(Ordering::SeqCst) {
             let view_mode = self.current_view_mode();
 
-            if let Some(screen) = self.screens.get_screen(view_mode) {
+            if let Some(screen) = self.screens.get_screen_by_type(view_mode) {
                 self.terminal
-                    .draw(&mut self.ui, &mut self.context, &mut **screen)?;
+                    .draw(&mut self.ui, &mut self.context, screen)?;
 
                 if event::poll(Duration::from_millis(50))? {
                     if let Ok(Event::Key(key)) = event::read() {
