@@ -21,7 +21,7 @@ use tui::{
 pub struct FormScreen;
 
 impl Screen for FormScreen {
-    fn render(&mut self, frame: &mut Frame, _: &mut ApplicationContext, ui_context: &mut UI) {
+    fn render(&self, frame: &mut Frame, _: &mut ApplicationContext, ui_context: &mut UI) {
         let block = default_block!(format!(" {} ", ui_context.view_mode()));
 
         let terminal_size = frame.size().as_terminal_size();

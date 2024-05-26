@@ -1,17 +1,15 @@
+use crate::{command::Command, hashmap, CommandMap, CommandVec};
 use log::debug;
-use std::collections::HashMap;
-
-use crate::{command::Command, hashmap};
 
 /// Caches a `Command` list using the namespace as a key for faster search
 #[derive(Default)]
 pub struct Cache {
-    cache: HashMap<String, Vec<Command>>,
+    cache: CommandMap,
 }
 
 impl Cache {
-    pub fn new(command_list: Vec<Command>) -> Cache {
-        let mut namespace_map: HashMap<String, Vec<Command>> = hashmap!();
+    pub fn new(command_list: CommandVec) -> Cache {
+        let mut namespace_map: CommandMap = hashmap!();
 
         command_list.into_iter().for_each(|c| {
             namespace_map
@@ -29,7 +27,7 @@ impl Cache {
     }
 
     #[inline]
-    pub fn get_entry(&mut self, namespace: &str) -> Vec<Command> {
+    pub fn get_entry(&mut self, namespace: &str) -> CommandVec {
         self.cache
             .get(namespace)
             .unwrap_or(&Vec::default())

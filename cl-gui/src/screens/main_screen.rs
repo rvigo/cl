@@ -31,7 +31,7 @@ use tui::{
 pub struct MainScreen;
 
 impl Screen for MainScreen {
-    fn render(&mut self, frame: &mut Frame, context: &mut ApplicationContext, ui_context: &mut UI) {
+    fn render(&self, frame: &mut Frame, context: &mut ApplicationContext, ui_context: &mut UI) {
         let query = ui_context.query_box.get_input();
         let filtered_commands = context.filter_commands(&query);
 

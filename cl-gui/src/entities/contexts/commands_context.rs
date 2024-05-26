@@ -11,18 +11,19 @@ use cl_core::{
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
 use log::debug;
-use std::{cmp::Reverse, thread, time::Duration};
+use parking_lot::Mutex;
+use std::{cmp::Reverse, sync::Arc, thread, time::Duration};
 use tui::widgets::ListState;
 
 /// Groups all `Command`'s related stuff
 pub struct CommandsContext {
-    commands: Commands,
-    state: ListState,
-    pub namespaces: Namespaces,
-    to_be_executed: Option<Command>,
-    matcher: SkimMatcherV2,
     commands_file_handler: CommandsFileHandler,
+    commands: Arc<Mutex<Commands>>,
     filtered_commands: CommandVec,
+    matcher: SkimMatcherV2,
+    pub namespaces: Namespaces,
+    state: ListState,
+    to_be_executed: Option<Command>,
 }
 
 impl CommandsContext {
@@ -34,13 +35,13 @@ impl CommandsContext {
             .collect_vec();
 
         let mut context = Self {
-            commands,
+            commands_file_handler,
+            commands: Arc::new(Mutex::new(commands)),
+            filtered_commands: vec![],
+            matcher: SkimMatcherV2::default(),
             namespaces: Namespaces::new(namespaces),
             state: ListState::default(), // TODO move this to another place
             to_be_executed: None,
-            matcher: SkimMatcherV2::default(),
-            commands_file_handler,
-            filtered_commands: vec![],
         };
 
         context.state.select(Some(0));
@@ -49,8 +50,6 @@ impl CommandsContext {
     }
 
     fn namespaces(&mut self) -> Vec<Namespace> {
-        // let mut namespaces = self.namespaces.items.include_default();
-
         self.namespaces.items.to_owned()
     }
 
@@ -99,7 +98,7 @@ impl CommandsContext {
         new_command.validate()?;
 
         debug!("new command validated: {new_command:?}");
-        let commands = self.commands.add_command(new_command)?;
+        let commands = self.commands.lock().add_command(new_command)?;
 
         self.namespaces
             .update_namespaces(&commands.keys().collect_vec());
@@ -119,6 +118,7 @@ impl CommandsContext {
 
         let commands = self
             .commands
+            .lock()
             .add_edited_command(edited_command, current_command)?;
 
         self.namespaces
@@ -131,7 +131,7 @@ impl CommandsContext {
 
     /// Removes a command and then saves the updated `commands.toml` file
     pub fn remove_command(&mut self, command: &Command) -> Result<()> {
-        let commands = self.commands.remove(command)?;
+        let commands = self.commands.lock().remove(command)?;
 
         // self.cache.remove_entry(command);
         self.commands_file_handler.save(&commands)?;
@@ -158,7 +158,7 @@ impl CommandsContext {
                 eprintln!();
             }
 
-            self.commands.exec_command(command, false, quiet)?;
+            self.commands.lock().exec_command(command, false, quiet)?;
         }
 
         Ok(())
@@ -179,12 +179,13 @@ impl CommandsContext {
             let commands =
                 if !current_namespace.is_empty() && current_namespace != DEFAULT_NAMESPACE {
                     self.commands
+                        .lock()
                         .commands()
                         .get(current_namespace)
                         .unwrap_or(&vec![])
                         .to_owned()
                 } else {
-                    let command_list = self.commands.command_as_list();
+                    let command_list = self.commands.lock().command_as_list();
 
                     if command_list.is_empty() {
                         vec![Command::default()]
@@ -214,8 +215,8 @@ impl CommandsContext {
 
         let mut scored_commands: Vec<(i64, Command)> = commands
             .iter()
+            .filter(|&c| (namespace.eq(DEFAULT_NAMESPACE) || c.namespace.eq(namespace)))
             .cloned()
-            .filter(|c| (namespace.eq(DEFAULT_NAMESPACE) || c.namespace.eq(namespace)))
             .filter_map(|c| {
                 self.matcher
                     .fuzzy_indices(&c.lookup_string(), query_string)

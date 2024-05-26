@@ -1,7 +1,6 @@
+use crate::entities::states::namespaces_state::NamespacesState;
 use cl_core::Namespace;
 use itertools::Itertools;
-
-use crate::entities::states::namespaces_state::NamespacesState;
 
 pub const DEFAULT_NAMESPACE: &str = "All";
 

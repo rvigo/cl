@@ -18,6 +18,7 @@ where
     left_statusbar_item: Option<&'a L>,
     center_statusbar_item: Option<R>,
     right_statusbar_item: Option<C>,
+    base_block: Block<'a>,
 }
 
 impl<'a, L, C, R> BaseWidget<'a, L, C, R>
@@ -32,11 +33,19 @@ where
         center_statusbar_item: Option<R>,
         right_statusbar_item: Option<C>,
     ) -> BaseWidget<'a, L, C, R> {
+        let base_block = Block::default()
+            .borders(Borders::ALL)
+            .style(Style::default())
+            .title(format!(" {} ", MAIN_PACKAGE_METADATA.to_string()))
+            .title_alignment(Alignment::Right)
+            .border_type(BorderType::Plain);
+
         BaseWidget {
             terminal_size,
             left_statusbar_item,
             center_statusbar_item,
             right_statusbar_item,
+            base_block,
         }
     }
 
@@ -120,14 +129,7 @@ where
     }
 
     fn render_base_block(&self, area: Rect, buf: &mut Buffer) {
-        let block = Block::default()
-            .borders(Borders::ALL)
-            .style(Style::default())
-            .title(format!(" {} ", MAIN_PACKAGE_METADATA.to_string()))
-            .title_alignment(Alignment::Right)
-            .border_type(BorderType::Plain);
-
-        block.render(area, buf)
+        self.base_block.to_owned().render(area, buf)
     }
 }
 

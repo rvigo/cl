@@ -44,15 +44,15 @@ impl Subcommand for Share {
         let file_location = &self.file_location;
         let namespaces = &self.namespace;
 
-        let commands_file_service =
+        let commands_file_handler =
             CommandsFileHandler::new(config.command_file_path()).validate()?;
-        let command_list = commands_file_service.load()?;
+        let command_list = commands_file_handler.load()?;
         let commands = Commands::init(command_list);
 
         match self.mode {
             Mode::Import => {
-                let mut stored_commands = commands.command_as_list().to_owned();
-                let commands_from_file: Vec<Command> = commands_file_service
+                let mut stored_commands = commands.command_as_list();
+                let commands_from_file: Vec<Command> = commands_file_handler
                     .load_from(&self.file_location)?
                     .to_vec();
 
@@ -101,7 +101,7 @@ impl Subcommand for Share {
 
                 if !commands_from_file.is_empty() {
                     stored_commands.extend(commands_from_file.to_owned());
-                    commands_file_service
+                    commands_file_handler
                         .save(&stored_commands.to_command_map())
                         .context("Could not import the aliases")?;
                     info!(
@@ -130,7 +130,7 @@ impl Subcommand for Share {
                     command_list = commands.command_as_list().to_owned();
                 }
 
-                commands_file_service
+                commands_file_handler
                     .save_at(&command_list.to_command_map(), file_location)
                     .context("Could not export the aliases")?;
                 info!("Exported {} aliases", command_list.len())

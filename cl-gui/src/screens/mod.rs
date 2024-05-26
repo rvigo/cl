@@ -48,14 +48,14 @@ impl From<ScreenType> for ViewMode {
 /// Represents a Screen
 pub trait Screen {
     fn render(
-        &mut self,
+        &self,
         frame: &mut Frame,
         application_context: &mut ApplicationContext,
         ui_context: &mut UI,
     );
 }
 
-type ScreenRegistrar<'screen> = HashMap<ScreenType, Box<dyn Screen + 'screen>>;
+type ScreenRegistrar<'screen> = HashMap<ScreenType, &'screen (dyn Screen + 'screen)>;
 
 /// Screens aggregator
 pub struct Screens<'screen> {
@@ -68,20 +68,20 @@ impl<'screen> Screens<'screen> {
 
         register!(
             screens,
-            ScreenType::Main => Box::new(MainScreen),
-            ScreenType::Form(Operation::Insert) => Box::new(FormScreen),
-            ScreenType::Form(Operation::Edit) => Box::new(FormScreen)
+            ScreenType::Main => &MainScreen,
+            ScreenType::Form(Operation::Insert) => &FormScreen,
+            ScreenType::Form(Operation::Edit) => &FormScreen
         );
 
         Self { screens }
     }
 
-    pub fn get_screen<I>(&mut self, screen_type: I) -> Option<&mut Box<dyn Screen + 'screen>>
+    pub fn get_screen_by_type<I>(&mut self, screen_type: I) -> Option<&(dyn Screen + 'screen)>
     where
         I: Into<ScreenType>,
     {
         let st: ScreenType = screen_type.into();
-        self.screens.get_mut(&st)
+        self.screens.get(&st).copied()
     }
 }
 
@@ -93,17 +93,13 @@ impl Default for Screens<'_> {
 
 /// Extension for `Screen`
 pub trait ScreenExt {
-    fn render_base<L, C, R>(
+    fn render_base(
         &self,
         frame: &mut Frame,
-        left_statusbar_item: Option<&L>,
-        center_statusbar_item: Option<R>,
-        right_statusbar_item: Option<C>,
-    ) where
-        L: StatusBarItem,
-        C: StatusBarItem,
-        R: StatusBarItem,
-    {
+        left_statusbar_item: Option<&impl StatusBarItem>,
+        center_statusbar_item: Option<impl StatusBarItem>,
+        right_statusbar_item: Option<impl StatusBarItem>,
+    ) {
         let area = frame.size();
 
         let terminal_size = area.as_terminal_size();

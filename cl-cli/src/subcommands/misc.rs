@@ -24,7 +24,7 @@ impl Subcommand for Misc {
         if self.description {
             if let Some(alias) = &self.alias {
                 let namespace = &self.namespace;
-                let command = commands.find_command(alias.clone(), namespace.to_owned())?;
+                let command = commands.find_command(alias, namespace.to_owned())?;
                 println!("{}", command.to_color_string());
             }
         } else if self.fzf {

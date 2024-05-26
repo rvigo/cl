@@ -140,7 +140,7 @@ impl Commands {
         Ok(())
     }
 
-    pub fn find_command(&self, alias: String, namespace: Option<String>) -> Result<Command> {
+    pub fn find_command(&self, alias: &str, namespace: Option<String>) -> Result<Command> {
         let commands = if let Some(namespace) = namespace {
             if let Some(commands) = self.commands.get(&namespace) {
                 commands
@@ -166,11 +166,15 @@ impl Commands {
         };
 
         if commands.is_empty() {
-            bail!(CommandError::AliasNotFound { alias })
+            bail!(CommandError::AliasNotFound {
+                alias: alias.to_owned()
+            })
         } else if commands.len() == 1 {
             Ok(commands[0].to_owned())
         } else {
-            bail!(CommandError::CommandPresentInManyNamespaces { alias })
+            bail!(CommandError::CommandPresentInManyNamespaces {
+                alias: alias.to_owned()
+            })
         }
     }
 

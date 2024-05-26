@@ -32,12 +32,8 @@ mod core {
     };
     use log::debug;
     use parking_lot::Mutex;
-    use std::{
-        io::Stdout,
-        sync::{atomic::AtomicBool, Arc},
-    };
+    use std::sync::{atomic::AtomicBool, Arc};
     use tokio::sync::mpsc::{channel, Receiver, Sender};
-    use tui::backend::CrosstermBackend;
 
     pub async fn init(config: Config) -> Result<()> {
         debug!("creating channels");
@@ -58,30 +54,31 @@ mod core {
 
         debug!("creating contexts");
         let should_quit: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
-        let ui_context = Arc::new(Mutex::new(UI::new(size.clone())));
+        let ui_context = Arc::new(Mutex::new(UI::new(size)));
         let context = Arc::new(Mutex::new(ApplicationContext::init(
             commands,
             file_service,
             config.preferences(),
         )));
 
-        debug!("creating screens with size {size:?}");
+        debug!("creating screens");
         let screens = Screens::default();
 
         debug!("starting components");
         start_input_handler(input_rx, &app_sx, &ui_context, &should_quit).await;
         start_event_handler(app_rx, &context, &ui_context, &should_quit).await;
 
-        start_ui(
+        log::debug!("creating tui");
+        let tui = TuiApplication::create(
             input_sx,
             should_quit,
             ui_context,
             context,
             terminal,
             screens,
-        )
-        .await
-        .and_then(|mut tui| tui.shutdown())
+        )?;
+
+        start_ui(tui).await.and_then(|mut tui| tui.shutdown())
     }
 
     async fn start_event_handler(
@@ -93,29 +90,14 @@ mod core {
         debug!("starting event listener");
         tokio::spawn(EventHandler::init(
             app_rx,
-            context.clone(),
-            ui_context.clone(),
-            should_quit.clone(),
+            context.to_owned(),
+            ui_context.to_owned(),
+            should_quit.to_owned(),
         ));
     }
 
-    async fn start_ui<'a>(
-        input_sx: Sender<InputMessages>,
-        should_quit: Arc<AtomicBool>,
-        ui_context: Arc<Mutex<UI<'a>>>,
-        context: Arc<Mutex<ApplicationContext>>,
-        terminal: Terminal<CrosstermBackend<Stdout>>,
-        screens: Screens<'a>,
-    ) -> Result<TuiApplication<'a>> {
+    async fn start_ui(mut tui: TuiApplication<'_>) -> Result<TuiApplication<'_>> {
         debug!("starting ui");
-        let mut tui = TuiApplication::create(
-            input_sx,
-            should_quit,
-            ui_context,
-            context,
-            terminal,
-            screens,
-        )?;
 
         tui.render().await?;
 
@@ -131,9 +113,9 @@ mod core {
         debug!("starting input handler");
         tokio::spawn(InputHandler::init(
             input_rx,
-            app_sx.clone(),
-            ui_context.clone(),
-            should_quit.clone(),
+            app_sx.to_owned(),
+            ui_context.to_owned(),
+            should_quit.to_owned(),
         ));
     }
 }

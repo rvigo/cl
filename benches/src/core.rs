@@ -31,11 +31,11 @@ mod core {
         let commands = Commands::init(command_vec);
 
         c.bench_function("find command", |b: &mut Bencher| {
-            b.iter(|| commands.find_command("lc".to_string(), None));
+            b.iter(|| commands.find_command("lc", None));
         });
 
         c.bench_function("find command with namespace", |b: &mut Bencher| {
-            b.iter(|| commands.find_command("cl".to_string(), Some("bash".to_string())));
+            b.iter(|| commands.find_command("cl", Some("bash".to_string())));
         });
     }
 

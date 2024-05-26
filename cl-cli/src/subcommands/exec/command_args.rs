@@ -63,11 +63,7 @@ impl CommandArg {
 
     pub fn as_key_value_pair(&self) -> (String, String) {
         let key = self.arg.to_string();
-        let value = if let Some(value) = &self.value {
-            value.to_string()
-        } else {
-            String::default()
-        };
+        let value = self.value.to_owned().unwrap_or_default();
         (key, value)
     }
 
@@ -78,8 +74,7 @@ impl CommandArg {
 
 impl ToString for CommandArg {
     fn to_string(&self) -> String {
-        let default = "".to_owned();
-        let prefix = self.prefix.as_ref().unwrap_or(&default);
+        let prefix = self.prefix.to_owned().unwrap_or_default();
 
         match &self.value {
             Some(value) => format!("{}{}={}", prefix, self.arg, value),

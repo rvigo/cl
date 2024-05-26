@@ -73,7 +73,7 @@ pub trait WithChoices: Popup {
         };
         let buttom_area = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints(constraints.as_ref())
+            .constraints(constraints)
             .split(layout[0]);
 
         buttom_area[buttom_area.len() - 1]

@@ -44,6 +44,7 @@ impl<'fields> Fields<'fields> {
             .and_then(|field| self.fields.get_mut(&field))
     }
 
+    // TODO should be moved to command_context
     pub fn build_new_command(&mut self) -> Command {
         let mut new = CommandBuilder::default();
 
@@ -78,6 +79,7 @@ impl<'fields> Fields<'fields> {
         new.build()
     }
 
+    // TODO should be moved to command_context
     pub fn build_edited_command(&mut self) -> Command {
         let mut edited = CommandBuilder::default();
 

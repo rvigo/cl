@@ -10,7 +10,7 @@ pub struct Metadata {
     package: Package,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Package {
     name: String,
     version: Version,
@@ -22,11 +22,11 @@ impl ToString for Package {
     }
 }
 
-impl From<CargoPackage> for Package {
-    fn from(value: CargoPackage) -> Self {
+impl From<&CargoPackage> for Package {
+    fn from(value: &CargoPackage) -> Self {
         Package {
-            name: value.name,
-            version: value.version.into(),
+            name: value.name.to_owned(),
+            version: value.version.to_owned().into(),
         }
     }
 }
@@ -70,18 +70,16 @@ impl Metadata {
         let packages = metadata
             .workspace_packages()
             .into_iter()
-            .filter(|package| PKG_NAME == package.name.as_str())
-            .map(|package| Package::from(package.to_owned()))
+            .filter(|package| PKG_NAME == package.name)
+            .map(Package::from)
             .collect::<Vec<_>>();
 
-        // TODO since Package::default doesnt work, it should be lazy, but how?
-        let default = Package {
-            name: PKG_NAME.to_owned(),
-            version: Version::default(),
-        };
+        let package = packages
+            .first()
+            .map(|p| p.to_owned())
+            .unwrap_or_else(Package::default)
+            .to_owned();
 
-        let packages = packages.first().unwrap_or(&default).to_owned();
-
-        packages.to_owned()
+        package
     }
 }
