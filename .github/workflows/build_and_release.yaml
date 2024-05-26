@@ -17,7 +17,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@1.73.0
+        uses: dtolnay/rust-toolchain@1.76.0
         with:
           components: rustfmt
       - name: Check formatting
@@ -30,7 +30,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@1.73.0
+        uses: dtolnay/rust-toolchain@1.76.0
         with:
           components: clippy
       - name: Check the lints
@@ -43,7 +43,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@1.73.0
+        uses: dtolnay/rust-toolchain@1.76.0
       - name: Unit Test
         run: |
           cargo test --workspace
@@ -75,51 +75,21 @@ jobs:
             os: macos
     steps:
       - name: Install toolchain for ${{ matrix.target }}
-        uses: dtolnay/rust-toolchain@1.73.0
+        uses: dtolnay/rust-toolchain@1.76.0
         with:
           targets: ${{ matrix.target }}
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install Cross
-        if: ${{ matrix.os == 'ubuntu' }}
-        run: cargo install cross
-      - name: Build with Cross
-        if: ${{ matrix.os == 'ubuntu' }}
-        run: |
-            cross build --release --bins --target ${{ matrix.target }}
       - name: Build
-        if: ${{ matrix.os != 'ubuntu' }}
         run: |
             cargo build --release --bins --target ${{ matrix.target }}
-
-      - name: extract binary name
-        run: |
-          VERSION=${GITHUB_REF_NAME#v}
-          TARGET=${{ matrix.target }}
-          BINARY_NAME=cl_${VERSION}_${TARGET}
-
-          echo $BINARY_NAME
-
-          echo "BINARY_NAME=$BINARY_NAME" >> $GITHUB_ENV
-      - name: rename binary
-        run: |
-            mv target/${{ matrix.target }}/release/cl target/${{ matrix.target }}/release/${BINARY_NAME}
-
-      - name: check binary name 
-        run: ls -latr target/${{ matrix.target }}/release
-
-      - name: Compress file 
-        run: |
-          tar -czvf target/${{ matrix.target }}/release/${BINARY_NAME}.tar.gz -C target/${{ matrix.target }}/release/ ${BINARY_NAME}
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.BINARY_NAME }}.tar.gz
-          path: target/${{ matrix.target }}/release/${{ env.BINARY_NAME }}.tar.gz
-          if-no-files-found: error
+          name: cl-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/
 
   release:
     name: Release
@@ -131,33 +101,30 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download Artifacts
+       - name: Download darwin_arm64
         uses: actions/download-artifact@v4
         with:
-          merge-multiple: true
-          path: target/artifacts
-
-      - name: Create checksum
-        run: |
-          cd target/artifacts
-          for file in *; do
-            shasum -a 256 $file > $(basename $file .tar.gz).sha256
-          done
-
-      - name: check artifacts
-        run: ls -latr target/artifacts 
-
-      - name: Create Release 
-        uses: softprops/action-gh-release@v1
+          name: cl-aarch64-apple-darwin
+          path: target/aarch64-apple-darwin/release/
+      - name: Download darwin_amd64_v1
+        uses: actions/download-artifact@v4
         with:
-          files: |
-            target/artifacts/* 
-          token: ${{ secrets.GH_TOKEN }}
-
-      - name: Update Homebrew formula
-        uses: dawidd6/action-homebrew-bump-formula@v3
+          name: cl-x86_64-apple-darwin
+          path: target/x86_64-apple-darwin/release/
+      - name: Download linux_amd64_v1
+        uses: actions/download-artifact@v4
         with:
-          token:  ${{ secrets.GH_TOKEN }}
-          tap: rvigo/homebrew-cl
-          formula: cl
+          name: cl-x86_64-unknown-linux-gnu
+          path: target/x86_64-unknown-linux-gnu/release/
+      - name: Download linux_arm64
+        uses: actions/download-artifact@v4
+        with:
+          name: cl-aarch64-unknown-linux-gnu
+          path: target/aarch64-unknown-linux-gnu/release/
+
+      - name: Release
+          run: |
+              rustreleaser
+          env:
+            GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
    
