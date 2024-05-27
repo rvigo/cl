@@ -2,6 +2,7 @@ use super::Subcommand;
 use anyhow::Result;
 use cl_core::{command::Command, config::Config, load_commands};
 use clap::Parser;
+use itertools::Itertools;
 use owo_colors::{colors::CustomColor, OwoColorize};
 use std::collections::HashSet;
 
@@ -21,6 +22,10 @@ impl Subcommand for Misc {
     fn run(&self, config: Config) -> Result<()> {
         let commands = load_commands!(config.command_file_path())?;
         let command_vec = commands.command_as_list();
+        let sorted_commands = command_vec
+            .iter()
+            .sorted_by_key(|c| c.alias.to_owned())
+            .collect::<Vec<&Command>>();
         if self.description {
             if let Some(alias) = &self.alias {
                 let namespace = &self.namespace;
@@ -41,7 +46,7 @@ impl Subcommand for Misc {
                 })
                 .collect();
 
-            command_vec.iter().for_each(|c| {
+            sorted_commands.iter().for_each(|c| {
                 if duplicated.contains(&c.alias) {
                     println!(
                         "{} ({})",
@@ -53,7 +58,7 @@ impl Subcommand for Misc {
                 }
             })
         } else {
-            command_vec
+            sorted_commands
                 .iter()
                 .for_each(|c| println!("{}", c.sumarize()));
         }
