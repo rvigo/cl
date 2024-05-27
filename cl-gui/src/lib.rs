@@ -1,7 +1,7 @@
-pub mod entities;
-pub mod key_handlers;
-pub mod screens;
-pub mod widgets;
+pub mod entity;
+pub mod key_handler;
+pub mod screen;
+pub mod widget;
 
 use anyhow::Result;
 use cl_core::config::Config;
@@ -15,16 +15,16 @@ pub async fn start_gui(config: Config) -> Result<()> {
 }
 
 mod core {
-    use super::entities::terminal::Terminal;
+    use super::entity::terminal::Terminal;
     use crate::{
-        entities::{
-            contexts::{application_context::ApplicationContext, ui::UI},
+        entity::{
+            context::{application_context::ApplicationContext, ui::UI},
+            event::{app_event::AppEvent, input_event::InputMessages},
             event_handler::EventHandler,
-            events::{app_events::AppEvent, input_events::InputMessages},
             input_handler::InputHandler,
             tui_application::TuiApplication,
         },
-        screens::Screens,
+        screen::Screens,
     };
     use anyhow::{Context, Result};
     use cl_core::{
