@@ -59,6 +59,7 @@ impl Command {
             || new.command != self.command
             || new.description != self.description
             || new.tags != self.tags
+            || new.namespace != self.namespace
     }
 
     fn is_incomplete(&self) -> bool {

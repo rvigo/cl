@@ -5,30 +5,13 @@ use tui::{
     text::{Line, Span},
 };
 
-pub trait Highlight<'hl> {
-    fn highlight<T>(self, highlight_input: T) -> Self
-    where
-        T: Into<String>;
-
-    fn split_preserve_chars(&self, content: &'hl str, pattern: &'hl str) -> Vec<&'hl str>;
-
-    fn group_by_newline(&self, input: &'hl [&str]) -> Vec<Vec<String>>;
-
-    #[inline]
-    fn contains_ignore_case(&self, v1: &str, v2: &str) -> bool {
-        v1.to_ascii_lowercase()
-            .matches(&v2.to_ascii_lowercase())
-            .next()
-            .is_some()
-    }
-}
-
-impl<'hl> Highlight<'hl> for DisplayWidget<'hl> {
+// Highlighting specific implementation
+impl<'hl> DisplayWidget<'hl> {
     /// Highlights the `content` based on the given input
     ///
     /// If the input is empty, returns `Self` without any modification
     #[inline]
-    fn highlight<T>(mut self, highlight_input: T) -> Self
+    pub fn highlight<T>(mut self, highlight_input: T) -> Self
     where
         T: Into<String>,
     {
@@ -140,5 +123,44 @@ impl<'hl> Highlight<'hl> for DisplayWidget<'hl> {
             .filter(|sub_vec| !sub_vec.is_empty())
             .map(|sub_vec| sub_vec.iter().cloned().map(String::from).collect_vec())
             .collect()
+    }
+
+    #[inline]
+    fn contains_ignore_case(&self, v1: &str, v2: &str) -> bool {
+        v1.to_ascii_lowercase()
+            .matches(&v2.to_ascii_lowercase())
+            .next()
+            .is_some()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::widget::display::DisplayWidget;
+
+    #[test]
+    fn should_group_highlighted_multilne_input() {
+        let content = "multiline\ninput";
+        let pattern = "in";
+        let d = DisplayWidget::new(content, false, true);
+        let input = d.split_preserve_chars(content, pattern);
+        let expected = vec![vec!["mult", "i", "l", "i", "n", "e"], vec!["i", "n", "put"]];
+
+        let result = d.group_by_newline(&input);
+
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn should_group_multilne_input_if_there_is_no_pattern() {
+        let content = "multiline\ninput";
+        let pattern = "";
+        let d = DisplayWidget::new(content, false, true);
+        let input = d.split_preserve_chars(content, pattern);
+        let expected = vec![vec!["multiline"], vec!["input"]];
+
+        let result = d.group_by_newline(&input);
+
+        assert_eq!(expected, result);
     }
 }

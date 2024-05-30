@@ -1,10 +1,9 @@
-use crossterm::event::KeyEvent;
-
 use super::{
     text_field::{FieldType, TextField, TextFieldBuilder},
     WidgetKeyHandler,
 };
 use crate::{create_fields_map, entity::terminal::TerminalSize};
+use crossterm::event::KeyEvent;
 use std::{
     collections::HashMap,
     ops::{Deref, DerefMut},
@@ -72,6 +71,19 @@ impl<'a> FieldState<'a> {
         }
     }
 
+    pub fn get_field_mut(&mut self, field_type: &FieldType) -> Option<&mut TextField<'a>> {
+        self.items.get_mut(field_type)
+    }
+
+    pub fn clear_inputs(&mut self) {
+        self.items
+            .iter_mut()
+            .for_each(|(_, field)| field.clear_input());
+    }
+}
+
+/// Iter related methods
+impl<'a> FieldState<'a> {
     pub fn fields_iter(&self) -> impl Iterator<Item = TextField<'a>> {
         let mut sorted_fields = vec![];
 
@@ -93,18 +105,8 @@ impl<'a> FieldState<'a> {
         self.sequence = sequence
     }
 
-    pub fn get_field_mut(&mut self, field_type: &FieldType) -> Option<&mut TextField<'a>> {
-        self.items.get_mut(field_type)
-    }
-
     pub fn get_sequence(&self) -> Vec<FieldType> {
         self.sequence.to_owned()
-    }
-
-    pub fn clear_inputs(&mut self) {
-        self.items
-            .iter_mut()
-            .for_each(|(_, field)| field.clear_input());
     }
 }
 

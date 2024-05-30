@@ -16,6 +16,9 @@ log = "0.4.20"
 tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread", "sync"] }
 cl-core = { path = "cl-core" }
 
+# [dev-dependencies]
+tempdir = "0.3.7"
+
 [package]
 name = "cl"
 version.workspace = true
@@ -32,6 +35,7 @@ cl-gui = { path = "cl-gui" }
 
 anyhow.workspace = true
 tokio.workspace = true
+
 
 [profile.release]
 opt-level = 3

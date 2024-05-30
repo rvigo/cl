@@ -32,6 +32,7 @@ impl CommandVecExt for CommandVec {
         for command in self {
             command_map
                 .entry(command.namespace.to_owned())
+                .and_modify(|commands| commands.push(command.to_owned()))
                 .or_insert_with(|| vec![command.to_owned()]);
         }
         command_map
