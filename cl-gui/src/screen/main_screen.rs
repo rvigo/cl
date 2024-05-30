@@ -10,7 +10,6 @@ use crate::{
     widget::{
         alias_list::AliasListWidget,
         display::DisplayWidget,
-        highlight::Highlight,
         popup::{help_popup::HelpPopup, RenderPopup},
         statusbar::{help::Help, info::Info},
     },

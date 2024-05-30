@@ -41,56 +41,9 @@ impl<'ui> UI<'ui> {
             show_help: false,
         }
     }
+}
 
-    pub fn popup_info_mut(&mut self) -> &mut PopupInfo {
-        &mut self.popup_context.info
-    }
-
-    pub fn set_popup_info(
-        &mut self,
-        popup_type: PopupType,
-        message: String,
-        callback_action: PopupCallbackAction,
-    ) {
-        let answers = match popup_type {
-            PopupType::Error => Choice::confirm(),
-            PopupType::Warning => Choice::dialog(),
-            PopupType::Help => Choice::empty(),
-        };
-        self.popup_context.set_available_choices(answers);
-        self.popup_context
-            .info
-            .set(popup_type.to_string(), popup_type, message, callback_action);
-    }
-
-    pub fn popup_context_mut(&mut self) -> &mut PopupContext {
-        &mut self.popup_context
-    }
-
-    pub fn clear_popup_context(&mut self) {
-        self.popup_context.clear()
-    }
-
-    pub fn get_selected_choice(&self) -> Choice {
-        self.popup_context.get_available_choices()[self.popup_context.selected()].to_owned()
-    }
-
-    pub fn show_popup(&self) -> bool {
-        self.show_popup
-    }
-
-    pub fn set_show_popup(&mut self, should_show: bool) {
-        self.show_popup = should_show
-    }
-
-    pub fn show_help(&self) -> bool {
-        self.show_help
-    }
-
-    pub fn set_show_help(&mut self, should_show: bool) {
-        self.show_help = should_show
-    }
-
+impl<'ui> UI<'ui> {
     pub fn set_selected_command_input(&mut self) {
         if let Some(command) = self.selected_command.as_ref() {
             self.fields_context.popuplate_form(command);
@@ -177,6 +130,58 @@ impl<'ui> UI<'ui> {
 
     pub fn set_view_mode(&mut self, view_mode: ViewMode) {
         self.view_mode = view_mode
+    }
+}
+
+// Popup
+impl<'ui> UI<'ui> {
+    pub fn popup_info_mut(&mut self) -> &mut PopupInfo {
+        &mut self.popup_context.info
+    }
+
+    pub fn set_popup_info(
+        &mut self,
+        popup_type: PopupType,
+        message: String,
+        callback_action: PopupCallbackAction,
+    ) {
+        let answers = match popup_type {
+            PopupType::Error => Choice::confirm(),
+            PopupType::Warning => Choice::dialog(),
+            PopupType::Help => Choice::empty(),
+        };
+        self.popup_context.set_available_choices(answers);
+        self.popup_context
+            .info
+            .set(popup_type.to_string(), popup_type, message, callback_action);
+    }
+
+    pub fn popup_context_mut(&mut self) -> &mut PopupContext {
+        &mut self.popup_context
+    }
+
+    pub fn clear_popup_context(&mut self) {
+        self.popup_context.clear()
+    }
+
+    pub fn get_selected_choice(&self) -> Choice {
+        self.popup_context.get_available_choices()[self.popup_context.selected()].to_owned()
+    }
+
+    pub fn show_popup(&self) -> bool {
+        self.show_popup
+    }
+
+    pub fn set_show_popup(&mut self, should_show: bool) {
+        self.show_popup = should_show
+    }
+
+    pub fn show_help(&self) -> bool {
+        self.show_help
+    }
+
+    pub fn set_show_help(&mut self, should_show: bool) {
+        self.show_help = should_show
     }
 }
 

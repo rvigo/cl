@@ -91,7 +91,6 @@ impl<'a> Widget for DisplayWidget<'a> {
 #[cfg(test)]
 mod test {
     use super::{DisplayWidget, *};
-    use crate::widget::highlight::Highlight;
     use tui::{
         style::Modifier,
         text::{Line, Span},
@@ -175,31 +174,5 @@ mod test {
 
         let actual = result.highlighted_content.unwrap();
         assert_eq!(actual, expected_line);
-    }
-
-    #[test]
-    fn should_group_highlighted_multilne_input() {
-        let content = "multiline\ninput";
-        let pattern = "in";
-        let d = DisplayWidget::new(content, false, true);
-        let input = d.split_preserve_chars(content, pattern);
-        let expected = vec![vec!["mult", "i", "l", "i", "n", "e"], vec!["i", "n", "put"]];
-
-        let result = d.group_by_newline(&input);
-
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn should_group_multilne_input_if_there_is_no_pattern() {
-        let content = "multiline\ninput";
-        let pattern = "";
-        let d = DisplayWidget::new(content, false, true);
-        let input = d.split_preserve_chars(content, pattern);
-        let expected = vec![vec!["multiline"], vec!["input"]];
-
-        let result = d.group_by_newline(&input);
-
-        assert_eq!(expected, result);
     }
 }
