@@ -20,6 +20,10 @@ release:
   prerelease: false
   draft: false
   target_branch: main
+  archive: 
+    files:
+      - README.md
+      - completions/**/*
 
 brew:
   name: cl
@@ -27,8 +31,9 @@ brew:
       cl is a way to group all your aliases, once in a while or multiple usages 
       with a lot of args commands in an organized and human readable place
   homepage: https://github.com/rvigo/cl 
-  install: |
+  install: |-
       bin.install "cl"
+      zsh_completion.install "completions/zsh/_cl" => "_cl"
   repository:
     owner: rvigo 
     name: homebrew-cl
