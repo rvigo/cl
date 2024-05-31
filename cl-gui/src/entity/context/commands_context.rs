@@ -71,9 +71,7 @@ impl CommandsContext {
         let mut commands = self.commands.lock();
         let result = commands.add_command(new_command)?;
 
-        log::debug!("saving commands: {result:?}");
         self.commands_file_handler.save(&result)?;
-
         self.namespaces
             .update_namespaces(&result.keys().collect_vec());
 
@@ -95,7 +93,6 @@ impl CommandsContext {
 
         self.namespaces
             .update_namespaces(&commands.keys().collect_vec());
-
         self.commands_file_handler.save(&commands)?;
 
         Ok(())
@@ -103,9 +100,12 @@ impl CommandsContext {
 
     /// Removes a command and then saves the updated `commands.toml` file
     pub fn remove_command(&mut self, command: &Command) -> Result<()> {
-        let commands = self.commands.lock().remove(command)?;
+        let mut commands = self.commands.lock();
 
-        // self.cache.remove_entry(command);
+        let commands = commands.remove(command)?;
+
+        self.namespaces
+            .update_namespaces(&commands.keys().collect_vec());
         self.commands_file_handler.save(&commands)?;
 
         Ok(())
@@ -314,17 +314,33 @@ mod test {
     fn should_save_a_command() {
         let tmp = TempDir::new("commands").unwrap();
         let command = create_command!("alias", "command", "namespace", None, None);
-        let mut context = commands_context!(vec![command], tmp.path());
+        let mut context = commands_context!(vec![command.to_owned()], tmp.path());
         let another_command = create_command!("alias2", "command", "namespace", None, None);
 
         let result = context.add_command(&another_command);
 
         assert!(result.is_ok());
-        let commands = context.commands.lock();
-        let binding = commands.commands();
-        let entry = binding.get("namespace").unwrap();
+        let commands_lock = context.commands.lock();
+        let commands = commands_lock.commands();
+        let entry = commands.get(&command.namespace).unwrap();
 
         assert_eq!(entry.len(), 2);
+    }
+
+    #[test]
+    fn should_remove_a_command() {
+        let tmp = TempDir::new("commands").unwrap();
+        let command = create_command!("alias", "command", "namespace", None, None);
+        let mut context = commands_context!(vec![command.to_owned()], tmp.path());
+
+        let result = context.remove_command(&command);
+
+        assert!(result.is_ok());
+        let commands_lock = context.commands.lock();
+        let commands = commands_lock.commands();
+        let entry = commands.get(&command.namespace);
+
+        assert!(entry.is_none());
     }
 
     #[test]
