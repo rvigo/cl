@@ -127,7 +127,7 @@ dependencies = [
 
 [[package]]
 name = "benches"
-version = "0.9.6"
+version = "0.9.3"
 dependencies = [
  "cl-cli",
  "cl-core",
@@ -247,7 +247,7 @@ dependencies = [
 
 [[package]]
 name = "cl"
-version = "0.9.6"
+version = "0.9.3"
 dependencies = [
  "anyhow",
  "cl-cli",
@@ -258,7 +258,7 @@ dependencies = [
 
 [[package]]
 name = "cl-cli"
-version = "0.9.6"
+version = "0.9.3"
 dependencies = [
  "anyhow",
  "cl-core",
@@ -275,7 +275,7 @@ dependencies = [
 
 [[package]]
 name = "cl-core"
-version = "0.9.6"
+version = "0.9.3"
 dependencies = [
  "anyhow",
  "cargo_metadata",
@@ -295,7 +295,7 @@ dependencies = [
 
 [[package]]
 name = "cl-gui"
-version = "0.9.6"
+version = "0.9.3"
 dependencies = [
  "anyhow",
  "cl-core",
