@@ -1,5 +1,5 @@
 use super::{AppEventResult, KeyEventHandler};
-use crate::entity::event::app_event::{
+use crate::entity::event::{
     AppEvent, CommandEvent, MainScreenEvent, PopupCallbackAction, PopupEvent, PopupType,
     QueryboxEvent, RenderEvent, ScreenEvent,
 };

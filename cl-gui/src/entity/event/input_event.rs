@@ -1,6 +1,6 @@
 use crossterm::event::KeyEvent;
 
 #[derive(Clone, Debug)]
-pub enum InputMessages {
+pub enum InputEvent {
     KeyPress(KeyEvent),
 }

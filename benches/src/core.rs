@@ -9,7 +9,7 @@ fn load_command_file() -> CommandMap {
 mod core {
     use crate::load_command_file;
     use benches::build_command;
-    use cl_core::commands::Commands;
+    use cl_core::Commands;
     use criterion::{Bencher, Criterion};
 
     pub fn load_commands(c: &mut Criterion) {
@@ -31,11 +31,11 @@ mod core {
         let commands = Commands::init(command_vec);
 
         c.bench_function("find command", |b: &mut Bencher| {
-            b.iter(|| commands.find_command("lc", None));
+            b.iter(|| commands.find("lc", None));
         });
 
         c.bench_function("find command with namespace", |b: &mut Bencher| {
-            b.iter(|| commands.find_command("cl", Some("bash".to_string())));
+            b.iter(|| commands.find("cl", Some("bash".to_string())));
         });
     }
 
@@ -51,13 +51,13 @@ mod core {
         let edited_command = build_command!(alias => "updated";);
 
         c.bench_function("update command (alias)", |b: &mut Bencher| {
-            b.iter(|| commands.add_edited_command(&edited_command, &command));
+            b.iter(|| commands.add_edited(&edited_command, &command));
         });
 
         let edited_command = build_command!(namespace => "updated";);
 
         c.bench_function("update command (namespace)", |b: &mut Bencher| {
-            b.iter(|| commands.add_edited_command(&edited_command, &command));
+            b.iter(|| commands.add_edited(&edited_command, &command));
         });
     }
 }

@@ -14,15 +14,15 @@ impl Commands {
         Commands { commands }
     }
 
-    pub fn commands(&self) -> CommandMap {
+    pub fn get(&self) -> CommandMap {
         self.commands.to_owned()
     }
 
-    pub fn command_as_list(&self) -> CommandVec {
+    pub fn to_list(&self) -> CommandVec {
         self.commands.to_vec()
     }
 
-    pub fn add_command(&mut self, command: &Command) -> Result<CommandMap> {
+    pub fn add(&mut self, command: &Command) -> Result<CommandMap> {
         self.check_duplicated(command)?;
         log::debug!("commands before insert: {:?}", self.commands);
         self.commands
@@ -34,7 +34,7 @@ impl Commands {
         Ok(self.commands.to_owned())
     }
 
-    pub fn add_edited_command(
+    pub fn add_edited(
         &mut self,
         new_command: &Command,
         old_command: &Command,
@@ -79,12 +79,7 @@ impl Commands {
     /// * `command_item` - The command entity itself
     /// * `dry_run` - A boolean flag representing if the command should be actually executed or just printed in the `stdout`
     /// * `quiet_mode` - A boolean flag representing if the command string should be shown before the command output
-    pub fn exec_command(
-        &self,
-        command_item: &Command,
-        dry_run: bool,
-        quiet_mode: bool,
-    ) -> Result<()> {
+    pub fn exec(&self, command_item: &Command, dry_run: bool, quiet_mode: bool) -> Result<()> {
         if dry_run {
             println!("{}", command_item.command);
         } else {
@@ -122,7 +117,7 @@ impl Commands {
         Ok(())
     }
 
-    pub fn find_command(&self, alias: &str, namespace: Option<String>) -> Result<Command> {
+    pub fn find(&self, alias: &str, namespace: Option<String>) -> Result<Command> {
         let commands = if let Some(namespace) = namespace {
             if let Some(commands) = self.commands.get(&namespace) {
                 commands
@@ -223,7 +218,7 @@ mod test {
         let command2 = create_command!("alias2", "command2", "namespace2", None, None);
 
         let commands = commands!(vec![command1.to_owned(), command2.to_owned()].to_command_map());
-        let all_command_items = commands.command_as_list();
+        let all_command_items = commands.to_list();
         assert_eq!(2, all_command_items.len())
     }
 
@@ -233,7 +228,7 @@ mod test {
         let mut commands = commands!(vec![command.to_owned()].to_command_map());
 
         let duplicated = command.clone();
-        let result = commands.add_command(&duplicated);
+        let result = commands.add(&duplicated);
         assert!(result.is_err());
         if let Err(error) = result {
             assert_eq!(
@@ -254,7 +249,7 @@ mod test {
         let command = create_command!("alias1", "command1", "namespace1", None, None);
         let mut commands = commands!(vec![command.to_owned()].to_command_map());
 
-        let commands_list = commands.command_as_list();
+        let commands_list = commands.to_list();
         assert_eq!(1, commands_list.len());
 
         let to_be_removed = commands_list.get(0).unwrap();
@@ -272,11 +267,11 @@ mod test {
     fn should_add_a_command() {
         let command = create_command!("old", "command", "namespace", None, None);
         let mut commands = commands!(vec![command.to_owned()].to_command_map());
-        let all_commands = commands.command_as_list();
+        let all_commands = commands.to_list();
 
         assert!(!all_commands.is_empty());
         let new_command = create_command!("new", "command", "namespace", None, None);
-        let commands_with_new_command = commands.add_command(&new_command);
+        let commands_with_new_command = commands.add(&new_command);
 
         assert!(commands_with_new_command.is_ok());
         if let Ok(commands) = commands_with_new_command {
@@ -296,8 +291,7 @@ mod test {
         edited_command.alias = String::from("new");
 
         let old_command = new_command;
-        let commands_with_edited_command =
-            commands.add_edited_command(&edited_command, &old_command);
+        let commands_with_edited_command = commands.add_edited(&edited_command, &old_command);
 
         assert!(commands_with_edited_command.is_ok());
         if let Ok(command_map) = commands_with_edited_command {
@@ -319,8 +313,7 @@ mod test {
         edited_command.namespace = String::from("edited_namespace");
 
         let old_command = new_command;
-        let commands_with_edited_command =
-            commands.add_edited_command(&edited_command, &old_command);
+        let commands_with_edited_command = commands.add_edited(&edited_command, &old_command);
 
         assert!(commands_with_edited_command.is_ok());
         if let Ok(command_map) = commands_with_edited_command {
@@ -343,8 +336,7 @@ mod test {
         let mut edited_command = command2.clone();
         edited_command.alias = String::from("alias1");
 
-        let command_list_with_edited_command =
-            commands.add_edited_command(&edited_command, &command2);
+        let command_list_with_edited_command = commands.add_edited(&edited_command, &command2);
 
         assert!(command_list_with_edited_command.is_err());
         assert_eq!(
@@ -366,8 +358,7 @@ mod test {
         let mut edited_command = command2.clone();
         edited_command.alias = String::from("alias1");
         edited_command.namespace = String::from("namespace1");
-        let command_list_with_edited_command =
-            commands.add_edited_command(&edited_command, &command2);
+        let command_list_with_edited_command = commands.add_edited(&edited_command, &command2);
 
         assert!(command_list_with_edited_command.is_err());
         assert_eq!(
@@ -386,7 +377,7 @@ mod test {
         let command2 = create_command!("alias2", "command", "namespace2", None, None);
         let commands = commands!(vec![command1.to_owned(), command2.to_owned()].to_command_map());
 
-        let result = commands.find_command(&command1.alias, None);
+        let result = commands.find(&command1.alias, None);
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), command1)
@@ -398,7 +389,7 @@ mod test {
         let command2 = create_command!("alias", "command", "namespace2", None, None);
         let commands = commands!(vec![command1.to_owned(), command2.to_owned()].to_command_map());
 
-        let result = commands.find_command(&command1.alias, None);
+        let result = commands.find(&command1.alias, None);
 
         assert!(result.is_err());
         assert_eq!(
@@ -415,7 +406,7 @@ mod test {
         let command1 = create_command!("alias", "command", "namespace1", None, None);
         let commands = commands!(vec![command1].to_command_map());
         let invalid_alias = "invalid";
-        let result = commands.find_command(&invalid_alias, None);
+        let result = commands.find(&invalid_alias, None);
 
         assert!(result.is_err());
         if let Err(error) = result {

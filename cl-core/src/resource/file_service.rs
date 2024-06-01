@@ -1,56 +1,48 @@
-use super::{fs_wrapper::macros::write, toml::TomlFileHandler};
+use super::{fs_wrapper::write, toml::Toml};
 use crate::{hashmap, resource::errors::FileError, CommandMap};
 use anyhow::Result;
 use log::debug;
 use std::path::{Path, PathBuf};
 
-pub struct CommandsFileHandler {
-    command_file_path: PathBuf,
-    toml: TomlFileHandler,
+pub struct FileService {
+    file_path: PathBuf,
 }
 
-impl CommandsFileHandler {
-    pub fn new(command_file_path: PathBuf) -> CommandsFileHandler {
-        Self {
-            command_file_path,
-            toml: TomlFileHandler,
-        }
+impl FileService {
+    pub fn new(file_path: PathBuf) -> FileService {
+        Self { file_path }
     }
 
     pub fn validate(self) -> Result<Self> {
-        if !self.command_file_path.exists() {
-            debug!(
-                "Creating a new commands.toml file at {:?}",
-                self.command_file_path
-            );
+        if !self.file_path.exists() {
+            debug!("Creating a new commands.toml file at {:?}", self.file_path);
             self.save(&hashmap!())?;
         }
         Ok(self)
     }
 
     pub fn save(&self, commands: &CommandMap) -> Result<(), FileError> {
-        let toml = self.toml.generate_file_from_commands(commands)?;
-        write!(self.command_file_path.as_path(), toml)
+        let toml = Toml::from_map(commands)?;
+        write!(self.file_path.as_path(), toml)
     }
 
     pub fn save_at<P>(&self, commands: &CommandMap, path: P) -> Result<(), FileError>
     where
         P: AsRef<Path>,
     {
-        let toml = self.toml.generate_file_from_commands(commands)?;
+        let toml = Toml::from_map(commands)?;
         write!(path.as_ref(), toml)
     }
 
     pub fn load(&self) -> Result<CommandMap> {
-        self.toml
-            .generate_commands_from_file(&self.command_file_path)
+        Toml::from_file(&self.file_path)
     }
 
     pub fn load_from<P>(&self, path: P) -> Result<CommandMap>
     where
         P: AsRef<Path>,
     {
-        self.toml.generate_commands_from_file(path)
+        Toml::from_file(path)
     }
 }
 
@@ -66,7 +58,7 @@ mod test {
         let content = vec![Command::default()];
         let dir = TempDir::new("handler")?;
         let path = dir.path().join("test.toml");
-        let file_service = CommandsFileHandler::new(path.to_owned()).validate()?;
+        let file_service = FileService::new(path.to_owned()).validate()?;
 
         let result = file_service.save(&content.to_command_map());
         assert!(result.is_ok());
@@ -81,7 +73,7 @@ mod test {
     fn should_return_an_error() -> Result<()> {
         let dir = TempDir::new("handler")?;
         let path = dir.path().join("nonexistent/test.toml"); // .save() should not create any dir, so it will fail
-        let result = CommandsFileHandler::new(path.to_owned()).validate();
+        let result = FileService::new(path.to_owned()).validate();
 
         assert!(result.is_err());
 

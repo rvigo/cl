@@ -1,13 +1,13 @@
 use super::Subcommand;
 use anyhow::{bail, Context, Result};
-use cl_core::config::{Config as AppConfig, LogLevel as ConfigLogLevel};
+use cl_core::{Config as AppConfig, LogLevel as ConfigLogLevel};
 use clap::{Parser, Subcommand as ClapSubcommand, ValueEnum};
 use dirs::home_dir;
 use log::info;
-use std::io::Write;
 use std::{
     env,
     fs::{write, OpenOptions},
+    io::Write,
     path::PathBuf,
     process::Command,
 };
@@ -19,9 +19,9 @@ enum LogLevel {
     Error,
 }
 
-impl LogLevel {
-    pub fn as_config_enum(&self) -> ConfigLogLevel {
-        match self {
+impl From<LogLevel> for ConfigLogLevel {
+    fn from(value: LogLevel) -> ConfigLogLevel {
+        match value {
             LogLevel::Debug => ConfigLogLevel::Debug,
             LogLevel::Info => ConfigLogLevel::Info,
             LogLevel::Error => ConfigLogLevel::Error,
@@ -84,10 +84,7 @@ impl Subcommand for Config {
                 .if_ok(|| info!("quiet mode set to {quiet}"))
         } else if let Some(log_level) = self.log_level {
             config
-                .change_and_save(|c| {
-                    c.preferences_mut()
-                        .set_log_level(log_level.as_config_enum())
-                })
+                .change_and_save(|c| c.preferences_mut().set_log_level(log_level.into()))
                 .if_ok(|| info!("log level set to {log_level:?}"))
         } else if let Some(highlight) = self.highlight_matches {
             config

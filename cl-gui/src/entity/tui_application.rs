@@ -1,8 +1,7 @@
 use super::{
-    context::{application_context::ApplicationContext, ui::UI},
-    event::input_event::InputMessages,
-    terminal::Terminal,
-    view_mode::ViewMode,
+    context::{ApplicationContext, UI},
+    event::InputEvent,
+    Terminal, ViewMode,
 };
 use crate::screen::Screens;
 use anyhow::{Context, Result};
@@ -22,7 +21,7 @@ use tui::backend::CrosstermBackend;
 
 pub struct TuiApplication<'tui> {
     terminal: Terminal<CrosstermBackend<Stdout>>,
-    input_sx: Sender<InputMessages>,
+    input_sx: Sender<InputEvent>,
     should_quit: Arc<AtomicBool>,
     ui: Arc<Mutex<UI<'tui>>>,
     context: Arc<Mutex<ApplicationContext>>,
@@ -31,7 +30,7 @@ pub struct TuiApplication<'tui> {
 
 impl<'tui> TuiApplication<'tui> {
     pub fn create(
-        input_sx: Sender<InputMessages>,
+        input_sx: Sender<InputEvent>,
         should_quit: Arc<AtomicBool>,
         ui: Arc<Mutex<UI<'tui>>>,
         context: Arc<Mutex<ApplicationContext>>,
@@ -60,7 +59,7 @@ impl<'tui> TuiApplication<'tui> {
 
                 if event::poll(Duration::from_millis(50))? {
                     if let Ok(Event::Key(key)) = event::read() {
-                        self.input_sx.send(InputMessages::KeyPress(key)).await?;
+                        self.input_sx.send(InputEvent::KeyPress(key)).await?;
                     }
                 }
             }

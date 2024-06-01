@@ -1,6 +1,6 @@
 use super::Subcommand;
 use anyhow::Result;
-use cl_core::{command::Command, config::Config, load_commands};
+use cl_core::{load_commands, Command, Config};
 use clap::Parser;
 use itertools::Itertools;
 use owo_colors::{colors::CustomColor, OwoColorize};
@@ -21,7 +21,7 @@ pub struct Misc {
 impl Subcommand for Misc {
     fn run(&self, config: Config) -> Result<()> {
         let commands = load_commands!(config.command_file_path())?;
-        let command_vec = commands.command_as_list();
+        let command_vec = commands.to_list();
         let sorted_commands = command_vec
             .iter()
             .sorted_by_key(|c| c.alias.to_owned())
@@ -29,7 +29,7 @@ impl Subcommand for Misc {
         if self.description {
             if let Some(alias) = &self.alias {
                 let namespace = &self.namespace;
-                let command = commands.find_command(alias, namespace.to_owned())?;
+                let command = commands.find(alias, namespace.to_owned())?;
                 println!("{}", command.to_color_string());
             }
         } else if self.fzf {

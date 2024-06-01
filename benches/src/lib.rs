@@ -1,11 +1,11 @@
 #[macro_export]
 macro_rules! load_command_handler {
     () => {{
-        use cl_core::resource::commands_file_handler::CommandsFileHandler;
-        CommandsFileHandler::new("../benches/data/sample.toml".into())
+        use cl_core::resource::FileService;
+        FileService::new("../benches/data/sample.toml".into())
     }};
     ($path:expr) => {
-        use cl_core::resource::commands_file_handler::CommandsFileHandler;
+        use cl_core::resource::file_service::FileService;
         CommandsFileHandler::new($path.into())
     };
 }
@@ -19,7 +19,7 @@ macro_rules! build_command {
         $(tags=>   $tags:expr;)?
         $(description => $description:expr;)?
     ) => {{
-        use cl_core::command::CommandBuilder;
+        use cl_core::CommandBuilder;
 
         let mut namespace = "any";
         let mut command = "any";

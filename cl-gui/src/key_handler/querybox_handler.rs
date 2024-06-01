@@ -1,5 +1,5 @@
 use super::{AppEventResult, KeyEventHandler};
-use crate::entity::event::app_event::{AppEvent, QueryboxEvent};
+use crate::entity::event::{AppEvent, QueryboxEvent};
 use crossterm::event::{KeyCode, KeyEvent};
 
 pub struct QueryboxHandler;

@@ -4,10 +4,7 @@ use super::{
 };
 use crate::entity::{fuzzy::Fuzzy, state::State};
 use anyhow::Result;
-use cl_core::{
-    command::Command, commands::Commands, resource::commands_file_handler::CommandsFileHandler,
-    CommandVec, CommandVecExt, Namespace,
-};
+use cl_core::{resource::FileService, Command, CommandVec, CommandVecExt, Commands, Namespace};
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
 use log::debug;
@@ -17,7 +14,7 @@ use tui::widgets::ListState;
 
 /// Groups all `Command`'s related stuff
 pub struct CommandsContext {
-    commands_file_handler: CommandsFileHandler,
+    commands_file_handler: FileService,
     commands: Arc<Mutex<Commands>>,
     filtered_commands: CommandVec,
     matcher: SkimMatcherV2,
@@ -27,9 +24,9 @@ pub struct CommandsContext {
 }
 
 impl CommandsContext {
-    pub fn new(commands: Commands, commands_file_handler: CommandsFileHandler) -> Self {
+    pub fn new(commands: Commands, commands_file_handler: FileService) -> Self {
         let namespaces = commands
-            .command_as_list()
+            .to_list()
             .iter()
             .map(|c| c.namespace.to_owned())
             .collect_vec();
@@ -69,7 +66,7 @@ impl CommandsContext {
 
         debug!("new command validated: {new_command:?}");
         let mut commands = self.commands.lock();
-        let result = commands.add_command(new_command)?;
+        let result = commands.add(new_command)?;
 
         self.commands_file_handler.save(&result)?;
         self.namespaces
@@ -89,7 +86,7 @@ impl CommandsContext {
         let commands = self
             .commands
             .lock()
-            .add_edited_command(edited_command, current_command)?;
+            .add_edited(edited_command, current_command)?;
 
         self.namespaces
             .update_namespaces(&commands.keys().collect_vec());
@@ -127,12 +124,12 @@ impl CommandsContext {
                 if !current_namespace.is_empty() && current_namespace != DEFAULT_NAMESPACE {
                     self.commands
                         .lock()
-                        .commands()
+                        .get()
                         .get(current_namespace)
                         .unwrap_or(&vec![])
                         .to_owned()
                 } else {
-                    let command_list = self.commands.lock().command_as_list();
+                    let command_list = self.commands.lock().to_list();
 
                     if command_list.is_empty() {
                         vec![Command::default()]
@@ -233,7 +230,7 @@ impl CommandsContext {
                 eprintln!();
             }
 
-            self.commands.lock().exec_command(command, false, quiet)?;
+            self.commands.lock().exec(command, false, quiet)?;
         }
 
         Ok(())
@@ -305,7 +302,7 @@ mod test {
         ($commands:expr, $path:expr) => {
             CommandsContext::new(
                 Commands::init($commands.to_command_map()),
-                CommandsFileHandler::new($path.join("commands.toml")),
+                FileService::new($path.join("commands.toml")),
             )
         };
     }
@@ -321,7 +318,7 @@ mod test {
 
         assert!(result.is_ok());
         let commands_lock = context.commands.lock();
-        let commands = commands_lock.commands();
+        let commands = commands_lock.get();
         let entry = commands.get(&command.namespace).unwrap();
 
         assert_eq!(entry.len(), 2);
@@ -337,7 +334,7 @@ mod test {
 
         assert!(result.is_ok());
         let commands_lock = context.commands.lock();
-        let commands = commands_lock.commands();
+        let commands = commands_lock.get();
         let entry = commands.get(&command.namespace);
 
         assert!(entry.is_none());

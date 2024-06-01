@@ -1,5 +1,5 @@
 use super::{AppEventResult, KeyEventHandler};
-use crate::entity::event::app_event::{AppEvent, PopupEvent::Disable};
+use crate::entity::event::{AppEvent, PopupEvent::Disable};
 use crossterm::event::KeyEvent;
 
 pub struct HelpPopupHandler;

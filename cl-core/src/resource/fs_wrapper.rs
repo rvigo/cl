@@ -33,7 +33,7 @@ where
     })
 }
 
-pub mod macros {
+mod macros {
     #[macro_export]
     macro_rules! write {
         ($path:expr, $contents:expr) => {
@@ -59,3 +59,5 @@ pub mod macros {
     pub use read_to_string;
     pub use write;
 }
+
+pub use macros::{create_dir_all, read_to_string, write};

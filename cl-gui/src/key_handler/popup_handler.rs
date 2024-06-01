@@ -1,5 +1,5 @@
 use super::{AppEventResult, KeyEventHandler};
-use crate::entity::event::app_event::{AppEvent, PopupEvent};
+use crate::entity::event::{AppEvent, PopupEvent};
 use crossterm::event::{KeyCode, KeyEvent};
 
 pub struct PopupHandler;

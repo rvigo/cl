@@ -1,6 +1,6 @@
 use crate::{
     preferences::Preferences,
-    resource::fs_wrapper::macros::{create_dir_all, read_to_string, write},
+    resource::fs_wrapper::{create_dir_all, read_to_string, write},
 };
 use anyhow::{Context, Result};
 use dirs::home_dir;

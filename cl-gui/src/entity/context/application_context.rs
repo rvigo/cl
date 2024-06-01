@@ -1,10 +1,7 @@
 use super::{commands_context::CommandsContext, namespaces::DEFAULT_NAMESPACE};
 use crate::entity::clipboard::Clipboard;
 use anyhow::Result;
-use cl_core::{
-    command::Command, commands::Commands, preferences::Preferences,
-    resource::commands_file_handler::CommandsFileHandler, CommandVec,
-};
+use cl_core::{resource::FileService, Command, CommandVec, Commands, Preferences};
 use tui::widgets::ListState;
 
 pub struct ApplicationContext {
@@ -16,7 +13,7 @@ pub struct ApplicationContext {
 impl ApplicationContext {
     pub fn init(
         commands: Commands,
-        commands_file_handler: CommandsFileHandler,
+        commands_file_handler: FileService,
         preferences: Preferences,
     ) -> ApplicationContext {
         let clipboard = Clipboard::new().ok();

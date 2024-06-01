@@ -1,5 +1,5 @@
 use super::{AppEventResult, KeyEventHandler};
-use crate::entity::event::app_event::{
+use crate::entity::event::{
     AppEvent, CommandEvent, FormScreenEvent, PopupEvent, PopupType, RenderEvent, ScreenEvent,
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};

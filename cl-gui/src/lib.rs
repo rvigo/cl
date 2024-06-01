@@ -4,7 +4,7 @@ pub mod screen;
 pub mod widget;
 
 use anyhow::Result;
-use cl_core::config::Config;
+use cl_core::Config;
 use tui::style::Color;
 
 pub const DEFAULT_TEXT_COLOR: Color = Color::Rgb(229, 229, 229);
@@ -18,18 +18,17 @@ mod core {
     use super::entity::terminal::Terminal;
     use crate::{
         entity::{
-            context::{application_context::ApplicationContext, ui::UI},
-            event::{app_event::AppEvent, input_event::InputMessages},
-            event_handler::EventHandler,
-            input_handler::InputHandler,
-            tui_application::TuiApplication,
+            context::{ApplicationContext, UI},
+            event::{
+                handler::{AppEventHandler, InputHandler},
+                AppEvent, InputEvent,
+            },
+            TuiApplication,
         },
         screen::Screens,
     };
     use anyhow::{Context, Result};
-    use cl_core::{
-        commands::Commands, config::Config, resource::commands_file_handler::CommandsFileHandler,
-    };
+    use cl_core::{resource::FileService, Commands, Config};
     use log::debug;
     use parking_lot::Mutex;
     use std::sync::{atomic::AtomicBool, Arc};
@@ -38,10 +37,10 @@ mod core {
     pub async fn init(config: Config) -> Result<()> {
         debug!("creating channels");
         let (app_sx, app_rx) = channel::<AppEvent>(16);
-        let (input_sx, input_rx) = channel::<InputMessages>(16);
+        let (input_sx, input_rx) = channel::<InputEvent>(16);
 
         debug!("loading commands from file");
-        let file_service = CommandsFileHandler::new(config.command_file_path()).validate()?;
+        let file_service = FileService::new(config.command_file_path()).validate()?;
         let commands = file_service
             .load()
             .context("Cannot load commands from file")?;
@@ -88,7 +87,7 @@ mod core {
         should_quit: &Arc<AtomicBool>,
     ) {
         debug!("starting event listener");
-        tokio::spawn(EventHandler::init(
+        tokio::spawn(AppEventHandler::init(
             app_rx,
             context.to_owned(),
             ui_context.to_owned(),
@@ -105,7 +104,7 @@ mod core {
     }
 
     async fn start_input_handler(
-        input_rx: Receiver<InputMessages>,
+        input_rx: Receiver<InputEvent>,
         app_sx: &Sender<AppEvent>,
         ui_context: &Arc<Mutex<UI<'static>>>,
         should_quit: &Arc<AtomicBool>,

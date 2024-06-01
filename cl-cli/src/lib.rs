@@ -1,6 +1,6 @@
 use anyhow::Result;
 use app::Subcommands;
-use cl_core::config::Config;
+use cl_core::Config;
 use subcommands::Subcommand;
 
 pub mod app;

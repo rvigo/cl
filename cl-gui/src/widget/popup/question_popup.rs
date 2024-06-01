@@ -1,5 +1,5 @@
 use super::{choice::Choice, popup_type::PopupType, Popup, WithChoices};
-use crate::{default_block, entity::context::popup_context::PopupContext, DEFAULT_TEXT_COLOR};
+use crate::{default_block, entity::context::PopupContext, DEFAULT_TEXT_COLOR};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},

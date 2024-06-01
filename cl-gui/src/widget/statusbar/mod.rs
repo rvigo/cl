@@ -1,7 +1,12 @@
-pub mod help;
-pub mod info;
-pub mod navigation_info;
-pub mod querybox;
+mod help;
+mod info;
+mod navigation_info;
+mod querybox;
+
+pub use help::Help;
+pub use info::Info;
+pub use navigation_info::NavigationInfo;
+pub use querybox::QueryBox;
 
 use tui::widgets::Widget;
 

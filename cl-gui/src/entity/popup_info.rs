@@ -1,4 +1,4 @@
-use crate::{entity::event::app_event::PopupCallbackAction, widget::popup::popup_type::PopupType};
+use crate::{entity::event::PopupCallbackAction, widget::popup::PopupType};
 
 #[derive(Default, Clone, Debug)]
 pub struct PopupInfo {

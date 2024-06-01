@@ -70,12 +70,12 @@ macro_rules! render {
 #[macro_export]
 macro_rules! display_widget {
     ($title:expr, $content:expr, $trim:expr, $highlight:expr) => {
-        $crate::widget::display::DisplayWidget::new($content, $trim, $highlight)
+        $crate::widget::DisplayWidget::new($content, $trim, $highlight)
             .block(default_block!($title))
     };
 
     ($title:expr, $content:expr, $trim:expr, $highlight:expr, $query:expr) => {
-        $crate::widget::display::DisplayWidget::new($content, $trim, $highlight)
+        $crate::widget::DisplayWidget::new($content, $trim, $highlight)
             .block(default_block!($title))
             .highlight($query)
     };

@@ -1,12 +1,16 @@
-pub mod alias_list;
-pub mod base_widget;
-pub mod display;
-pub mod field_state;
-pub mod highlight;
-pub mod macros;
+mod alias_list;
+mod base_widget;
+mod display;
+mod highlight;
+mod macros;
 pub mod popup;
 pub mod statusbar;
 pub mod text_field;
+
+pub use alias_list::AliasListWidget;
+pub use base_widget::BaseWidget;
+pub use display::DisplayWidget;
+pub use text_field::TextField;
 
 use self::statusbar::StatusBarItem;
 use crossterm::event::KeyEvent;
@@ -19,16 +23,17 @@ pub trait WidgetKeyHandler {
 #[macro_export]
 macro_rules! create_fields_map {
     ($($field_type:path :{ focus = $focus:expr,multiline = $multiline:expr }),+ $(,)*) => {{
-     let mut fields = cl_core::hashmap!();
-        $(
-         fields.insert( $field_type,
-            TextFieldBuilder::default()
-                .field_type($field_type)
-                .in_focus($focus)
-                .multiline($multiline)
-                .build());
-        )+
+        use $crate::widget::text_field::TextFieldBuilder;
+        let mut fields = cl_core::hashmap!();
+            $(
+            fields.insert( $field_type,
+                TextFieldBuilder::default()
+                    .field_type($field_type)
+                    .in_focus($focus)
+                    .multiline($multiline)
+                    .build());
+            )+
 
-        fields
+            fields
     }};
 }
