@@ -1,8 +1,8 @@
-use super::{
-    text_field::{FieldType, TextField, TextFieldBuilder},
-    WidgetKeyHandler,
+use crate::{
+    create_fields_map,
+    entity::terminal::TerminalSize,
+    widget::{text_field::FieldType, TextField, WidgetKeyHandler},
 };
-use crate::{create_fields_map, entity::terminal::TerminalSize};
 use crossterm::event::KeyEvent;
 use std::{
     collections::HashMap,

@@ -1,11 +1,14 @@
 mod clipboard;
 pub mod context;
-pub(super) mod event;
-pub(super) mod event_handler;
+pub mod event;
 mod fuzzy;
-pub(super) mod input_handler;
-pub mod popup_info;
-pub(super) mod state;
-pub(super) mod terminal;
-pub(super) mod tui_application;
-pub mod view_mode;
+mod popup_info;
+pub mod state;
+pub mod terminal;
+mod tui_application;
+mod view_mode;
+
+pub use popup_info::PopupInfo;
+pub use terminal::Terminal;
+pub use tui_application::TuiApplication;
+pub use view_mode::ViewMode;

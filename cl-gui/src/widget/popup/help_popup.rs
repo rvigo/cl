@@ -1,6 +1,6 @@
 use super::{popup_type::PopupType, Popup};
 use crate::{
-    entity::{context::popup_context::PopupContext, view_mode::ViewMode},
+    entity::{context::PopupContext, ViewMode},
     DEFAULT_SELECTED_COLOR,
 };
 use tui::{

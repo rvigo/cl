@@ -1,4 +1,4 @@
-use cl_core::command::Command;
+use cl_core::Command;
 
 /// A trait to give a type an optmized string representation to fuzzy searches
 ///

@@ -1,14 +1,13 @@
 use super::Selectable;
 use crate::{
-    entity::{state::State, terminal::TerminalSize},
-    widget::{
-        field_state::FieldState,
-        text_field::{FieldType, TextField},
+    entity::{
+        state::{FieldState, State},
+        terminal::TerminalSize,
     },
+    widget::text_field::{FieldType, TextField},
 };
 use cl_core::{
-    command::{Command, CommandBuilder},
-    hashmap,
+    hashmap, {Command, CommandBuilder},
 };
 use crossterm::event::KeyEvent;
 use itertools::Itertools;

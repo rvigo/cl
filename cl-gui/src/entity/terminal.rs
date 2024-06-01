@@ -1,4 +1,4 @@
-use super::context::{application_context::ApplicationContext, ui::UI};
+use super::context::{ApplicationContext, UI};
 use crate::screen::Screen;
 use anyhow::Result;
 use crossterm::{

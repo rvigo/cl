@@ -1,12 +1,14 @@
-use super::{
-    context::{application_context::ApplicationContext, ui::UI, Selectable},
-    event::app_event::{
-        AppEvent, CommandEvent, FormScreenEvent, MainScreenEvent, PopupCallbackAction, PopupEvent,
-        PopupType, QueryboxEvent, RenderEvent, ScreenEvent,
+use crate::{
+    entity::{
+        context::{ApplicationContext, Selectable, UI},
+        event::{
+            AppEvent, CommandEvent, FormScreenEvent, MainScreenEvent, PopupCallbackAction,
+            PopupEvent, PopupType, QueryboxEvent, RenderEvent, ScreenEvent,
+        },
+        view_mode::ViewMode,
     },
-    view_mode::ViewMode,
+    widget::popup::{Choice, PopupType as PopupMessageType},
 };
-use crate::widget::popup::{choice::Choice, popup_type::PopupType as PopupMessageType};
 use log::debug;
 use parking_lot::Mutex;
 use std::sync::{
@@ -15,14 +17,14 @@ use std::sync::{
 };
 use tokio::sync::mpsc::Receiver;
 
-pub struct EventHandler<'a> {
+pub struct AppEventHandler<'a> {
     app_rx: Receiver<AppEvent>,
     app_context: Arc<Mutex<ApplicationContext>>,
     ui_context: Arc<Mutex<UI<'a>>>,
     should_quit: Arc<AtomicBool>,
 }
 
-impl<'a> EventHandler<'a> {
+impl<'a> AppEventHandler<'a> {
     pub async fn init(
         app_rx: Receiver<AppEvent>,
         context: Arc<Mutex<ApplicationContext>>,

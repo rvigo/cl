@@ -1,12 +1,12 @@
 mod form_screen;
 mod main_screen;
 
-use super::entity::context::{application_context::ApplicationContext, ui::UI};
+use super::entity::context::{ApplicationContext, UI};
 use crate::{
-    entity::{terminal::TerminalSizeExt, view_mode::ViewMode},
+    entity::{terminal::TerminalSizeExt, ViewMode},
     register, render,
     screen::{form_screen::FormScreen, main_screen::MainScreen},
-    widget::{base_widget::BaseWidget, statusbar::StatusBarItem},
+    widget::{statusbar::StatusBarItem, BaseWidget},
 };
 use std::collections::HashMap;
 use tui::Frame;

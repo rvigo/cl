@@ -2,13 +2,13 @@ use super::{Screen, ScreenExt};
 use crate::{
     default_block,
     entity::{
-        context::{application_context::ApplicationContext, ui::UI},
+        context::{ApplicationContext, UI},
         terminal::{TerminalSize, TerminalSizeExt},
     },
     popup, render,
     widget::{
-        popup::{help_popup::HelpPopup, RenderPopup},
-        statusbar::{help::Help, info::Info, navigation_info::NavigationInfo},
+        popup::{HelpPopup, RenderPopup},
+        statusbar::{Help, Info, NavigationInfo},
         text_field::FieldType,
     },
 };

@@ -3,7 +3,7 @@ pub mod command_args;
 use self::command_args::CommandArg;
 use super::Subcommand;
 use anyhow::{anyhow, bail, Context, Result};
-use cl_core::{config::Config, load_commands, resource::errors::CommandError};
+use cl_core::{load_commands, resource::errors::CommandError, Config};
 use clap::Parser;
 use command_args::CommandArgs;
 use itertools::Itertools;
@@ -72,14 +72,14 @@ impl Subcommand for Exec {
         let args = &self.command_args;
         let dry_run = self.dry_run;
         let quiet_mode = self.quiet || config.preferences().quiet_mode();
-        let mut command_item = commands.find_command(alias, namespace.to_owned())?;
+        let mut command_item = commands.find(alias, namespace.to_owned())?;
 
         command_item.command = prepare_command(command_item.command, args.to_owned())
             .context("Cannot prepare the command to be executed")?;
 
         debug!("command to be executed: {}", command_item.command);
         commands
-            .exec_command(&command_item, dry_run, quiet_mode)
+            .exec(&command_item, dry_run, quiet_mode)
             .context("Cannot run the command")
     }
 }

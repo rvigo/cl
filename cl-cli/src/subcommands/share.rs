@@ -1,9 +1,6 @@
 use super::Subcommand;
 use anyhow::{Context, Result};
-use cl_core::{
-    command::Command, commands::Commands, config::Config,
-    resource::commands_file_handler::CommandsFileHandler, CommandMapExt, CommandVecExt,
-};
+use cl_core::{resource::FileService, Command, CommandMapExt, CommandVecExt, Commands, Config};
 use clap::{Parser, ValueEnum};
 use log::{info, warn};
 use std::{collections::HashSet, path::PathBuf};
@@ -44,14 +41,13 @@ impl Subcommand for Share {
         let file_location = &self.file_location;
         let namespaces = &self.namespace;
 
-        let commands_file_handler =
-            CommandsFileHandler::new(config.command_file_path()).validate()?;
+        let commands_file_handler = FileService::new(config.command_file_path()).validate()?;
         let command_list = commands_file_handler.load()?;
         let commands = Commands::init(command_list);
 
         match self.mode {
             Mode::Import => {
-                let mut stored_commands = commands.command_as_list();
+                let mut stored_commands = commands.to_list();
                 let commands_from_file: Vec<Command> = commands_file_handler
                     .load_from(&self.file_location)?
                     .to_vec();
@@ -119,7 +115,7 @@ impl Subcommand for Share {
                     for namespace in namespaces.iter() {
                         command_list.append(
                             &mut commands
-                                .command_as_list()
+                                .to_list()
                                 .iter()
                                 .filter(|c| c.namespace.eq(namespace))
                                 .map(|c| c.to_owned())
@@ -127,7 +123,7 @@ impl Subcommand for Share {
                         );
                     }
                 } else {
-                    command_list = commands.command_as_list().to_owned();
+                    command_list = commands.to_list().to_owned();
                 }
 
                 commands_file_handler

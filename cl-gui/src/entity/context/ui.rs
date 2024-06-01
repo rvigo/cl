@@ -1,20 +1,20 @@
 use super::{fields::Fields, popup_context::PopupContext, Selectable};
 use crate::{
     entity::{
-        event::app_event::PopupCallbackAction,
+        event::PopupCallbackAction,
         popup_info::PopupInfo,
-        state::{clipboard_state::ClipboardState, State},
+        state::{ClipboardState, State},
         terminal::TerminalSize,
         view_mode::ViewMode,
     },
     widget::{
-        popup::{choice::Choice, popup_type::PopupType},
-        statusbar::querybox::QueryBox,
+        popup::{Choice, PopupType},
+        statusbar::QueryBox,
         text_field::{FieldType, TextField},
         WidgetKeyHandler,
     },
 };
-use cl_core::command::Command;
+use cl_core::Command;
 use crossterm::event::KeyEvent;
 
 pub struct UI<'ui> {

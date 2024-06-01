@@ -1,7 +1,7 @@
 use super::Selectable;
 use crate::{
     entity::{popup_info::PopupInfo, state::State},
-    widget::popup::choice::Choice,
+    widget::popup::Choice,
 };
 
 #[derive(Default)]

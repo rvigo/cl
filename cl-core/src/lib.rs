@@ -1,11 +1,16 @@
-pub mod command;
-pub mod commands;
-pub mod config;
+mod command;
+mod commands;
+mod config;
 pub mod logger;
-pub mod preferences;
+mod preferences;
 pub mod resource;
 
-use command::Command;
+pub use command::{Command, CommandBuilder};
+pub use commands::Commands;
+pub use config::Config;
+pub use config::LogLevel;
+pub use preferences::Preferences;
+
 use std::collections::HashMap;
 
 pub type Namespace = String;

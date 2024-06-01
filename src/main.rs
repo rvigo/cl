@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
 use cl_cli::{app::App, run_subcommands};
 use cl_core::{
-    config::Config,
     logger::{LoggerBuilder, LoggerType},
+    Config,
 };
 use cl_gui::start_gui;
 

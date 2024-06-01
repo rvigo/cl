@@ -47,7 +47,14 @@ where
             base_block,
         }
     }
+}
 
+impl<'a, L, C, R> BaseWidget<'a, L, C, R>
+where
+    L: StatusBarItem,
+    C: StatusBarItem,
+    R: StatusBarItem,
+{
     fn render_small_screen(&self, area: Rect, buf: &mut Buffer) {
         self.render_base_block(area, buf)
     }

@@ -1,11 +1,12 @@
-use super::{context::ui::UI, view_mode::ViewMode};
 use crate::{
-    entity::event::{app_event::AppEvent, input_event::InputMessages},
+    entity::{
+        context::UI,
+        event::{AppEvent, InputEvent},
+        ViewMode,
+    },
     key_handler::{
-        edit_handler::EditScreenHandler, help_popup_handler::HelpPopupHandler,
-        insert_handler::InsertScreenHandler, main_handler::MainScreenHandler,
-        popup_handler::PopupHandler, querybox_handler::QueryboxHandler, HandlerType,
-        KeyEventHandler,
+        EditScreenHandler, HandlerType, HelpPopupHandler, InsertScreenHandler, KeyEventHandler,
+        MainScreenHandler, PopupHandler, QueryboxHandler,
     },
     register,
 };
@@ -26,7 +27,7 @@ use tokio::sync::mpsc::{error::SendError, Receiver, Sender};
 type ThreadSafeKeyEventHandler<'a> = &'a (dyn KeyEventHandler + Send + Sync);
 
 pub struct InputHandler {
-    input_rx: Receiver<InputMessages>,
+    input_rx: Receiver<InputEvent>,
     app_sx: Sender<AppEvent>,
     ui_context: Arc<Mutex<UI<'static>>>,
     should_quit: Arc<AtomicBool>,
@@ -35,7 +36,7 @@ pub struct InputHandler {
 
 impl InputHandler {
     pub async fn init(
-        input_rx: Receiver<InputMessages>,
+        input_rx: Receiver<InputEvent>,
         app_sx: Sender<AppEvent>,
         ui_context: Arc<Mutex<UI<'static>>>,
         should_quit: Arc<AtomicBool>,
@@ -66,10 +67,10 @@ impl InputHandler {
     async fn start(&mut self) -> Result<()> {
         while let Some(message) = self.input_rx.recv().await {
             match message {
-                InputMessages::KeyPress(key_event) => {
+                InputEvent::KeyPress(key_event) => {
                     let event = self.handle_input(key_event)?;
                     if let Some(event) = event {
-                        self.send_event(event).await?;
+                        self.dispatch(event).await?;
                     }
                 }
             };
@@ -93,8 +94,8 @@ impl InputHandler {
         }
     }
 
-    async fn send_event(&self, event: AppEvent) -> Result<(), SendError<AppEvent>> {
-        debug!("sending event: {:?}", event);
+    async fn dispatch(&self, event: AppEvent) -> Result<(), SendError<AppEvent>> {
+        debug!("dispatching event: {:?}", event);
         self.app_sx.send(event).await
     }
 

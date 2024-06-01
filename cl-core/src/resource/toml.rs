@@ -1,12 +1,12 @@
-use super::{errors::FileError, fs_wrapper::macros::read_to_string};
+use super::{errors::FileError, fs_wrapper::read_to_string};
 use crate::CommandMap;
 use anyhow::Result;
 use std::path::Path;
 
-pub struct TomlFileHandler;
+pub struct Toml;
 
-impl TomlFileHandler {
-    pub fn generate_commands_from_file<P>(&self, path: P) -> Result<CommandMap>
+impl Toml {
+    pub fn from_file<P>(path: P) -> Result<CommandMap>
     where
         P: AsRef<Path>,
     {
@@ -16,7 +16,7 @@ impl TomlFileHandler {
         Ok(commands)
     }
 
-    pub fn generate_file_from_commands(&self, commands: &CommandMap) -> Result<String, FileError> {
+    pub fn from_map(commands: &CommandMap) -> Result<String, FileError> {
         toml::to_string(&commands).map_err(FileError::from)
     }
 }

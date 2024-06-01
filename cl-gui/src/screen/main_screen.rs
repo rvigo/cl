@@ -2,22 +2,20 @@ use super::{Screen, ScreenExt};
 use crate::{
     default_block, display_widget,
     entity::{
-        context::{application_context::ApplicationContext, ui::UI},
+        context::{ApplicationContext, UI},
         state::State,
         terminal::{TerminalSize, TerminalSizeExt},
     },
     popup, render,
     widget::{
-        alias_list::AliasListWidget,
-        display::DisplayWidget,
-        popup::{help_popup::HelpPopup, RenderPopup},
-        statusbar::{help::Help, info::Info},
+        popup::{HelpPopup, RenderPopup},
+        statusbar::{Help, Info},
+        AliasListWidget, DisplayWidget,
     },
     DEFAULT_SELECTED_COLOR,
 };
 use cl_core::{
-    command::{Command, CommandBuilder},
-    Namespace,
+    Namespace, {Command, CommandBuilder},
 };
 use tui::{
     layout::{Constraint, Direction, Layout},

@@ -1,10 +1,14 @@
-pub mod choice;
-pub mod help_popup;
-pub mod popup_type;
-pub mod question_popup;
+mod choice;
+mod help_popup;
+mod popup_type;
+mod question_popup;
 
-use self::choice::Choice;
-use crate::{centered_rect, entity::context::popup_context::PopupContext, DEFAULT_SELECTED_COLOR};
+pub use self::choice::Choice;
+pub use help_popup::HelpPopup;
+pub use popup_type::PopupType;
+pub use question_popup::QuestionPopup;
+
+use crate::{centered_rect, entity::context::PopupContext, DEFAULT_SELECTED_COLOR};
 use std::{rc::Rc, vec};
 use tui::{
     buffer::Buffer,
@@ -142,7 +146,7 @@ pub mod macros {
         };
 
         ($info:expr, $choiches:expr) => {{
-            use $crate::widget::popup::question_popup::QuestionPopup;
+            use $crate::widget::popup::QuestionPopup;
 
             QuestionPopup::new(
                 $info.message.to_owned(),

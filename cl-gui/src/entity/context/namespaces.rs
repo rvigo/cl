@@ -1,8 +1,7 @@
-use std::collections::HashSet;
-
-use crate::entity::state::namespaces_state::NamespacesState;
+use crate::entity::state::NamespacesState;
 use cl_core::Namespace;
 use itertools::Itertools;
+use std::collections::HashSet;
 
 pub const DEFAULT_NAMESPACE: &str = "All";
 

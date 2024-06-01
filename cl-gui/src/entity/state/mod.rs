@@ -1,6 +1,11 @@
 mod alias_list_state;
-pub mod clipboard_state;
-pub mod namespaces_state;
+mod clipboard_state;
+mod field_state;
+mod namespaces_state;
+
+pub use clipboard_state::ClipboardState;
+pub use field_state::FieldState;
+pub use namespaces_state::NamespacesState;
 
 pub trait State {
     type Output;
