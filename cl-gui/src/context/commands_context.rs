@@ -2,14 +2,13 @@ use super::{
     namespace_context::{NamespaceContext, DEFAULT_NAMESPACE},
     Selectable,
 };
-use crate::{Fuzzy, State};
+use crate::{state::ListState, Fuzzy, State};
 use anyhow::Result;
 use cl_core::{resource::FileService, Command, CommandMap, CommandVec, CommandVecExt, Commands};
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
 use log::debug;
 use std::{cmp::Reverse, thread, time::Duration};
-use tui::widgets::ListState;
 
 /// Groups all `Command`'s related stuff
 pub struct CommandsContext {
