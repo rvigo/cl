@@ -1,13 +1,13 @@
-mod alias_list;
 mod base_widget;
 mod display;
 mod highlight;
+pub mod list;
 mod macros;
+
 pub mod popup;
 pub mod statusbar;
 pub mod text_field;
 
-pub use alias_list::AliasListWidget;
 pub use base_widget::BaseWidget;
 pub use display::DisplayWidget;
 pub use text_field::TextField;

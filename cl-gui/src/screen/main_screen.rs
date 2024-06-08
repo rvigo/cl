@@ -4,9 +4,10 @@ use crate::{
     default_block, display_widget, popup, render,
     terminal::{TerminalSize, TerminalSizeExt},
     widget::{
+        list::List,
         popup::{HelpPopup, RenderPopup},
         statusbar::{Help, Info},
-        AliasListWidget, DisplayWidget,
+        DisplayWidget,
     },
     State, DEFAULT_SELECTED_COLOR,
 };
@@ -44,7 +45,7 @@ impl Screen for MainScreen {
         let tags_str = &selected_command.tags_as_string();
         let description_str = &selected_command.description();
 
-        let commands = AliasListWidget::new(&filtered_commands, command_state);
+        let commands = List::new(&filtered_commands, command_state);
         let tabs = create_namespaces_menu_widget(namespaces, selected_namespace);
 
         let command = display_widget!("Command", command_str, true, should_highlight, &query);
@@ -122,7 +123,7 @@ fn render_form_medium(
     frame: &mut Frame,
     tabs: Tabs,
     command: DisplayWidget,
-    commands: AliasListWidget,
+    commands: List,
     namespace: DisplayWidget,
     tags: DisplayWidget,
     description: DisplayWidget,
@@ -165,12 +166,7 @@ fn render_form_medium(
     );
 }
 
-fn render_form_small(
-    frame: &mut Frame,
-    tabs: Tabs,
-    commands: AliasListWidget,
-    command: DisplayWidget,
-) {
+fn render_form_small(frame: &mut Frame, tabs: Tabs, commands: List, command: DisplayWidget) {
     let constraints = [Constraint::Length(3), Constraint::Min(5)];
     let chunks = Layout::default()
         .direction(Direction::Vertical)
