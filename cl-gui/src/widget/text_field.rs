@@ -1,10 +1,9 @@
-use super::WidgetKeyHandler;
+use super::{Lines, WidgetKeyHandler};
 use crate::{default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::{
     fmt::{Debug, Display},
     hash::Hash,
-    slice::Iter,
 };
 use tui::{
     buffer::Buffer,
@@ -28,7 +27,7 @@ pub enum FieldType {
 }
 
 impl FieldType {
-    pub fn iter() -> Iter<'static, FieldType> {
+    pub fn values() -> [FieldType; 5] {
         [
             FieldType::Alias,
             FieldType::Tags,
@@ -36,7 +35,6 @@ impl FieldType {
             FieldType::Description,
             FieldType::Namespace,
         ]
-        .iter()
     }
 }
 
@@ -54,17 +52,22 @@ impl Display for FieldType {
 
 /// Represents a text field component/widget
 #[derive(Clone)]
-pub struct TextField<'a> {
+pub struct TextField<'txt> {
     title: String,
     field_type: FieldType,
     in_focus: bool,
     alignment: Alignment,
     multiline: bool,
-    text_area: TextArea<'a>,
+    text_area: TextArea<'txt>,
 }
 
-impl<'a> TextField<'a> {
-    pub fn new<T>(title: T, field_type: FieldType, in_focus: bool, multiline: bool) -> TextField<'a>
+impl<'txt> TextField<'txt> {
+    pub fn new<T>(
+        title: T,
+        field_type: FieldType,
+        in_focus: bool,
+        multiline: bool,
+    ) -> TextField<'txt>
     where
         T: Into<String>,
     {
@@ -88,9 +91,9 @@ impl<'a> TextField<'a> {
 
     pub fn set_text<L>(&mut self, content: L)
     where
-        L: ToLines,
+        L: Into<Lines>,
     {
-        self.text_area = TextArea::from(content.to_lines())
+        self.text_area = TextArea::from(&*content.into())
     }
 
     pub fn activate_focus(&mut self) {
@@ -114,7 +117,7 @@ impl<'a> TextField<'a> {
         self.text_area = self.default_text_area()
     }
 
-    fn default_text_area(&self) -> TextArea<'a> {
+    fn default_text_area(&self) -> TextArea<'txt> {
         let mut text_area = TextArea::default();
         text_area.set_cursor_line_style(Style::default());
         text_area.set_cursor_style(
@@ -214,24 +217,5 @@ impl TextFieldBuilder {
     pub fn build(self) -> TextField<'static> {
         let title = self.field_type.to_string();
         TextField::new(title, self.field_type, self.in_focus, self.multiline)
-    }
-}
-
-type Lines = Vec<String>;
-
-/// Converts the content to `Lines`
-pub trait ToLines {
-    fn to_lines(&self) -> Lines;
-}
-
-impl ToLines for Vec<String> {
-    fn to_lines(&self) -> Lines {
-        self.to_owned()
-    }
-}
-
-impl ToLines for String {
-    fn to_lines(&self) -> Lines {
-        vec![self.to_owned()]
     }
 }

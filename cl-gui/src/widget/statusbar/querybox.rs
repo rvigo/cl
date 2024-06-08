@@ -28,7 +28,7 @@ impl<'querybox> QueryBox<'querybox> {
         self.focus = false
     }
 
-    pub fn get_input(&self) -> String {
+    pub fn input(&self) -> String {
         self.buffer.to_owned()
     }
 }

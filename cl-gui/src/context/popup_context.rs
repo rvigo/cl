@@ -1,39 +1,70 @@
 use super::Selectable;
 use crate::{
-    entity::{popup_info::PopupInfo, state::State},
-    widget::popup::Choice,
+    event::PopupCallbackAction,
+    widget::popup::{Choice, Content, Type},
+    State,
 };
 
 #[derive(Default)]
 pub struct PopupContext {
-    pub info: PopupInfo,
+    pub content: Content,
     selected_choice_idx: usize,
     available_choices: Vec<Choice>,
+    show_popup: bool,
 }
 
 impl PopupContext {
     pub fn new() -> PopupContext {
         Self {
-            info: PopupInfo::default(),
+            content: Content::default(),
             selected_choice_idx: 0,
             available_choices: vec![],
+            show_popup: false,
         }
     }
 
-    pub fn set_available_choices(&mut self, choices: Vec<Choice>) {
+    pub fn set_choices(&mut self, choices: Vec<Choice>) {
         self.available_choices = choices
     }
 
-    pub fn get_available_choices(&self) -> &Vec<Choice> {
+    pub fn choices(&self) -> &Vec<Choice> {
         &self.available_choices
     }
 
-    pub fn selected_choice(&self) -> usize {
+    pub fn selected_choice(&self) -> Choice {
+        self.choices()[self.selected_choice_idx].to_owned()
+    }
+
+    pub fn selected_choice_idx(&self) -> usize {
         self.selected_choice_idx
     }
 
-    pub fn clear(&mut self) {
+    pub fn clear_choices(&mut self) {
         self.selected_choice_idx = 0;
+    }
+
+    pub fn set_content(
+        &mut self,
+        popup_type: Type,
+        message: String,
+        callback_action: PopupCallbackAction,
+    ) {
+        let answers = match popup_type {
+            Type::Error => Choice::confirm(),
+            Type::Warning => Choice::dialog(),
+            Type::Help => Choice::empty(),
+        };
+        self.set_choices(answers);
+        self.content
+            .set(popup_type.to_string(), popup_type, message, callback_action);
+    }
+
+    pub fn show_popup(&self) -> bool {
+        self.show_popup
+    }
+
+    pub fn set_show_popup(&mut self, show: bool) {
+        self.show_popup = show
     }
 }
 

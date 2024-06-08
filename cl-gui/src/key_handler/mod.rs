@@ -12,7 +12,7 @@ pub use main_handler::MainScreenHandler;
 pub use popup_handler::PopupHandler;
 pub use querybox_handler::QueryboxHandler;
 
-use super::entity::event::AppEvent;
+use crate::event::AppEvent;
 use anyhow::Result;
 use crossterm::event::KeyEvent;
 

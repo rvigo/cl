@@ -1,12 +1,13 @@
 mod form_screen;
 mod main_screen;
 
-use super::entity::context::{ApplicationContext, UI};
+use crate::context::{Application, UI};
 use crate::{
-    entity::{terminal::TerminalSizeExt, ViewMode},
     register, render,
     screen::{form_screen::FormScreen, main_screen::MainScreen},
+    terminal::TerminalSizeExt,
     widget::{statusbar::StatusBarItem, BaseWidget},
+    ViewMode,
 };
 use std::collections::HashMap;
 use tui::Frame;
@@ -47,12 +48,7 @@ impl From<ScreenType> for ViewMode {
 
 /// Represents a Screen
 pub trait Screen {
-    fn render(
-        &self,
-        frame: &mut Frame,
-        application_context: &mut ApplicationContext,
-        ui_context: &mut UI,
-    );
+    fn render(&self, frame: &mut Frame, application_context: &mut Application, ui_context: &mut UI);
 }
 
 type ScreenRegistrar<'screen> = HashMap<ScreenType, &'screen (dyn Screen + 'screen)>;
@@ -96,7 +92,7 @@ pub trait ScreenExt {
     fn render_base(
         &self,
         frame: &mut Frame,
-        left_statusbar_item: Option<&impl StatusBarItem>,
+        left_statusbar_item: Option<impl StatusBarItem>,
         center_statusbar_item: Option<impl StatusBarItem>,
         right_statusbar_item: Option<impl StatusBarItem>,
     ) {

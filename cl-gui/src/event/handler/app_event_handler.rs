@@ -1,13 +1,14 @@
 use crate::{
-    entity::{
-        context::{ApplicationContext, Selectable, UI},
-        event::{
-            AppEvent, CommandEvent, FormScreenEvent, MainScreenEvent, PopupCallbackAction,
-            PopupEvent, PopupType, QueryboxEvent, RenderEvent, ScreenEvent,
-        },
-        view_mode::ViewMode,
+    context::{Application, Selectable, UI},
+    event::{
+        AppEvent, CommandEvent, FormScreenEvent, MainScreenEvent, PopupCallbackAction, PopupEvent,
+        PopupType, QueryboxEvent, RenderEvent, ScreenEvent,
     },
-    widget::popup::{Choice, PopupType as PopupMessageType},
+    widget::{
+        popup::{Choice, Type as PopupMessageType},
+        WidgetKeyHandler,
+    },
+    ViewMode,
 };
 use log::debug;
 use parking_lot::Mutex;
@@ -19,7 +20,7 @@ use tokio::sync::mpsc::Receiver;
 
 pub struct AppEventHandler<'a> {
     app_rx: Receiver<AppEvent>,
-    app_context: Arc<Mutex<ApplicationContext>>,
+    app_context: Arc<Mutex<Application>>,
     ui_context: Arc<Mutex<UI<'a>>>,
     should_quit: Arc<AtomicBool>,
 }
@@ -27,7 +28,7 @@ pub struct AppEventHandler<'a> {
 impl<'a> AppEventHandler<'a> {
     pub async fn init(
         app_rx: Receiver<AppEvent>,
-        context: Arc<Mutex<ApplicationContext>>,
+        context: Arc<Mutex<Application>>,
         ui_context: Arc<Mutex<UI<'a>>>,
         should_quit: Arc<AtomicBool>,
     ) {
@@ -49,23 +50,23 @@ impl<'a> AppEventHandler<'a> {
                         if let Some(command) = self.ui_context.lock().selected_command() {
                             self.app_context
                                 .lock()
-                                .set_current_command_as_callback(command);
+                                .commands
+                                .set_command_to_be_executed(command.to_owned());
                         }
                         self.quit();
                     }
                     CommandEvent::Insert => {
                         let mut ui = self.ui_context.lock();
                         let mut c = self.app_context.lock();
-                        let command = ui.build_new_command();
+                        let command = ui.fields.collect();
                         match c.add_command(command) {
                             Ok(()) => {
-                                ui.set_view_mode(ViewMode::Main);
-                                ui.reset_form_field_selected_field();
+                                ui.set_view(ViewMode::Main);
                                 c.reload();
                             }
                             Err(error) => {
-                                ui.set_show_popup(true);
-                                ui.set_popup_info(
+                                ui.popup.set_show_popup(true);
+                                ui.popup.set_content(
                                     PopupMessageType::Error,
                                     error.to_string(),
                                     PopupCallbackAction::None,
@@ -77,17 +78,16 @@ impl<'a> AppEventHandler<'a> {
                         let mut c = self.app_context.lock();
                         let mut ui = self.ui_context.lock();
 
-                        let edited_command = ui.edit_command();
+                        let edited_command = ui.fields.collect();
                         if let Some(current_command) = ui.selected_command() {
-                            match c.add_edited_command(edited_command, current_command) {
+                            match c.edit_command(edited_command, current_command) {
                                 Ok(()) => {
-                                    ui.set_view_mode(ViewMode::Main);
-                                    ui.reset_form_field_selected_field();
+                                    ui.set_view(ViewMode::Main);
                                     c.reload()
                                 }
                                 Err(error) => {
-                                    ui.set_show_popup(true);
-                                    ui.set_popup_info(
+                                    ui.popup.set_show_popup(true);
+                                    ui.popup.set_content(
                                         PopupMessageType::Error,
                                         error.to_string(),
                                         PopupCallbackAction::None,
@@ -99,13 +99,11 @@ impl<'a> AppEventHandler<'a> {
                     CommandEvent::Copy => {
                         let mut ui = self.ui_context.lock();
                         if let Some(command) = ui.selected_command() {
-                            if let Err(error) = self
-                                .app_context
-                                .lock()
-                                .copy_text_to_clipboard(&command.command)
+                            if let Err(error) =
+                                self.app_context.lock().copy_to_clipboard(&command.command)
                             {
-                                ui.set_show_popup(true);
-                                ui.set_popup_info(
+                                ui.popup.set_show_popup(true);
+                                ui.popup.set_content(
                                     PopupMessageType::Error,
                                     error.to_string(),
                                     PopupCallbackAction::None,
@@ -121,32 +119,30 @@ impl<'a> AppEventHandler<'a> {
                         let mut c = self.app_context.lock();
                         let mut ui = self.ui_context.lock();
                         c.reload();
-                        if ui.is_form_modified() {
-                            ui.set_popup_info(PopupMessageType::Warning,
-                                "Wait, you didn't save your changes! Are you sure you want to quit?"
-                                    .to_owned(),
+                        if ui.fields.is_modified() {
+                            ui.popup.set_content(
+                            PopupMessageType::Warning,
+                                "Wait, you didn't save your changes! Are you sure you want to quit?".to_owned(),
                                 PopupCallbackAction::Render(RenderEvent::Main),
                             );
-                            ui.set_show_popup(true)
+                            ui.popup.set_show_popup(true)
                         } else {
-                            ui.set_view_mode(ViewMode::Main);
-                            ui.reset_form_field_selected_field();
+                            ui.set_view(ViewMode::Main);
                         }
                     }
                     RenderEvent::Edit => {
                         let mut ui = self.ui_context.lock();
-                        ui.set_view_mode(ViewMode::Edit);
                         if ui.selected_command().is_some() {
-                            ui.reset_form_field_selected_field();
-                            ui.clear_form_fields();
+                            ui.set_view(ViewMode::Edit);
+                            ui.fields.reset();
+                            ui.fields.clear_inputs();
                             ui.set_selected_command_input();
                         }
                     }
                     RenderEvent::Insert => {
                         let mut ui = self.ui_context.lock();
-                        ui.set_view_mode(ViewMode::Insert);
-                        ui.reset_form_field_selected_field();
-                        ui.clear_form_fields();
+                        ui.set_view(ViewMode::Insert);
+                        ui.fields.clear_inputs();
                     }
                 },
                 AppEvent::Quit => self.quit(),
@@ -161,8 +157,8 @@ impl<'a> AppEventHandler<'a> {
                                 message,
                                 callback_action,
                             } => {
-                                ui.set_show_popup(true);
-                                ui.set_popup_info(
+                                ui.popup.set_show_popup(true);
+                                ui.popup.set_content(
                                     PopupMessageType::Warning,
                                     message,
                                     callback_action,
@@ -172,20 +168,20 @@ impl<'a> AppEventHandler<'a> {
                     }
                     PopupEvent::Answer => {
                         let mut ui = self.ui_context.lock();
-                        match ui.get_selected_choice() {
+                        match ui.popup.selected_choice() {
                             Choice::Ok => {
                                 let mut c = self.app_context.lock();
-                                match &ui.popup_info_mut().callback {
-                                    PopupCallbackAction::DeleteCommand => {
+                                match &ui.popup.content.callback {
+                                    PopupCallbackAction::RemoveCommand => {
                                         if let Some(command) = ui.selected_command() {
-                                            match c.delete_selected_command(command) {
+                                            match c.remove_command(command) {
                                                 Ok(()) => {
-                                                    ui.clear_popup_context();
+                                                    ui.popup.clear_choices();
                                                     c.reload();
                                                 }
                                                 Err(error) => {
-                                                    ui.set_show_popup(true);
-                                                    ui.set_popup_info(
+                                                    ui.popup.set_show_popup(true);
+                                                    ui.popup.set_content(
                                                         PopupMessageType::Error,
                                                         error.to_string(),
                                                         PopupCallbackAction::None,
@@ -195,16 +191,15 @@ impl<'a> AppEventHandler<'a> {
                                         }
                                     }
                                     PopupCallbackAction::None => {
-                                        ui.clear_popup_context();
-                                        ui.set_show_popup(false);
+                                        ui.popup.clear_choices();
+                                        ui.popup.set_show_popup(false);
                                     }
                                     PopupCallbackAction::Render(screen) => match screen {
                                         RenderEvent::Main => {
-                                            ui.set_view_mode(ViewMode::Main);
+                                            ui.set_view(ViewMode::Main);
                                             c.reload();
-                                            ui.reset_form_field_selected_field();
-                                            ui.clear_popup_context();
-                                            ui.set_show_popup(false);
+                                            ui.popup.clear_choices();
+                                            ui.popup.set_show_popup(false);
                                         }
                                         RenderEvent::Edit | RenderEvent::Insert => {
                                             todo!()
@@ -213,53 +208,49 @@ impl<'a> AppEventHandler<'a> {
                                 }
                             }
                             Choice::Cancel => {
-                                ui.clear_popup_context();
+                                ui.popup.clear_choices();
                             }
                         };
 
                         // else
-                        ui.set_show_popup(false)
+                        ui.popup.set_show_popup(false)
                     }
                     PopupEvent::Disable => {
                         let mut ui = self.ui_context.lock();
                         if ui.show_help() {
                             ui.set_show_help(false)
                         } else {
-                            ui.clear_popup_context();
-                            ui.set_show_popup(false)
+                            ui.popup.clear_choices();
+                            ui.popup.set_show_popup(false)
                         }
                     }
-                    PopupEvent::NextChoice => self.ui_context.lock().popup_context_mut().next(),
-                    PopupEvent::PreviousChoice => {
-                        self.ui_context.lock().popup_context_mut().previous()
-                    }
+                    PopupEvent::NextChoice => self.ui_context.lock().popup.next(),
+                    PopupEvent::PreviousChoice => self.ui_context.lock().popup.previous(),
                 },
                 AppEvent::QueryBox(event) => {
                     let mut ui = self.ui_context.lock();
                     match event {
-                        QueryboxEvent::Active => ui.activate_querybox_focus(),
-                        QueryboxEvent::Deactive => ui.deactivate_querybox_focus(),
-                        QueryboxEvent::Input(key_event) => ui.handle_querybox_input(key_event),
+                        QueryboxEvent::Active => ui.querybox.activate_focus(),
+                        QueryboxEvent::Deactive => ui.querybox.deactivate_focus(),
+                        QueryboxEvent::Input(key_event) => ui.querybox.handle_input(key_event),
                     }
                 }
                 AppEvent::Screen(screen) => match screen {
                     ScreenEvent::Main(main_screen) => {
                         let mut c = self.app_context.lock();
                         match main_screen {
-                            MainScreenEvent::NextCommand => c.commands_context.next(),
-                            MainScreenEvent::PreviousCommand => c.commands_context.previous(),
-                            MainScreenEvent::NextNamespace => c.commands_context.namespaces.next(),
-                            MainScreenEvent::PreviousNamespace => {
-                                c.commands_context.namespaces.previous()
-                            }
+                            MainScreenEvent::NextCommand => c.commands.next(),
+                            MainScreenEvent::PreviousCommand => c.commands.previous(),
+                            MainScreenEvent::NextNamespace => c.namespaces.next(),
+                            MainScreenEvent::PreviousNamespace => c.namespaces.previous(),
                         }
                     }
                     ScreenEvent::Form(form_screen) => {
                         let mut ui = self.ui_context.lock();
                         match form_screen {
-                            FormScreenEvent::NextField => ui.next_field(),
-                            FormScreenEvent::PreviousField => ui.previous_field(),
-                            FormScreenEvent::Input(key_event) => ui.handle_input(key_event),
+                            FormScreenEvent::NextField => ui.fields.next(),
+                            FormScreenEvent::PreviousField => ui.fields.previous(),
+                            FormScreenEvent::Input(key_event) => ui.fields.handle_input(key_event),
                         }
                     }
                 },

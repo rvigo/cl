@@ -67,7 +67,7 @@ impl<'a> DisplayWidget<'a> {
 
 impl<'a> Widget for DisplayWidget<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        // if there is no highlighted content, transforms the content in a `Line`
+        // if there is no highlighted content, transforms the content in a `Text`
         let content = if let Some(styled) = self.highlighted_content {
             Text::from(styled)
         } else {

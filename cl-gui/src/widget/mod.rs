@@ -14,6 +14,7 @@ pub use text_field::TextField;
 
 use self::statusbar::StatusBarItem;
 use crossterm::event::KeyEvent;
+use std::ops::Deref;
 
 /// Handles use key input
 pub trait WidgetKeyHandler {
@@ -36,4 +37,37 @@ macro_rules! create_fields_map {
 
             fields
     }};
+}
+
+#[derive(Default)]
+pub struct Lines(pub Vec<String>);
+
+impl Deref for Lines {
+    type Target = Vec<String>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<String> for Lines {
+    fn from(value: String) -> Self {
+        let inner = value.lines().map(String::from).collect();
+        Lines(inner)
+    }
+}
+
+impl<'a> From<&'a String> for Lines {
+    fn from(value: &'a String) -> Self {
+        value.to_owned().into()
+    }
+}
+
+impl From<Option<&String>> for Lines {
+    fn from(value: Option<&String>) -> Self {
+        match value {
+            Some(content) => content.into(),
+            None => Lines::default(),
+        }
+    }
 }

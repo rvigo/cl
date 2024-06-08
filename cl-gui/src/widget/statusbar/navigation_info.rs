@@ -9,7 +9,7 @@ pub struct NavigationInfo {
 impl NavigationInfo {
     pub fn new() -> NavigationInfo {
         Self {
-            content: String::from("<Tab> Rigth <S+Tab> Left <C+S> Save <Esc> Return"),
+            content: String::from("<Tab> Rigth <S-Tab> Left <C-S> Save <Esc> Return"),
         }
     }
 }

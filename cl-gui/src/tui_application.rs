@@ -1,9 +1,9 @@
-use super::{
-    context::{ApplicationContext, UI},
+use crate::{
+    context::{Application, UI},
     event::InputEvent,
+    screen::Screens,
     Terminal, ViewMode,
 };
-use crate::screen::Screens;
 use anyhow::{Context, Result};
 use crossterm::event::{self, Event};
 use log::debug;
@@ -24,7 +24,7 @@ pub struct TuiApplication<'tui> {
     input_sx: Sender<InputEvent>,
     should_quit: Arc<AtomicBool>,
     ui: Arc<Mutex<UI<'tui>>>,
-    context: Arc<Mutex<ApplicationContext>>,
+    context: Arc<Mutex<Application>>,
     screens: Screens<'tui>,
 }
 
@@ -33,7 +33,7 @@ impl<'tui> TuiApplication<'tui> {
         input_sx: Sender<InputEvent>,
         should_quit: Arc<AtomicBool>,
         ui: Arc<Mutex<UI<'tui>>>,
-        context: Arc<Mutex<ApplicationContext>>,
+        context: Arc<Mutex<Application>>,
         terminal: Terminal<CrosstermBackend<Stdout>>,
         screens: Screens<'tui>,
     ) -> Result<TuiApplication<'tui>> {
@@ -55,7 +55,7 @@ impl<'tui> TuiApplication<'tui> {
 
             if let Some(screen) = self.screens.get_screen_by_type(view_mode) {
                 self.terminal
-                    .draw(&mut self.ui, &mut self.context, screen)?;
+                    .draw(&mut self.ui.lock(), &mut self.context.lock(), screen)?;
 
                 if event::poll(Duration::from_millis(50))? {
                     if let Ok(Event::Key(key)) = event::read() {
@@ -85,6 +85,6 @@ impl<'tui> TuiApplication<'tui> {
     }
 
     fn callback(&self) -> Result<()> {
-        self.context.lock().execute_callback_command()
+        self.context.lock().execute_callback()
     }
 }

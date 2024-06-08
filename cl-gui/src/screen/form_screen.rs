@@ -1,11 +1,8 @@
 use super::{Screen, ScreenExt};
 use crate::{
-    default_block,
-    entity::{
-        context::{ApplicationContext, UI},
-        terminal::{TerminalSize, TerminalSizeExt},
-    },
-    popup, render,
+    context::{Application, UI},
+    default_block, popup, render,
+    terminal::{TerminalSize, TerminalSizeExt},
     widget::{
         popup::{HelpPopup, RenderPopup},
         statusbar::{Help, Info, NavigationInfo},
@@ -21,12 +18,10 @@ use tui::{
 pub struct FormScreen;
 
 impl Screen for FormScreen {
-    fn render(&self, frame: &mut Frame, _: &mut ApplicationContext, ui_context: &mut UI) {
+    fn render(&self, frame: &mut Frame, _: &mut Application, ui_context: &mut UI) {
         let block = default_block!(format!(" {} ", ui_context.view_mode()));
-
         let terminal_size = frame.size().as_terminal_size();
-
-        ui_context.sort_fields(terminal_size.to_owned());
+        ui_context.fields.sort(&terminal_size);
 
         match terminal_size {
             TerminalSize::Medium => render_medium_form(frame, ui_context, block),
@@ -39,14 +34,15 @@ impl Screen for FormScreen {
             frame.render_popup(help_popup, frame.size());
         }
 
-        let info = ui_context.popup_info_mut().to_owned();
-        if ui_context.show_popup() {
-            let popup = popup!(info, ui_context.popup_context_mut().get_available_choices());
-
-            frame.render_stateful_popup(popup, frame.size(), ui_context.popup_context_mut());
+        if ui_context.popup.show_popup() {
+            let popup_ctx = &mut ui_context.popup;
+            let content = &popup_ctx.content;
+            let choices = popup_ctx.choices();
+            let popup = popup!(content, choices);
+            frame.render_stateful_popup(popup, frame.size(), popup_ctx);
         }
 
-        let center = if ui_context.is_form_modified() {
+        let center = if ui_context.fields.is_modified() {
             Some(Info::new("MODIFIED"))
         } else {
             None
@@ -54,7 +50,7 @@ impl Screen for FormScreen {
 
         self.render_base(
             frame,
-            Some(&NavigationInfo::default()),
+            Some(NavigationInfo::default()),
             center,
             Some(Help::default()),
         );
@@ -101,7 +97,8 @@ fn render_medium_form(frame: &mut Frame, ui_context: &mut UI, block: Block) {
 
     render!(frame, {block, form_chunks[0]});
 
-    let fields = ui_context.get_form_fields_iter();
+    let fields = ui_context.fields.iter();
+
     fields.for_each(|field| {
         let area = match field.field_type() {
             FieldType::Alias => first_row[0],
@@ -143,8 +140,7 @@ fn render_small_form(frame: &mut Frame, ui_context: &mut UI, block: Block) {
 
     render!(frame, {block, form_chunks[0]});
 
-    let fields = ui_context.get_form_fields_iter();
-
+    let fields = ui_context.fields.iter();
     fields.for_each(|field| {
         let area = match field.field_type() {
             FieldType::Alias => first_row[0],

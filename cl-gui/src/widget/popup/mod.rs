@@ -1,14 +1,16 @@
 mod choice;
-mod help_popup;
+mod content;
+mod help;
 mod popup_type;
-mod question_popup;
+mod question;
 
-pub use self::choice::Choice;
-pub use help_popup::HelpPopup;
-pub use popup_type::PopupType;
-pub use question_popup::QuestionPopup;
+pub use choice::Choice;
+pub use content::Content;
+pub use help::HelpPopup;
+pub use popup_type::Type;
+pub use question::QuestionPopup;
 
-use crate::{centered_rect, entity::context::PopupContext, DEFAULT_SELECTED_COLOR};
+use crate::{centered_rect, context::PopupContext, DEFAULT_SELECTED_COLOR};
 use std::{rc::Rc, vec};
 use tui::{
     buffer::Buffer,

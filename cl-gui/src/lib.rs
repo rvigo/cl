@@ -1,7 +1,21 @@
-pub mod entity;
-pub mod key_handler;
-pub mod screen;
-pub mod widget;
+mod clipboard;
+mod context;
+mod event;
+mod fuzzy;
+mod key_handler;
+mod screen;
+mod state;
+mod terminal;
+mod tui_application;
+mod view_mode;
+mod widget;
+
+use clipboard::Clipboard;
+use fuzzy::Fuzzy;
+use state::State;
+use terminal::Terminal;
+use tui_application::TuiApplication;
+use view_mode::ViewMode;
 
 use anyhow::Result;
 use cl_core::Config;
@@ -15,17 +29,14 @@ pub async fn start_gui(config: Config) -> Result<()> {
 }
 
 mod core {
-    use super::entity::terminal::Terminal;
     use crate::{
-        entity::{
-            context::{ApplicationContext, UI},
-            event::{
-                handler::{AppEventHandler, InputHandler},
-                AppEvent, InputEvent,
-            },
-            TuiApplication,
+        context::{Application, UI},
+        event::{
+            handler::{AppEventHandler, InputEventHandler},
+            AppEvent, InputEvent,
         },
         screen::Screens,
+        Terminal, TuiApplication,
     };
     use anyhow::{Context, Result};
     use cl_core::{resource::FileService, Commands, Config};
@@ -54,7 +65,7 @@ mod core {
         debug!("creating contexts");
         let should_quit: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
         let ui_context = Arc::new(Mutex::new(UI::new(size)));
-        let context = Arc::new(Mutex::new(ApplicationContext::init(
+        let context = Arc::new(Mutex::new(Application::init(
             commands,
             file_service,
             config.preferences(),
@@ -82,7 +93,7 @@ mod core {
 
     async fn start_event_handler(
         app_rx: Receiver<AppEvent>,
-        context: &Arc<Mutex<ApplicationContext>>,
+        context: &Arc<Mutex<Application>>,
         ui_context: &Arc<Mutex<UI<'static>>>,
         should_quit: &Arc<AtomicBool>,
     ) {
@@ -110,7 +121,7 @@ mod core {
         should_quit: &Arc<AtomicBool>,
     ) {
         debug!("starting input handler");
-        tokio::spawn(InputHandler::init(
+        tokio::spawn(InputEventHandler::init(
             input_rx,
             app_sx.to_owned(),
             ui_context.to_owned(),

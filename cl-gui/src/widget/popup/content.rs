@@ -1,18 +1,18 @@
-use crate::{entity::event::PopupCallbackAction, widget::popup::PopupType};
+use crate::{event::PopupCallbackAction, widget::popup::Type};
 
 #[derive(Default, Clone, Debug)]
-pub struct PopupInfo {
+pub struct Content {
     pub title: String,
     pub message: String,
-    pub popup_type: PopupType,
+    pub popup_type: Type,
     pub callback: PopupCallbackAction,
 }
 
-impl PopupInfo {
+impl Content {
     pub fn set<T: Into<String>>(
         &mut self,
         title: T,
-        popup_type: PopupType,
+        popup_type: Type,
         message: String,
         callback: PopupCallbackAction,
     ) {
