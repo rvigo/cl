@@ -1,17 +1,17 @@
 #[derive(Default, Debug, Clone)]
-pub enum PopupType {
+pub enum Type {
     #[default]
     Error,
     Warning,
     Help,
 }
 
-impl ToString for PopupType {
+impl ToString for Type {
     fn to_string(&self) -> String {
         match self {
-            PopupType::Error => "Error".to_owned(),
-            PopupType::Warning => "Warning".to_owned(),
-            PopupType::Help => "Help".to_owned(),
+            Type::Error => "Error".to_owned(),
+            Type::Warning => "Warning".to_owned(),
+            Type::Help => "Help".to_owned(),
         }
     }
 }

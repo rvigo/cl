@@ -15,12 +15,12 @@ pub struct AliasListWidget<'a> {
 }
 
 impl<'a> AliasListWidget<'a> {
-    pub fn new(commands: CommandVec, state: ListState) -> AliasListWidget<'a> {
+    pub fn new(commands: &CommandVec, state: ListState) -> AliasListWidget<'a> {
         let items: Vec<ListItem> = commands
-            .into_iter()
+            .iter()
             .map(|c| {
                 ListItem::new(Line::styled(
-                    c.alias,
+                    c.alias.to_owned(),
                     Style::default().fg(DEFAULT_TEXT_COLOR),
                 ))
             })

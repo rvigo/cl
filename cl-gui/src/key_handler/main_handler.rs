@@ -1,5 +1,5 @@
 use super::{AppEventResult, KeyEventHandler};
-use crate::entity::event::{
+use crate::event::{
     AppEvent, CommandEvent, MainScreenEvent, PopupCallbackAction, PopupEvent, PopupType,
     QueryboxEvent, RenderEvent, ScreenEvent,
 };
@@ -85,7 +85,7 @@ impl KeyEventHandler for MainScreenHandler {
             } => Ok(Some(AppEvent::Popup(PopupEvent::Enable(
                 PopupType::Dialog {
                     message: "Are you sure you want to delete the command?".to_owned(),
-                    callback_action: PopupCallbackAction::DeleteCommand,
+                    callback_action: PopupCallbackAction::RemoveCommand,
                 },
             )))),
             KeyEvent {

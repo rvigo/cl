@@ -51,13 +51,13 @@ mod core {
         let edited_command = build_command!(alias => "updated";);
 
         c.bench_function("update command (alias)", |b: &mut Bencher| {
-            b.iter(|| commands.add_edited(&edited_command, &command));
+            b.iter(|| commands.edit(&edited_command, &command));
         });
 
         let edited_command = build_command!(namespace => "updated";);
 
         c.bench_function("update command (namespace)", |b: &mut Bencher| {
-            b.iter(|| commands.add_edited(&edited_command, &command));
+            b.iter(|| commands.edit(&edited_command, &command));
         });
     }
 }

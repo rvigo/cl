@@ -34,11 +34,7 @@ impl Commands {
         Ok(self.commands.to_owned())
     }
 
-    pub fn add_edited(
-        &mut self,
-        new_command: &Command,
-        old_command: &Command,
-    ) -> Result<CommandMap> {
+    pub fn edit(&mut self, new_command: &Command, old_command: &Command) -> Result<CommandMap> {
         self.compare_edited_command(new_command, old_command)?;
 
         if let Some(commands) = self.commands.get_mut(&old_command.namespace) {
@@ -291,7 +287,7 @@ mod test {
         edited_command.alias = String::from("new");
 
         let old_command = new_command;
-        let commands_with_edited_command = commands.add_edited(&edited_command, &old_command);
+        let commands_with_edited_command = commands.edit(&edited_command, &old_command);
 
         assert!(commands_with_edited_command.is_ok());
         if let Ok(command_map) = commands_with_edited_command {
@@ -313,7 +309,7 @@ mod test {
         edited_command.namespace = String::from("edited_namespace");
 
         let old_command = new_command;
-        let commands_with_edited_command = commands.add_edited(&edited_command, &old_command);
+        let commands_with_edited_command = commands.edit(&edited_command, &old_command);
 
         assert!(commands_with_edited_command.is_ok());
         if let Ok(command_map) = commands_with_edited_command {
@@ -336,7 +332,7 @@ mod test {
         let mut edited_command = command2.clone();
         edited_command.alias = String::from("alias1");
 
-        let command_list_with_edited_command = commands.add_edited(&edited_command, &command2);
+        let command_list_with_edited_command = commands.edit(&edited_command, &command2);
 
         assert!(command_list_with_edited_command.is_err());
         assert_eq!(
@@ -358,7 +354,7 @@ mod test {
         let mut edited_command = command2.clone();
         edited_command.alias = String::from("alias1");
         edited_command.namespace = String::from("namespace1");
-        let command_list_with_edited_command = commands.add_edited(&edited_command, &command2);
+        let command_list_with_edited_command = commands.edit(&edited_command, &command2);
 
         assert!(command_list_with_edited_command.is_err());
         assert_eq!(

@@ -1,26 +1,27 @@
-use super::{choice::Choice, popup_type::PopupType, Popup, WithChoices};
-use crate::{default_block, entity::context::PopupContext, DEFAULT_TEXT_COLOR};
+use super::{Choice, Popup, Type, WithChoices};
+use crate::{context::PopupContext, default_block, DEFAULT_TEXT_COLOR};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
     style::Style,
     widgets::{Clear, Paragraph, Widget, Wrap},
 };
+use unicode_width::UnicodeWidthStr;
 
 #[derive(Clone, Debug)]
 pub struct QuestionPopup {
     content: String,
-    popup_type: PopupType,
+    popup_type: Type,
     choices: Vec<Choice>,
 }
 
 impl QuestionPopup {
-    pub fn new<T>(message: T, choices: &Vec<Choice>, popup_type: PopupType) -> QuestionPopup
+    pub fn new<T>(content: T, choices: &Vec<Choice>, popup_type: Type) -> QuestionPopup
     where
         T: Into<String>,
     {
         Self {
-            content: message.into(),
+            content: content.into(),
             popup_type,
             choices: choices.to_owned(),
         }
@@ -33,7 +34,7 @@ impl Popup for QuestionPopup {
     }
 
     fn content_width(&self) -> u16 {
-        self.content.len() as u16
+        self.content.width() as u16
     }
 
     fn content_height(&self) -> u16 {
@@ -58,7 +59,7 @@ impl Popup for QuestionPopup {
             Clear::render(Clear, render_position, buf);
             paragraph.render(render_position, buf);
 
-            let options = self.button_widget(state.selected_choice());
+            let options = self.button_widget(state.selected_choice_idx());
             let buttom_area = self.create_buttom_area(render_position);
             options.render(buttom_area, buf);
         }

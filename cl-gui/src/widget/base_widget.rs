@@ -1,5 +1,5 @@
 use super::StatusBarItem;
-use crate::entity::terminal::TerminalSize;
+use crate::terminal::TerminalSize;
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -7,31 +7,31 @@ use tui::{
     widgets::{Block, BorderType, Borders, Widget},
 };
 
-pub struct BaseWidget<'a, L, C, R>
+pub struct BaseWidget<'base, L, C, R>
 where
     L: StatusBarItem,
     C: StatusBarItem,
     R: StatusBarItem,
 {
-    terminal_size: &'a TerminalSize,
-    left_statusbar_item: Option<&'a L>,
+    terminal_size: &'base TerminalSize,
+    left_statusbar_item: Option<L>,
     center_statusbar_item: Option<R>,
     right_statusbar_item: Option<C>,
-    base_block: Block<'a>,
+    base_block: Block<'base>,
 }
 
-impl<'a, L, C, R> BaseWidget<'a, L, C, R>
+impl<'base, L, C, R> BaseWidget<'base, L, C, R>
 where
     L: StatusBarItem,
     C: StatusBarItem,
     R: StatusBarItem,
 {
     pub fn new(
-        terminal_size: &'a TerminalSize,
-        left_statusbar_item: Option<&'a L>,
+        terminal_size: &'base TerminalSize,
+        left_statusbar_item: Option<L>,
         center_statusbar_item: Option<R>,
         right_statusbar_item: Option<C>,
-    ) -> BaseWidget<'a, L, C, R> {
+    ) -> BaseWidget<'base, L, C, R> {
         let base_block = Block::default()
             .borders(Borders::ALL)
             .style(Style::default())
@@ -49,7 +49,7 @@ where
     }
 }
 
-impl<'a, L, C, R> BaseWidget<'a, L, C, R>
+impl<'base, L, C, R> BaseWidget<'base, L, C, R>
 where
     L: StatusBarItem,
     C: StatusBarItem,
@@ -91,7 +91,7 @@ where
                 )
                 .split(chunks[3]);
 
-            if let Some(left_statusbar_item) = self.left_statusbar_item {
+            if let Some(left_statusbar_item) = &self.left_statusbar_item {
                 let block = Block::default()
                     .borders(Borders::ALL)
                     .border_type(BorderType::Plain);
@@ -139,7 +139,7 @@ where
     }
 }
 
-impl<'a, L, C, R> Widget for BaseWidget<'a, L, C, R>
+impl<'base, L, C, R> Widget for BaseWidget<'base, L, C, R>
 where
     L: StatusBarItem,
     C: StatusBarItem,

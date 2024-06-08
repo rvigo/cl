@@ -1,22 +1,16 @@
 use super::{Screen, ScreenExt};
 use crate::{
-    default_block, display_widget,
-    entity::{
-        context::{ApplicationContext, UI},
-        state::State,
-        terminal::{TerminalSize, TerminalSizeExt},
-    },
-    popup, render,
+    context::{Application, UI},
+    default_block, display_widget, popup, render,
+    terminal::{TerminalSize, TerminalSizeExt},
     widget::{
         popup::{HelpPopup, RenderPopup},
         statusbar::{Help, Info},
         AliasListWidget, DisplayWidget,
     },
-    DEFAULT_SELECTED_COLOR,
+    State, DEFAULT_SELECTED_COLOR,
 };
-use cl_core::{
-    Namespace, {Command, CommandBuilder},
-};
+use cl_core::Namespace;
 use tui::{
     layout::{Constraint, Direction, Layout},
     style::{Modifier, Style},
@@ -28,35 +22,36 @@ use tui::{
 pub struct MainScreen;
 
 impl Screen for MainScreen {
-    fn render(&self, frame: &mut Frame, context: &mut ApplicationContext, ui_context: &mut UI) {
-        let query = ui_context.query_box.get_input();
+    fn render(&self, frame: &mut Frame, context: &mut Application, ui_context: &mut UI) {
+        let query = ui_context.querybox.input();
         let filtered_commands = context.filter_commands(&query);
 
-        let selected_idx = context.commands_context.selected_command_idx();
-
-        let selected_command = get_selected_command(selected_idx, &filtered_commands);
+        let selected_idx = context.commands.selected_command_idx();
+        let selected_command = filtered_commands
+            .get(selected_idx)
+            .expect("No command found");
 
         //
-        ui_context.select_command(Some(selected_command.to_owned()));
+        ui_context.select_command(Some(selected_command));
 
         let should_highlight = context.should_highlight();
 
-        let namespaces = context.commands_context.namespaces.items.to_owned();
-        let selected_namespace = context.commands_context.namespaces.state.selected();
+        let namespaces = context.namespaces.items.to_owned();
+        let selected_namespace = context.namespaces.state.selected();
 
-        let command_state = context.get_commands_state();
+        let command_state = context.commands.state();
         let command_str = &selected_command.command;
         let tags_str = &selected_command.tags_as_string();
         let description_str = &selected_command.description();
 
-        let commands = AliasListWidget::new(filtered_commands, command_state);
+        let commands = AliasListWidget::new(&filtered_commands, command_state);
         let tabs = create_namespaces_menu_widget(namespaces, selected_namespace);
 
         let command = display_widget!("Command", command_str, true, should_highlight, &query);
         let tags = display_widget!("Tags", tags_str, true, should_highlight, &query);
         let namespace = display_widget!(
             "Namespace",
-            selected_command.namespace,
+            &selected_command.namespace,
             true,
             should_highlight,
             &query
@@ -82,17 +77,20 @@ impl Screen for MainScreen {
 
         //
         if ui_context.show_help() {
-            let help_popup = popup!(&ui_context.view_mode());
-            frame.render_popup(help_popup, frame.size());
+            let help = popup!(&ui_context.view_mode());
+            frame.render_popup(help, frame.size());
         }
 
         //
-        let info = ui_context.popup_info_mut().to_owned();
-        if ui_context.show_popup() {
-            let popup = popup!(info, ui_context.popup_context_mut().get_available_choices());
-            frame.render_stateful_popup(popup, frame.size(), ui_context.popup_context_mut());
+        if ui_context.popup.show_popup() {
+            let popup_ctx = &mut ui_context.popup;
+            let content = &popup_ctx.content;
+            let choices = popup_ctx.choices();
+            let popup = popup!(content, choices);
+            frame.render_stateful_popup(popup, frame.size(), popup_ctx);
         }
 
+        //
         let center = if ui_context.clipboard_state.yanked() {
             let info = Info::new("Command copied to clipboard!");
             ui_context.clipboard_state.check();
@@ -101,19 +99,8 @@ impl Screen for MainScreen {
         } else {
             None
         };
-
-        let querybox = ui_context.querybox_ref();
-        let help = Help::default();
-        //
-        self.render_base(frame, Some(querybox), center, Some(help));
-    }
-}
-
-fn get_selected_command(selected_idx: usize, filtered_commands: &[Command]) -> Command {
-    if let Some(command) = filtered_commands.get(selected_idx) {
-        command.to_owned()
-    } else {
-        CommandBuilder::default().build()
+        let left = ui_context.querybox.to_owned();
+        self.render_base(frame, Some(left), center, Some(Help::default()));
     }
 }
 

@@ -1,42 +1,33 @@
 use super::{
-    namespaces::{Namespaces, DEFAULT_NAMESPACE},
+    namespace_context::{NamespaceContext, DEFAULT_NAMESPACE},
     Selectable,
 };
-use crate::entity::{fuzzy::Fuzzy, state::State};
+use crate::{Fuzzy, State};
 use anyhow::Result;
-use cl_core::{resource::FileService, Command, CommandVec, CommandVecExt, Commands, Namespace};
+use cl_core::{resource::FileService, Command, CommandMap, CommandVec, CommandVecExt, Commands};
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
 use log::debug;
-use parking_lot::Mutex;
-use std::{cmp::Reverse, sync::Arc, thread, time::Duration};
+use std::{cmp::Reverse, thread, time::Duration};
 use tui::widgets::ListState;
 
 /// Groups all `Command`'s related stuff
 pub struct CommandsContext {
-    commands_file_handler: FileService,
-    commands: Arc<Mutex<Commands>>,
+    file_service: FileService,
+    commands: Commands,
     filtered_commands: CommandVec,
     matcher: SkimMatcherV2,
-    pub namespaces: Namespaces,
     state: ListState,
     to_be_executed: Option<Command>,
 }
 
 impl CommandsContext {
-    pub fn new(commands: Commands, commands_file_handler: FileService) -> Self {
-        let namespaces = commands
-            .to_list()
-            .iter()
-            .map(|c| c.namespace.to_owned())
-            .collect_vec();
-
+    pub fn new(commands: Commands, file_service: FileService) -> Self {
         let mut context = Self {
-            commands_file_handler,
-            commands: Arc::new(Mutex::new(commands)),
+            file_service,
+            commands,
             filtered_commands: vec![],
             matcher: SkimMatcherV2::default(),
-            namespaces: Namespaces::new(namespaces),
             state: ListState::default(), // TODO move this to another place
             to_be_executed: None,
         };
@@ -47,65 +38,42 @@ impl CommandsContext {
     }
 }
 
-// Namespaces
-impl CommandsContext {
-    fn namespaces(&mut self) -> Vec<Namespace> {
-        self.namespaces.items.to_owned()
-    }
-
-    pub fn current_namespace(&self) -> String {
-        self.namespaces.items[self.namespaces.state.selected()].to_owned()
-    }
-}
-
 // Command manipulation
 impl CommandsContext {
     /// Adds a new command and then saves the updated `commands.toml` file
-    pub fn add_command(&mut self, new_command: &Command) -> Result<()> {
+    pub fn add(&mut self, new_command: &Command) -> Result<CommandMap> {
         new_command.validate()?;
 
         debug!("new command validated: {new_command:?}");
-        let mut commands = self.commands.lock();
-        let result = commands.add(new_command)?;
+        let commands = self.commands.add(new_command)?;
 
-        self.commands_file_handler.save(&result)?;
-        self.namespaces
-            .update_namespaces(&result.keys().collect_vec());
+        self.file_service.save(&commands)?;
 
-        Ok(())
+        Ok(commands)
     }
 
     /// Adds an edited command, deletes the older one and then saves the updated `commands.toml` file
-    pub fn add_edited_command(
+    pub fn edit(
         &mut self,
         edited_command: &Command,
         current_command: &Command,
-    ) -> Result<()> {
+    ) -> Result<CommandMap> {
         edited_command.validate()?;
 
-        let commands = self
-            .commands
-            .lock()
-            .add_edited(edited_command, current_command)?;
+        let commands = self.commands.edit(edited_command, current_command)?;
 
-        self.namespaces
-            .update_namespaces(&commands.keys().collect_vec());
-        self.commands_file_handler.save(&commands)?;
+        self.file_service.save(&commands)?;
 
-        Ok(())
+        Ok(commands)
     }
 
     /// Removes a command and then saves the updated `commands.toml` file
-    pub fn remove_command(&mut self, command: &Command) -> Result<()> {
-        let mut commands = self.commands.lock();
+    pub fn remove(&mut self, command: &Command) -> Result<CommandMap> {
+        let commands = self.commands.remove(command)?;
 
-        let commands = commands.remove(command)?;
+        self.file_service.save(&commands)?;
 
-        self.namespaces
-            .update_namespaces(&commands.keys().collect_vec());
-        self.commands_file_handler.save(&commands)?;
-
-        Ok(())
+        Ok(commands)
     }
 
     /// Filters the commands based on a query and a namespace
@@ -123,13 +91,12 @@ impl CommandsContext {
             let commands =
                 if !current_namespace.is_empty() && current_namespace != DEFAULT_NAMESPACE {
                     self.commands
-                        .lock()
                         .get()
                         .get(current_namespace)
                         .unwrap_or(&vec![])
                         .to_owned()
                 } else {
-                    let command_list = self.commands.lock().to_list();
+                    let command_list = self.commands.to_list();
 
                     if command_list.is_empty() {
                         vec![Command::default()]
@@ -181,8 +148,8 @@ impl CommandsContext {
     }
 
     /// Selects the given command to be executed at the end of the app execution
-    pub fn set_command_to_be_executed(&mut self, command: Option<Command>) {
-        self.to_be_executed = command
+    pub fn set_command_to_be_executed(&mut self, command: Command) {
+        self.to_be_executed = Some(command)
     }
 
     pub fn selected_command_idx(&self) -> usize {
@@ -202,19 +169,14 @@ impl CommandsContext {
         }
 
         self.filtered_commands = commands.to_owned();
-        self.namespaces.items = self.namespaces();
 
-        self.filtered_commands.to_owned()
-    }
-
-    pub fn filtered_commands(&self) -> CommandVec {
         self.filtered_commands.to_owned()
     }
 
     /// Runs a previously selected command
     ///
     /// If the command has any `named parameters`, will show a warning message
-    pub fn execute_command(&self, quiet: bool) -> Result<()> {
+    pub fn execute(&self, quiet: bool) -> Result<()> {
         if let Some(command) = &self.command_to_be_executed() {
             debug!("executing selected command");
             if command.has_named_parameter() {
@@ -230,7 +192,7 @@ impl CommandsContext {
                 eprintln!();
             }
 
-            self.commands.lock().exec(command, false, quiet)?;
+            self.commands.exec(command, false, quiet)?;
         }
 
         Ok(())
@@ -264,7 +226,7 @@ impl Selectable for CommandsContext {
     }
 }
 
-impl Selectable for Namespaces {
+impl Selectable for NamespaceContext {
     fn next(&mut self) {
         let current = self.state.selected();
         let next = (current + 1) % self.items.len();
@@ -314,10 +276,10 @@ mod test {
         let mut context = commands_context!(vec![command.to_owned()], tmp.path());
         let another_command = create_command!("alias2", "command", "namespace", None, None);
 
-        let result = context.add_command(&another_command);
+        let result = context.add(&another_command);
 
         assert!(result.is_ok());
-        let commands_lock = context.commands.lock();
+        let commands_lock = context.commands;
         let commands = commands_lock.get();
         let entry = commands.get(&command.namespace).unwrap();
 
@@ -330,10 +292,10 @@ mod test {
         let command = create_command!("alias", "command", "namespace", None, None);
         let mut context = commands_context!(vec![command.to_owned()], tmp.path());
 
-        let result = context.remove_command(&command);
+        let result = context.remove(&command);
 
         assert!(result.is_ok());
-        let commands_lock = context.commands.lock();
+        let commands_lock = context.commands;
         let commands = commands_lock.get();
         let entry = commands.get(&command.namespace);
 
@@ -400,8 +362,8 @@ mod test {
 
         context.filter_commands(DEFAULT_NAMESPACE, "4");
 
-        assert_eq!(context.filtered_commands().len(), 1);
-        let command = &context.filtered_commands()[0];
+        assert_eq!(context.filtered_commands.len(), 1);
+        let command = &context.filtered_commands[0];
 
         assert_eq!(command, &command4);
         assert_eq!(context.selected_command_idx(), 0)
@@ -466,43 +428,4 @@ mod test {
     //     let context = Namespaces::new(namespaces);
     //     assert_eq!(context.items, expected);
     // }
-    #[test]
-    fn should_go_to_next_namespace() {
-        let tmp = TempDir::new("commands").unwrap();
-        let command1 = create_command!("alias1", "command", "namespace1", None, None);
-        let command2 = create_command!("alias2", "command", "namespace1", None, None);
-        let command3 = create_command!("alias3", "command", "namespace2", None, None);
-        let mut context = commands_context!(vec![command1, command2, command3], tmp.path());
-
-        assert_eq!(context.current_namespace(), DEFAULT_NAMESPACE);
-
-        context.namespaces.next();
-        assert_eq!(context.current_namespace(), "namespace1");
-
-        context.namespaces.next();
-        assert_eq!(context.current_namespace(), "namespace2");
-
-        context.namespaces.next();
-        assert_eq!(context.current_namespace(), DEFAULT_NAMESPACE);
-    }
-
-    #[test]
-    fn should_go_to_previous_namespace() {
-        let tmp = TempDir::new("commands").unwrap();
-        let command1 = create_command!("alias1", "command", "namespace1", None, None);
-        let command2 = create_command!("alias2", "command", "namespace1", None, None);
-        let command3 = create_command!("alias3", "command", "namespace2", None, None);
-        let mut context = commands_context!(vec![command1, command2, command3], tmp.path());
-
-        assert_eq!(context.current_namespace(), DEFAULT_NAMESPACE);
-
-        context.namespaces.previous();
-        assert_eq!(context.current_namespace(), "namespace2");
-
-        context.namespaces.previous();
-        assert_eq!(context.current_namespace(), "namespace1");
-
-        context.namespaces.previous();
-        assert_eq!(context.current_namespace(), DEFAULT_NAMESPACE);
-    }
 }

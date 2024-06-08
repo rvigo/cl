@@ -1,8 +1,5 @@
-use super::{popup_type::PopupType, Popup};
-use crate::{
-    entity::{context::PopupContext, ViewMode},
-    DEFAULT_SELECTED_COLOR,
-};
+use super::{Popup, Type};
+use crate::{context::PopupContext, ViewMode, DEFAULT_SELECTED_COLOR};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Constraint, Rect},
@@ -39,15 +36,15 @@ impl Popup for HelpPopup<'_> {
     fn render(self, area: Rect, buf: &mut Buffer, _: Option<&mut PopupContext>) {
         let rows = self
             .content
-            .clone()
-            .into_iter()
+            .iter()
+            .cloned()
             .map(|cells| Row::new(cells).bottom_margin(1));
 
         let table = Table::new(rows)
             .block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .title(format!(" {} ", PopupType::Help.to_string()))
+                    .title(format!(" {} ", Type::Help.to_string()))
                     .title_alignment(Alignment::Center)
                     .border_type(BorderType::Plain),
             )
@@ -77,7 +74,7 @@ macro_rules! styled_cell {
 fn main_options<'a>() -> Vec<Pair<Cell<'a>>> {
     vec![
         Pair::new(
-            styled_cell!("<Q/Esc/Ctrl + C>", key_style()),
+            styled_cell!("<Q/Esc/Ctrl-C>", key_style()),
             styled_cell!("Quit"),
         ),
         Pair::new(
@@ -97,7 +94,7 @@ fn main_options<'a>() -> Vec<Pair<Cell<'a>>> {
             styled_cell!("Move to next namespace"),
         ),
         Pair::new(
-            styled_cell!("<H/←/Shift + Tab>", key_style()),
+            styled_cell!("<H/←/Shift-Tab>", key_style()),
             styled_cell!("Move to previous namespace"),
         ),
         Pair::new(styled_cell!("<K/↑>", key_style()), styled_cell!("Move up")),
@@ -123,7 +120,7 @@ fn main_options<'a>() -> Vec<Pair<Cell<'a>>> {
 fn edit_options<'a>() -> Vec<Pair<Cell<'a>>> {
     vec![
         Pair::new(
-            styled_cell!("<Esc/Ctrl + C>", key_style()),
+            styled_cell!("<Esc/Ctrl-C>", key_style()),
             styled_cell!("Return"),
         ),
         Pair::new(
@@ -131,11 +128,11 @@ fn edit_options<'a>() -> Vec<Pair<Cell<'a>>> {
             styled_cell!("Next Field"),
         ),
         Pair::new(
-            styled_cell!("<Shift + Tab>", key_style()),
+            styled_cell!("<Shift-Tab>", key_style()),
             styled_cell!("Previous Field"),
         ),
         Pair::new(
-            styled_cell!("<Enter/ Ctrl + S>", key_style()),
+            styled_cell!("<Enter/Ctrl-S>", key_style()),
             styled_cell!("Update command"),
         ),
         Pair::new(styled_cell!("<F1>", key_style()), styled_cell!("Help")),
@@ -145,7 +142,7 @@ fn edit_options<'a>() -> Vec<Pair<Cell<'a>>> {
 fn insert_options<'a>() -> Vec<Pair<Cell<'a>>> {
     vec![
         Pair::new(
-            styled_cell!("<Esc/Ctrl + C>", key_style()),
+            styled_cell!("<Esc/Ctrl-C>", key_style()),
             styled_cell!("Return"),
         ),
         Pair::new(
@@ -153,11 +150,11 @@ fn insert_options<'a>() -> Vec<Pair<Cell<'a>>> {
             styled_cell!("Next Field"),
         ),
         Pair::new(
-            styled_cell!("<Shift + Tab>", key_style()),
+            styled_cell!("<Shift-Tab>", key_style()),
             styled_cell!("Previous Field"),
         ),
         Pair::new(
-            styled_cell!("<Enter/ Ctrl + S>", key_style()),
+            styled_cell!("<Enter/Ctrl-S>", key_style()),
             styled_cell!("Create command"),
         ),
         Pair::new(styled_cell!("<F1>", key_style()), styled_cell!("Help")),

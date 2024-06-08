@@ -1,13 +1,10 @@
 use crate::{
     create_fields_map,
-    entity::terminal::TerminalSize,
+    terminal::TerminalSize,
     widget::{text_field::FieldType, TextField, WidgetKeyHandler},
 };
 use crossterm::event::KeyEvent;
-use std::{
-    collections::HashMap,
-    ops::{Deref, DerefMut},
-};
+use std::collections::HashMap;
 
 const SMALL_SIZE_FIELD_SEQUENCE: &[FieldType] = &[
     FieldType::Alias,
@@ -27,7 +24,7 @@ const MEDIUM_SIZE_FIELD_SEQUENCE: &[FieldType] = &[
 
 #[derive(Clone)]
 pub struct FieldState<'a> {
-    items: HashMap<FieldType, TextField<'a>>,
+    pub items: HashMap<FieldType, TextField<'a>>,
     sequence: Vec<FieldType>,
 }
 
@@ -105,7 +102,7 @@ impl<'a> FieldState<'a> {
         self.sequence = sequence
     }
 
-    pub fn get_sequence(&self) -> Vec<FieldType> {
+    pub fn sequence(&self) -> Vec<FieldType> {
         self.sequence.to_owned()
     }
 }
@@ -113,19 +110,5 @@ impl<'a> FieldState<'a> {
 impl<'a> From<(HashMap<FieldType, TextField<'a>>, Vec<FieldType>)> for FieldState<'a> {
     fn from((items, sequence): (HashMap<FieldType, TextField<'a>>, Vec<FieldType>)) -> Self {
         FieldState { items, sequence }
-    }
-}
-
-impl<'a> Deref for FieldState<'a> {
-    type Target = HashMap<FieldType, TextField<'a>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.items
-    }
-}
-
-impl DerefMut for FieldState<'_> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.items
     }
 }

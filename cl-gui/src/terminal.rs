@@ -1,5 +1,7 @@
-use super::context::{ApplicationContext, UI};
-use crate::screen::Screen;
+use crate::{
+    context::{Application, UI},
+    screen::Screen,
+};
 use anyhow::Result;
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},
@@ -7,11 +9,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use log::debug;
-use parking_lot::Mutex;
-use std::{
-    io::{self, Stdout},
-    sync::Arc,
-};
+use std::io::{self, Stdout};
 use tui::{
     backend::{Backend, CrosstermBackend},
     layout::Rect,
@@ -67,12 +65,12 @@ impl Terminal<CrosstermBackend<Stdout>> {
 
     pub fn draw<'terminal>(
         &mut self,
-        ui_context: &mut Arc<Mutex<UI>>,
-        app_context: &mut Arc<Mutex<ApplicationContext>>,
+        ui_context: &mut UI,
+        app_context: &mut Application,
         screen: &(dyn Screen + 'terminal),
     ) -> Result<()> {
         self.tui_terminal
-            .draw(|frame| screen.render(frame, &mut app_context.lock(), &mut ui_context.lock()))?;
+            .draw(|frame| screen.render(frame, app_context, ui_context))?;
         Ok(())
     }
 }
