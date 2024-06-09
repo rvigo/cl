@@ -3,10 +3,8 @@ mod main_screen;
 
 use crate::context::{Application, UI};
 use crate::{
-    register, render,
+    register,
     screen::{form_screen::FormScreen, main_screen::MainScreen},
-    terminal::TerminalSizeExt,
-    widget::{statusbar::StatusBarItem, BaseWidget},
     ViewMode,
 };
 use std::collections::HashMap;
@@ -86,28 +84,3 @@ impl Default for Screens<'_> {
         Self::new()
     }
 }
-
-/// Extension for `Screen`
-pub trait ScreenExt {
-    fn render_base(
-        &self,
-        frame: &mut Frame,
-        left_statusbar_item: Option<impl StatusBarItem>,
-        center_statusbar_item: Option<impl StatusBarItem>,
-        right_statusbar_item: Option<impl StatusBarItem>,
-    ) {
-        let area = frame.size();
-
-        let terminal_size = area.as_terminal_size();
-        let base_widget = BaseWidget::new(
-            &terminal_size,
-            left_statusbar_item,
-            center_statusbar_item,
-            right_statusbar_item,
-        );
-
-        render!(frame, { base_widget, area });
-    }
-}
-
-impl<T> ScreenExt for T where T: Screen {}

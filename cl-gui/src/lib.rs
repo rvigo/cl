@@ -23,11 +23,13 @@ use tui::style::Color;
 
 // TODO create a theme configuration
 pub const DEFAULT_TEXT_COLOR: Color = Color::Rgb(205, 214, 244);
-pub const DEFAULT_WIDGET_NAME_COLOR: Color = Color::Rgb(198, 208, 245);
-pub const DEFAULT_SELECTED_COLOR: Color = Color::Rgb(186, 187, 241);
-pub const DEFAULT_HIGH_LIGHT_COLOR: Color = Color::Rgb(249, 226, 175);
-pub const DEFAULT_BACKGROUND_COLOR: Color = Color::Rgb(24, 24, 37);
-pub const DEFAULT_INFO_COLOR: Color = Color::Rgb(166, 227, 161);
+pub const DEFAULT_WIDGET_NAME_COLOR: Color = Color::Rgb(203, 166, 247);
+pub const DEFAULT_SELECTED_COLOR: Color = Color::Rgb(203, 166, 247);
+pub const DEFAULT_HIGH_LIGHT_COLOR: Color = Color::Rgb(180, 190, 254);
+pub const DEFAULT_BACKGROUND_COLOR: Color = Color::Rgb(30, 30, 46);
+pub const DEFAULT_INFO_COLOR: Color = Color::Rgb(148, 226, 213);
+pub const DEFAULT_CURSOR_COLOR: Color = Color::Rgb(245, 224, 220);
+pub const DEFAULT_INACTIVE_TEXTBOX_COLOR: Color = Color::Rgb(108, 112, 134);
 
 pub async fn start_gui(config: Config) -> Result<()> {
     core::init(config).await

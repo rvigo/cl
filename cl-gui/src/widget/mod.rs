@@ -1,4 +1,3 @@
-mod base_widget;
 mod display;
 mod highlight;
 pub mod list;
@@ -8,11 +7,9 @@ pub mod popup;
 pub mod statusbar;
 pub mod text_field;
 
-pub use base_widget::BaseWidget;
 pub use display::DisplayWidget;
 pub use text_field::TextField;
 
-use self::statusbar::StatusBarItem;
 use crossterm::event::KeyEvent;
 use std::ops::Deref;
 

@@ -80,8 +80,8 @@ impl<'a> FieldState<'a> {
 }
 
 /// Iter related methods
-impl<'a> FieldState<'a> {
-    pub fn fields_iter(&self) -> impl Iterator<Item = TextField<'a>> {
+impl<'field> FieldState<'field> {
+    pub fn fields(&self) -> Vec<TextField<'field>> {
         let mut sorted_fields = vec![];
 
         self.sequence.iter().for_each(|i| {
@@ -90,7 +90,7 @@ impl<'a> FieldState<'a> {
             }
         });
 
-        sorted_fields.into_iter()
+        sorted_fields.to_owned()
     }
 
     pub fn sort(&mut self, size: &TerminalSize) {

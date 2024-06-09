@@ -5,7 +5,6 @@ mod querybox;
 
 pub use help::Help;
 pub use info::Info;
-pub use navigation_info::NavigationInfo;
 pub use querybox::QueryBox;
 
 use tui::widgets::Widget;

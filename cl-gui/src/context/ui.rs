@@ -79,7 +79,7 @@ mod tests {
         ui.fields.reset();
         ui.fields.clear_inputs();
 
-        let mut fields = ui.fields.iter();
-        assert!(fields.all(|c| c.text().is_empty()));
+        let fields = ui.fields.inner();
+        assert!(fields.iter().all(|c| c.text().is_empty()));
     }
 }
