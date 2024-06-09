@@ -1,4 +1,4 @@
-use crate::{widget::display::DisplayWidget, DEFAULT_SELECTED_COLOR};
+use crate::{dummy_block, widget::display::DisplayWidget, DEFAULT_INFO_COLOR};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -21,10 +21,13 @@ impl Info {
 
 impl Widget for Info {
     fn render(self, area: Rect, buf: &mut Buffer) {
+        let inner_block = dummy_block!();
+        let inner_area = inner_block.inner(area);
+
         let display = DisplayWidget::new(self.content, true, false)
             .alignment(Alignment::Center)
-            .style(Style::default().bg(DEFAULT_SELECTED_COLOR));
+            .style(Style::default().bg(DEFAULT_INFO_COLOR));
 
-        display.render(area, buf)
+        display.render(inner_area, buf)
     }
 }

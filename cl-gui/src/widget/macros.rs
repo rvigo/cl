@@ -37,15 +37,76 @@ macro_rules! default_block {
         use tui::{
             layout::Alignment,
             style::Style,
-            widgets::{Block, BorderType, Borders},
+            widgets::{Block, BorderType, Borders, Padding},
         };
+        use $crate::DEFAULT_TEXT_COLOR;
 
         Block::default()
-            .borders(Borders::ALL)
-            .style(Style::default())
+            .borders(Borders::TOP | Borders::RIGHT)
+            .style(Style::default().fg(DEFAULT_TEXT_COLOR))
             .title(format!(" {} ", $title))
             .title_alignment(Alignment::Left)
-            .border_type(BorderType::Plain)
+            .border_type(BorderType::Rounded)
+            .padding(Padding::horizontal(2))
+    }};
+
+    () => {{
+        use tui::{
+            style::Style,
+            widgets::{Block, BorderType, Borders, Padding},
+        };
+        use $crate::{DEFAULT_BACKGROUND_COLOR, DEFAULT_TEXT_COLOR};
+
+        Block::default()
+            .borders(Borders::TOP | Borders::RIGHT)
+            .style(
+                Style::default()
+                    .fg(DEFAULT_TEXT_COLOR)
+                    .bg(DEFAULT_BACKGROUND_COLOR),
+            )
+            .border_type(BorderType::Rounded)
+            .padding(Padding::horizontal(2))
+    }};
+}
+
+#[macro_export]
+macro_rules! dummy_block {
+    () => {{
+        use tui::widgets::{Block, BorderType, Borders, Padding};
+
+        Block::default()
+            .borders(Borders::TOP | Borders::RIGHT)
+            .border_type(BorderType::Rounded)
+            .padding(Padding::horizontal(2))
+    }};
+}
+
+#[macro_export]
+macro_rules! default_widget_block {
+    ($title:expr) => {{
+        use tui::{
+            layout::Alignment,
+            style::{Modifier, Style},
+            widgets::{Block, BorderType, Borders, Padding},
+        };
+        use $crate::{DEFAULT_BACKGROUND_COLOR, DEFAULT_TEXT_COLOR, DEFAULT_WIDGET_NAME_COLOR};
+
+        Block::default()
+            .borders(Borders::TOP | Borders::RIGHT)
+            .title(format!(" {} ", $title))
+            .title_alignment(Alignment::Left)
+            .title_style(
+                Style::default()
+                    .fg(DEFAULT_WIDGET_NAME_COLOR)
+                    .add_modifier(Modifier::BOLD),
+            )
+            .style(
+                Style::default()
+                    .fg(DEFAULT_TEXT_COLOR)
+                    .bg(DEFAULT_BACKGROUND_COLOR),
+            )
+            .border_type(BorderType::Rounded)
+            .padding(Padding::horizontal(2))
     }};
 }
 
@@ -71,12 +132,13 @@ macro_rules! render {
 macro_rules! display_widget {
     ($title:expr, $content:expr, $trim:expr, $highlight:expr) => {
         $crate::widget::DisplayWidget::new($content, $trim, $highlight)
-            .block(default_block!($title))
+            .block(default_widget_block!($title))
     };
 
-    ($title:expr, $content:expr, $trim:expr, $highlight:expr, $query:expr) => {
+    ($title:expr, $content:expr, $trim:expr, $highlight:expr, $query:expr) => {{
+        use $crate::default_widget_block;
         $crate::widget::DisplayWidget::new($content, $trim, $highlight)
-            .block(default_block!($title))
+            .block(default_widget_block!($title))
             .highlight($query)
-    };
+    }};
 }
