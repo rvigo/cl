@@ -1,4 +1,4 @@
-use crate::{default_widget_block, state::ListState, DEFAULT_HIGH_LIGHT_COLOR};
+use crate::{default_widget_block, state::ListState, DEFAULT_TEXT_COLOR};
 use cl_core::CommandVec;
 use tui::{
     buffer::Buffer,
@@ -33,7 +33,7 @@ impl<'a> List<'a> {
             start_corner: Corner::TopLeft,
             highlight_style: Style::default()
                 .fg(Color::Black)
-                .bg(DEFAULT_HIGH_LIGHT_COLOR)
+                .bg(DEFAULT_TEXT_COLOR)
                 .add_modifier(Modifier::BOLD | Modifier::ITALIC),
 
             highlight_symbol: Some("> "),

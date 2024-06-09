@@ -10,6 +10,7 @@ use crate::{
         DisplayWidget,
     },
     State, DEFAULT_BACKGROUND_COLOR, DEFAULT_HIGH_LIGHT_COLOR, DEFAULT_TEXT_COLOR,
+    DEFAULT_WIDGET_NAME_COLOR,
 };
 use cl_core::{CommandBuilder, Namespace};
 use tui::{
@@ -183,14 +184,18 @@ fn render_medium_size(
     let app_name = Paragraph::new(Text::styled(
         format!("cl - {}", env!("CARGO_PKG_VERSION")),
         Style::default()
-            .fg(DEFAULT_HIGH_LIGHT_COLOR)
+            .fg(DEFAULT_WIDGET_NAME_COLOR)
             .add_modifier(Modifier::BOLD | Modifier::ITALIC),
     ))
     .alignment(Alignment::Center)
     .block(
         Block::default()
             .borders(Borders::TOP | Borders::RIGHT)
-            .style(Style::default().bg(DEFAULT_BACKGROUND_COLOR))
+            .style(
+                Style::default()
+                    .bg(DEFAULT_BACKGROUND_COLOR)
+                    .fg(DEFAULT_TEXT_COLOR),
+            )
             .border_type(BorderType::Rounded)
             .padding(Padding::horizontal(2)),
     );
@@ -237,7 +242,7 @@ fn render_medium_size(
     render! {
         frame,
         { app_name, left_side[0]},
-        { aliases, left_side[1]}
+        { aliases, left_side[1]},
     }
 
     render! {
