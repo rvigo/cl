@@ -1,4 +1,7 @@
-use crate::{widget::WidgetKeyHandler, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
+use crate::{
+    dummy_block, widget::WidgetKeyHandler, DEFAULT_BACKGROUND_COLOR, DEFAULT_HIGH_LIGHT_COLOR,
+    DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR,
+};
 use crossterm::event::{KeyCode, KeyEvent};
 use tui::{
     buffer::Buffer,
@@ -50,38 +53,44 @@ impl WidgetKeyHandler for QueryBox<'_> {
 
 impl<'querybox> Widget for QueryBox<'querybox> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
+        let inner_b = dummy_block!(); // new block just to get the inner area
+        let inner_area = inner_b.inner(area);
+
         let style = if self.focus {
             Style::default().fg(Color::Black).bg(DEFAULT_SELECTED_COLOR)
         } else if !self.focus && !self.text_area.is_empty() {
-            Style::default().fg(DEFAULT_SELECTED_COLOR)
+            Style::default().fg(DEFAULT_HIGH_LIGHT_COLOR)
         } else {
             Style::default().fg(DEFAULT_TEXT_COLOR)
         };
 
         if self.buffer.is_empty() && !self.focus {
-            self.text_area = TextArea::from(vec!["Press <F> to find commands"])
+            self.text_area = TextArea::from(vec!["Press </> to search"])
         }
 
         if self.focus {
             self.text_area.set_cursor_line_style(Style::default());
             self.text_area.set_cursor_style(
                 Style::default()
-                    .fg(DEFAULT_TEXT_COLOR)
+                    .fg(DEFAULT_HIGH_LIGHT_COLOR)
                     .add_modifier(Modifier::REVERSED),
             );
         } else {
             self.text_area.set_cursor_line_style(Style::default());
             self.text_area.set_cursor_style(Style::default());
         };
+        let mut block_style = Style::default().bg(DEFAULT_BACKGROUND_COLOR);
+
+        block_style = if !self.focus {
+            block_style.fg(DEFAULT_TEXT_COLOR)
+        } else {
+            block_style
+        };
 
         self.text_area
-            .set_block(Block::default().style(if !self.focus {
-                Style::default().fg(DEFAULT_TEXT_COLOR)
-            } else {
-                Style::default()
-            }));
+            .set_block(Block::default().style(block_style));
         self.text_area.set_style(style);
 
-        self.text_area.widget().render(area, buf)
+        self.text_area.widget().render(inner_area, buf)
     }
 }

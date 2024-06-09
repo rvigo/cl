@@ -1,4 +1,4 @@
-use crate::{default_block, state::ListState, DEFAULT_SELECTED_COLOR};
+use crate::{default_widget_block, state::ListState, DEFAULT_HIGH_LIGHT_COLOR};
 use cl_core::CommandVec;
 use tui::{
     buffer::Buffer,
@@ -33,8 +33,8 @@ impl<'a> List<'a> {
             start_corner: Corner::TopLeft,
             highlight_style: Style::default()
                 .fg(Color::Black)
-                .bg(DEFAULT_SELECTED_COLOR)
-                .add_modifier(Modifier::BOLD),
+                .bg(DEFAULT_HIGH_LIGHT_COLOR)
+                .add_modifier(Modifier::BOLD | Modifier::ITALIC),
 
             highlight_symbol: Some("> "),
             repeat_highlight_symbol: false,
@@ -97,7 +97,7 @@ impl<'a> Widget for List<'a> {
                 inner_area
             }
             None => {
-                let b = default_block!("Aliases");
+                let b = default_widget_block!("Aliases");
                 let inner_area = b.inner(area);
                 b.render(area, buf);
                 inner_area
