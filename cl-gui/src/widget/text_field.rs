@@ -99,6 +99,10 @@ impl<'txt> TextField<'txt> {
         self.text_area = TextArea::from(&*content.into())
     }
 
+    pub fn lines(&self) -> Vec<String> {
+        self.text_area.to_owned().into_lines()
+    }
+
     pub fn activate_focus(&mut self) {
         self.in_focus = true
     }

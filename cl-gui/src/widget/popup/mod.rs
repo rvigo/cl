@@ -67,7 +67,7 @@ pub trait WithChoices: Popup {
     fn create_buttom_area(&self, area: Rect) -> Rect {
         let layout = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(100)].as_ref())
+            .constraints([Constraint::Percentage(100)])
             .split(self.create_buttom_layout(area)[4]);
 
         let constraints = if self.choices().len() == 2 {
@@ -86,30 +86,24 @@ pub trait WithChoices: Popup {
     fn create_buttom_layout(&self, area: Rect) -> Rc<[Rect]> {
         let layout = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints(
-                [
-                    Constraint::Percentage(25),
-                    Constraint::Percentage(25),
-                    Constraint::Percentage(25),
-                    Constraint::Percentage(25),
-                ]
-                .as_ref(),
-            )
+            .constraints([
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+            ])
             .split(area);
 
         Layout::default()
             .direction(Direction::Vertical)
-            .constraints(
-                [
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                    Constraint::Percentage(20),
-                    Constraint::Length(3), //keeps the options inside the box
-                ]
-                .as_ref(),
-            )
+            .constraints([
+                Constraint::Percentage(20),
+                Constraint::Percentage(20),
+                Constraint::Percentage(20),
+                Constraint::Percentage(20),
+                Constraint::Percentage(20),
+                Constraint::Length(3), //keeps the options inside the box
+            ])
             .split(layout[3])
     }
 }
@@ -155,6 +149,45 @@ pub mod macros {
                 $choiches,
                 $info.popup_type.to_owned(),
             )
+        }};
+    }
+
+    #[macro_export]
+    macro_rules! default_popup_block {
+        ($popup_type:expr) => {{
+            use super::Type;
+            use tui::{
+                layout::Alignment,
+                style::{Color, Modifier, Style},
+                widgets::{Block, BorderType, Borders, Padding},
+            };
+            use $crate::{DEFAULT_BACKGROUND_COLOR, DEFAULT_TEXT_COLOR};
+
+            let style = match $popup_type {
+                Type::Error => Style::default()
+                    .fg(Color::Rgb(243, 139, 168))
+                    .add_modifier(Modifier::BOLD),
+
+                Type::Warning => Style::default()
+                    .fg(Color::Rgb(249, 226, 175))
+                    .add_modifier(Modifier::BOLD),
+
+                Type::Help => Style::default()
+                    .fg(Color::Rgb(166, 227, 161))
+                    .add_modifier(Modifier::BOLD),
+            };
+            Block::default()
+                .borders(Borders::ALL)
+                .title($popup_type.to_string())
+                .title_alignment(Alignment::Left)
+                .title_style(style)
+                .style(
+                    Style::default()
+                        .fg(DEFAULT_TEXT_COLOR)
+                        .bg(DEFAULT_BACKGROUND_COLOR),
+                )
+                .border_type(BorderType::Rounded)
+                .padding(Padding::horizontal(2))
         }};
     }
 }

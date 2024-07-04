@@ -103,7 +103,7 @@ impl Screen for MainScreen {
                 center,
                 right,
             ),
-            TerminalSize::Small => render_form_small(frame, tabs, aliases, command),
+            TerminalSize::Small => render_form_small(frame, tabs, aliases, command, left),
         }
 
         //
@@ -207,7 +207,7 @@ fn render_medium_size(
 
     let details_chunks = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
+        .constraints([Constraint::Percentage(40), Constraint::Percentage(60)])
         .split(right_side[2]);
 
     //
@@ -221,61 +221,86 @@ fn render_medium_size(
 
     let statusbar_layout = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints(
-            [
-                Constraint::Percentage(33),
-                Constraint::Percentage(33),
-                Constraint::Percentage(33),
-            ]
-            .as_ref(),
-        )
+        .constraints([
+            Constraint::Percentage(33),
+            Constraint::Percentage(33),
+            Constraint::Percentage(33),
+        ])
         .split(footer.inner(drawable_chunks[1]));
 
-    render!(frame, { footer, drawable_chunks[1] });
-
-    render!(frame, {left, statusbar_layout[0]}, );
     if let Some(center_statusbar_item) = center {
-        render!(frame, {center_statusbar_item, statusbar_layout[1]}, );
+        render! { frame, { center_statusbar_item, statusbar_layout[1] }};
     }
-    render! { frame, {right, statusbar_layout[2]}};
+
+    render! { frame, { footer, drawable_chunks[1] }};
+    render! {
+        frame,
+        { left,  statusbar_layout[0] },
+        { right, statusbar_layout[2] }
+    };
 
     render! {
         frame,
         { app_name, left_side[0]},
-        { aliases, left_side[1]},
+        { aliases,  left_side[1]},
     }
 
     render! {
         frame,
-        { tabs, right_side[0] }, // top
+        { tabs,        right_side[0] }, // top
         { description, right_side[1] }, // middle
-        { command, right_side[3] },
-        { namespace, details_chunks[0] },
-        { tags, details_chunks[1] },
+        { command,     right_side[3] },
+        { namespace,   details_chunks[0] },
+        { tags,        details_chunks[1] },
     }
 }
 
-fn render_form_small(frame: &mut Frame, tabs: Tabs, commands: List, command: DisplayWidget) {
-    let constraints = [Constraint::Length(3), Constraint::Min(5)];
+fn render_form_small(
+    frame: &mut Frame,
+    tabs: Tabs,
+    commands: List,
+    command: DisplayWidget,
+    querybox: QueryBox,
+) {
+    let areas = [
+        Constraint::Percentage(25), // name & aliases
+        Constraint::Percentage(75), // right side
+    ];
     let chunks = Layout::default()
-        .direction(Direction::Vertical)
+        .direction(Direction::Horizontal)
         .margin(1)
-        .constraints(constraints)
+        .constraints(areas)
         .split(frame.size());
 
-    let central_chunk = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(30), Constraint::Percentage(70)].as_ref())
+    let left_side = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Max(3), Constraint::Length(5)])
+        .split(chunks[0]);
+
+    let right_side = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
         .split(chunks[1]);
 
-    let command_detail_chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(100)].as_ref())
-        .split(central_chunk[1]);
-    render!(
+    let querybox_block = Block::default()
+        .borders(Borders::TOP | Borders::RIGHT)
+        .style(
+            Style::default()
+                .bg(DEFAULT_BACKGROUND_COLOR)
+                .fg(DEFAULT_TEXT_COLOR),
+        )
+        .border_type(BorderType::Rounded);
+
+    render! {
         frame,
-        { tabs, chunks[0] },
-        { commands, central_chunk[0] },
-        { command, command_detail_chunks[0] },
-    );
+        { querybox_block, left_side[0] },
+        { querybox, left_side[0] },
+        { commands, left_side[1] }
+    }
+
+    render! {
+        frame,
+        { tabs, right_side[0] },
+        { command, right_side[1] },
+    }
 }
