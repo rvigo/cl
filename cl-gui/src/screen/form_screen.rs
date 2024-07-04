@@ -13,6 +13,7 @@ use crate::{
     DEFAULT_BACKGROUND_COLOR, DEFAULT_HIGH_LIGHT_COLOR, DEFAULT_TEXT_COLOR,
     DEFAULT_WIDGET_NAME_COLOR,
 };
+use itertools::Itertools;
 use tui::{
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Modifier, Style},
@@ -178,10 +179,11 @@ fn render_medium_form(
     render! { frame, {right, statusbar_layout[2]}};
 }
 
-fn command_preview<'a>(fields: &[TextField<'a>]) -> Vec<Line<'a>> {
+fn command_preview<'form>(fields: &[TextField<'form>]) -> Vec<Line<'form>> {
     let mut alias: (FieldType, String, bool) = (FieldType::Alias, String::default(), false);
     let mut namespace: (FieldType, String, bool) = (FieldType::Namespace, String::default(), false);
-    let mut command: (FieldType, String, bool) = (FieldType::Command, String::default(), false);
+    let mut command: (FieldType, Vec<String>, bool) =
+        (FieldType::Command, Vec::<String>::new(), false);
     let mut description: (FieldType, String, bool) =
         (FieldType::Description, String::default(), false);
     let mut tags: (FieldType, String, bool) = (FieldType::Tags, String::default(), false);
@@ -189,23 +191,23 @@ fn command_preview<'a>(fields: &[TextField<'a>]) -> Vec<Line<'a>> {
     fields.iter().for_each(|field| match field.field_type() {
         FieldType::Alias => alias = (field.field_type(), field.text(), field.in_focus),
         FieldType::Namespace => namespace = (field.field_type(), field.text(), field.in_focus),
-        FieldType::Command => command = (field.field_type(), field.text(), field.in_focus),
+        FieldType::Command => command = (field.field_type(), field.lines(), field.in_focus),
         FieldType::Description => description = (field.field_type(), field.text(), field.in_focus),
         FieldType::Tags => tags = (field.field_type(), field.text(), field.in_focus),
     });
     [
         highlight(alias.0, alias.1, alias.2),
         highlight(namespace.0, namespace.1, namespace.2),
-        highlight(command.0, command.1, command.2),
+        highlight_lines(command.0, command.1, command.2),
         highlight(description.0, description.1, description.2),
         highlight_tags(tags.1, tags.2),
     ]
     .iter()
     .flat_map(|v| v.iter().cloned())
-    .collect::<Vec<Line<'a>>>()
+    .collect::<Vec<Line<'form>>>()
 }
 
-fn highlight<'a>(field_type: FieldType, text: String, highlight: bool) -> Vec<Line<'a>> {
+fn highlight<'line>(field_type: FieldType, text: String, highlight: bool) -> Vec<Line<'line>> {
     let field_name = format!("{}: ", field_type);
     let space: Line = Line::from("");
     if highlight {
@@ -216,15 +218,51 @@ fn highlight<'a>(field_type: FieldType, text: String, highlight: bool) -> Vec<Li
                     .fg(DEFAULT_HIGH_LIGHT_COLOR)
                     .add_modifier(Modifier::BOLD),
             ),
-            Line::from(text.to_string()),
+            Line::from(text.lines().join("\n")),
             space,
         ]
     } else {
         vec![
             Line::styled(field_name, Style::default().fg(DEFAULT_HIGH_LIGHT_COLOR)),
-            Line::from(text.to_string()),
+            Line::from(text.lines().join("\n")),
             space,
         ]
+    }
+}
+
+fn highlight_lines<'a>(field_type: FieldType, text: Vec<String>, highlight: bool) -> Vec<Line<'a>> {
+    let content = text.into_iter().map(Line::from).collect::<Vec<_>>();
+    let values = if highlight {
+        vec![Line::styled(
+            field_type.to_string(),
+            Style::default()
+                .fg(DEFAULT_HIGH_LIGHT_COLOR)
+                .add_modifier(Modifier::BOLD),
+        )]
+        .into_iter()
+        .chain(content.clone())
+        .collect::<Vec<_>>()
+    } else {
+        vec![Line::styled(
+            field_type.to_string(),
+            Style::default().fg(DEFAULT_HIGH_LIGHT_COLOR),
+        )]
+        .into_iter()
+        .chain(content.clone())
+        .collect::<Vec<_>>()
+    };
+
+    if values.len() > 5 {
+        let values = values.into_iter().chain(vec![Line::from("")]).take(6);
+
+        values
+            .chain(vec![Line::from("..."), Line::from("")])
+            .collect::<Vec<_>>()
+    } else {
+        values
+            .into_iter()
+            .chain(vec![Line::from("")])
+            .collect::<Vec<_>>()
     }
 }
 

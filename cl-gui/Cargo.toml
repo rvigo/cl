@@ -20,6 +20,7 @@ thiserror = "1.0.47"
 tui = { package = "ratatui", version = "0.24.0" }
 tui-textarea = "0.4.0"
 unicode-width = "0.1"
+comfy-table = "7.1.1"
 
 [dev-dependencies]
 tempdir.workspace = true

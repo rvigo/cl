@@ -1,5 +1,5 @@
 use super::{Choice, Popup, Type, WithChoices};
-use crate::{context::PopupContext, default_block, DEFAULT_TEXT_COLOR};
+use crate::{context::PopupContext, default_popup_block, DEFAULT_TEXT_COLOR};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -46,7 +46,7 @@ impl Popup for QuestionPopup {
 
     fn render(self, area: Rect, buf: &mut Buffer, state: Option<&mut PopupContext>) {
         if let Some(state) = state {
-            let block = default_block!(self.popup_type.to_string());
+            let block = default_popup_block!(self.popup_type);
 
             let paragraph = Paragraph::new(self.content.to_owned())
                 .style(Style::default().fg(DEFAULT_TEXT_COLOR))

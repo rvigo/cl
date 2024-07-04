@@ -1,14 +1,17 @@
-use super::{Popup, Type};
-use crate::{context::PopupContext, ViewMode, DEFAULT_SELECTED_COLOR};
+use super::Popup;
+use crate::{context::PopupContext, default_popup_block, ViewMode, DEFAULT_TEXT_COLOR};
+use comfy_table::{presets, CellAlignment};
+use std::ops::Deref;
 use tui::{
     buffer::Buffer,
-    layout::{Alignment, Constraint, Rect},
+    layout::{Alignment, Rect},
     style::Style,
-    widgets::{Block, BorderType, Borders, Cell, Clear, Row, Table, Widget},
+    widgets::{Clear, Padding, Paragraph, Widget, Wrap},
 };
+use unicode_width::UnicodeWidthStr;
 
-pub struct HelpPopup<'a> {
-    content: Vec<Pair<Cell<'a>>>,
+pub struct HelpPopup<'help> {
+    content: Table<'help>,
 }
 
 impl<'a> HelpPopup<'a> {
@@ -34,179 +37,191 @@ impl Popup for HelpPopup<'_> {
     }
 
     fn render(self, area: Rect, buf: &mut Buffer, _: Option<&mut PopupContext>) {
-        let rows = self
-            .content
-            .iter()
-            .cloned()
-            .map(|cells| Row::new(cells).bottom_margin(1));
-
-        let table = Table::new(rows)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title(format!(" {} ", Type::Help.to_string()))
-                    .title_alignment(Alignment::Center)
-                    .border_type(BorderType::Plain),
-            )
-            .widths(&[Constraint::Percentage(50), Constraint::Percentage(50)]);
-
         let render_position = self.get_render_position(area);
+        let mut t = comfy_table::Table::new();
+        t.load_preset(presets::NOTHING);
+        for row in &self.content.content {
+            t.add_row(row.cells.iter().map(|cell| cell.text).collect::<Vec<_>>());
+        }
+        t.column_iter_mut().for_each(|col| {
+            col.set_constraint(comfy_table::ColumnConstraint::Absolute(
+                comfy_table::Width::Fixed(self.content.width() + 7),
+            ));
+            col.set_cell_alignment(CellAlignment::Left);
+        });
+
+        let p = Paragraph::new(t.to_string())
+            .style(Style::default().fg(DEFAULT_TEXT_COLOR))
+            .alignment(Alignment::Center)
+            .wrap(Wrap { trim: true })
+            .block(default_popup_block!(Type::Help).padding(Padding::vertical(2)));
 
         Clear::render(Clear, render_position, buf);
-        table.render(render_position, buf)
+        p.render(render_position, buf)
     }
 }
 
-fn key_style() -> Style {
-    Style::default().fg(DEFAULT_SELECTED_COLOR)
-}
-
-macro_rules! styled_cell {
+macro_rules! cell {
     ($text:expr) => {
         Cell::from($text)
     };
-
-    ($text:expr, $style:expr) => {
-        Cell::from($text).style($style)
-    };
 }
 
-fn main_options<'a>() -> Vec<Pair<Cell<'a>>> {
-    vec![
-        Pair::new(
-            styled_cell!("<Q/Esc/Ctrl-C>", key_style()),
-            styled_cell!("Quit"),
-        ),
-        Pair::new(
-            styled_cell!("<I/Insert>", key_style()),
-            styled_cell!("Create new command"),
-        ),
-        Pair::new(
-            styled_cell!("<D/Delete>", key_style()),
-            styled_cell!("Delete selected command"),
-        ),
-        Pair::new(
-            styled_cell!("<E>", key_style()),
-            styled_cell!("Edit selected command"),
-        ),
-        Pair::new(
-            styled_cell!("<L/→/Tab>", key_style()),
-            styled_cell!("Move to next namespace"),
-        ),
-        Pair::new(
-            styled_cell!("<H/←/Shift-Tab>", key_style()),
-            styled_cell!("Move to previous namespace"),
-        ),
-        Pair::new(styled_cell!("<K/↑>", key_style()), styled_cell!("Move up")),
-        Pair::new(
-            styled_cell!("<J/↓>", key_style()),
-            styled_cell!("Move down"),
-        ),
-        Pair::new(
-            styled_cell!("<Y>", key_style()),
-            styled_cell!("Copy selected command"),
-        ),
-        Pair::new(
-            styled_cell!("<F//>", key_style()),
-            styled_cell!("Find stored commands"),
-        ),
-        Pair::new(
-            styled_cell!("<F1/?>", key_style()),
-            styled_cell!("Show help"),
-        ),
-    ]
+macro_rules! row {
+    ($( $cell:expr),+ $(,)?) => {{
+        let mut row = Row::default();
+        $(
+            row.add_cell($cell);
+        )*
+
+        row
+        }};
+
+}
+macro_rules! table{
+    ($( $row:expr),+ $(,)?) => {{
+        let mut table= vec![];
+        $(
+           table.push($row);
+        )*
+
+       table.into()
+        }};
+
 }
 
-fn edit_options<'a>() -> Vec<Pair<Cell<'a>>> {
-    vec![
-        Pair::new(
-            styled_cell!("<Esc/Ctrl-C>", key_style()),
-            styled_cell!("Return"),
-        ),
-        Pair::new(
-            styled_cell!("<Tab>", key_style()),
-            styled_cell!("Next Field"),
-        ),
-        Pair::new(
-            styled_cell!("<Shift-Tab>", key_style()),
-            styled_cell!("Previous Field"),
-        ),
-        Pair::new(
-            styled_cell!("<Enter/Ctrl-S>", key_style()),
-            styled_cell!("Update command"),
-        ),
-        Pair::new(styled_cell!("<F1>", key_style()), styled_cell!("Help")),
-    ]
+fn main_options<'a>() -> Table<'a> {
+    table! {
+        row! {cell!("Quit"), cell!("<Q/Esc/Ctrl-C>")},
+        row! {cell!("Create new command"), cell!("<I/Insert>")},
+        row! {cell!("Delete selected command"), cell!("<D/Delete>")},
+        row! {cell!("Edit selected command"), cell!("<E>")},
+        row! {cell!("Move to next namespace"), cell!("<L/→/Tab>")},
+        row! {cell!("Move to previous namespace"), cell!("<H/←/Shift-Tab>")},
+        row! {cell!("Move up"), cell!("<K/↑>")},
+        row! {cell!("Move down"), cell!("<J/↓>")},
+        row! {cell!("Copy selected command"), cell!("<Y>")},
+        row! {cell!("Search commands"), cell!("<F//>")},
+        row! {cell!("Show help"), cell!("<F1/?>")},
+    }
 }
 
-fn insert_options<'a>() -> Vec<Pair<Cell<'a>>> {
-    vec![
-        Pair::new(
-            styled_cell!("<Esc/Ctrl-C>", key_style()),
-            styled_cell!("Return"),
-        ),
-        Pair::new(
-            styled_cell!("<Tab>", key_style()),
-            styled_cell!("Next Field"),
-        ),
-        Pair::new(
-            styled_cell!("<Shift-Tab>", key_style()),
-            styled_cell!("Previous Field"),
-        ),
-        Pair::new(
-            styled_cell!("<Enter/Ctrl-S>", key_style()),
-            styled_cell!("Create command"),
-        ),
-        Pair::new(styled_cell!("<F1>", key_style()), styled_cell!("Help")),
-    ]
+fn edit_options<'a>() -> Table<'a> {
+    table! {
+            row! { cell!("Return"), cell!("<Esc/Ctrl-C>")},
+            row! { cell!("Next Field"), cell!("<Tab>")},
+            row! { cell!("Previous Field"), cell!("<Shift-Tab>")},
+            row! { cell!("Update command"), cell!("<Enter/Ctrl-S>")},
+            row! { cell!("Help"), cell!("<F1>")},
+    }
+}
+
+fn insert_options<'a>() -> Table<'a> {
+    table! {
+            row! { cell!("Return"), cell!("<Esc/Ctrl-C>")},
+            row! { cell!("Next Field"), cell!("<Tab>")},
+            row! { cell!("Previous Field"), cell!("<Shift-Tab>")},
+            row! { cell!("Create command"), cell!("<Enter/Ctrl-S>")},
+            row! { cell!("Help"), cell!("<F1>")},
+    }
 }
 
 #[derive(Clone)]
-pub struct Pair<T> {
-    first: T,
-    second: T,
+struct Table<'a> {
+    content: Vec<Row<'a>>,
 }
 
-impl<T> Pair<T> {
-    pub fn new(first: T, second: T) -> Pair<T> {
-        Self { first, second }
+impl Table<'_> {
+    fn width(&self) -> u16 {
+        self.content
+            .iter()
+            .map(|row| row.width())
+            .max()
+            .unwrap_or(0)
     }
 }
 
-impl<T> Iterator for PairIterator<T>
-where
-    T: Clone,
-{
-    type Item = T;
+impl<'a> From<Vec<Row<'a>>> for Table<'a> {
+    fn from(content: Vec<Row<'a>>) -> Self {
+        Table { content }
+    }
+}
 
-    fn next(&mut self) -> Option<Self::Item> {
-        let result = match self.index {
-            0 => Some(self.pair.first.to_owned()),
-            1 => Some(self.pair.second.to_owned()),
-            _ => None,
+impl<'a> Deref for Table<'a> {
+    type Target = Vec<Row<'a>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.content
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct Row<'a> {
+    cells: Vec<Cell<'a>>,
+}
+
+impl<'a> Row<'a> {
+    pub fn add_cell(&mut self, cell: Cell<'a>) {
+        self.cells.push(cell);
+    }
+
+    pub fn width(&self) -> u16 {
+        self.cells
+            .iter()
+            .map(|cell| cell.width())
+            .max()
+            .unwrap_or(0)
+    }
+}
+
+#[derive(Clone)]
+pub struct Cell<'a> {
+    text: &'a str,
+}
+
+impl<'a> Cell<'a> {
+    fn new(text: &'a str) -> Cell<'a> {
+        Cell { text }
+    }
+
+    fn width(&self) -> u16 {
+        self.text.width() as u16
+    }
+}
+
+impl<'a> From<&'a str> for Cell<'a> {
+    fn from(text: &'a str) -> Self {
+        Cell::new(text)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::vec;
+
+    use super::*;
+
+    #[test]
+    fn test_main_options() {
+        let cell1 = Cell::from("Quit");
+        let cell2 = Cell::from("Move to previous namespace");
+
+        let current = vec![&cell1, &cell2]
+            .iter()
+            .map(|cell| cell.width())
+            .max()
+            .unwrap_or(0);
+        let cell1_width = cell1.text.width();
+        let cell2_width = cell2.text.width();
+        let r = row! {
+            cell1,
+            cell2,
         };
-        self.index += 1;
-        result
+
+        let row_width = r.width();
+        assert_eq!(cell1_width, 4);
+        assert_eq!(cell2_width, 26);
+        assert_eq!(current, 26);
+        assert_eq!(row_width, 26);
     }
-}
-
-impl<T> IntoIterator for Pair<T>
-where
-    T: Clone,
-{
-    type Item = T;
-
-    type IntoIter = PairIterator<T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        PairIterator {
-            pair: self,
-            index: 0,
-        }
-    }
-}
-
-pub struct PairIterator<T> {
-    pair: Pair<T>,
-    index: usize,
 }
