@@ -1,4 +1,4 @@
-use crate::{default_widget_block, state::ListState, DEFAULT_TEXT_COLOR};
+use crate::{default_widget_block, state::ListState, theme::DEFAULT_TEXT_COLOR};
 use cl_core::CommandVec;
 use tui::{
     buffer::Buffer,
@@ -9,7 +9,7 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Default)]
+#[derive(Clone)]
 pub struct List<'a> {
     block: Option<Block<'a>>,
     items: Vec<String>,

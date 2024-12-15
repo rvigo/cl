@@ -1,3 +1,4 @@
+pub mod clipboard;
 mod display;
 mod highlight;
 pub mod list;

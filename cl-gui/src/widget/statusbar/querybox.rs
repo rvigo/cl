@@ -1,6 +1,10 @@
 use crate::{
-    dummy_block, widget::WidgetKeyHandler, DEFAULT_BACKGROUND_COLOR, DEFAULT_HIGH_LIGHT_COLOR,
-    DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR,
+    dummy_block,
+    theme::{
+        DEFAULT_BACKGROUND_COLOR, DEFAULT_HIGHLIGHT_COLOR, DEFAULT_SELECTED_COLOR,
+        DEFAULT_TEXT_COLOR,
+    },
+    widget::WidgetKeyHandler,
 };
 use crossterm::event::{KeyCode, KeyEvent};
 use tui::{
@@ -59,7 +63,7 @@ impl<'querybox> Widget for QueryBox<'querybox> {
         let style = if self.focus {
             Style::default().fg(Color::Black).bg(DEFAULT_SELECTED_COLOR)
         } else if !self.focus && !self.text_area.is_empty() {
-            Style::default().fg(DEFAULT_HIGH_LIGHT_COLOR)
+            Style::default().fg(DEFAULT_HIGHLIGHT_COLOR)
         } else {
             Style::default().fg(DEFAULT_TEXT_COLOR)
         };
@@ -72,7 +76,7 @@ impl<'querybox> Widget for QueryBox<'querybox> {
             self.text_area.set_cursor_line_style(Style::default());
             self.text_area.set_cursor_style(
                 Style::default()
-                    .fg(DEFAULT_HIGH_LIGHT_COLOR)
+                    .fg(DEFAULT_HIGHLIGHT_COLOR)
                     .add_modifier(Modifier::REVERSED),
             );
         } else {

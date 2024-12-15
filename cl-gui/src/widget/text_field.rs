@@ -1,6 +1,6 @@
 use super::{Lines, WidgetKeyHandler};
-use crate::{
-    DEFAULT_BACKGROUND_COLOR, DEFAULT_CURSOR_COLOR, DEFAULT_HIGH_LIGHT_COLOR,
+use crate::theme::{
+    DEFAULT_BACKGROUND_COLOR, DEFAULT_CURSOR_COLOR, DEFAULT_HIGHLIGHT_COLOR,
     DEFAULT_INACTIVE_TEXTBOX_COLOR, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR,
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -144,7 +144,7 @@ impl<'txt> TextField<'txt> {
     fn title_style(&self) -> Style {
         if self.in_focus {
             Style::default()
-                .fg(DEFAULT_HIGH_LIGHT_COLOR)
+                .fg(DEFAULT_HIGHLIGHT_COLOR)
                 .add_modifier(Modifier::BOLD | Modifier::ITALIC)
         } else {
             Style::default()

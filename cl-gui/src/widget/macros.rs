@@ -55,7 +55,6 @@ macro_rules! default_block {
             style::Style,
             widgets::{Block, BorderType, Borders, Padding},
         };
-        use $crate::{DEFAULT_BACKGROUND_COLOR, DEFAULT_TEXT_COLOR};
 
         Block::default()
             .borders(Borders::TOP | Borders::RIGHT)
@@ -89,7 +88,9 @@ macro_rules! default_widget_block {
             style::{Modifier, Style},
             widgets::{Block, BorderType, Borders, Padding},
         };
-        use $crate::{DEFAULT_BACKGROUND_COLOR, DEFAULT_TEXT_COLOR, DEFAULT_WIDGET_NAME_COLOR};
+        use $crate::theme::{
+            DEFAULT_BACKGROUND_COLOR, DEFAULT_TEXT_COLOR, DEFAULT_WIDGET_NAME_COLOR,
+        };
 
         Block::default()
             .borders(Borders::TOP | Borders::RIGHT)
