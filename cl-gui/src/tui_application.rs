@@ -53,7 +53,7 @@ impl<'tui> TuiApplication<'tui> {
         while !self.should_quit.load(Ordering::SeqCst) {
             let view_mode = self.current_view_mode();
 
-            if let Some(screen) = self.screens.get_screen_by_type(view_mode) {
+            if let Some(screen) = self.screens.get_screen(view_mode) {
                 self.terminal
                     .draw(&mut self.ui.lock(), &mut self.context.lock(), screen)?;
 

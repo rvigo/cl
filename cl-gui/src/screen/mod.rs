@@ -46,7 +46,7 @@ impl From<ScreenType> for ViewMode {
 
 /// Represents a Screen
 pub trait Screen {
-    fn render(&self, frame: &mut Frame, application_context: &mut Application, ui_context: &mut UI);
+    fn render(&self, frame: &mut Frame, application: &mut Application, ui: &mut UI);
 }
 
 type ScreenRegistrar<'screen> = HashMap<ScreenType, &'screen (dyn Screen + 'screen)>;
@@ -70,7 +70,7 @@ impl<'screen> Screens<'screen> {
         Self { screens }
     }
 
-    pub fn get_screen_by_type<I>(&mut self, screen_type: I) -> Option<&(dyn Screen + 'screen)>
+    pub fn get_screen<I>(&mut self, screen_type: I) -> Option<&(dyn Screen + 'screen)>
     where
         I: Into<ScreenType>,
     {

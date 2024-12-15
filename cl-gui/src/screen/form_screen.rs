@@ -73,8 +73,8 @@ fn render_medium_form(
     ];
 
     let areas = [
-        Constraint::Percentage(25), // name & preview
-        Constraint::Percentage(75), // right side
+        Constraint::Percentage(20), // name & preview
+        Constraint::Percentage(80), // right side
     ];
 
     let constraints = [
@@ -191,14 +191,24 @@ fn command_preview<'form>(fields: &[TextField<'form>]) -> Vec<Line<'form>> {
         (FieldType::Command, Vec::<String>::new(), false);
     let mut description: (FieldType, String, bool) =
         (FieldType::Description, String::default(), false);
-    let mut tags: (FieldType, String, bool) = (FieldType::Tags, String::default(), false);
+    let mut tags: (FieldType, Option<String>, bool) = (FieldType::Tags, None, false);
 
     fields.iter().for_each(|field| match field.field_type() {
         FieldType::Alias => alias = (field.field_type(), field.text(), field.in_focus),
         FieldType::Namespace => namespace = (field.field_type(), field.text(), field.in_focus),
         FieldType::Command => command = (field.field_type(), field.lines(), field.in_focus),
         FieldType::Description => description = (field.field_type(), field.text(), field.in_focus),
-        FieldType::Tags => tags = (field.field_type(), field.text(), field.in_focus),
+        FieldType::Tags => {
+            tags = (
+                field.field_type(),
+                if field.text().is_empty() {
+                    None
+                } else {
+                    Some(field.text())
+                },
+                field.in_focus,
+            )
+        }
     });
     [
         highlight(alias.0, alias.1, alias.2),
@@ -271,12 +281,20 @@ fn highlight_lines<'a>(field_type: FieldType, text: Vec<String>, highlight: bool
     }
 }
 
-fn highlight_tags<'a>(tags: String, highlight: bool) -> Vec<Line<'a>> {
-    let content = &tags.split(',').collect::<Vec<_>>();
-    let content = content
-        .iter()
-        .map(|s| format!(" - {}", s.trim()))
-        .collect::<Vec<_>>();
+fn highlight_tags<'a>(tags: Option<String>, highlight: bool) -> Vec<Line<'a>> {
+    let content = if let Some(tags) = tags {
+        let content = &tags.split(',').collect::<Vec<_>>();
+        match content.len() {
+            0 => vec![],
+            _ => content
+                .iter()
+                .map(|s| format!(" - {}", s.trim()))
+                .collect::<Vec<_>>(),
+        }
+    } else {
+        vec![]
+    };
+
     let content = content.into_iter().map(Line::from).collect::<Vec<_>>();
     let values = if highlight {
         vec![Line::styled(
@@ -300,6 +318,6 @@ fn highlight_tags<'a>(tags: String, highlight: bool) -> Vec<Line<'a>> {
 
     values
         .into_iter()
-        .chain(vec![Line::from("")])
+        // .chain(vec![Line::from("")])
         .collect::<Vec<_>>()
 }
