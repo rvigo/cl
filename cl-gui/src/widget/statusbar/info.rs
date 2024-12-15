@@ -1,4 +1,4 @@
-use crate::{dummy_block, widget::display::DisplayWidget, DEFAULT_INFO_COLOR};
+use crate::{dummy_block, theme::DEFAULT_INFO_COLOR, widget::display::DisplayWidget};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},

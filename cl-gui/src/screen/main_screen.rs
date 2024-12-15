@@ -3,14 +3,18 @@ use crate::{
     context::{Application, UI},
     default_widget_block, display_widget, popup, render,
     terminal::{TerminalSize, TerminalSizeExt},
+    theme::{
+        DEFAULT_BACKGROUND_COLOR, DEFAULT_HIGHLIGHT_COLOR, DEFAULT_TEXT_COLOR,
+        DEFAULT_WIDGET_NAME_COLOR,
+    },
     widget::{
+        clipboard::ClibpoardWidget,
         list::List,
         popup::{HelpPopup, RenderPopup},
-        statusbar::{Help, Info, QueryBox},
+        statusbar::{Help, QueryBox},
         DisplayWidget,
     },
-    State, DEFAULT_BACKGROUND_COLOR, DEFAULT_HIGH_LIGHT_COLOR, DEFAULT_TEXT_COLOR,
-    DEFAULT_WIDGET_NAME_COLOR,
+    State,
 };
 use cl_core::{CommandBuilder, Namespace};
 use tui::{
@@ -68,14 +72,9 @@ impl Screen for MainScreen {
         );
 
         let left = ui_context.querybox.to_owned();
-        let center = if ui_context.clipboard_state.yanked() {
-            let info = Info::new("Command copied to clipboard!");
-            ui_context.clipboard_state.check();
 
-            Some(info)
-        } else {
-            None
-        };
+        let clipboard = ClibpoardWidget::new(&mut ui_context.clipboard_state);
+
         let right = Help::new();
         //
         match frame.size().as_terminal_size() {
@@ -88,7 +87,7 @@ impl Screen for MainScreen {
                 tags,
                 description,
                 left,
-                center,
+                clipboard,
                 right,
             ),
             TerminalSize::Large => render_medium_size(
@@ -100,7 +99,7 @@ impl Screen for MainScreen {
                 tags,
                 description,
                 left,
-                center,
+                clipboard,
                 right,
             ),
             TerminalSize::Small => render_form_small(frame, tabs, aliases, command, left),
@@ -116,7 +115,7 @@ impl Screen for MainScreen {
         if ui_context.popup.show_popup() {
             let popup_ctx = &mut ui_context.popup;
             let content = &popup_ctx.content;
-            let choices = popup_ctx.choices();
+            let choices = &popup_ctx.choices().to_owned();
             let popup = popup!(content, choices);
             frame.render_stateful_popup(popup, frame.size(), popup_ctx);
         }
@@ -131,7 +130,7 @@ fn create_namespaces_menu_widget<'a>(namespaces: Vec<Namespace>, selected: usize
         .block(default_widget_block!("Namespaces"))
         .highlight_style(
             Style::default()
-                .fg(DEFAULT_HIGH_LIGHT_COLOR)
+                .fg(DEFAULT_HIGHLIGHT_COLOR)
                 .add_modifier(Modifier::BOLD | Modifier::ITALIC),
         )
         .divider(Span::raw("|"))
@@ -147,7 +146,7 @@ fn render_medium_size(
     tags: DisplayWidget,
     description: DisplayWidget,
     left: QueryBox,
-    center: Option<Info>,
+    center: ClibpoardWidget,
     right: Help,
 ) {
     let drawable_area = [
@@ -228,9 +227,7 @@ fn render_medium_size(
         ])
         .split(footer.inner(drawable_chunks[1]));
 
-    if let Some(center_statusbar_item) = center {
-        render! { frame, { center_statusbar_item, statusbar_layout[1] }};
-    }
+    render! {frame, {center, statusbar_layout[1]}};
 
     render! { frame, { footer, drawable_chunks[1] }};
     render! {

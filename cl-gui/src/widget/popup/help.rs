@@ -1,5 +1,5 @@
 use super::Popup;
-use crate::{context::PopupContext, default_popup_block, ViewMode, DEFAULT_TEXT_COLOR};
+use crate::{context::PopupContext, default_popup_block, theme::DEFAULT_TEXT_COLOR, ViewMode};
 use comfy_table::{presets, CellAlignment};
 use std::ops::Deref;
 use tui::{

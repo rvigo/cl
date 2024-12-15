@@ -3,6 +3,10 @@ use crate::{
     context::{Application, UI},
     default_widget_block, popup, render,
     terminal::TerminalSizeExt,
+    theme::{
+        DEFAULT_BACKGROUND_COLOR, DEFAULT_HIGHLIGHT_COLOR, DEFAULT_TEXT_COLOR,
+        DEFAULT_WIDGET_NAME_COLOR,
+    },
     view_mode::ViewMode,
     widget::{
         popup::{HelpPopup, RenderPopup},
@@ -10,8 +14,6 @@ use crate::{
         text_field::FieldType,
         TextField,
     },
-    DEFAULT_BACKGROUND_COLOR, DEFAULT_HIGH_LIGHT_COLOR, DEFAULT_TEXT_COLOR,
-    DEFAULT_WIDGET_NAME_COLOR,
 };
 use itertools::Itertools;
 use tui::{
@@ -37,9 +39,11 @@ impl Screen for FormScreen {
             None
         };
         let right = Help::default();
-        match terminal_size {
-            _ => render_medium_form(frame, &view_mode, &fields, center, right),
-        }
+        // temporally disable match expression
+        // match terminal_size {
+        //     _ => render_medium_form(frame, &view_mode, &fields, center, right),
+        // }
+        render_medium_form(frame, &view_mode, &fields, center, right);
 
         if ui_context.show_help() {
             let help_popup = popup!(&ui_context.view_mode());
@@ -49,7 +53,7 @@ impl Screen for FormScreen {
         if ui_context.popup.show_popup() {
             let popup_ctx = &mut ui_context.popup;
             let content = &popup_ctx.content;
-            let choices = popup_ctx.choices();
+            let choices = &popup_ctx.choices().to_owned();
             let popup = popup!(content, choices);
             frame.render_stateful_popup(popup, frame.size(), popup_ctx);
         }
@@ -72,6 +76,7 @@ fn render_medium_form(
         Constraint::Percentage(25), // name & preview
         Constraint::Percentage(75), // right side
     ];
+
     let constraints = [
         Constraint::Length(5), //Alias & Namespace
         Constraint::Min(10),   //Command
@@ -215,7 +220,7 @@ fn highlight<'line>(field_type: FieldType, text: String, highlight: bool) -> Vec
             Line::styled(
                 field_name,
                 Style::default()
-                    .fg(DEFAULT_HIGH_LIGHT_COLOR)
+                    .fg(DEFAULT_HIGHLIGHT_COLOR)
                     .add_modifier(Modifier::BOLD),
             ),
             Line::from(text.lines().join("\n")),
@@ -223,7 +228,7 @@ fn highlight<'line>(field_type: FieldType, text: String, highlight: bool) -> Vec
         ]
     } else {
         vec![
-            Line::styled(field_name, Style::default().fg(DEFAULT_HIGH_LIGHT_COLOR)),
+            Line::styled(field_name, Style::default().fg(DEFAULT_HIGHLIGHT_COLOR)),
             Line::from(text.lines().join("\n")),
             space,
         ]
@@ -236,7 +241,7 @@ fn highlight_lines<'a>(field_type: FieldType, text: Vec<String>, highlight: bool
         vec![Line::styled(
             field_type.to_string(),
             Style::default()
-                .fg(DEFAULT_HIGH_LIGHT_COLOR)
+                .fg(DEFAULT_HIGHLIGHT_COLOR)
                 .add_modifier(Modifier::BOLD),
         )]
         .into_iter()
@@ -245,7 +250,7 @@ fn highlight_lines<'a>(field_type: FieldType, text: Vec<String>, highlight: bool
     } else {
         vec![Line::styled(
             field_type.to_string(),
-            Style::default().fg(DEFAULT_HIGH_LIGHT_COLOR),
+            Style::default().fg(DEFAULT_HIGHLIGHT_COLOR),
         )]
         .into_iter()
         .chain(content.clone())
@@ -277,7 +282,7 @@ fn highlight_tags<'a>(tags: String, highlight: bool) -> Vec<Line<'a>> {
         vec![Line::styled(
             FieldType::Tags.to_string(),
             Style::default()
-                .fg(DEFAULT_HIGH_LIGHT_COLOR)
+                .fg(DEFAULT_HIGHLIGHT_COLOR)
                 .add_modifier(Modifier::BOLD),
         )]
         .into_iter()
@@ -286,7 +291,7 @@ fn highlight_tags<'a>(tags: String, highlight: bool) -> Vec<Line<'a>> {
     } else {
         vec![Line::styled(
             FieldType::Tags.to_string(),
-            Style::default().fg(DEFAULT_HIGH_LIGHT_COLOR),
+            Style::default().fg(DEFAULT_HIGHLIGHT_COLOR),
         )]
         .into_iter()
         .chain(content.clone())

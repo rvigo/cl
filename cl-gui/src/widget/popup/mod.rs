@@ -10,7 +10,7 @@ pub use help::HelpPopup;
 pub use popup_type::Type;
 pub use question::QuestionPopup;
 
-use crate::{centered_rect, context::PopupContext, DEFAULT_SELECTED_COLOR};
+use crate::{centered_rect, context::PopupContext, theme::DEFAULT_SELECTED_COLOR};
 use std::{rc::Rc, vec};
 use tui::{
     buffer::Buffer,
@@ -161,7 +161,7 @@ pub mod macros {
                 style::{Color, Modifier, Style},
                 widgets::{Block, BorderType, Borders, Padding},
             };
-            use $crate::{DEFAULT_BACKGROUND_COLOR, DEFAULT_TEXT_COLOR};
+            use $crate::theme::{DEFAULT_BACKGROUND_COLOR, DEFAULT_TEXT_COLOR};
 
             let style = match $popup_type {
                 Type::Error => Style::default()
