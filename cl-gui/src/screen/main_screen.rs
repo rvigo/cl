@@ -28,10 +28,10 @@ use tui::{
 pub struct MainScreen;
 
 impl Screen for MainScreen {
-    fn render(&self, frame: &mut Frame, context: &mut Application, ui_context: &mut UI) {
-        let query = ui_context.querybox.input();
-        let filtered_commands = context.filter_commands(&query);
-        let selected_idx = context.commands.selected_command_idx();
+    fn render(&self, frame: &mut Frame, application: &mut Application, ui: &mut UI) {
+        let query = ui.querybox.input();
+        let filtered_commands = application.filter_commands(&query);
+        let selected_idx = application.commands.selected_command_idx();
         let selected_command = filtered_commands
             .get(selected_idx)
             .map(ToOwned::to_owned)
@@ -39,14 +39,14 @@ impl Screen for MainScreen {
             .to_owned();
 
         //
-        ui_context.select_command(Some(&selected_command));
+        ui.select_command(Some(&selected_command));
 
-        let should_highlight = context.should_highlight();
+        let should_highlight = application.should_highlight();
 
-        let namespaces = context.namespaces.items.to_owned();
-        let selected_namespace = context.namespaces.state.selected();
+        let namespaces = application.namespaces.items.to_owned();
+        let selected_namespace = application.namespaces.state.selected();
 
-        let command_state = context.commands.state();
+        let command_state = application.commands.state();
         let command_str = &selected_command.command;
         let tags_str = &selected_command.tags_as_string();
         let description_str = &selected_command.description();
@@ -71,9 +71,9 @@ impl Screen for MainScreen {
             &query
         );
 
-        let left = ui_context.querybox.to_owned();
+        let left = ui.querybox.to_owned();
 
-        let clipboard = ClibpoardWidget::new(&mut ui_context.clipboard_state);
+        let clipboard = ClibpoardWidget::new(&mut ui.clipboard_state);
 
         let right = Help::new();
         //
@@ -106,14 +106,14 @@ impl Screen for MainScreen {
         }
 
         //
-        if ui_context.show_help() {
-            let help = popup!(&ui_context.view_mode());
+        if ui.show_help() {
+            let help = popup!(&ui.view_mode());
             frame.render_popup(help, frame.size());
         }
 
         //
-        if ui_context.popup.show_popup() {
-            let popup_ctx = &mut ui_context.popup;
+        if ui.popup.show_popup() {
+            let popup_ctx = &mut ui.popup;
             let content = &popup_ctx.content;
             let choices = &popup_ctx.choices().to_owned();
             let popup = popup!(content, choices);
@@ -154,8 +154,8 @@ fn render_medium_size(
         Constraint::Max(3),    // footer
     ];
     let areas = [
-        Constraint::Percentage(25), // name & aliases
-        Constraint::Percentage(75), // right side
+        Constraint::Percentage(20), // name & aliases
+        Constraint::Percentage(80), // right side
     ];
 
     let constraints = [
