@@ -11,8 +11,9 @@ use crate::{
         clipboard::ClibpoardWidget,
         list::List,
         popup::{HelpPopup, RenderPopup},
-        statusbar::{Help, QueryBox},
-        DisplayWidget,
+        statusbar::Help,
+        tabs::Tabs,
+        Component,
     },
     State,
 };
@@ -20,8 +21,8 @@ use cl_core::{CommandBuilder, Namespace};
 use tui::{
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Modifier, Style},
-    text::{Line, Span, Text},
-    widgets::{Block, BorderType, Borders, Padding, Paragraph, Tabs},
+    text::Text,
+    widgets::{Block, BorderType, Borders, Padding, Paragraph},
     Frame,
 };
 
@@ -52,7 +53,7 @@ impl Screen for MainScreen {
         let description_str = &selected_command.description();
 
         let aliases = List::new(&filtered_commands, command_state);
-        let tabs = create_namespaces_menu_widget(namespaces, selected_namespace);
+        let tabs = create_tabs(namespaces, selected_namespace);
 
         let command = display_widget!("Command", command_str, true, should_highlight, &query);
         let tags = display_widget!("Tags", tags_str, true, should_highlight, &query);
@@ -71,14 +72,11 @@ impl Screen for MainScreen {
             &query
         );
 
-        let left = ui.querybox.to_owned();
+        let querybox = ui.querybox.to_owned();
 
-        let clipboard = ClibpoardWidget::new(&mut ui.clipboard_state);
-
-        let right = Help::new();
         //
         match frame.size().as_terminal_size() {
-            TerminalSize::Medium => render_medium_size(
+            TerminalSize::Medium | TerminalSize::Large => render_medium_size(
                 frame,
                 tabs,
                 command,
@@ -86,23 +84,11 @@ impl Screen for MainScreen {
                 namespace,
                 tags,
                 description,
-                left,
-                clipboard,
-                right,
+                querybox,
+                ClibpoardWidget::new(&mut ui.clipboard_state),
+                Help::new(),
             ),
-            TerminalSize::Large => render_medium_size(
-                frame,
-                tabs,
-                command,
-                aliases,
-                namespace,
-                tags,
-                description,
-                left,
-                clipboard,
-                right,
-            ),
-            TerminalSize::Small => render_form_small(frame, tabs, aliases, command, left),
+            TerminalSize::Small => render_form_small(frame, tabs, aliases, command, querybox),
         }
 
         //
@@ -122,9 +108,7 @@ impl Screen for MainScreen {
     }
 }
 
-fn create_namespaces_menu_widget<'a>(namespaces: Vec<Namespace>, selected: usize) -> Tabs<'a> {
-    let namespaces = namespaces.into_iter().map(Line::from).collect();
-
+fn create_tabs<'a>(namespaces: Vec<Namespace>, selected: usize) -> Tabs<'a> {
     Tabs::new(namespaces)
         .select(selected)
         .block(default_widget_block!("Namespaces"))
@@ -133,21 +117,21 @@ fn create_namespaces_menu_widget<'a>(namespaces: Vec<Namespace>, selected: usize
                 .fg(DEFAULT_HIGHLIGHT_COLOR)
                 .add_modifier(Modifier::BOLD | Modifier::ITALIC),
         )
-        .divider(Span::raw("|"))
+        .divider('|')
 }
 
 #[allow(clippy::too_many_arguments)]
 fn render_medium_size(
     frame: &mut Frame,
-    tabs: Tabs,
-    command: DisplayWidget,
-    aliases: List,
-    namespace: DisplayWidget,
-    tags: DisplayWidget,
-    description: DisplayWidget,
-    left: QueryBox,
-    center: ClibpoardWidget,
-    right: Help,
+    tabs: impl Component,
+    command: impl Component,
+    aliases: impl Component,
+    namespace: impl Component,
+    tags: impl Component,
+    description: impl Component,
+    left: impl Component,
+    center: impl Component,
+    right: impl Component,
 ) {
     let drawable_area = [
         Constraint::Length(5), // drawable area
@@ -254,10 +238,10 @@ fn render_medium_size(
 
 fn render_form_small(
     frame: &mut Frame,
-    tabs: Tabs,
-    commands: List,
-    command: DisplayWidget,
-    querybox: QueryBox,
+    tabs: impl Component,
+    commands: impl Component,
+    command: impl Component,
+    querybox: impl Component,
 ) {
     let areas = [
         Constraint::Percentage(25), // name & aliases

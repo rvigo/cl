@@ -1,10 +1,12 @@
-use super::statusbar::Info;
+use super::{statusbar::Info, Component};
 use crate::state::ClipboardState;
 use tui::{buffer::Buffer, layout::Rect, widgets::Widget};
 
 pub struct ClibpoardWidget<'clipboard> {
     state: &'clipboard mut ClipboardState,
 }
+
+impl Component for ClibpoardWidget<'_> {}
 
 impl<'clipboard> ClibpoardWidget<'clipboard> {
     pub fn new(state: &'clipboard mut ClipboardState) -> Self {

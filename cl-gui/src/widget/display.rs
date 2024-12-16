@@ -1,3 +1,4 @@
+use super::Component;
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -6,7 +7,6 @@ use tui::{
     widgets::{Block, Paragraph, Widget, Wrap},
 };
 
-#[derive(Clone)]
 pub struct DisplayWidget<'a> {
     /// the content of the widget
     content: String,
@@ -20,6 +20,8 @@ pub struct DisplayWidget<'a> {
     style: Style,
     alignment: Alignment,
 }
+
+impl Component for DisplayWidget<'_> {}
 
 impl<'a> DisplayWidget<'a> {
     pub fn new<T>(content: T, trim: bool, should_highlight: bool) -> DisplayWidget<'a>
@@ -100,9 +102,8 @@ mod test {
     fn should_highlight_multiline_input() {
         let content = "sandbox\nsandbox";
         let pattern = "sand";
-        let d = DisplayWidget::new(content, false, true);
 
-        let result = d.clone().highlight(pattern);
+        let result = DisplayWidget::new(content, false, true).highlight(pattern);
 
         assert!(result.highlighted_content.is_some());
 

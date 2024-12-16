@@ -122,7 +122,7 @@ macro_rules! register {
 
 #[macro_export]
 macro_rules! render {
-    ($frame:ident, $({ $what:ident, $_where:expr}),* $(,)?) => {
+    ($frame:ident, $({ $what:expr, $_where:expr}),* $(,)?) => {
         $(
             $frame.render_widget($what, $_where);
         )+

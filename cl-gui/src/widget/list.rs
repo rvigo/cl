@@ -1,3 +1,4 @@
+use super::Component;
 use crate::{default_widget_block, state::ListState, theme::DEFAULT_TEXT_COLOR};
 use cl_core::CommandVec;
 use tui::{
@@ -9,7 +10,6 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-#[derive(Clone)]
 pub struct List<'a> {
     block: Option<Block<'a>>,
     items: Vec<String>,
@@ -21,6 +21,8 @@ pub struct List<'a> {
     highlight_spacing: HighlightSpacing,
     state: ListState,
 }
+
+impl Component for List<'_> {}
 
 impl<'a> List<'a> {
     pub fn new(commands: &CommandVec, state: ListState) -> List<'a> {

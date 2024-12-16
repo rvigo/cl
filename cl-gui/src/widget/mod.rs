@@ -3,9 +3,9 @@ mod display;
 mod highlight;
 pub mod list;
 mod macros;
-
 pub mod popup;
 pub mod statusbar;
+pub mod tabs;
 pub mod text_field;
 
 pub use display::DisplayWidget;
@@ -13,6 +13,7 @@ pub use text_field::TextField;
 
 use crossterm::event::KeyEvent;
 use std::ops::Deref;
+use tui::widgets::Widget;
 
 /// Handles use key input
 pub trait WidgetKeyHandler {
@@ -69,3 +70,6 @@ impl From<Option<&String>> for Lines {
         }
     }
 }
+
+// A marker trait for all widgets
+pub trait Component: Widget {}
