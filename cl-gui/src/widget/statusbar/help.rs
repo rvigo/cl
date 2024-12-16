@@ -1,4 +1,7 @@
-use crate::{dummy_block, widget::display::DisplayWidget};
+use crate::{
+    dummy_block,
+    widget::{display::DisplayWidget, Component},
+};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -9,6 +12,8 @@ use tui::{
 pub struct Help {
     content: String,
 }
+
+impl Component for Help {}
 
 impl Help {
     pub fn new() -> Help {

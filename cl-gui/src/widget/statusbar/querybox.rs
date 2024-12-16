@@ -4,7 +4,7 @@ use crate::{
         DEFAULT_BACKGROUND_COLOR, DEFAULT_HIGHLIGHT_COLOR, DEFAULT_SELECTED_COLOR,
         DEFAULT_TEXT_COLOR,
     },
-    widget::WidgetKeyHandler,
+    widget::{Component, WidgetKeyHandler},
 };
 use crossterm::event::{KeyCode, KeyEvent};
 use tui::{
@@ -21,6 +21,8 @@ pub struct QueryBox<'querybox> {
     focus: bool,
     buffer: String,
 }
+
+impl Component for QueryBox<'_> {}
 
 impl<'querybox> QueryBox<'querybox> {
     pub fn focus(&self) -> bool {
@@ -57,7 +59,7 @@ impl WidgetKeyHandler for QueryBox<'_> {
 
 impl<'querybox> Widget for QueryBox<'querybox> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
-        let inner_b = dummy_block!(); // new block just to get the inner area
+        let inner_b = dummy_block!();
         let inner_area = inner_b.inner(area);
 
         let style = if self.focus {
