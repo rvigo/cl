@@ -1,9 +1,9 @@
 use std::time::{Duration, Instant};
 
+#[derive(Default)]
 pub struct ClipboardState {
     yanked: bool,
-    start_instant: Option<Instant>,
-    duration: u64,
+    timer_counter: ClipboardTimerCount,
 }
 
 impl ClipboardState {
@@ -11,31 +11,47 @@ impl ClipboardState {
         self.yanked
     }
 
-    pub fn start(&mut self) {
+    pub fn start_counter(&mut self) {
         self.yanked = true;
-        self.start_instant = Some(Instant::now());
+        self.timer_counter.start();
     }
 
-    pub fn check(&mut self) {
-        if let Some(instant) = self.start_instant {
-            if instant.elapsed().as_secs() == Duration::new(self.duration, 0).as_secs() {
-                self.stop()
-            }
+    pub fn check_if_need_to_stop(&mut self) {
+        self.timer_counter.check();
+        if !self.timer_counter.running {
+            self.yanked = false;
         }
-    }
-
-    fn stop(&mut self) {
-        self.yanked = false;
-        self.start_instant = None;
     }
 }
 
-impl Default for ClipboardState {
+struct ClipboardTimerCount {
+    start_instant: Option<Instant>,
+    duration: u64,
+    running: bool,
+}
+
+impl ClipboardTimerCount {
+    fn start(&mut self) {
+        self.start_instant = Some(Instant::now());
+        self.running = true;
+    }
+
+    fn check(&mut self) {
+        if let Some(instant) = self.start_instant {
+            if instant.elapsed().as_secs() == Duration::new(self.duration, 0).as_secs() {
+                self.start_instant = None;
+                self.running = false;
+            }
+        }
+    }
+}
+
+impl Default for ClipboardTimerCount {
     fn default() -> Self {
         Self {
-            yanked: Default::default(),
             start_instant: Default::default(),
             duration: 3,
+            running: false,
         }
     }
 }
