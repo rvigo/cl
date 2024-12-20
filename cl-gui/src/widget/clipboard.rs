@@ -23,6 +23,6 @@ impl<'clipboard> Widget for ClibpoardWidget<'clipboard> {
             info.render(area, buf);
         }
 
-        self.state.check();
+        self.state.check_if_need_to_stop();
     }
 }

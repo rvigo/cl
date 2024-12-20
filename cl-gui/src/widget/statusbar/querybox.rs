@@ -62,12 +62,10 @@ impl<'querybox> Widget for QueryBox<'querybox> {
         let inner_b = dummy_block!();
         let inner_area = inner_b.inner(area);
 
-        let style = if self.focus {
-            Style::default().fg(Color::Black).bg(DEFAULT_SELECTED_COLOR)
-        } else if !self.focus && !self.text_area.is_empty() {
-            Style::default().fg(DEFAULT_HIGHLIGHT_COLOR)
-        } else {
-            Style::default().fg(DEFAULT_TEXT_COLOR)
+        let style = match self.focus {
+            true => Style::default().fg(Color::Black).bg(DEFAULT_SELECTED_COLOR),
+            false if !self.text_area.is_empty() => Style::default().fg(DEFAULT_HIGHLIGHT_COLOR),
+            false => Style::default().fg(DEFAULT_TEXT_COLOR),
         };
 
         if self.buffer.is_empty() && !self.focus {

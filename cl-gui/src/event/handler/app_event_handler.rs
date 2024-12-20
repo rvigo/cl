@@ -109,7 +109,7 @@ impl<'a> AppEventHandler<'a> {
                                     PopupCallbackAction::None,
                                 );
                             } else {
-                                ui.clipboard_state.start()
+                                ui.clipboard_state.start_counter()
                             }
                         }
                     }
