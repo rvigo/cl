@@ -25,7 +25,7 @@ pub struct TuiApplication<'tui> {
     should_quit: Arc<AtomicBool>,
     ui: Arc<Mutex<UI<'tui>>>,
     context: Arc<Mutex<Application>>,
-    screens: Screens<'tui>,
+    screens: Screens,
 }
 
 impl<'tui> TuiApplication<'tui> {
@@ -35,7 +35,7 @@ impl<'tui> TuiApplication<'tui> {
         ui: Arc<Mutex<UI<'tui>>>,
         context: Arc<Mutex<Application>>,
         terminal: Terminal<CrosstermBackend<Stdout>>,
-        screens: Screens<'tui>,
+        screens: Screens,
     ) -> Result<TuiApplication<'tui>> {
         let tui = TuiApplication {
             terminal,
@@ -53,9 +53,9 @@ impl<'tui> TuiApplication<'tui> {
         while !self.should_quit.load(Ordering::SeqCst) {
             let view_mode = self.current_view_mode();
 
-            if let Some(screen) = self.screens.get_screen(view_mode) {
+            if let Some(screen) = self.screens.get_screen_mut(view_mode) {
                 self.terminal
-                    .draw(&mut self.ui.lock(), &mut self.context.lock(), screen)?;
+                    .draw(&mut self.ui.lock(), &mut self.context.lock(), &mut **screen)?;
 
                 if event::poll(Duration::from_millis(50))? {
                     if let Ok(Event::Key(key)) = event::read() {
