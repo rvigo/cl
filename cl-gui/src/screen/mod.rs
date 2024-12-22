@@ -1,13 +1,12 @@
 mod form_screen;
 mod main_screen;
+pub mod observer;
 
 use crate::context::{Application, UI};
-use crate::{
-    register,
-    screen::{form_screen::FormScreen, main_screen::MainScreen},
-    ViewMode,
-};
+use crate::{register, ViewMode};
+use main_screen::MainScreen;
 use std::collections::HashMap;
+use std::ops::{Deref, DerefMut};
 use tui::Frame;
 
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -46,40 +45,68 @@ impl From<ScreenType> for ViewMode {
 
 /// Represents a Screen
 pub trait Screen {
-    fn render(&self, frame: &mut Frame, application: &mut Application, ui: &mut UI);
+    fn render(&mut self, frame: &mut Frame, application: &mut Application, ui: &mut UI);
 }
 
-type ScreenRegistrar<'screen> = HashMap<ScreenType, &'screen (dyn Screen + 'screen)>;
+type ScreenRegistrar<'screen> = HashMap<ScreenType, BoxedScreen>;
+
+pub struct BoxedScreen(Box<dyn Screen>);
+
+impl BoxedScreen {
+    pub fn new(screen: impl Screen + 'static) -> Self {
+        Self(Box::new(screen))
+    }
+}
+
+impl Deref for BoxedScreen {
+    type Target = dyn Screen;
+
+    fn deref(&self) -> &Self::Target {
+        &*self.0
+    }
+}
+
+impl DerefMut for BoxedScreen {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut *self.0
+    }
+}
 
 /// Screens aggregator
-pub struct Screens<'screen> {
-    screens: ScreenRegistrar<'screen>,
+pub struct Screens {
+    screens: ScreenRegistrar<'static>,
 }
 
-impl<'screen> Screens<'screen> {
-    pub fn new() -> Screens<'screen> {
-        let mut screens: ScreenRegistrar<'screen> = ScreenRegistrar::new();
+impl Screens {
+    pub fn new() -> Screens {
+        let mut screens: ScreenRegistrar = ScreenRegistrar::new();
 
         register!(
             screens,
-            ScreenType::Main => &MainScreen,
-            ScreenType::Form(Operation::Insert) => &FormScreen,
-            ScreenType::Form(Operation::Edit) => &FormScreen
+            ScreenType::Main => BoxedScreen::new(MainScreen::new()),
         );
 
         Self { screens }
     }
 
-    pub fn get_screen<I>(&mut self, screen_type: I) -> Option<&(dyn Screen + 'screen)>
+    pub fn get_screen<I>(&mut self, screen_type: I) -> Option<&BoxedScreen>
     where
         I: Into<ScreenType>,
     {
         let st: ScreenType = screen_type.into();
-        self.screens.get(&st).copied()
+        self.screens.get(&st)
+    }
+
+    pub fn get_screen_mut<I>(&mut self, screen_type: I) -> Option<&mut BoxedScreen>
+    where
+        I: Into<ScreenType>,
+    {
+        let st: ScreenType = screen_type.into();
+        self.screens.get_mut(&st)
     }
 }
 
-impl Default for Screens<'_> {
+impl Default for Screens {
     fn default() -> Self {
         Self::new()
     }

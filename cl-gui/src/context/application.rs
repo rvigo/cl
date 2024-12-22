@@ -4,7 +4,7 @@ use super::{
 };
 use crate::Clipboard;
 use anyhow::Result;
-use cl_core::{resource::FileService, Command, CommandVec, Commands, Preferences};
+use cl_core::{resource::FileService, Command, CommandBuilder, CommandVec, Commands, Preferences};
 
 pub struct Application {
     pub commands: CommandsContext,
@@ -60,6 +60,17 @@ impl Application {
         let current_namespace = self.namespaces.current();
         self.commands
             .filter_commands(&current_namespace, query_string)
+    }
+
+    pub fn get_selected_command(&mut self, query_string: Option<&str>) -> Option<Command> {
+        let filtered_commands = self.filter_commands(&query_string.unwrap_or_default());
+        let selected_idx = self.commands.selected_command_idx();
+        let selected_command = filtered_commands
+            .get(selected_idx)
+            .map(ToOwned::to_owned)
+            .to_owned();
+
+        selected_command
     }
 }
 

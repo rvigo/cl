@@ -1,4 +1,4 @@
-use super::Screen;
+use super::{observer::Subject, Screen};
 use crate::{
     context::{Application, UI},
     default_widget_block, display_widget, popup, render,
@@ -13,11 +13,13 @@ use crate::{
         popup::{HelpPopup, RenderPopup},
         statusbar::Help,
         tabs::Tabs,
-        Component,
+        text_field::FieldType::{self},
+        Component, DisplayWidget,
     },
     State,
 };
 use cl_core::{CommandBuilder, Namespace};
+use std::{cell::RefCell, rc::Rc};
 use tui::{
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Modifier, Style},
@@ -26,10 +28,48 @@ use tui::{
     Frame,
 };
 
-pub struct MainScreen;
+#[derive(Clone)]
+pub struct MainScreen<'m> {
+    pub list_subject: Subject<DisplayWidget<'m>>,
+    command: Rc<RefCell<DisplayWidget<'m>>>,
+    tags: Rc<RefCell<DisplayWidget<'m>>>,
+    namespace: Rc<RefCell<DisplayWidget<'m>>>,
+    description: Rc<RefCell<DisplayWidget<'m>>>,
+}
 
-impl Screen for MainScreen {
-    fn render(&self, frame: &mut Frame, application: &mut Application, ui: &mut UI) {
+impl<'m> MainScreen<'m> {
+    pub fn new() -> Self {
+        let mut list_subject = Subject::default();
+
+        let command = display_widget!("Command", "", true, true, "");
+        let tags = display_widget!("Tags", "", true, true, "");
+        let namespace = display_widget!("Namespace", "", true, true, "");
+        let description = display_widget!("Description", "", true, true, "");
+
+        let command_refcell = Rc::new(RefCell::new(command));
+        let tags_refcell = Rc::new(RefCell::new(tags));
+        let namespace_refcell = Rc::new(RefCell::new(namespace));
+        let description_refcell = Rc::new(RefCell::new(description));
+
+        list_subject.register(FieldType::Command, Rc::clone(&command_refcell));
+        list_subject.register(FieldType::Tags, tags_refcell.to_owned());
+        list_subject.register(FieldType::Namespace, namespace_refcell.to_owned());
+        list_subject.register(FieldType::Description, description_refcell.to_owned());
+
+        let screen = MainScreen {
+            list_subject,
+            command: Rc::clone(&command_refcell),
+            tags: tags_refcell,
+            namespace: namespace_refcell,
+            description: description_refcell,
+        };
+
+        screen
+    }
+}
+
+impl<'m> Screen for MainScreen<'m> {
+    fn render(&mut self, frame: &mut Frame, application: &mut Application, ui: &mut UI) {
         let query = ui.querybox.input();
         let filtered_commands = application.filter_commands(&query);
         let selected_idx = application.commands.selected_command_idx();
@@ -48,47 +88,28 @@ impl Screen for MainScreen {
         let selected_namespace = application.namespaces.state.selected();
 
         let command_state = application.commands.state();
-        let command_str = &selected_command.command;
-        let tags_str = &selected_command.tags_as_string();
-        let description_str = &selected_command.description();
 
         let aliases = List::new(&filtered_commands, command_state);
         let tabs = create_tabs(namespaces, selected_namespace);
 
-        let command = display_widget!("Command", command_str, true, should_highlight, &query);
-        let tags = display_widget!("Tags", tags_str, true, should_highlight, &query);
-        let namespace = display_widget!(
-            "Namespace",
-            &selected_command.namespace,
-            true,
-            should_highlight,
-            &query
-        );
-        let description = display_widget!(
-            "Description",
-            description_str,
-            true,
-            should_highlight,
-            &query
-        );
+        self.list_subject.notify(&selected_command);
 
         let querybox = ui.querybox.to_owned();
 
-        //
         match frame.size().as_terminal_size() {
-            TerminalSize::Medium | TerminalSize::Large => render_medium_size(
+            TerminalSize::Medium | TerminalSize::Large | TerminalSize::Small => render_medium_size(
                 frame,
                 tabs,
-                command,
+                self.command.borrow().to_owned(),
                 aliases,
-                namespace,
-                tags,
-                description,
+                self.namespace.borrow().to_owned(),
+                self.tags.borrow().to_owned(),
+                self.description.borrow().to_owned(),
                 querybox,
                 ClibpoardWidget::new(&mut ui.clipboard_state),
                 Help::new(),
             ),
-            TerminalSize::Small => render_form_small(frame, tabs, aliases, command, querybox),
+            // TerminalSize::Small => render_form_small(frame, tabs, aliases, command, querybox),
         }
 
         //
@@ -124,7 +145,7 @@ fn create_tabs<'a>(namespaces: Vec<Namespace>, selected: usize) -> Tabs<'a> {
 fn render_medium_size(
     frame: &mut Frame,
     tabs: impl Component,
-    command: impl Component,
+    command: DisplayWidget,
     aliases: impl Component,
     namespace: impl Component,
     tags: impl Component,
@@ -225,7 +246,6 @@ fn render_medium_size(
         { app_name, left_side[0]},
         { aliases,  left_side[1]},
     }
-
     render! {
         frame,
         { tabs,        right_side[0] }, // top

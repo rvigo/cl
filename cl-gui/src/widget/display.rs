@@ -7,13 +7,14 @@ use tui::{
     widgets::{Block, Paragraph, Widget, Wrap},
 };
 
+#[derive(PartialEq, Debug, Clone)]
 pub struct DisplayWidget<'a> {
     /// the content of the widget
-    content: String,
+    pub content: String,
     /// flag indicating if the content can be highlighted
-    should_highlight: bool,
+    pub should_highlight: bool,
     /// the highlighted content
-    highlighted_content: Option<Line<'a>>,
+    pub highlighted_content: Option<Line<'a>>,
     /// flag indicating if the content should be trimmed
     trim: bool,
     block: Option<Block<'a>>,
