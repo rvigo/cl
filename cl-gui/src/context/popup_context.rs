@@ -1,38 +1,42 @@
 use super::Selectable;
 use crate::{
-    event::PopupCallbackAction,
-    widget::popup::{Choice, Content, Type},
+    event::{DialogType, PopupCallbackAction},
+    screen::dialog_factory::{
+        CommandDeletionConfirmationDialog, EditedScreenExitDialog, GenericErrorDialog,
+    },
+    widget::popup::{Choice, Popup},
     State,
 };
+use log::debug;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct PopupContext {
-    pub content: Content,
     selected_choice_idx: usize,
-    available_choices: Vec<Choice>,
     show_popup: bool,
+    pub callback: PopupCallbackAction,
+    pub dialog_type: Option<DialogType>,
 }
 
 impl PopupContext {
     pub fn new() -> PopupContext {
         Self {
-            content: Content::default(),
             selected_choice_idx: 0,
-            available_choices: vec![],
             show_popup: false,
+            callback: PopupCallbackAction::None,
+            dialog_type: None,
         }
     }
 
-    pub fn set_choices(&mut self, choices: Vec<Choice>) {
-        self.available_choices = choices
+    pub fn active_popup(&self) -> Option<Popup<String>> {
+        self.factory()
     }
 
-    pub fn choices(&self) -> &Vec<Choice> {
-        &self.available_choices
-    }
-
-    pub fn selected_choice(&self) -> Choice {
-        self.choices()[self.selected_choice_idx].to_owned()
+    pub fn selected_choice(&self) -> Option<Choice> {
+        if let Some(pop) = &self.active_popup() {
+            Some(pop.choices[self.selected_choice_idx].to_owned())
+        } else {
+            None
+        }
     }
 
     pub fn selected_choice_idx(&self) -> usize {
@@ -43,20 +47,8 @@ impl PopupContext {
         self.selected_choice_idx = 0;
     }
 
-    pub fn set_content(
-        &mut self,
-        popup_type: Type,
-        message: String,
-        callback_action: PopupCallbackAction,
-    ) {
-        let answers = match popup_type {
-            Type::Error => Choice::confirm(),
-            Type::Warning => Choice::dialog(),
-            Type::Help => Choice::empty(),
-        };
-        self.set_choices(answers);
-        self.content
-            .set(popup_type.to_string(), popup_type, message, callback_action);
+    pub fn set_dialog_type(&mut self, r#type: DialogType) {
+        self.dialog_type = Some(r#type);
     }
 
     pub fn show_popup(&self) -> bool {
@@ -64,23 +56,47 @@ impl PopupContext {
     }
 
     pub fn set_show_popup(&mut self, show: bool) {
+        debug!("Setting show_popup: {:?}", show);
         self.show_popup = show
+    }
+
+    pub fn deactivate_popup(&mut self) {
+        self.callback = PopupCallbackAction::None;
+        self.dialog_type = None;
+    }
+
+    fn factory(&self) -> Option<Popup<String>> {
+        if let Some(dialog) = &self.dialog_type {
+            let pop = match dialog {
+                DialogType::CommandDeletionConfimation => CommandDeletionConfirmationDialog::new(),
+                DialogType::EditedScreenExit => EditedScreenExitDialog::new(),
+                DialogType::GenericError(message) => GenericErrorDialog::new(message),
+            };
+
+            Some(pop)
+        } else {
+            None
+        }
     }
 }
 
 impl Selectable for PopupContext {
     fn next(&mut self) {
-        let current = self.selected_choice_idx;
-        let next = (current + 1) % self.available_choices.len();
+        if let Some(pop) = self.active_popup().as_mut() {
+            let current = self.selected_choice_idx;
+            let next = (current + 1) % pop.choices.len();
 
-        self.selected_choice_idx = next;
+            self.selected_choice_idx = next;
+        }
     }
 
     fn previous(&mut self) {
-        let current = self.selected_choice_idx;
-        let previous = (current + self.available_choices.len() - 1) % self.available_choices.len();
+        if let Some(pop) = self.active_popup().as_mut() {
+            let current = self.selected_choice_idx;
+            let previous = (current + pop.choices.len() - 1) % pop.choices.len();
 
-        self.selected_choice_idx = previous;
+            self.selected_choice_idx = previous;
+        }
     }
 }
 

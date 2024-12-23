@@ -1,7 +1,10 @@
-use super::{observer::Subject, Screen};
+use super::{
+    observer::{CommandEvent, Event, Observer, Subject},
+    Screen,
+};
 use crate::{
     context::{Application, UI},
-    default_widget_block, display_widget, popup, render,
+    default_widget_block, display_widget, render,
     terminal::{TerminalSize, TerminalSizeExt},
     theme::{
         DEFAULT_BACKGROUND_COLOR, DEFAULT_HIGHLIGHT_COLOR, DEFAULT_TEXT_COLOR,
@@ -10,7 +13,6 @@ use crate::{
     widget::{
         clipboard::ClibpoardWidget,
         list::List,
-        popup::{HelpPopup, RenderPopup},
         statusbar::Help,
         tabs::Tabs,
         text_field::FieldType::{self},
@@ -30,7 +32,7 @@ use tui::{
 
 #[derive(Clone)]
 pub struct MainScreen<'m> {
-    pub list_subject: Subject<DisplayWidget<'m>>,
+    subject: Vec<Rc<RefCell<DisplayWidget<'m>>>>,
     command: Rc<RefCell<DisplayWidget<'m>>>,
     tags: Rc<RefCell<DisplayWidget<'m>>>,
     namespace: Rc<RefCell<DisplayWidget<'m>>>,
@@ -39,30 +41,30 @@ pub struct MainScreen<'m> {
 
 impl<'m> MainScreen<'m> {
     pub fn new() -> Self {
-        let mut list_subject = Subject::default();
+        let subject = Vec::new();
 
-        let command = display_widget!("Command", "", true, true, "");
-        let tags = display_widget!("Tags", "", true, true, "");
-        let namespace = display_widget!("Namespace", "", true, true, "");
-        let description = display_widget!("Description", "", true, true, "");
+        let command = display_widget!(FieldType::Command, "", true, true, "");
+        let tags = display_widget!(FieldType::Tags, "", true, true, "");
+        let namespace = display_widget!(FieldType::Namespace, "", true, true, "");
+        let description = display_widget!(FieldType::Description, "", true, true, "");
 
         let command_refcell = Rc::new(RefCell::new(command));
         let tags_refcell = Rc::new(RefCell::new(tags));
         let namespace_refcell = Rc::new(RefCell::new(namespace));
         let description_refcell = Rc::new(RefCell::new(description));
 
-        list_subject.register(FieldType::Command, Rc::clone(&command_refcell));
-        list_subject.register(FieldType::Tags, tags_refcell.to_owned());
-        list_subject.register(FieldType::Namespace, namespace_refcell.to_owned());
-        list_subject.register(FieldType::Description, description_refcell.to_owned());
-
-        let screen = MainScreen {
-            list_subject,
+        let mut screen = MainScreen {
+            subject,
             command: Rc::clone(&command_refcell),
-            tags: tags_refcell,
-            namespace: namespace_refcell,
-            description: description_refcell,
+            tags: tags_refcell.to_owned(),
+            namespace: namespace_refcell.to_owned(),
+            description: description_refcell.to_owned(),
         };
+
+        screen.register(Rc::clone(&command_refcell));
+        screen.register(tags_refcell.to_owned());
+        screen.register(namespace_refcell.to_owned());
+        screen.register(description_refcell.to_owned());
 
         screen
     }
@@ -92,7 +94,8 @@ impl<'m> Screen for MainScreen<'m> {
         let aliases = List::new(&filtered_commands, command_state);
         let tabs = create_tabs(namespaces, selected_namespace);
 
-        self.list_subject.notify(&selected_command);
+        let event = Event::new(CommandEvent::new(selected_command, query, should_highlight));
+        self.notify(event);
 
         let querybox = ui.querybox.to_owned();
 
@@ -113,26 +116,45 @@ impl<'m> Screen for MainScreen<'m> {
         }
 
         //
-        if ui.show_help() {
-            let help = popup!(&ui.view_mode());
-            frame.render_popup(help, frame.size());
-        }
+        // if ui.show_help() {
+        //     let help = popup!(&ui.view_mode());
+        //     render! { frame, { help, frame.size()}};
+        // }
 
-        //
+        // //
         if ui.popup.show_popup() {
-            let popup_ctx = &mut ui.popup;
-            let content = &popup_ctx.content;
-            let choices = &popup_ctx.choices().to_owned();
-            let popup = popup!(content, choices);
-            frame.render_stateful_popup(popup, frame.size(), popup_ctx);
+            let popup = ui.popup.active_popup();
+            if let Some(popup) = popup {
+                frame.render_stateful_widget(popup.to_owned(), frame.size(), &mut ui.popup);
+            }
         }
+    }
+}
+
+impl<'m> Subject<DisplayWidget<'m>> for MainScreen<'m> {
+    fn register(&mut self, observer: Rc<RefCell<DisplayWidget<'m>>>) {
+        self.get_observers_mut().push(observer);
+    }
+
+    fn notify(&mut self, event: Event<CommandEvent>) {
+        for observer in self.get_observers() {
+            observer.borrow_mut().update(event.to_owned());
+        }
+    }
+
+    fn get_observers<'s>(&'s self) -> &'s Vec<Rc<RefCell<DisplayWidget<'m>>>> {
+        &self.subject
+    }
+
+    fn get_observers_mut(&mut self) -> &mut Vec<Rc<RefCell<DisplayWidget<'m>>>> {
+        self.subject.as_mut()
     }
 }
 
 fn create_tabs<'a>(namespaces: Vec<Namespace>, selected: usize) -> Tabs<'a> {
     Tabs::new(namespaces)
         .select(selected)
-        .block(default_widget_block!("Namespaces"))
+        .block(default_widget_block!().title("Namespaces"))
         .highlight_style(
             Style::default()
                 .fg(DEFAULT_HIGHLIGHT_COLOR)

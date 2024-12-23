@@ -1,4 +1,8 @@
-use crate::{dummy_block, theme::DEFAULT_INFO_COLOR, widget::display::DisplayWidget};
+use crate::{
+    dummy_block,
+    theme::DEFAULT_INFO_COLOR,
+    widget::{display::DisplayWidget, text_field::FieldType},
+};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -24,7 +28,7 @@ impl Widget for Info {
         let inner_block = dummy_block!();
         let inner_area = inner_block.inner(area);
 
-        let display = DisplayWidget::new(self.content, true, false)
+        let display = DisplayWidget::new(FieldType::Info, self.content, true, false)
             .alignment(Alignment::Center)
             .style(Style::default().bg(DEFAULT_INFO_COLOR));
 

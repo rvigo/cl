@@ -67,6 +67,8 @@ impl<'fields> Fields<'fields> {
                 FieldType::Tags => {
                     field.set_text(current_command.tags.as_ref().unwrap_or(&vec![]).join(", "));
                 }
+                FieldType::Popup(_) => todo!(),
+                FieldType::Info => todo!(),
             };
 
             field.move_cursor_to_end_of_text();

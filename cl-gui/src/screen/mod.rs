@@ -1,9 +1,13 @@
+pub mod dialog_factory;
 mod form_screen;
 mod main_screen;
-pub mod observer;
+mod observer;
 
-use crate::context::{Application, UI};
-use crate::{register, ViewMode};
+use crate::{
+    context::{Application, UI},
+    register, ViewMode,
+};
+use form_screen::FormScreen;
 use main_screen::MainScreen;
 use std::collections::HashMap;
 use std::ops::{Deref, DerefMut};
@@ -84,17 +88,11 @@ impl Screens {
         register!(
             screens,
             ScreenType::Main => BoxedScreen::new(MainScreen::new()),
+            ScreenType::Form(Operation::Insert) => BoxedScreen::new(FormScreen),
+            ScreenType::Form(Operation::Edit) => BoxedScreen::new(FormScreen)
         );
 
         Self { screens }
-    }
-
-    pub fn get_screen<I>(&mut self, screen_type: I) -> Option<&BoxedScreen>
-    where
-        I: Into<ScreenType>,
-    {
-        let st: ScreenType = screen_type.into();
-        self.screens.get(&st)
     }
 
     pub fn get_screen_mut<I>(&mut self, screen_type: I) -> Option<&mut BoxedScreen>

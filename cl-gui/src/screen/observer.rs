@@ -1,59 +1,116 @@
 use crate::widget::{text_field::FieldType, DisplayWidget};
 use cl_core::Command;
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 pub trait Observer {
-    fn update(&mut self, content: String);
+    type ContentType;
+
+    fn update(&mut self, event: Event<Self::ContentType>);
 }
 
-impl<'d> Observer for DisplayWidget<'d> {
-    fn update(&mut self, content: String) {
-        self.content = content;
+pub trait Sub<O>
+where
+    O: Observer,
+{
+    fn register(&mut self, observer: Rc<RefCell<O>>);
+
+    fn notify(&mut self, event: Event<O::ContentType>);
+}
+
+pub trait Subject<O>
+where
+    O: Observer,
+{
+    fn get_observers<'s>(&'s self) -> &'s Vec<Rc<RefCell<O>>>;
+
+    fn get_observers_mut<'s>(&'s mut self) -> &'s mut Vec<Rc<RefCell<O>>>;
+
+    fn register(&mut self, observer: Rc<RefCell<O>>);
+
+    fn notify(&mut self, event: Event<O::ContentType>);
+}
+
+#[derive(Debug, Clone)]
+pub struct Event<T> {
+    pub content: T,
+}
+
+impl<T> Event<T> {
+    pub fn new(content: T) -> Self {
+        Event { content }
     }
 }
 
 #[derive(Clone)]
-pub struct Subject<O> {
-    observers: HashMap<FieldType, Rc<RefCell<O>>>,
+pub struct CommandEvent {
+    pub command: Command,
+    pub highlight: bool,
+    pub query: String,
 }
 
-impl<O> Default for Subject<O> {
-    fn default() -> Self {
-        Subject {
-            observers: HashMap::new(),
+impl CommandEvent {
+    pub fn new(command: Command, query: String, highlight: bool) -> Self {
+        CommandEvent {
+            command,
+            highlight,
+            query,
         }
     }
 }
 
-impl<O> Subject<O>
-where
-    O: Observer,
-{
-    pub fn register(&mut self, field_type: FieldType, observer: Rc<RefCell<O>>) {
-        self.observers.insert(field_type, observer);
-    }
+// pub struct PopupEvent<'p> {
+//     content: &'p Content,
+//     choices: &'p Vec<Choice>,
+//     frame: &'p mut Frame<'p>,
+//     popup_ctx: &'p mut Option<&'p mut PopupContext>,
+// }
 
-    pub fn notify(&mut self, command: &Command) {
-        for (field_type, observer) in &mut self.observers {
-            match field_type {
-                FieldType::Command => {
-                    let mut o = observer.borrow_mut();
-                    o.update(command.command.clone());
-                }
-                FieldType::Tags => {
-                    let mut o = observer.borrow_mut();
-                    o.update(command.tags_as_string());
-                }
-                FieldType::Namespace => {
-                    let mut o = observer.borrow_mut();
-                    o.update(command.namespace.clone());
-                }
-                FieldType::Description => {
-                    let mut o = observer.borrow_mut();
-                    o.update(command.description());
-                }
-                _ => {}
-            }
-        }
+// impl<'p> PopupEvent<'p> {
+//     pub fn new(
+//         content: &'p Content,
+//         choices: &'p Vec<Choice>,
+//         frame: &'p mut Frame<'p>,
+//         popup_ctx: &'p mut Option<&'p mut PopupContext>,
+//     ) -> Self {
+//         PopupEvent {
+//             content,
+//             choices,
+//             frame,
+//             popup_ctx,
+//         }
+//     }
+// }
+
+/// IMPLS
+impl<'d> Observer for DisplayWidget<'d> {
+    type ContentType = CommandEvent;
+
+    fn update(&mut self, event: Event<Self::ContentType>) {
+        let command = event.content.command;
+        let content = match self.r#type {
+            FieldType::Command => command.command.to_owned(),
+            FieldType::Namespace => command.namespace.to_owned(),
+            FieldType::Tags => command.tags_as_string(),
+            FieldType::Description => command.description(),
+            _ => "".to_owned(),
+        };
+
+        self.highlight(event.content.query);
+        self.content = content;
+        self.should_highlight = event.content.highlight;
     }
 }
+
+// impl Observer for dyn Popup {
+//     type ContentType = PopupEvent<'static>;
+
+//     fn update(&mut self, event: Event<Self::ContentType>) {
+//         if let Some(ctx) = event.content.popup_ctx {
+//             let content = &ctx.content;
+//             let choices = &ctx.choices().to_owned();
+//             let popup = popup!(content, Some(choices.to_vec()));
+//             let frame = event.content.frame;
+//             frame.render_stateful_widget(popup, frame.size(), &mut Some(ctx));
+//         }
+//     }
+// }

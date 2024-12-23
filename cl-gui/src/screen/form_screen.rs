@@ -9,7 +9,6 @@ use crate::{
     },
     view_mode::ViewMode,
     widget::{
-        popup::{HelpPopup, RenderPopup},
         statusbar::{Help, Info},
         text_field::FieldType,
         TextField,
@@ -27,13 +26,13 @@ use tui::{
 pub struct FormScreen;
 
 impl Screen for FormScreen {
-    fn render(&mut self, frame: &mut Frame, _: &mut Application, ui_context: &mut UI) {
+    fn render(&mut self, frame: &mut Frame, _: &mut Application, ui: &mut UI) {
         let terminal_size = frame.size().as_terminal_size();
-        ui_context.fields.sort(&terminal_size);
+        ui.fields.sort(&terminal_size);
 
-        let view_mode = ui_context.view_mode();
-        let fields = ui_context.fields.inner();
-        let center = if ui_context.fields.is_modified() {
+        let view_mode = ui.view_mode();
+        let fields = ui.fields.inner();
+        let center = if ui.fields.is_modified() {
             Some(Info::new("MODIFIED"))
         } else {
             None
@@ -45,17 +44,16 @@ impl Screen for FormScreen {
         // }
         render_medium_form(frame, &view_mode, &fields, center, right);
 
-        if ui_context.show_help() {
-            let help_popup = popup!(&ui_context.view_mode());
-            frame.render_popup(help_popup, frame.size());
+        if ui.show_help() {
+            let help_popup = popup!(&ui.view_mode());
+            frame.render_widget(help_popup, frame.size());
         }
 
-        if ui_context.popup.show_popup() {
-            let popup_ctx = &mut ui_context.popup;
-            let content = &popup_ctx.content;
-            let choices = &popup_ctx.choices().to_owned();
-            let popup = popup!(content, choices);
-            frame.render_stateful_popup(popup, frame.size(), popup_ctx);
+        if ui.popup.show_popup() {
+            let popup = ui.popup.active_popup();
+            if let Some(popup) = popup {
+                frame.render_stateful_widget(popup.to_owned(), frame.size(), &mut ui.popup);
+            }
         }
     }
 }
@@ -138,7 +136,7 @@ fn render_medium_form(
 
     let preview = Paragraph::new(map)
         .wrap(Wrap { trim: true })
-        .block(default_widget_block!("Preview"));
+        .block(default_widget_block!().title("Preview"));
 
     fields.iter().cloned().for_each(|field| {
         let area = match field.field_type() {
@@ -147,6 +145,7 @@ fn render_medium_form(
             FieldType::Command => second_row[0],
             FieldType::Description => third_row[0],
             FieldType::Tags => third_row[1],
+            _ => panic!("Invalid field type"),
         };
         render! {frame, {field, area}}
     });
@@ -209,6 +208,7 @@ fn command_preview<'form>(fields: &[TextField<'form>]) -> Vec<Line<'form>> {
                 field.in_focus,
             )
         }
+        _ => panic!("Invalid field type"),
     });
     [
         highlight(alias.0, alias.1, alias.2),

@@ -1,4 +1,4 @@
-use super::Component;
+use super::{text_field::FieldType, Component};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -20,12 +20,18 @@ pub struct DisplayWidget<'a> {
     block: Option<Block<'a>>,
     style: Style,
     alignment: Alignment,
+    pub r#type: FieldType,
 }
 
 impl Component for DisplayWidget<'_> {}
 
 impl<'a> DisplayWidget<'a> {
-    pub fn new<T>(content: T, trim: bool, should_highlight: bool) -> DisplayWidget<'a>
+    pub fn new<T>(
+        r#type: FieldType,
+        content: T,
+        trim: bool,
+        should_highlight: bool,
+    ) -> DisplayWidget<'a>
     where
         T: Into<String>,
     {
@@ -37,6 +43,7 @@ impl<'a> DisplayWidget<'a> {
             block: None,
             style: Default::default(),
             alignment: Alignment::Left,
+            r#type,
         }
     }
 
@@ -77,15 +84,16 @@ impl<'a> Widget for DisplayWidget<'a> {
             Text::from(self.content)
         };
 
+        let block = self
+            .block
+            .unwrap_or(Block::default())
+            .title(self.r#type.to_string());
+
         let paragraph = Paragraph::new(content)
             .style(self.style)
             .alignment(self.alignment)
             .wrap(Wrap { trim: self.trim })
-            .block(if let Some(block) = self.block {
-                block
-            } else {
-                Block::default()
-            });
+            .block(block);
 
         paragraph.render(area, buf)
     }
@@ -104,7 +112,8 @@ mod test {
         let content = "sandbox\nsandbox";
         let pattern = "sand";
 
-        let result = DisplayWidget::new(content, false, true).highlight(pattern);
+        let mut result = DisplayWidget::new(FieldType::Command, content, false, true);
+        result.highlight(pattern);
 
         assert!(result.highlighted_content.is_some());
 
@@ -130,7 +139,7 @@ mod test {
         let content = "this is a sandbox";
         let pattern = "sand";
 
-        let d = DisplayWidget::new(content, false, true);
+        let mut d = DisplayWidget::new(FieldType::Command, content, false, true);
 
         let expected_line = Line::from(vec![
             Span::from("thi"),
@@ -147,11 +156,11 @@ mod test {
             Span::from("box"),
         ]);
 
-        let result = d.highlight(pattern);
+        d.highlight(pattern);
 
-        assert!(result.highlighted_content.is_some());
+        assert!(d.highlighted_content.is_some());
 
-        let actual = result.highlighted_content.unwrap();
+        let actual = d.highlighted_content.unwrap();
         assert_eq!(actual, expected_line);
     }
 
@@ -159,7 +168,7 @@ mod test {
     fn should_highlight_chars_in_content() {
         let content = "change location";
         let pattern = "cl";
-        let d = DisplayWidget::new(content, false, true);
+        let mut d = DisplayWidget::new(FieldType::Command, content, false, true);
 
         let expected_line = Line::from(vec![
             Span::styled("c", Style::default().add_modifier(Modifier::UNDERLINED)),
@@ -170,11 +179,11 @@ mod test {
             Span::from("ation"),
         ]);
 
-        let result = d.highlight(pattern);
+        d.highlight(pattern);
 
-        assert!(result.highlighted_content.is_some());
+        assert!(d.highlighted_content.is_some());
 
-        let actual = result.highlighted_content.unwrap();
+        let actual = d.highlighted_content.unwrap();
         assert_eq!(actual, expected_line);
     }
 }

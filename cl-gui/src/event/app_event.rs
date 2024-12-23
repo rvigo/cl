@@ -37,10 +37,14 @@ pub enum PopupEvent {
 #[derive(Clone, Debug)]
 pub enum PopupType {
     Help,
-    Dialog {
-        message: String,
-        callback_action: PopupCallbackAction,
-    },
+    Dialog(DialogType),
+}
+
+#[derive(Clone, Debug)]
+pub enum DialogType {
+    CommandDeletionConfimation,
+    EditedScreenExit,
+    GenericError(String),
 }
 
 #[derive(Default, Clone, Debug)]
