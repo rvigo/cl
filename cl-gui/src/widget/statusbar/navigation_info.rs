@@ -1,4 +1,4 @@
-use crate::widget::display::DisplayWidget;
+use crate::widget::{display::DisplayWidget, text_field::FieldType};
 use tui::{buffer::Buffer, layout::Rect, widgets::Widget};
 
 #[derive(Clone)]
@@ -16,7 +16,7 @@ impl NavigationInfo {
 
 impl Widget for NavigationInfo {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let display = DisplayWidget::new(&self.content, true, false);
+        let display = DisplayWidget::new(FieldType::Info, &self.content, true, false);
 
         display.render(area, buf)
     }

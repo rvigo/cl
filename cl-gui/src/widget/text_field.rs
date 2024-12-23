@@ -1,4 +1,4 @@
-use super::{Lines, WidgetKeyHandler};
+use super::{popup::Type, Lines, WidgetKeyHandler};
 use crate::theme::{
     DEFAULT_BACKGROUND_COLOR, DEFAULT_CURSOR_COLOR, DEFAULT_HIGHLIGHT_COLOR,
     DEFAULT_INACTIVE_TEXTBOX_COLOR, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR,
@@ -27,6 +27,8 @@ pub enum FieldType {
     Command,
     Description,
     Namespace,
+    Popup(Type),
+    Info,
 }
 
 impl FieldType {
@@ -44,11 +46,13 @@ impl FieldType {
 impl Display for FieldType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            FieldType::Alias => write!(f, "Alias"),
-            FieldType::Tags => write!(f, "Tags"),
-            FieldType::Command => write!(f, "Command"),
-            FieldType::Description => write!(f, "Description"),
-            FieldType::Namespace => write!(f, "Namespace"),
+            FieldType::Alias => write!(f, " Alias "),
+            FieldType::Tags => write!(f, " Tags "),
+            FieldType::Command => write!(f, " Command "),
+            FieldType::Description => write!(f, " Description "),
+            FieldType::Namespace => write!(f, " Namespace "),
+            FieldType::Popup(popup_type) => write!(f, "{}", popup_type.to_string()),
+            FieldType::Info => write!(f, " Info "),
         }
     }
 }

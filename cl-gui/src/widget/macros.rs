@@ -82,7 +82,7 @@ macro_rules! dummy_block {
 
 #[macro_export]
 macro_rules! default_widget_block {
-    ($title:expr) => {{
+    () => {{
         use tui::{
             layout::Alignment,
             style::{Modifier, Style},
@@ -94,7 +94,6 @@ macro_rules! default_widget_block {
 
         Block::default()
             .borders(Borders::TOP | Borders::RIGHT)
-            .title(format!(" {} ", $title))
             .title_alignment(Alignment::Left)
             .title_style(
                 Style::default()
@@ -131,15 +130,18 @@ macro_rules! render {
 
 #[macro_export]
 macro_rules! display_widget {
-    ($title:expr, $content:expr, $trim:expr, $highlight:expr) => {
-        $crate::widget::DisplayWidget::new($content, $trim, $highlight)
-            .block(default_widget_block!($title))
+    ($type:expr, $content:expr, $trim:expr, $highlight:expr) => {
+        $crate::widget::DisplayWidget::new($type, $content, $trim, $highlight)
+            .block(default_widget_block!())
     };
 
-    ($title:expr, $content:expr, $trim:expr, $highlight:expr, $query:expr) => {{
+    ($type:expr,  $content:expr, $trim:expr, $highlight:expr, $query:expr) => {{
         use $crate::default_widget_block;
-        $crate::widget::DisplayWidget::new($content, $trim, $highlight)
-            .block(default_widget_block!($title))
-            .highlight($query)
+        let mut widget = $crate::widget::DisplayWidget::new($type, $content, $trim, $highlight)
+            .block(default_widget_block!());
+
+        widget.highlight($query);
+
+        widget
     }};
 }

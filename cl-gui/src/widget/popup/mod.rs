@@ -1,56 +1,67 @@
 mod choice;
-mod content;
 mod help;
+mod popup_trait;
 mod popup_type;
-mod question;
 
 pub use choice::Choice;
-pub use content::Content;
 pub use help::HelpPopup;
 pub use popup_type::Type;
-pub use question::QuestionPopup;
 
-use crate::{centered_rect, context::PopupContext, theme::DEFAULT_SELECTED_COLOR};
-use std::{rc::Rc, vec};
+use crate::{
+    centered_rect,
+    context::PopupContext,
+    default_popup_block,
+    event::PopupCallbackAction,
+    theme::{DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR},
+};
+use std::rc::Rc;
 use tui::{
     buffer::Buffer,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::{Block, Borders, Tabs},
-    Frame,
+    text::Line,
+    widgets::{Block, Borders, Clear, Paragraph, StatefulWidget, Tabs, Widget, Wrap},
 };
+use unicode_width::UnicodeWidthStr;
 
-pub trait Popup
-where
-    Self: Sized + Send + Sync,
-{
-    fn render(self, area: Rect, buf: &mut Buffer, state: Option<&mut PopupContext>);
-
-    fn content_height(&self) -> u16;
-
-    fn content_width(&self) -> u16;
-
-    fn choices(&self) -> Vec<Choice> {
-        Choice::empty()
-    }
-
-    fn get_render_position(&self, area: Rect) -> Rect {
-        let width = self.content_width();
-        let height = self.content_height();
-
-        let dynamic_height = (100 * (height * 2)) / area.height;
-        let real_height = std::cmp::max(dynamic_height, area.height);
-        centered_rect!(width, real_height, area)
-    }
+#[derive(Clone, Debug)]
+pub struct Popup<C> {
+    content: C,
+    pub choices: Vec<Choice>,
+    r#type: Type,
+    pub callback: PopupCallbackAction,
 }
 
-pub trait WithChoices: Popup {
+impl<C> Popup<C> {
+    pub fn new(
+        content: C,
+        choices: Vec<Choice>,
+        r#type: Type,
+        callback: PopupCallbackAction,
+    ) -> Popup<C> {
+        Self {
+            content,
+            choices,
+            r#type,
+            callback,
+        }
+    }
+
+    fn choices(&self) -> Vec<Choice> {
+        let choices = match self.r#type {
+            Type::Error => Choice::confirm(),
+            Type::Warning => Choice::dialog(),
+            Type::Help => Choice::empty(),
+        };
+
+        choices
+    }
+
     fn button_widget(&self, selected: usize) -> Tabs<'_> {
-        let choices = self
+        let choices: Vec<Line<'_>> = self
             .choices()
             .iter()
-            .map(|tab| Line::from(tab.to_string()))
+            .map(|choice| Line::from(choice.to_string()))
             .collect();
 
         Tabs::new(choices)
@@ -61,7 +72,7 @@ pub trait WithChoices: Popup {
                     .fg(DEFAULT_SELECTED_COLOR)
                     .add_modifier(Modifier::UNDERLINED),
             )
-            .divider(Span::raw(""))
+            .divider("")
     }
 
     fn create_buttom_area(&self, area: Rect) -> Rect {
@@ -108,86 +119,53 @@ pub trait WithChoices: Popup {
     }
 }
 
-pub trait RenderPopup {
-    fn render_popup<P>(&mut self, popup: P, area: Rect)
-    where
-        P: Popup;
-
-    fn render_stateful_popup<P>(&mut self, popup: P, area: Rect, state: &mut PopupContext)
-    where
-        P: Popup;
-}
-
-impl RenderPopup for Frame<'_> {
-    fn render_popup<P>(&mut self, popup: P, area: Rect)
-    where
-        P: Popup,
-    {
-        popup.render(area, self.buffer_mut(), None);
+impl Popup<String> {
+    fn content_width(&self) -> u16 {
+        self.content.width() as u16
     }
 
-    fn render_stateful_popup<P>(&mut self, popup: P, area: Rect, state: &mut PopupContext)
-    where
-        P: Popup,
-    {
-        popup.render(area, self.buffer_mut(), Some(state))
+    fn content_height(&self) -> u16 {
+        const MIN_HEIGHT: usize = 5;
+
+        let lines = self.content.lines().count();
+        MIN_HEIGHT.max(lines) as u16
+    }
+
+    fn get_render_position(&self, area: Rect) -> Rect {
+        let width = self.content_width();
+        let height = self.content_height();
+
+        let dynamic_height = (100 * (height * 2)) / area.height;
+        let real_height = std::cmp::max(dynamic_height, area.height);
+        centered_rect!(width, real_height, area)
     }
 }
 
-pub mod macros {
-    #[macro_export]
-    macro_rules! popup {
-        ($view_mode:expr) => {
-            HelpPopup::new($view_mode)
-        };
-
-        ($info:expr, $choiches:expr) => {{
-            use $crate::widget::popup::QuestionPopup;
-
-            QuestionPopup::new(
-                $info.message.to_owned(),
-                $choiches,
-                $info.popup_type.to_owned(),
-            )
-        }};
+impl Widget for Popup<String> {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        StatefulWidget::render(self, area, buf, &mut PopupContext::default());
     }
+}
 
-    #[macro_export]
-    macro_rules! default_popup_block {
-        ($popup_type:expr) => {{
-            use super::Type;
-            use tui::{
-                layout::Alignment,
-                style::{Color, Modifier, Style},
-                widgets::{Block, BorderType, Borders, Padding},
-            };
-            use $crate::theme::{DEFAULT_BACKGROUND_COLOR, DEFAULT_TEXT_COLOR};
+impl StatefulWidget for Popup<String> {
+    type State = PopupContext;
 
-            let style = match $popup_type {
-                Type::Error => Style::default()
-                    .fg(Color::Rgb(243, 139, 168))
-                    .add_modifier(Modifier::BOLD),
+    fn render(self, area: Rect, buf: &mut Buffer, state: &mut PopupContext) {
+        let block = default_popup_block!(self.r#type);
 
-                Type::Warning => Style::default()
-                    .fg(Color::Rgb(249, 226, 175))
-                    .add_modifier(Modifier::BOLD),
+        let paragraph = Paragraph::new(self.content.to_owned())
+            .style(Style::default().fg(DEFAULT_TEXT_COLOR))
+            .alignment(Alignment::Left)
+            .wrap(Wrap { trim: true })
+            .block(block.to_owned());
 
-                Type::Help => Style::default()
-                    .fg(Color::Rgb(166, 227, 161))
-                    .add_modifier(Modifier::BOLD),
-            };
-            Block::default()
-                .borders(Borders::ALL)
-                .title($popup_type.to_string())
-                .title_alignment(Alignment::Left)
-                .title_style(style)
-                .style(
-                    Style::default()
-                        .fg(DEFAULT_TEXT_COLOR)
-                        .bg(DEFAULT_BACKGROUND_COLOR),
-                )
-                .border_type(BorderType::Rounded)
-                .padding(Padding::horizontal(2))
-        }};
+        let render_position = self.get_render_position(area);
+
+        Clear::render(Clear, render_position, buf);
+        paragraph.render(render_position, buf);
+
+        let options = self.button_widget(state.selected_choice_idx());
+        let buttom_area = self.create_buttom_area(render_position);
+        options.render(buttom_area, buf);
     }
 }

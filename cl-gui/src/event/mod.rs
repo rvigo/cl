@@ -4,6 +4,7 @@ mod input_event;
 
 pub use app_event::AppEvent;
 pub use app_event::CommandEvent;
+pub use app_event::DialogType;
 pub use app_event::FormScreenEvent;
 pub use app_event::MainScreenEvent;
 pub use app_event::PopupCallbackAction;

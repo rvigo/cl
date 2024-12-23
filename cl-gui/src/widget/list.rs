@@ -99,7 +99,7 @@ impl<'a> Widget for List<'a> {
                 inner_area
             }
             None => {
-                let b = default_widget_block!("Aliases");
+                let b = default_widget_block!().title(" Aliases ");
                 let inner_area = b.inner(area);
                 b.render(area, buf);
                 inner_area

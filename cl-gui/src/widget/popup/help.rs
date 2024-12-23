@@ -1,5 +1,4 @@
-use super::Popup;
-use crate::{context::PopupContext, default_popup_block, theme::DEFAULT_TEXT_COLOR, ViewMode};
+use crate::{default_popup_block, theme::DEFAULT_TEXT_COLOR, ViewMode};
 use comfy_table::{presets, CellAlignment};
 use std::ops::Deref;
 use tui::{
@@ -9,6 +8,8 @@ use tui::{
     widgets::{Clear, Padding, Paragraph, Widget, Wrap},
 };
 use unicode_width::UnicodeWidthStr;
+
+use super::popup_trait::PopupTrait;
 
 pub struct HelpPopup<'help> {
     content: Table<'help>,
@@ -25,7 +26,7 @@ impl<'a> HelpPopup<'a> {
     }
 }
 
-impl Popup for HelpPopup<'_> {
+impl PopupTrait for HelpPopup<'_> {
     fn content_height(&self) -> u16 {
         self.content.len() as u16
     }
@@ -35,8 +36,10 @@ impl Popup for HelpPopup<'_> {
 
         FIXED_WIDTH
     }
+}
 
-    fn render(self, area: Rect, buf: &mut Buffer, _: Option<&mut PopupContext>) {
+impl<'p> Widget for HelpPopup<'p> {
+    fn render(self, area: Rect, buf: &mut Buffer) {
         let render_position = self.get_render_position(area);
         let mut t = comfy_table::Table::new();
         t.load_preset(presets::NOTHING);

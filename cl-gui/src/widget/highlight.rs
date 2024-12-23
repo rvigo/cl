@@ -11,13 +11,13 @@ impl<'hl> DisplayWidget<'hl> {
     ///
     /// If the input is empty, returns `Self` without any modification
     #[inline]
-    pub fn highlight<T>(mut self, highlight_input: T) -> Self
+    pub fn highlight<T>(&mut self, highlight_input: T)
     where
         T: Into<String>,
     {
         let highlight_string: String = highlight_input.into();
         if !self.should_highlight() || highlight_string.is_empty() {
-            return self;
+            return;
         }
 
         if highlight_string.eq(&self.content()) {
@@ -26,7 +26,7 @@ impl<'hl> DisplayWidget<'hl> {
                 Style::default().add_modifier(Modifier::UNDERLINED),
             );
             self.set_highlighted_content(Some(line));
-            return self;
+            return;
         }
 
         let content = self.content();
@@ -51,8 +51,6 @@ impl<'hl> DisplayWidget<'hl> {
             .collect_vec();
 
         self.set_highlighted_content(Some(Line::from(spans)));
-
-        self
     }
 
     /// Splits the given content based on the given pattern
@@ -136,13 +134,13 @@ impl<'hl> DisplayWidget<'hl> {
 
 #[cfg(test)]
 mod tests {
-    use crate::widget::display::DisplayWidget;
+    use crate::widget::{display::DisplayWidget, text_field::FieldType};
 
     #[test]
     fn should_group_highlighted_multilne_input() {
         let content = "multiline\ninput";
         let pattern = "in";
-        let d = DisplayWidget::new(content, false, true);
+        let d = DisplayWidget::new(FieldType::Command, content, false, true);
         let input = d.split_preserve_chars(content, pattern);
         let expected = vec![vec!["mult", "i", "l", "i", "n", "e"], vec!["i", "n", "put"]];
 
@@ -155,7 +153,7 @@ mod tests {
     fn should_group_multilne_input_if_there_is_no_pattern() {
         let content = "multiline\ninput";
         let pattern = "";
-        let d = DisplayWidget::new(content, false, true);
+        let d = DisplayWidget::new(FieldType::Command, content, false, true);
         let input = d.split_preserve_chars(content, pattern);
         let expected = vec![vec!["multiline"], vec!["input"]];
 
