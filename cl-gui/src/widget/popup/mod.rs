@@ -4,9 +4,12 @@ mod popup_trait;
 mod popup_type;
 
 pub use choice::Choice;
-pub use help::HelpPopup;
+use comfy_table::presets;
+use comfy_table::CellAlignment;
 pub use popup_type::Type;
+use tui::widgets::Padding;
 
+use crate::screen::dialog_factory::Table;
 use crate::{
     centered_rect,
     context::PopupContext,
@@ -23,6 +26,21 @@ use tui::{
     widgets::{Block, Borders, Clear, Paragraph, StatefulWidget, Tabs, Widget, Wrap},
 };
 use unicode_width::UnicodeWidthStr;
+
+trait PopupExt {
+    fn content_height(&self) -> u16;
+
+    fn content_width(&self) -> u16;
+
+    fn get_render_position(&self, area: Rect) -> Rect {
+        let width = self.content_width();
+        let height = self.content_height();
+
+        let dynamic_height = (100 * (height * 2)) / area.height;
+        let real_height = std::cmp::max(dynamic_height, area.height);
+        centered_rect!(width, real_height, area)
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct Popup<C> {
@@ -119,7 +137,7 @@ impl<C> Popup<C> {
     }
 }
 
-impl Popup<String> {
+impl PopupExt for Popup<String> {
     fn content_width(&self) -> u16 {
         self.content.width() as u16
     }
@@ -129,15 +147,6 @@ impl Popup<String> {
 
         let lines = self.content.lines().count();
         MIN_HEIGHT.max(lines) as u16
-    }
-
-    fn get_render_position(&self, area: Rect) -> Rect {
-        let width = self.content_width();
-        let height = self.content_height();
-
-        let dynamic_height = (100 * (height * 2)) / area.height;
-        let real_height = std::cmp::max(dynamic_height, area.height);
-        centered_rect!(width, real_height, area)
     }
 }
 
@@ -167,5 +176,51 @@ impl StatefulWidget for Popup<String> {
         let options = self.button_widget(state.selected_choice_idx());
         let buttom_area = self.create_buttom_area(render_position);
         options.render(buttom_area, buf);
+    }
+}
+
+impl PopupExt for Popup<Table<'_>> {
+    fn content_height(&self) -> u16 {
+        self.content.len() as u16
+    }
+
+    fn content_width(&self) -> u16 {
+        const FIXED_WIDTH: u16 = 75;
+
+        FIXED_WIDTH
+    }
+}
+
+impl Widget for Popup<Table<'_>> {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        StatefulWidget::render(self, area, buf, &mut PopupContext::default());
+    }
+}
+
+impl StatefulWidget for Popup<Table<'_>> {
+    type State = PopupContext;
+
+    fn render(self, area: Rect, buf: &mut Buffer, _: &mut PopupContext) {
+        let render_position = self.get_render_position(area);
+        let mut t = comfy_table::Table::new();
+        t.load_preset(presets::NOTHING);
+        for row in &self.content.content {
+            t.add_row(row.cells.iter().map(|cell| cell.text).collect::<Vec<_>>());
+        }
+        t.column_iter_mut().for_each(|col| {
+            col.set_constraint(comfy_table::ColumnConstraint::Absolute(
+                comfy_table::Width::Fixed(self.content.width() + 7),
+            ));
+            col.set_cell_alignment(CellAlignment::Left);
+        });
+
+        let p = Paragraph::new(t.to_string())
+            .style(Style::default().fg(DEFAULT_TEXT_COLOR))
+            .alignment(Alignment::Center)
+            .wrap(Wrap { trim: true })
+            .block(default_popup_block!(Type::Help).padding(Padding::vertical(2)));
+
+        Clear::render(Clear, render_position, buf);
+        p.render(render_position, buf)
     }
 }

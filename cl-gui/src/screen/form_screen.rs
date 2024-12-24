@@ -1,7 +1,7 @@
 use super::Screen;
 use crate::{
     context::{Application, UI},
-    default_widget_block, popup, render,
+    default_widget_block, render,
     terminal::TerminalSizeExt,
     theme::{
         DEFAULT_BACKGROUND_COLOR, DEFAULT_HIGHLIGHT_COLOR, DEFAULT_TEXT_COLOR,
@@ -44,10 +44,10 @@ impl Screen for FormScreen {
         // }
         render_medium_form(frame, &view_mode, &fields, center, right);
 
-        if ui.show_help() {
-            let help_popup = popup!(&ui.view_mode());
-            frame.render_widget(help_popup, frame.size());
-        }
+        // if ui.show_help() {
+        //     let help_popup = popup!(&ui.view_mode());
+        //     frame.render_widget(help_popup, frame.size());
+        // }
 
         if ui.popup.show_popup() {
             let popup = ui.popup.active_popup();

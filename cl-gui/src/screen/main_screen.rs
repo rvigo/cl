@@ -1,4 +1,5 @@
 use super::{
+    dialog_factory::HelpPopup,
     observer::{CommandEvent, Event, Observer, Subject},
     Screen,
 };
@@ -30,9 +31,11 @@ use tui::{
     Frame,
 };
 
+type Observers<'m> = Vec<Rc<RefCell<DisplayWidget<'m>>>>;
+
 #[derive(Clone)]
 pub struct MainScreen<'m> {
-    subject: Vec<Rc<RefCell<DisplayWidget<'m>>>>,
+    observers: Observers<'m>,
     command: Rc<RefCell<DisplayWidget<'m>>>,
     tags: Rc<RefCell<DisplayWidget<'m>>>,
     namespace: Rc<RefCell<DisplayWidget<'m>>>,
@@ -41,7 +44,7 @@ pub struct MainScreen<'m> {
 
 impl<'m> MainScreen<'m> {
     pub fn new() -> Self {
-        let subject = Vec::new();
+        let observers = Observers::new();
 
         let command = display_widget!(FieldType::Command, "", true, true, "");
         let tags = display_widget!(FieldType::Tags, "", true, true, "");
@@ -54,7 +57,7 @@ impl<'m> MainScreen<'m> {
         let description_refcell = Rc::new(RefCell::new(description));
 
         let mut screen = MainScreen {
-            subject,
+            observers,
             command: Rc::clone(&command_refcell),
             tags: tags_refcell.to_owned(),
             namespace: namespace_refcell.to_owned(),
@@ -115,11 +118,11 @@ impl<'m> Screen for MainScreen<'m> {
             // TerminalSize::Small => render_form_small(frame, tabs, aliases, command, querybox),
         }
 
-        //
-        // if ui.show_help() {
-        //     let help = popup!(&ui.view_mode());
-        //     render! { frame, { help, frame.size()}};
-        // }
+        if ui.show_help() {
+            let h = HelpPopup::new(&ui.view_mode());
+
+            frame.render_widget(h.to_owned(), frame.size());
+        }
 
         // //
         if ui.popup.show_popup() {
@@ -143,11 +146,11 @@ impl<'m> Subject<DisplayWidget<'m>> for MainScreen<'m> {
     }
 
     fn get_observers<'s>(&'s self) -> &'s Vec<Rc<RefCell<DisplayWidget<'m>>>> {
-        &self.subject
+        &self.observers
     }
 
     fn get_observers_mut(&mut self) -> &mut Vec<Rc<RefCell<DisplayWidget<'m>>>> {
-        self.subject.as_mut()
+        self.observers.as_mut()
     }
 }
 
