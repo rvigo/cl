@@ -1,19 +1,18 @@
 use crate::{
-    event::{PopupCallbackAction, RenderEvent},
-    widget::popup::{Choice, Popup, Type},
+	event::{PopupCallbackAction, RenderEvent},
+	widget::popup::{Choice, Popup, Type},
 };
 
 const CONTENT: &str = "Wait, you didn't save your changes! Are you sure you want to quit?";
 
-pub struct EditedScreenExitDialog(Popup<String>);
+pub struct EditedScreenExitDialog;
 
 impl EditedScreenExitDialog {
-    pub fn new() -> Popup<String> {
-        let choices = vec![Choice::Ok, Choice::Cancel];
-        let r#type = Type::Warning;
-        let callback = PopupCallbackAction::Render(RenderEvent::Main);
-        let popup = Popup::new(CONTENT.to_owned(), choices, r#type, callback);
+	pub fn create() -> Popup {
+		let choices = Choice::dialog();
+		let r#type = Type::Warning;
+		let callback = PopupCallbackAction::Render(RenderEvent::Main);
 
-        popup
-    }
+		Popup::new(CONTENT.to_owned(), choices, r#type, callback)
+	}
 }
