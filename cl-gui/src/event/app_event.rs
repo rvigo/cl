@@ -1,3 +1,4 @@
+use crate::view_mode::ViewMode;
 use crossterm::event::KeyEvent;
 
 #[derive(Clone, Debug)]
@@ -45,6 +46,7 @@ pub enum DialogType {
     CommandDeletionConfimation,
     EditedScreenExit,
     GenericError(String),
+    HelpPopup(ViewMode),
 }
 
 #[derive(Default, Clone, Debug)]

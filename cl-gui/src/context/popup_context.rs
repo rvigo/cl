@@ -71,6 +71,9 @@ impl PopupContext {
                 DialogType::CommandDeletionConfimation => CommandDeletionConfirmationDialog::new(),
                 DialogType::EditedScreenExit => EditedScreenExitDialog::new(),
                 DialogType::GenericError(message) => GenericErrorDialog::new(message),
+
+                // DialogType::HelpPopup(view_mode) => HelpPopup::new(view_mode),
+                _ => return None,
             };
 
             Some(pop)
@@ -82,7 +85,7 @@ impl PopupContext {
 
 impl Selectable for PopupContext {
     fn next(&mut self) {
-        if let Some(pop) = self.active_popup().as_mut() {
+        if let Some(pop) = self.active_popup() {
             let current = self.selected_choice_idx;
             let next = (current + 1) % pop.choices.len();
 
