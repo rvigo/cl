@@ -19,7 +19,7 @@ use tui::widgets::Widget;
 
 /// Handles use key input
 pub trait WidgetKeyHandler {
-	fn handle_input(&mut self, input: KeyEvent);
+    fn handle_input(&mut self, input: KeyEvent);
 }
 
 #[macro_export]
@@ -44,33 +44,33 @@ macro_rules! create_fields_map {
 pub struct Lines(pub Vec<String>);
 
 impl Deref for Lines {
-	type Target = Vec<String>;
+    type Target = Vec<String>;
 
-	fn deref(&self) -> &Self::Target {
-		&self.0
-	}
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl From<String> for Lines {
-	fn from(value: String) -> Self {
-		let inner = value.lines().map(String::from).collect();
-		Lines(inner)
-	}
+    fn from(value: String) -> Self {
+        let inner = value.lines().map(String::from).collect();
+        Lines(inner)
+    }
 }
 
 impl<'a> From<&'a String> for Lines {
-	fn from(value: &'a String) -> Self {
-		value.to_owned().into()
-	}
+    fn from(value: &'a String) -> Self {
+        value.to_owned().into()
+    }
 }
 
 impl From<Option<&String>> for Lines {
-	fn from(value: Option<&String>) -> Self {
-		match value {
-			Some(content) => content.into(),
-			None => Lines::default(),
-		}
-	}
+    fn from(value: Option<&String>) -> Self {
+        match value {
+            Some(content) => content.into(),
+            None => Lines::default(),
+        }
+    }
 }
 
 // A marker trait for all widgets

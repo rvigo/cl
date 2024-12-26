@@ -1,6 +1,5 @@
 mod help;
 mod info;
-mod navigation_info;
 mod querybox;
 
 pub use help::Help;
@@ -19,5 +18,4 @@ macro_rules! status_bar_item {
 
 status_bar_item!(help::Help);
 status_bar_item!(info::Info);
-status_bar_item!(navigation_info::NavigationInfo);
 status_bar_item!(querybox::QueryBox<'_>);
