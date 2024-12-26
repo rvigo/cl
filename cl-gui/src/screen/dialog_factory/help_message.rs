@@ -1,28 +1,39 @@
-use crate::widget::popup::{Choice, Popup};
-use crate::{event::PopupCallbackAction, widget::popup::Type, ViewMode};
-use std::fmt;
-use std::ops::Deref;
+use crate::{
+    event::PopupCallbackAction,
+    widget::popup::{Choice, Popup, Type},
+    ViewMode,
+};
+use std::slice::Iter;
+use std::{
+    fmt::{self},
+    ops::Deref,
+};
 use unicode_width::UnicodeWidthStr;
 
 pub struct HelpPopup;
 
 impl HelpPopup {
-	pub fn create(view_mode: &ViewMode) -> Popup {
-		let content = match view_mode {
-			ViewMode::Main => main_options(),
-			ViewMode::Edit => edit_options(),
-			ViewMode::Insert => insert_options(),
-		};
-		let choices = Choice::empty();
+    pub fn create(view_mode: &ViewMode) -> Popup {
+        let content = match view_mode {
+            ViewMode::Main => main_options(),
+            ViewMode::Edit => edit_options(),
+            ViewMode::Insert => insert_options(),
+        };
+        let choices = Choice::empty();
 
-		Popup::new(content.to_string(), choices, Type::Help, PopupCallbackAction::None)
-	}
+        Popup::new(
+            content.as_vec(),
+            choices,
+            Type::Help,
+            PopupCallbackAction::None,
+        )
+    }
 }
 
 macro_rules! cell {
-	($text:expr) => {
-		Cell::from($text)
-	};
+    ($text:expr) => {
+        Cell::from($text)
+    };
 }
 
 macro_rules! row {
@@ -48,167 +59,187 @@ macro_rules! table{
 
 }
 
-fn main_options<'a>() -> Table<'a> {
-	table! {
-			row! {cell!("Quit"), cell!("<Q/Esc/Ctrl-C>")},
-			row! {cell!("Create new command"), cell!("<I/Insert>")},
-			row! {cell!("Delete selected command"), cell!("<D/Delete>")},
-			row! {cell!("Edit selected command"), cell!("<E>")},
-			row! {cell!("Move to next namespace"), cell!("<L/→/Tab>")},
-			row! {cell!("Move to previous namespace"), cell!("<H/←/Shift-Tab>")},
-			row! {cell!("Move up"), cell!("<K/↑>")},
-			row! {cell!("Move down"), cell!("<J/↓>")},
-			row! {cell!("Copy selected command"), cell!("<Y>")},
-			row! {cell!("Search commands"), cell!("<F//>")},
-			row! {cell!("Show help"), cell!("<F1/?>")},
-	}
+fn main_options() -> Table {
+    table! {
+            row! {cell!("Quit"), cell!("<Q/Esc/Ctrl-C>")},
+            row! {cell!("Create new command"), cell!("<I/Insert>")},
+            row! {cell!("Delete selected command"), cell!("<D/Delete>")},
+            row! {cell!("Edit selected command"), cell!("<E>")},
+            row! {cell!("Move to next namespace"), cell!("<L/→/Tab>")},
+            row! {cell!("Move to previous namespace"), cell!("<H/←/Shift-Tab>")},
+            row! {cell!("Move up"), cell!("<K/↑>")},
+            row! {cell!("Move down"), cell!("<J/↓>")},
+            row! {cell!("Copy selected command"), cell!("<Y>")},
+            row! {cell!("Search commands"), cell!("<F//>")},
+            row! {cell!("Show help"), cell!("<F1/?>")},
+    }
 }
 
-fn edit_options<'a>() -> Table<'a> {
-	table! {
-						row! { cell!("Return"), cell!("<Esc/Ctrl-C>")},
-						row! { cell!("Next Field"), cell!("<Tab>")},
-						row! { cell!("Previous Field"), cell!("<Shift-Tab>")},
-						row! { cell!("Update command"), cell!("<Enter/Ctrl-S>")},
-						row! { cell!("Help"), cell!("<F1>")},
-	}
+fn edit_options() -> Table {
+    table! {
+            row! { cell!("Return"), cell!("<Esc/Ctrl-C>")},
+            row! { cell!("Next Field"), cell!("<Tab>")},
+            row! { cell!("Previous Field"), cell!("<Shift-Tab>")},
+            row! { cell!("Update command"), cell!("<Enter/Ctrl-S>")},
+            row! { cell!("Help"), cell!("<F1>")},
+    }
 }
 
-fn insert_options<'a>() -> Table<'a> {
-	table! {
-						row! { cell!("Return"), cell!("<Esc/Ctrl-C>")},
-						row! { cell!("Next Field"), cell!("<Tab>")},
-						row! { cell!("Previous Field"), cell!("<Shift-Tab>")},
-						row! { cell!("Create command"), cell!("<Enter/Ctrl-S>")},
-						row! { cell!("Help"), cell!("<F1>")},
-	}
+fn insert_options() -> Table {
+    table! {
+            row! { cell!("Return"), cell!("<Esc/Ctrl-C>")},
+            row! { cell!("Next Field"), cell!("<Tab>")},
+            row! { cell!("Previous Field"), cell!("<Shift-Tab>")},
+            row! { cell!("Create command"), cell!("<Enter/Ctrl-S>")},
+            row! { cell!("Help"), cell!("<F1>")},
+    }
 }
 
-// TODO create a separator based on the max width of the largest cell and calculate the diff in each row
 #[derive(Clone)]
-pub struct Table<'a> {
-	pub content: Vec<Row<'a>>,
+pub struct Table {
+    pub content: Vec<Row>,
 }
 
-impl fmt::Display for Table<'_> {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		write!(f, "{}", self.content.iter().map(|s| s.to_string()).collect::<Vec<_>>().join("\n"))
-	}
+impl fmt::Display for Table {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.content
+                .iter()
+                .map(|row| row.to_string())
+                .collect::<Vec<_>>()
+                .join("\n")
+        )
+    }
 }
 
-impl Table<'_> {
-	pub fn width(&self) -> u16 {
-		self.content.iter().map(|row| row.width()).max().unwrap_or(0)
-	}
+impl Table {
+    fn new(content: Vec<Row>) -> Table {
+        Table { content }.build()
+    }
+
+    fn build(&self) -> Self {
+        let row_bigger_cell_width = self.content.iter().fold(0, |mut acc, row| {
+            let current_cell_width = row.width();
+            if acc < current_cell_width {
+                acc = current_cell_width
+            }
+            acc
+        });
+
+        let mut content = vec![];
+
+        for row in &self.content {
+            let new_row = row
+                .cells()
+                .map(|cell| {
+                    let new_cell_content = cell.text.to_owned()
+                        + &(" ").repeat((row_bigger_cell_width - cell.width()) as usize);
+
+                    Cell::from(new_cell_content)
+                })
+                .collect::<Row>();
+
+            content.push(new_row);
+        }
+
+        Table { content }
+    }
+
+    pub fn as_vec(&self) -> Vec<String> {
+        self.content.iter().map(|r| r.to_string()).collect()
+    }
 }
 
-impl<'a> From<Vec<Row<'a>>> for Table<'a> {
-	fn from(content: Vec<Row<'a>>) -> Self {
-		Table { content }
-	}
+impl From<Vec<Row>> for Table {
+    fn from(content: Vec<Row>) -> Self {
+        Table::new(content)
+    }
 }
 
-impl<'a> Deref for Table<'a> {
-	type Target = Vec<Row<'a>>;
+impl Deref for Table {
+    type Target = Vec<Row>;
 
-	fn deref(&self) -> &Self::Target {
-		&self.content
-	}
+    fn deref(&self) -> &Self::Target {
+        &self.content
+    }
 }
 
 #[derive(Clone, Default)]
-pub struct Row<'a> {
-	pub cells: Vec<Cell<'a>>,
+pub struct Row {
+    pub cells: Vec<Cell>,
 }
 
-impl fmt::Display for Row<'_> {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		let x = self.cells.iter().map(|s| s.to_string()).collect::<Vec<String>>().join("|");
-		write!(f, "{x}")
-	}
+impl fmt::Display for Row {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let row = self
+            .cells
+            .iter()
+            .map(|cell| cell.to_string())
+            .collect::<Vec<_>>()
+            .join(" ");
+        write!(f, "{}", row)
+    }
 }
 
-impl<'a> Row<'a> {
-	pub fn add_cell(&mut self, cell: Cell<'a>) {
-		self.cells.push(cell);
-	}
+impl Row {
+    pub fn add_cell(&mut self, cell: Cell) {
+        self.cells.push(cell);
+    }
 
-	pub fn width(&self) -> u16 {
-		self.cells.iter().map(|cell| cell.width()).max().unwrap_or(0)
-	}
+    pub fn width(&self) -> u16 {
+        self.cells
+            .iter()
+            .map(|cell| cell.width())
+            .max()
+            .unwrap_or(0)
+    }
+
+    pub fn cells(&self) -> Iter<'_, Cell> {
+        self.cells.iter()
+    }
+}
+
+impl FromIterator<Cell> for Row {
+    fn from_iter<T: IntoIterator<Item = Cell>>(iter: T) -> Self {
+        let mut row = Row::default();
+        for i in iter {
+            row.add_cell(i);
+        }
+        row
+    }
 }
 
 #[derive(Clone)]
-pub struct Cell<'a> {
-	pub text: &'a str,
+pub struct Cell {
+    pub text: String,
 }
 
-impl fmt::Display for Cell<'_> {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		write!(f, "{:width$}", self.text, width = self.width() as usize)
-	}
+impl fmt::Display for Cell {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.text)
+    }
 }
 
-impl<'a> Cell<'a> {
-	fn new(text: &'a str) -> Cell<'a> {
-		Cell { text }
-	}
+impl Cell {
+    fn new(text: String) -> Cell {
+        Cell { text }
+    }
 
-	fn width(&self) -> u16 {
-		self.text.width() as u16
-	}
+    fn width(&self) -> u16 {
+        self.text.width() as u16
+    }
 }
 
-impl<'a> From<&'a str> for Cell<'a> {
-	fn from(text: &'a str) -> Self {
-		Cell::new(text)
-	}
+impl From<&'_ str> for Cell {
+    fn from(text: &'_ str) -> Self {
+        Cell::new(text.to_owned())
+    }
 }
 
-#[cfg(test)]
-mod tests {
-	use std::vec;
-
-	use super::*;
-
-	#[test]
-	fn test_main_options() {
-		let cell1 = Cell::from("Quit");
-		let cell2 = Cell::from("Move to previous namespace");
-
-		let current = vec![&cell1, &cell2].iter().map(|cell| cell.width()).max().unwrap_or(0);
-		let cell1_width = cell1.text.width();
-		let cell2_width = cell2.text.width();
-		let r = row! {
-				cell1,
-				cell2,
-		};
-
-		let row_width = r.width();
-		assert_eq!(cell1_width, 4);
-		assert_eq!(cell2_width, 26);
-		assert_eq!(current, 26);
-		assert_eq!(row_width, 26);
-	}
-
-	#[test]
-	fn should_center_the_table() {
-		let cell1 = Cell::from("Quit");
-		let cell2 = Cell::from("Move to previous namespace");
-
-		let r = row! {
-				cell1,
-				cell2,
-		};
-
-		let table: Table<'_> = table! {
-				r,
-		};
-
-		let table_string: String = main_options().to_string();
-
-		println!("{}", table_string);
-		// assert_eq!(table_width, 26);
-		// assert_eq!(table_string_width, 26);
-	}
+impl From<String> for Cell {
+    fn from(text: String) -> Self {
+        Cell::new(text)
+    }
 }

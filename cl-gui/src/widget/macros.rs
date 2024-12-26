@@ -126,6 +126,32 @@ macro_rules! render {
             $frame.render_widget($what, $_where);
         )+
     };
+
+
+
+    ($frame:ident, $({ $what:expr, $_where:expr, $state:expr}),* $(,)?) => {
+        $(
+            $frame.render_stateful_widget($what, $_where, $state);
+        )+
+    };
+}
+
+#[macro_export]
+macro_rules! maybe_render {
+  ($frame:ident, $({ $what:expr, $_where:expr}),* $(,)?) => {
+        $(
+            if let Some(what) = $what {
+                $frame.render_widget(what, $_where);
+            }
+        )+
+    };
+    ($frame:ident, $({ $what:expr, $_where:expr, $state:expr}),* $(,)?) => {
+        $(
+            if let Some(what) = $what {
+                $frame.render_stateful_widget(what, $_where, $state);
+            }
+        )+
+    };
 }
 
 #[macro_export]
@@ -137,8 +163,9 @@ macro_rules! display_widget {
 
     ($type:expr,  $content:expr, $trim:expr, $highlight:expr, $query:expr) => {{
         use $crate::default_widget_block;
-        let mut widget = $crate::widget::DisplayWidget::new($type, $content, $trim, $highlight)
-            .block(default_widget_block!());
+        let mut widget =
+            $crate::widget::DisplayWidget::new($type, $content, $trim, $highlight, true)
+                .block(default_widget_block!());
 
         widget.highlight($query);
 

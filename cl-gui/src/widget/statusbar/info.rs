@@ -28,7 +28,7 @@ impl Widget for Info {
         let inner_block = dummy_block!();
         let inner_area = inner_block.inner(area);
 
-        let display = DisplayWidget::new(FieldType::Info, self.content, true, false)
+        let display = DisplayWidget::new(FieldType::Info, self.content, true, false, false)
             .alignment(Alignment::Center)
             .style(Style::default().bg(DEFAULT_INFO_COLOR));
 

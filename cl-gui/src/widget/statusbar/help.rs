@@ -28,8 +28,14 @@ impl Widget for Help {
         let inner_b = dummy_block!();
         let inner_area = inner_b.inner(area);
 
-        let display = DisplayWidget::new(FieldType::Popup(Type::Help), self.content, true, false)
-            .alignment(Alignment::Right);
+        let display = DisplayWidget::new(
+            FieldType::Popup(Type::Help),
+            self.content,
+            true,
+            false,
+            false,
+        )
+        .alignment(Alignment::Right);
 
         display.render(inner_area, buf)
     }

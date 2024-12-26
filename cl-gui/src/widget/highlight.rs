@@ -140,7 +140,7 @@ mod tests {
     fn should_group_highlighted_multilne_input() {
         let content = "multiline\ninput";
         let pattern = "in";
-        let d = DisplayWidget::new(FieldType::Command, content, false, true);
+        let d = DisplayWidget::new(FieldType::Command, content, false, true, true);
         let input = d.split_preserve_chars(content, pattern);
         let expected = vec![vec!["mult", "i", "l", "i", "n", "e"], vec!["i", "n", "put"]];
 
@@ -153,7 +153,7 @@ mod tests {
     fn should_group_multilne_input_if_there_is_no_pattern() {
         let content = "multiline\ninput";
         let pattern = "";
-        let d = DisplayWidget::new(FieldType::Command, content, false, true);
+        let d = DisplayWidget::new(FieldType::Command, content, false, true, true);
         let input = d.split_preserve_chars(content, pattern);
         let expected = vec![vec!["multiline"], vec!["input"]];
 

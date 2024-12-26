@@ -1,7 +1,7 @@
 use super::Screen;
 use crate::{
     context::{Application, UI},
-    default_widget_block, render,
+    default_widget_block, maybe_render, render,
     terminal::TerminalSizeExt,
     theme::{
         DEFAULT_BACKGROUND_COLOR, DEFAULT_HIGHLIGHT_COLOR, DEFAULT_TEXT_COLOR,
@@ -44,17 +44,7 @@ impl Screen for FormScreen {
         // }
         render_medium_form(frame, &view_mode, &fields, center, right);
 
-        // if ui.show_help() {
-        //     let help_popup = popup!(&ui.view_mode());
-        //     frame.render_widget(help_popup, frame.size());
-        // }
-
-        if ui.popup.show_popup() {
-            let popup = ui.popup.active_popup();
-            if let Some(popup) = popup {
-                frame.render_stateful_widget(popup.to_owned(), frame.size(), &mut ui.popup);
-            }
-        }
+        maybe_render! { frame , {ui.popup.active_popup(), frame.size(), &mut ui.popup} };
     }
 }
 
@@ -147,7 +137,7 @@ fn render_medium_form(
             FieldType::Tags => third_row[1],
             _ => panic!("Invalid field type"),
         };
-        render! {frame, {field, area}}
+        render! { frame, {field, area} }
     });
 
     //
@@ -170,154 +160,198 @@ fn render_medium_form(
             .as_ref(),
         )
         .split(footer.inner(drawable_chunks[1]));
-    render! (
-        frame,
-        { app_name, left_side[0]},
-        { preview, left_side[1]}
-    );
 
-    render!(frame, { footer, drawable_chunks[1] });
-    if let Some(center_statusbar_item) = center {
-        render!(frame, {center_statusbar_item, statusbar_layout[1]}, );
-    }
+    render! {
+            frame,
+            { app_name, left_side[0]},
+            { preview, left_side[1]}
+    };
+
+    render! { frame, { footer, drawable_chunks[1] }};
+    maybe_render! { frame, {center, statusbar_layout[1]} };
     render! { frame, {right, statusbar_layout[2]}};
 }
 
 fn command_preview<'form>(fields: &[TextField<'form>]) -> Vec<Line<'form>> {
-    let mut alias: (FieldType, String, bool) = (FieldType::Alias, String::default(), false);
-    let mut namespace: (FieldType, String, bool) = (FieldType::Namespace, String::default(), false);
-    let mut command: (FieldType, Vec<String>, bool) =
-        (FieldType::Command, Vec::<String>::new(), false);
-    let mut description: (FieldType, String, bool) =
-        (FieldType::Description, String::default(), false);
-    let mut tags: (FieldType, Option<String>, bool) = (FieldType::Tags, None, false);
+    fn extract_field<'a, T>(
+        fields: &[TextField<'a>],
+        field_type: FieldType,
+        default: T,
+        extractor: impl Fn(&TextField<'a>) -> T,
+    ) -> (FieldType, T, bool) {
+        fields
+            .iter()
+            .find(|field| field.field_type() == field_type)
+            .map(|field| (field.field_type(), extractor(field), field.in_focus))
+            .unwrap_or((field_type, default, false))
+    }
 
-    fields.iter().for_each(|field| match field.field_type() {
-        FieldType::Alias => alias = (field.field_type(), field.text(), field.in_focus),
-        FieldType::Namespace => namespace = (field.field_type(), field.text(), field.in_focus),
-        FieldType::Command => command = (field.field_type(), field.lines(), field.in_focus),
-        FieldType::Description => description = (field.field_type(), field.text(), field.in_focus),
-        FieldType::Tags => {
-            tags = (
-                field.field_type(),
-                if field.text().is_empty() {
-                    None
-                } else {
-                    Some(field.text())
-                },
-                field.in_focus,
-            )
-        }
-        _ => panic!("Invalid field type"),
+    let alias = extract_field(fields, FieldType::Alias, String::default(), |field| {
+        field.text()
     });
+    let namespace = extract_field(fields, FieldType::Namespace, String::default(), |field| {
+        field.text()
+    });
+    let command = extract_field(fields, FieldType::Command, Vec::<String>::new(), |field| {
+        field.lines()
+    });
+    let description = extract_field(fields, FieldType::Description, String::default(), |field| {
+        field.text()
+    });
+    let tags = extract_field(fields, FieldType::Tags, None, |field| {
+        if field.text().is_empty() {
+            None
+        } else {
+            Some(field.text())
+        }
+    });
+
+    // Collect and flatten the highlighted lines
     [
-        highlight(alias.0, alias.1, alias.2),
-        highlight(namespace.0, namespace.1, namespace.2),
-        highlight_lines(command.0, command.1, command.2),
-        highlight(description.0, description.1, description.2),
-        highlight_tags(tags.1, tags.2),
+        highlight(alias.into()),
+        highlight(namespace.into()),
+        highlight_lines(command.into()),
+        highlight(description.into()),
+        highlight_tags(tags.into()),
     ]
     .iter()
     .flat_map(|v| v.iter().cloned())
-    .collect::<Vec<Line<'form>>>()
+    .collect()
 }
 
-fn highlight<'line>(field_type: FieldType, text: String, highlight: bool) -> Vec<Line<'line>> {
-    let field_name = format!("{}: ", field_type);
+fn highlight<'line>(preview: PreviewLine<String>) -> Vec<Line<'line>> {
+    let field_name = format!("{}: ", preview.field_type);
     let space: Line = Line::from("");
-    if highlight {
-        vec![
-            Line::styled(
-                field_name,
-                Style::default()
-                    .fg(DEFAULT_HIGHLIGHT_COLOR)
-                    .add_modifier(Modifier::BOLD),
-            ),
-            Line::from(text.lines().join("\n")),
-            space,
-        ]
-    } else {
-        vec![
-            Line::styled(field_name, Style::default().fg(DEFAULT_HIGHLIGHT_COLOR)),
-            Line::from(text.lines().join("\n")),
-            space,
-        ]
-    }
+
+    let style = Style::default()
+        .fg(DEFAULT_HIGHLIGHT_COLOR)
+        .apply_if(preview.highlight, |style| {
+            style.add_modifier(Modifier::BOLD)
+        });
+
+    let styled_name = Line::styled(field_name, style);
+    let content_line = Line::from(preview.content.lines().join("\n"));
+
+    vec![styled_name, content_line, space]
 }
 
-fn highlight_lines<'a>(field_type: FieldType, text: Vec<String>, highlight: bool) -> Vec<Line<'a>> {
-    let content = text.into_iter().map(Line::from).collect::<Vec<_>>();
-    let values = if highlight {
-        vec![Line::styled(
-            field_type.to_string(),
-            Style::default()
-                .fg(DEFAULT_HIGHLIGHT_COLOR)
-                .add_modifier(Modifier::BOLD),
-        )]
-        .into_iter()
-        .chain(content.clone())
-        .collect::<Vec<_>>()
-    } else {
-        vec![Line::styled(
-            field_type.to_string(),
-            Style::default().fg(DEFAULT_HIGHLIGHT_COLOR),
-        )]
-        .into_iter()
-        .chain(content.clone())
-        .collect::<Vec<_>>()
-    };
+fn highlight_lines<'a>(preview: PreviewLine<Vec<String>>) -> Vec<Line<'a>> {
+    let style = Style::default()
+        .fg(DEFAULT_HIGHLIGHT_COLOR)
+        .apply_if(preview.highlight, |style| {
+            style.add_modifier(Modifier::BOLD)
+        });
 
-    if values.len() > 5 {
-        let values = values.into_iter().chain(vec![Line::from("")]).take(6);
+    let content = preview
+        .content
+        .into_iter()
+        .map(Line::from)
+        .collect::<Vec<_>>();
+    let header = Line::styled(format!("{}:", preview.field_type), style);
 
-        values
-            .chain(vec![Line::from("..."), Line::from("")])
-            .collect::<Vec<_>>()
-    } else {
-        values
-            .into_iter()
-            .chain(vec![Line::from("")])
-            .collect::<Vec<_>>()
+    let mut values = vec![header];
+    values.extend(content);
+
+    const MAX_LINES: usize = 5;
+    if values.len() > MAX_LINES {
+        values.truncate(MAX_LINES);
+        values.push(Line::from("..."));
     }
-}
 
-fn highlight_tags<'a>(tags: Option<String>, highlight: bool) -> Vec<Line<'a>> {
-    let content = if let Some(tags) = tags {
-        let content = &tags.split(',').collect::<Vec<_>>();
-        match content.len() {
-            0 => vec![],
-            _ => content
-                .iter()
-                .map(|s| format!(" - {}", s.trim()))
-                .collect::<Vec<_>>(),
-        }
-    } else {
-        vec![]
-    };
-
-    let content = content.into_iter().map(Line::from).collect::<Vec<_>>();
-    let values = if highlight {
-        vec![Line::styled(
-            FieldType::Tags.to_string(),
-            Style::default()
-                .fg(DEFAULT_HIGHLIGHT_COLOR)
-                .add_modifier(Modifier::BOLD),
-        )]
-        .into_iter()
-        .chain(content.clone())
-        .collect::<Vec<_>>()
-    } else {
-        vec![Line::styled(
-            FieldType::Tags.to_string(),
-            Style::default().fg(DEFAULT_HIGHLIGHT_COLOR),
-        )]
-        .into_iter()
-        .chain(content.clone())
-        .collect::<Vec<_>>()
-    };
+    values.push(Line::from(""));
 
     values
-        .into_iter()
-        // .chain(vec![Line::from("")])
-        .collect::<Vec<_>>()
+}
+
+fn highlight_tags<'a>(preview: PreviewLine<Option<String>>) -> Vec<Line<'a>> {
+    let content = preview.content.as_ref().map_or(vec![], |tags| {
+        tags.split(',')
+            .map(|s| format!(" - {}", s.trim()))
+            .collect::<Vec<_>>()
+    });
+
+    let style = Style::default()
+        .fg(DEFAULT_HIGHLIGHT_COLOR)
+        .apply_if(preview.highlight, |style| {
+            style.add_modifier(Modifier::BOLD)
+        });
+
+    let line = Line::styled(preview.field_type.to_string(), style);
+
+    let mut values = vec![line];
+
+    values.extend(content.into_iter().map(Line::from));
+    values.push(Line::from(""));
+
+    values
+}
+
+trait StyleExt {
+    fn apply_if(self, condition: bool, apply: impl Fn(Self) -> Self) -> Self
+    where
+        Self: Sized;
+}
+
+impl StyleExt for Style {
+    fn apply_if(self, condition: bool, apply: impl Fn(Self) -> Self) -> Self {
+        if condition {
+            apply(self)
+        } else {
+            self
+        }
+    }
+}
+
+struct PreviewLine<C> {
+    field_type: FieldType,
+    content: C,
+    highlight: bool,
+}
+
+impl PreviewLine<String> {
+    fn new(field_type: FieldType, content: String, highlight: bool) -> Self {
+        Self {
+            field_type,
+            content,
+            highlight,
+        }
+    }
+}
+
+impl PreviewLine<Vec<String>> {
+    fn new(field_type: FieldType, content: Vec<String>, highlight: bool) -> Self {
+        Self {
+            field_type,
+            content,
+            highlight,
+        }
+    }
+}
+
+impl PreviewLine<Option<String>> {
+    fn new(field_type: FieldType, content: Option<String>, highlight: bool) -> Self {
+        Self {
+            field_type,
+            content,
+            highlight,
+        }
+    }
+}
+
+impl From<(FieldType, String, bool)> for PreviewLine<String> {
+    fn from((field_type, content, highlight): (FieldType, String, bool)) -> Self {
+        Self::new(field_type, content, highlight)
+    }
+}
+
+impl From<(FieldType, Vec<String>, bool)> for PreviewLine<Vec<String>> {
+    fn from((field_type, content, highlight): (FieldType, Vec<String>, bool)) -> Self {
+        Self::new(field_type, content, highlight)
+    }
+}
+
+impl From<(FieldType, Option<String>, bool)> for PreviewLine<Option<String>> {
+    fn from((field_type, content, highlight): (FieldType, Option<String>, bool)) -> Self {
+        Self::new(field_type, content, highlight)
+    }
 }

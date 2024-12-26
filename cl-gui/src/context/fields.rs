@@ -182,104 +182,50 @@ impl State for Fields<'_> {
 #[cfg(test)]
 mod test {
     use super::*;
-    // use crate::widget::WidgetKeyHandler;
-    // use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-    // fn create_fields() -> FieldState<'static> {
-    //     let mut alias = TextField::new(String::from("alias"), FieldType::Alias, true, false);
-    //     let mut command = TextField::new(String::from("command"), FieldType::Command, false, true);
-    //     let mut namespace = TextField::new(
-    //         String::from("namespace"),
-    //         FieldType::Namespace,
-    //         false,
-    //         false,
-    //     );
-    //     let mut description = TextField::new(
-    //         String::from("description"),
-    //         FieldType::Description,
-    //         false,
-    //         true,
-    //     );
-    //     let mut tags = TextField::new(String::from("tags"), FieldType::Tags, false, false);
+    #[test]
+    fn should_move_to_next_field() {
+        let mut field_context = Fields::new(&TerminalSize::Medium);
+        field_context.select(Some(FieldType::Alias));
 
-    //     alias.handle_input(KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE));
-    //     alias.handle_input(KeyEvent::new(KeyCode::Char('l'), KeyModifiers::NONE));
-    //     alias.handle_input(KeyEvent::new(KeyCode::Char('i'), KeyModifiers::NONE));
-    //     alias.handle_input(KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE));
-    //     alias.handle_input(KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE));
-    //     namespace.handle_input(KeyEvent::new(KeyCode::Char('n'), KeyModifiers::NONE));
-    //     command.handle_input(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::NONE));
-    //     // multifield description field
-    //     description.handle_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
-    //     description.handle_input(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
-    //     description.handle_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
-    //     tags.handle_input(KeyEvent::new(KeyCode::Char('t'), KeyModifiers::NONE));
+        field_context.next();
+        assert_eq!(field_context.selected(), Some(FieldType::Namespace));
+        assert_eq!(field_context.state.items[&FieldType::Alias].in_focus, false);
+        assert_eq!(
+            field_context.state.items[&FieldType::Namespace].in_focus,
+            true
+        );
 
-    //     let map = vec![alias, namespace, command, description, tags]
-    //         .into_iter()
-    //         .map(|f| (f.field_type(), f))
-    //         .collect();
-    //     let order = [
-    //         FieldType::Alias,
-    //         FieldType::Namespace,
-    //         FieldType::Command,
-    //         FieldType::Description,
-    //         FieldType::Tags,
-    //     ]
-    //     .to_vec();
+        field_context.next();
+        assert_eq!(field_context.selected(), Some(FieldType::Command));
+        assert_eq!(
+            field_context.state.items[&FieldType::Namespace].in_focus,
+            false
+        );
+        assert_eq!(
+            field_context.state.items[&FieldType::Command].in_focus,
+            true
+        );
+    }
 
-    //     FieldState::from((map, order))
-    // }
+    #[test]
+    fn should_move_to_previous_field() {
+        let mut field_context = Fields::new(&TerminalSize::Medium);
+        field_context.select(Some(FieldType::Alias));
 
-    // #[test]
-    // fn should_move_to_next_field() {
-    //     let mut field_context = Fields::new(&TerminalSize::Medium);
-    //     field_context.select(Some(FieldType::Alias));
+        field_context.previous();
+        assert_eq!(field_context.selected(), Some(FieldType::Tags));
+        assert_eq!(field_context.state.items[&FieldType::Alias].in_focus, false);
+        assert_eq!(field_context.state.items[&FieldType::Tags].in_focus, true);
 
-    //     field_context.next();
-    //     assert_eq!(field_context.selected(), Some(FieldType::Namespace));
-    //     assert_eq!(field_context.state.items[&FieldType::Alias].in_focus, false);
-    //     assert_eq!(
-    //         field_context.state.items[&FieldType::Namespace].in_focus,
-    //         true
-    //     );
-
-    //     field_context.next();
-    //     assert_eq!(field_context.selected(), Some(FieldType::Command));
-    //     assert_eq!(
-    //         field_context.state.items[&FieldType::Namespace].in_focus,
-    //         false
-    //     );
-    //     assert_eq!(
-    //         field_context.state.items[&FieldType::Command].in_focus,
-    //         true
-    //     );
-    // }
-
-    // #[test]
-    // fn should_move_to_previous_field() {
-    //     let mut field_context = Fields::new(&TerminalSize::Medium);
-    //     field_context.select(Some(FieldType::Alias));
-
-    //     field_context.previous();
-    //     assert_eq!(field_context.selected(), Some(FieldType::Tags));
-    //     assert_eq!(
-    //         field_context.state.items[&FieldType::Alias].in_focus(),
-    //         false
-    //     );
-    //     assert_eq!(field_context.state.items[&FieldType::Tags].in_focus(), true);
-
-    //     field_context.previous();
-    //     assert_eq!(field_context.selected(), Some(FieldType::Description));
-    //     assert_eq!(
-    //         field_context.state.items[&FieldType::Tags].in_focus(),
-    //         false
-    //     );
-    //     assert_eq!(
-    //         field_context.state.items[&FieldType::Description].in_focus(),
-    //         true
-    //     );
-    // }
+        field_context.previous();
+        assert_eq!(field_context.selected(), Some(FieldType::Description));
+        assert_eq!(field_context.state.items[&FieldType::Tags].in_focus, false);
+        assert_eq!(
+            field_context.state.items[&FieldType::Description].in_focus,
+            true
+        );
+    }
 
     #[test]
     fn should_return_the_selected_field() {
@@ -289,32 +235,4 @@ mod test {
         let selected_field = field_context.selected_field_mut();
         assert_eq!(selected_field.unwrap().field_type(), FieldType::Namespace);
     }
-
-    // #[test]
-    // fn should_set_input_based_at_selected_command() {
-    //     let mut field_context = Fields::new(&TerminalSize::Medium);
-    //     let selected_command = Command {
-    //         alias: String::from("alias"),
-    //         command: String::from("command"),
-    //         namespace: String::from("namespace"),
-    //         description: None,
-    //         tags: Some(vec![String::from("tag1"), String::from("tag2")]),
-    //     };
-    //     field_context.select_command(Some(selected_command));
-    //     field_context.popuplate_form();
-
-    //     let command = field_context.selected_command();
-
-    //     assert!(command.is_some());
-    //     let command = command.unwrap();
-
-    //     assert_eq!(command.alias, "alias");
-    //     assert_eq!(command.command, "command");
-    //     assert_eq!(command.namespace, "namespace");
-    //     assert_eq!(command.description, None);
-    //     assert_eq!(
-    //         command.tags,
-    //         Some(vec![String::from("tag1"), String::from("tag2")])
-    //     );
-    // }
 }
