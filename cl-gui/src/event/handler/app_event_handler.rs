@@ -1,13 +1,10 @@
 use crate::{
     context::{Application, Selectable, UI},
     event::{
-        AppEvent, CommandEvent, FormScreenEvent, MainScreenEvent, PopupCallbackAction, PopupEvent,
-        PopupType, QueryboxEvent, RenderEvent, ScreenEvent,
+        AppEvent, CommandEvent, DialogType, FormScreenEvent, MainScreenEvent, PopupCallbackAction,
+        PopupEvent, PopupType, QueryboxEvent, RenderEvent, ScreenEvent,
     },
-    widget::{
-        popup::{Choice, Type as PopupMessageType},
-        WidgetKeyHandler,
-    },
+    widget::{popup::Choice, WidgetKeyHandler},
     ViewMode,
 };
 use log::debug;
@@ -65,12 +62,8 @@ impl<'a> AppEventHandler<'a> {
                                 c.reload();
                             }
                             Err(error) => {
-                                ui.popup.set_show_popup(true);
-                                ui.popup.set_content(
-                                    PopupMessageType::Error,
-                                    error.to_string(),
-                                    PopupCallbackAction::None,
-                                );
+                                ui.popup
+                                    .set_dialog_type(DialogType::GenericError(error.to_string()));
                             }
                         }
                     }
@@ -86,12 +79,9 @@ impl<'a> AppEventHandler<'a> {
                                     c.reload()
                                 }
                                 Err(error) => {
-                                    ui.popup.set_show_popup(true);
-                                    ui.popup.set_content(
-                                        PopupMessageType::Error,
+                                    ui.popup.set_dialog_type(DialogType::GenericError(
                                         error.to_string(),
-                                        PopupCallbackAction::None,
-                                    );
+                                    ));
                                 }
                             }
                         }
@@ -102,14 +92,10 @@ impl<'a> AppEventHandler<'a> {
                             if let Err(error) =
                                 self.app_context.lock().copy_to_clipboard(&command.command)
                             {
-                                ui.popup.set_show_popup(true);
-                                ui.popup.set_content(
-                                    PopupMessageType::Error,
-                                    error.to_string(),
-                                    PopupCallbackAction::None,
-                                );
+                                ui.popup
+                                    .set_dialog_type(DialogType::GenericError(error.to_string()));
                             } else {
-                                ui.clipboard_state.start()
+                                ui.clipboard_state.start_counter()
                             }
                         }
                     }
@@ -120,12 +106,8 @@ impl<'a> AppEventHandler<'a> {
                         let mut ui = self.ui_context.lock();
                         c.reload();
                         if ui.fields.is_modified() {
-                            ui.popup.set_content(
-                            PopupMessageType::Warning,
-                                "Wait, you didn't save your changes! Are you sure you want to quit?".to_owned(),
-                                PopupCallbackAction::Render(RenderEvent::Main),
-                            );
-                            ui.popup.set_show_popup(true)
+                            debug!("fields modified");
+                            ui.popup.set_dialog_type(DialogType::EditedScreenExit);
                         } else {
                             ui.set_view(ViewMode::Main);
                         }
@@ -151,78 +133,70 @@ impl<'a> AppEventHandler<'a> {
                         let mut ui = self.ui_context.lock();
                         match popup_type {
                             PopupType::Help => {
-                                ui.set_show_help(true);
+                                let view_mode = ui.view_mode();
+                                ui.popup.set_dialog_type(DialogType::HelpPopup(view_mode));
                             }
-                            PopupType::Dialog {
-                                message,
-                                callback_action,
-                            } => {
-                                ui.popup.set_show_popup(true);
-                                ui.popup.set_content(
-                                    PopupMessageType::Warning,
-                                    message,
-                                    callback_action,
-                                );
+                            PopupType::Dialog(r#type) => {
+                                debug!("enabling popup: {:?}", r#type);
+                                ui.popup.set_dialog_type(r#type);
                             }
                         }
                     }
                     PopupEvent::Answer => {
                         let mut ui = self.ui_context.lock();
-                        match ui.popup.selected_choice() {
-                            Choice::Ok => {
-                                let mut c = self.app_context.lock();
-                                match &ui.popup.content.callback {
-                                    PopupCallbackAction::RemoveCommand => {
-                                        if let Some(command) = ui.selected_command() {
-                                            match c.remove_command(command) {
-                                                Ok(()) => {
-                                                    ui.popup.clear_choices();
-                                                    c.reload();
-                                                }
-                                                Err(error) => {
-                                                    ui.popup.set_show_popup(true);
-                                                    ui.popup.set_content(
-                                                        PopupMessageType::Error,
-                                                        error.to_string(),
-                                                        PopupCallbackAction::None,
-                                                    );
+                        if let Some(choice) = ui.popup.selected_choice() {
+                            match choice {
+                                Choice::Ok => {
+                                    let mut c = self.app_context.lock();
+                                    if let Some(popup) = ui.popup.active_popup() {
+                                        match popup.callback {
+                                            PopupCallbackAction::RemoveCommand => {
+                                                if let Some(command) = ui.selected_command() {
+                                                    match c.remove_command(command) {
+                                                        Ok(()) => {
+                                                            ui.popup.clear_choices();
+                                                            c.reload();
+                                                        }
+                                                        Err(error) => {
+                                                            ui.popup.set_dialog_type(
+                                                                DialogType::GenericError(
+                                                                    error.to_string(),
+                                                                ),
+                                                            );
+                                                        }
+                                                    }
                                                 }
                                             }
+                                            PopupCallbackAction::None => {
+                                                ui.popup.deactivate_popup();
+                                            }
+                                            PopupCallbackAction::Render(screen) => match screen {
+                                                RenderEvent::Main => {
+                                                    debug!("rendering main screen");
+                                                    ui.set_view(ViewMode::Main);
+                                                    c.reload();
+                                                    ui.popup.deactivate_popup();
+                                                }
+                                                RenderEvent::Edit | RenderEvent::Insert => {
+                                                    todo!()
+                                                }
+                                            },
                                         }
                                     }
-                                    PopupCallbackAction::None => {
-                                        ui.popup.clear_choices();
-                                        ui.popup.set_show_popup(false);
-                                    }
-                                    PopupCallbackAction::Render(screen) => match screen {
-                                        RenderEvent::Main => {
-                                            ui.set_view(ViewMode::Main);
-                                            c.reload();
-                                            ui.popup.clear_choices();
-                                            ui.popup.set_show_popup(false);
-                                        }
-                                        RenderEvent::Edit | RenderEvent::Insert => {
-                                            todo!()
-                                        }
-                                    },
                                 }
-                            }
-                            Choice::Cancel => {
-                                ui.popup.clear_choices();
-                            }
-                        };
-
-                        // else
-                        ui.popup.set_show_popup(false)
+                                Choice::Cancel => {
+                                    ui.popup.clear_choices();
+                                }
+                            };
+                        } else {
+                            ui.popup.deactivate_popup();
+                        }
                     }
                     PopupEvent::Disable => {
                         let mut ui = self.ui_context.lock();
-                        if ui.show_help() {
-                            ui.set_show_help(false)
-                        } else {
-                            ui.popup.clear_choices();
-                            ui.popup.set_show_popup(false)
-                        }
+                        debug!("disabling popup");
+                        ui.popup.clear_choices();
+                        ui.popup.deactivate_popup();
                     }
                     PopupEvent::NextChoice => self.ui_context.lock().popup.next(),
                     PopupEvent::PreviousChoice => self.ui_context.lock().popup.previous(),

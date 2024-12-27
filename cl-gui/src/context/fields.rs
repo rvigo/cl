@@ -29,8 +29,8 @@ impl<'fields> Fields<'fields> {
         self.state.sort(size);
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = TextField<'_>> {
-        self.state.fields_iter()
+    pub fn inner(&self) -> Vec<TextField<'_>> {
+        self.state.fields()
     }
 
     pub fn selected_field_mut(&mut self) -> Option<&mut TextField<'fields>> {
@@ -51,24 +51,15 @@ impl<'fields> Fields<'fields> {
 
     pub fn popuplate(&mut self, current_command: &Command) {
         self.state.items.iter_mut().for_each(|(field_type, field)| {
-            match field_type {
-                FieldType::Alias => {
-                    field.set_text(&current_command.alias);
-                }
-                FieldType::Command => {
-                    field.set_text(&current_command.command);
-                }
-                FieldType::Namespace => {
-                    field.set_text(&current_command.namespace);
-                }
-                FieldType::Description => {
-                    field.set_text(current_command.description.as_ref());
-                }
-                FieldType::Tags => {
-                    field.set_text(current_command.tags.as_ref().unwrap_or(&vec![]).join(", "));
-                }
+            let text = match field_type {
+                FieldType::Alias => current_command.alias.to_owned(),
+                FieldType::Command => current_command.command.to_owned(),
+                FieldType::Namespace => current_command.namespace.to_owned(),
+                FieldType::Description => current_command.description.clone().unwrap_or_default(),
+                FieldType::Tags => current_command.tags.as_ref().unwrap_or(&vec![]).join(", "),
+                _ => panic!("Invalid field type: {:?}", field_type),
             };
-
+            field.set_text(text.to_string());
             field.move_cursor_to_end_of_text();
 
             self.original_fields
@@ -177,57 +168,10 @@ impl State for Fields<'_> {
         self.selected_field = field_type;
     }
 }
+
 #[cfg(test)]
 mod test {
     use super::*;
-    // use crate::widget::WidgetKeyHandler;
-    // use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-
-    // fn create_fields() -> FieldState<'static> {
-    //     let mut alias = TextField::new(String::from("alias"), FieldType::Alias, true, false);
-    //     let mut command = TextField::new(String::from("command"), FieldType::Command, false, true);
-    //     let mut namespace = TextField::new(
-    //         String::from("namespace"),
-    //         FieldType::Namespace,
-    //         false,
-    //         false,
-    //     );
-    //     let mut description = TextField::new(
-    //         String::from("description"),
-    //         FieldType::Description,
-    //         false,
-    //         true,
-    //     );
-    //     let mut tags = TextField::new(String::from("tags"), FieldType::Tags, false, false);
-
-    //     alias.handle_input(KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE));
-    //     alias.handle_input(KeyEvent::new(KeyCode::Char('l'), KeyModifiers::NONE));
-    //     alias.handle_input(KeyEvent::new(KeyCode::Char('i'), KeyModifiers::NONE));
-    //     alias.handle_input(KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE));
-    //     alias.handle_input(KeyEvent::new(KeyCode::Char('s'), KeyModifiers::NONE));
-    //     namespace.handle_input(KeyEvent::new(KeyCode::Char('n'), KeyModifiers::NONE));
-    //     command.handle_input(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::NONE));
-    //     // multifield description field
-    //     description.handle_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
-    //     description.handle_input(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
-    //     description.handle_input(KeyEvent::new(KeyCode::Char('d'), KeyModifiers::NONE));
-    //     tags.handle_input(KeyEvent::new(KeyCode::Char('t'), KeyModifiers::NONE));
-
-    //     let map = vec![alias, namespace, command, description, tags]
-    //         .into_iter()
-    //         .map(|f| (f.field_type(), f))
-    //         .collect();
-    //     let order = [
-    //         FieldType::Alias,
-    //         FieldType::Namespace,
-    //         FieldType::Command,
-    //         FieldType::Description,
-    //         FieldType::Tags,
-    //     ]
-    //     .to_vec();
-
-    //     FieldState::from((map, order))
-    // }
 
     #[test]
     fn should_move_to_next_field() {
@@ -236,23 +180,20 @@ mod test {
 
         field_context.next();
         assert_eq!(field_context.selected(), Some(FieldType::Namespace));
+        assert_eq!(field_context.state.items[&FieldType::Alias].in_focus, false);
         assert_eq!(
-            field_context.state.items[&FieldType::Alias].in_focus(),
-            false
-        );
-        assert_eq!(
-            field_context.state.items[&FieldType::Namespace].in_focus(),
+            field_context.state.items[&FieldType::Namespace].in_focus,
             true
         );
 
         field_context.next();
         assert_eq!(field_context.selected(), Some(FieldType::Command));
         assert_eq!(
-            field_context.state.items[&FieldType::Namespace].in_focus(),
+            field_context.state.items[&FieldType::Namespace].in_focus,
             false
         );
         assert_eq!(
-            field_context.state.items[&FieldType::Command].in_focus(),
+            field_context.state.items[&FieldType::Command].in_focus,
             true
         );
     }
@@ -264,20 +205,14 @@ mod test {
 
         field_context.previous();
         assert_eq!(field_context.selected(), Some(FieldType::Tags));
-        assert_eq!(
-            field_context.state.items[&FieldType::Alias].in_focus(),
-            false
-        );
-        assert_eq!(field_context.state.items[&FieldType::Tags].in_focus(), true);
+        assert_eq!(field_context.state.items[&FieldType::Alias].in_focus, false);
+        assert_eq!(field_context.state.items[&FieldType::Tags].in_focus, true);
 
         field_context.previous();
         assert_eq!(field_context.selected(), Some(FieldType::Description));
+        assert_eq!(field_context.state.items[&FieldType::Tags].in_focus, false);
         assert_eq!(
-            field_context.state.items[&FieldType::Tags].in_focus(),
-            false
-        );
-        assert_eq!(
-            field_context.state.items[&FieldType::Description].in_focus(),
+            field_context.state.items[&FieldType::Description].in_focus,
             true
         );
     }
@@ -290,32 +225,4 @@ mod test {
         let selected_field = field_context.selected_field_mut();
         assert_eq!(selected_field.unwrap().field_type(), FieldType::Namespace);
     }
-
-    // #[test]
-    // fn should_set_input_based_at_selected_command() {
-    //     let mut field_context = Fields::new(&TerminalSize::Medium);
-    //     let selected_command = Command {
-    //         alias: String::from("alias"),
-    //         command: String::from("command"),
-    //         namespace: String::from("namespace"),
-    //         description: None,
-    //         tags: Some(vec![String::from("tag1"), String::from("tag2")]),
-    //     };
-    //     field_context.select_command(Some(selected_command));
-    //     field_context.popuplate_form();
-
-    //     let command = field_context.selected_command();
-
-    //     assert!(command.is_some());
-    //     let command = command.unwrap();
-
-    //     assert_eq!(command.alias, "alias");
-    //     assert_eq!(command.command, "command");
-    //     assert_eq!(command.namespace, "namespace");
-    //     assert_eq!(command.description, None);
-    //     assert_eq!(
-    //         command.tags,
-    //         Some(vec![String::from("tag1"), String::from("tag2")])
-    //     );
-    // }
 }

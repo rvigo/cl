@@ -1,4 +1,5 @@
-use crate::{default_block, state::ListState, DEFAULT_SELECTED_COLOR};
+use super::Component;
+use crate::{default_widget_block, state::ListState, theme::DEFAULT_TEXT_COLOR};
 use cl_core::CommandVec;
 use tui::{
     buffer::Buffer,
@@ -9,7 +10,6 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Default)]
 pub struct List<'a> {
     block: Option<Block<'a>>,
     items: Vec<String>,
@@ -22,6 +22,8 @@ pub struct List<'a> {
     state: ListState,
 }
 
+impl Component for List<'_> {}
+
 impl<'a> List<'a> {
     pub fn new(commands: &CommandVec, state: ListState) -> List<'a> {
         let items: Vec<String> = commands.iter().map(|c| c.alias.to_owned()).collect();
@@ -33,8 +35,8 @@ impl<'a> List<'a> {
             start_corner: Corner::TopLeft,
             highlight_style: Style::default()
                 .fg(Color::Black)
-                .bg(DEFAULT_SELECTED_COLOR)
-                .add_modifier(Modifier::BOLD),
+                .bg(DEFAULT_TEXT_COLOR)
+                .add_modifier(Modifier::BOLD | Modifier::ITALIC),
 
             highlight_symbol: Some("> "),
             repeat_highlight_symbol: false,
@@ -97,7 +99,7 @@ impl<'a> Widget for List<'a> {
                 inner_area
             }
             None => {
-                let b = default_block!("Aliases");
+                let b = default_widget_block!().title(" Aliases ");
                 let inner_area = b.inner(area);
                 b.render(area, buf);
                 inner_area

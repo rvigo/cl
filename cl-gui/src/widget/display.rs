@@ -1,48 +1,74 @@
+use super::{text_field::FieldType, Component};
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
     style::Style,
-    text::{Line, Text},
+    text::Line,
     widgets::{Block, Paragraph, Widget, Wrap},
 };
 
-#[derive(Clone)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct DisplayWidget<'a> {
-    /// the content of the widget
-    content: String,
+    /// the raw content of the widget
+    raw_content: String,
     /// flag indicating if the content can be highlighted
-    should_highlight: bool,
-    /// the highlighted content
-    highlighted_content: Option<Line<'a>>,
+    pub should_highlight: bool,
+    /// the content
+    pub content: Line<'a>,
     /// flag indicating if the content should be trimmed
     trim: bool,
     block: Option<Block<'a>>,
     style: Style,
     alignment: Alignment,
+    pub r#type: FieldType,
+    show_title: bool,
 }
 
+impl Component for DisplayWidget<'_> {}
+
 impl<'a> DisplayWidget<'a> {
-    pub fn new<T>(content: T, trim: bool, should_highlight: bool) -> DisplayWidget<'a>
+    pub fn new<T>(
+        r#type: FieldType,
+        content: T,
+        trim: bool,
+        should_highlight: bool,
+        show_title: bool,
+    ) -> DisplayWidget<'a>
     where
         T: Into<String>,
     {
+        let content = content.into();
         Self {
-            content: content.into(),
+            raw_content: content.to_owned(),
             should_highlight,
-            highlighted_content: None,
+            content: Line::from(content),
             trim,
             block: None,
             style: Default::default(),
             alignment: Alignment::Left,
+            r#type,
+            show_title,
         }
     }
 
-    pub fn content(&self) -> String {
-        self.content.to_owned()
+    pub fn raw_content(&self) -> String {
+        self.raw_content.to_owned()
     }
 
-    pub fn set_highlighted_content(&mut self, highlight_content: Option<Line<'a>>) {
-        self.highlighted_content = highlight_content
+    pub fn update_content<C>(&mut self, updated_content: C)
+    where
+        C: Into<Line<'a>>,
+    {
+        let updated_content: Line<'a> = updated_content.into();
+        let raw = updated_content.spans.to_vec();
+
+        let raw_content = raw
+            .iter()
+            .map(|span| span.content.clone())
+            .collect::<String>();
+
+        self.raw_content = raw_content;
+        self.content = updated_content
     }
 
     pub fn should_highlight(&self) -> bool {
@@ -67,22 +93,23 @@ impl<'a> DisplayWidget<'a> {
 
 impl<'a> Widget for DisplayWidget<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        // if there is no highlighted content, transforms the content in a `Text`
-        let content = if let Some(styled) = self.highlighted_content {
-            Text::from(styled)
-        } else {
-            Text::from(self.content)
-        };
+        let block = self
+            .block
+            .map(|b| {
+                if self.show_title {
+                    b.title(self.r#type.to_string())
+                } else {
+                    b
+                }
+            })
+            .unwrap_or_default();
 
+        let content = self.content;
         let paragraph = Paragraph::new(content)
             .style(self.style)
             .alignment(self.alignment)
             .wrap(Wrap { trim: self.trim })
-            .block(if let Some(block) = self.block {
-                block
-            } else {
-                Block::default()
-            });
+            .block(block);
 
         paragraph.render(area, buf)
     }
@@ -100,11 +127,9 @@ mod test {
     fn should_highlight_multiline_input() {
         let content = "sandbox\nsandbox";
         let pattern = "sand";
-        let d = DisplayWidget::new(content, false, true);
 
-        let result = d.clone().highlight(pattern);
-
-        assert!(result.highlighted_content.is_some());
+        let mut widget = DisplayWidget::new(FieldType::Command, content, false, true, true);
+        widget.highlight(pattern);
 
         let expected_line = Line::from(vec![
             Span::styled("s", Style::default().add_modifier(Modifier::UNDERLINED)),
@@ -119,7 +144,7 @@ mod test {
             Span::from("box"),
         ]);
 
-        let actual = result.highlighted_content.unwrap();
+        let actual = widget.content;
         assert_eq!(actual, expected_line);
     }
 
@@ -127,9 +152,7 @@ mod test {
     fn should_highlight_single_line_input() {
         let content = "this is a sandbox";
         let pattern = "sand";
-
-        let d = DisplayWidget::new(content, false, true);
-
+        let mut widget = DisplayWidget::new(FieldType::Command, content, false, true, true);
         let expected_line = Line::from(vec![
             Span::from("thi"),
             Span::styled("s", Style::default().add_modifier(Modifier::UNDERLINED)),
@@ -145,11 +168,9 @@ mod test {
             Span::from("box"),
         ]);
 
-        let result = d.highlight(pattern);
+        widget.highlight(pattern);
 
-        assert!(result.highlighted_content.is_some());
-
-        let actual = result.highlighted_content.unwrap();
+        let actual = widget.content;
         assert_eq!(actual, expected_line);
     }
 
@@ -157,8 +178,7 @@ mod test {
     fn should_highlight_chars_in_content() {
         let content = "change location";
         let pattern = "cl";
-        let d = DisplayWidget::new(content, false, true);
-
+        let mut widget = DisplayWidget::new(FieldType::Command, content, false, true, true);
         let expected_line = Line::from(vec![
             Span::styled("c", Style::default().add_modifier(Modifier::UNDERLINED)),
             Span::from("hange "),
@@ -168,11 +188,21 @@ mod test {
             Span::from("ation"),
         ]);
 
-        let result = d.highlight(pattern);
+        widget.highlight(pattern);
 
-        assert!(result.highlighted_content.is_some());
-
-        let actual = result.highlighted_content.unwrap();
+        let actual = widget.content;
         assert_eq!(actual, expected_line);
+    }
+
+    #[test]
+    fn test() {
+        let string = String::from("abc");
+        let line = Line::from(string);
+
+        let revert = line.spans.to_vec();
+
+        let revert_line = &revert[0].content;
+
+        println!("{:?}", revert_line);
     }
 }

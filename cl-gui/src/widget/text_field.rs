@@ -1,5 +1,8 @@
-use super::{Lines, WidgetKeyHandler};
-use crate::{default_block, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR};
+use super::{popup::Type, Lines, WidgetKeyHandler};
+use crate::theme::{
+    DEFAULT_BACKGROUND_COLOR, DEFAULT_CURSOR_COLOR, DEFAULT_HIGHLIGHT_COLOR,
+    DEFAULT_INACTIVE_TEXTBOX_COLOR, DEFAULT_SELECTED_COLOR, DEFAULT_TEXT_COLOR,
+};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::{
     fmt::{Debug, Display},
@@ -8,8 +11,8 @@ use std::{
 use tui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
-    style::{Color, Modifier, Style},
-    widgets::Widget,
+    style::{Modifier, Style},
+    widgets::{Block, BorderType, Borders, Padding, Widget},
 };
 use tui_textarea::{
     CursorMove::{Bottom, End},
@@ -24,6 +27,8 @@ pub enum FieldType {
     Command,
     Description,
     Namespace,
+    Popup(Type),
+    Info,
 }
 
 impl FieldType {
@@ -41,11 +46,13 @@ impl FieldType {
 impl Display for FieldType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            FieldType::Alias => write!(f, "Alias"),
-            FieldType::Tags => write!(f, "Tags"),
-            FieldType::Command => write!(f, "Command"),
-            FieldType::Description => write!(f, "Description"),
-            FieldType::Namespace => write!(f, "Namespace"),
+            FieldType::Alias => write!(f, " Alias "),
+            FieldType::Tags => write!(f, " Tags "),
+            FieldType::Command => write!(f, " Command "),
+            FieldType::Description => write!(f, " Description "),
+            FieldType::Namespace => write!(f, " Namespace "),
+            FieldType::Popup(popup_type) => write!(f, "{}", popup_type.to_string()),
+            FieldType::Info => write!(f, " Info "),
         }
     }
 }
@@ -55,7 +62,7 @@ impl Display for FieldType {
 pub struct TextField<'txt> {
     title: String,
     field_type: FieldType,
-    in_focus: bool,
+    pub in_focus: bool,
     alignment: Alignment,
     multiline: bool,
     text_area: TextArea<'txt>,
@@ -96,16 +103,16 @@ impl<'txt> TextField<'txt> {
         self.text_area = TextArea::from(&*content.into())
     }
 
+    pub fn lines(&self) -> Vec<String> {
+        self.text_area.to_owned().into_lines()
+    }
+
     pub fn activate_focus(&mut self) {
         self.in_focus = true
     }
 
     pub fn deactivate_focus(&mut self) {
         self.in_focus = false
-    }
-
-    pub fn in_focus(&self) -> bool {
-        self.in_focus
     }
 
     pub fn move_cursor_to_end_of_text(&mut self) {
@@ -128,11 +135,35 @@ impl<'txt> TextField<'txt> {
         text_area
     }
 
-    fn get_style(&self, in_focus: bool) -> Style {
-        if in_focus {
-            Style::default().fg(Color::Black).bg(DEFAULT_SELECTED_COLOR)
+    fn text_area_style(&self) -> Style {
+        if self.in_focus {
+            Style::default()
+                .fg(DEFAULT_TEXT_COLOR)
+                .bg(DEFAULT_SELECTED_COLOR)
         } else {
             Style::default().fg(DEFAULT_TEXT_COLOR)
+        }
+    }
+
+    fn title_style(&self) -> Style {
+        if self.in_focus {
+            Style::default()
+                .fg(DEFAULT_HIGHLIGHT_COLOR)
+                .add_modifier(Modifier::BOLD | Modifier::ITALIC)
+        } else {
+            Style::default()
+                .fg(DEFAULT_INACTIVE_TEXTBOX_COLOR)
+                .add_modifier(Modifier::BOLD)
+        }
+    }
+
+    fn cursor_style(&self) -> Style {
+        if self.in_focus {
+            Style::default()
+                .fg(DEFAULT_CURSOR_COLOR)
+                .add_modifier(Modifier::REVERSED)
+        } else {
+            Style::default()
         }
     }
 }
@@ -170,23 +201,26 @@ impl WidgetKeyHandler for TextField<'_> {
 
 impl<'a> Widget for TextField<'a> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
-        if self.in_focus() {
-            self.text_area.set_cursor_style(
+        self.text_area.set_cursor_style(self.cursor_style());
+        let block = Block::default()
+            .borders(Borders::TOP | Borders::RIGHT)
+            .title(format!(" {} ", self.title))
+            .title_alignment(Alignment::Left)
+            .title_style(self.title_style())
+            .style(
                 Style::default()
                     .fg(DEFAULT_TEXT_COLOR)
-                    .add_modifier(Modifier::REVERSED),
-            );
-        } else {
-            self.text_area.set_cursor_style(Style::default());
-        };
-        let title = self.title.clone();
-        let default_block = default_block!(title);
+                    .bg(DEFAULT_BACKGROUND_COLOR),
+            )
+            .border_type(BorderType::Rounded)
+            .padding(Padding::horizontal(2));
 
-        self.text_area.set_block(default_block);
+        self.text_area.set_block(block);
 
         self.text_area.set_cursor_line_style(Style::default());
         self.text_area.set_alignment(self.alignment);
-        self.text_area.set_style(self.get_style(self.in_focus));
+        self.text_area.set_style(self.text_area_style());
+
         self.text_area.widget().render(area, buf)
     }
 }

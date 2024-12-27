@@ -5,7 +5,9 @@ use crate::{
         EditScreenHandler, HandlerType, HelpPopupHandler, InsertScreenHandler, KeyEventHandler,
         MainScreenHandler, PopupHandler, QueryboxHandler,
     },
-    register, ViewMode,
+    register,
+    widget::popup::Type,
+    ViewMode,
 };
 use anyhow::{anyhow, Result};
 use cl_core::hashmap;
@@ -41,13 +43,13 @@ impl InputEventHandler {
         let mut handlers: HashMap<HandlerType, ThreadSafeKeyEventHandler<'static>> = hashmap!();
 
         register!(
-            handlers,
-            HandlerType::Popup => &PopupHandler,
-            HandlerType::Help => &HelpPopupHandler,
-            HandlerType::Main => &MainScreenHandler,
-            HandlerType::Insert => &InsertScreenHandler,
-            HandlerType::Edit => &EditScreenHandler,
-            HandlerType::QueryBox => &QueryboxHandler
+                handlers,
+                HandlerType::Popup => &PopupHandler,
+                HandlerType::Help => &HelpPopupHandler,
+                HandlerType::Main => &MainScreenHandler,
+                HandlerType::Insert => &InsertScreenHandler,
+                HandlerType::Edit => &EditScreenHandler,
+                HandlerType::QueryBox => &QueryboxHandler
         );
 
         let mut handler = Self {
@@ -97,10 +99,11 @@ impl InputEventHandler {
     }
 
     fn get_handler(&self, ui_context: &UI<'static>) -> HandlerType {
-        if ui_context.popup.show_popup() {
-            HandlerType::Popup
-        } else if ui_context.show_help() {
-            HandlerType::Help
+        if let Some(active_popup) = ui_context.popup.active_popup() {
+            match active_popup.r#type {
+                Type::Error | Type::Warning => HandlerType::Popup,
+                Type::Help => HandlerType::Help,
+            }
         } else if ui_context.querybox.focus() {
             HandlerType::QueryBox
         } else {

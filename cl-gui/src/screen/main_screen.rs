@@ -1,192 +1,320 @@
-use super::{Screen, ScreenExt};
+use super::{
+    observer::{CommandEvent, Event, Observer, Subject},
+    Screen,
+};
 use crate::{
     context::{Application, UI},
-    default_block, display_widget, popup, render,
+    default_widget_block, display_widget, maybe_render, render,
     terminal::{TerminalSize, TerminalSizeExt},
-    widget::{
-        list::List,
-        popup::{HelpPopup, RenderPopup},
-        statusbar::{Help, Info},
-        DisplayWidget,
+    theme::{
+        DEFAULT_BACKGROUND_COLOR, DEFAULT_HIGHLIGHT_COLOR, DEFAULT_TEXT_COLOR,
+        DEFAULT_WIDGET_NAME_COLOR,
     },
-    State, DEFAULT_SELECTED_COLOR,
+    widget::{
+        statusbar::Help, tabs::Tabs, text_field::FieldType, ClibpoardWidget, Component,
+        DisplayWidget, List,
+    },
+    State,
 };
-use cl_core::Namespace;
+use cl_core::{CommandBuilder, Namespace};
+use std::{cell::RefCell, rc::Rc};
 use tui::{
-    layout::{Constraint, Direction, Layout},
+    layout::{Alignment, Constraint, Direction, Layout},
     style::{Modifier, Style},
-    text::{Line, Span},
-    widgets::Tabs,
+    text::Text,
+    widgets::{Block, BorderType, Borders, Padding, Paragraph},
     Frame,
 };
 
-pub struct MainScreen;
+type Observers<'m> = Vec<Rc<RefCell<DisplayWidget<'m>>>>;
 
-impl Screen for MainScreen {
-    fn render(&self, frame: &mut Frame, context: &mut Application, ui_context: &mut UI) {
-        let query = ui_context.querybox.input();
-        let filtered_commands = context.filter_commands(&query);
+#[derive(Clone)]
+pub struct MainScreen<'m> {
+    observers: Observers<'m>,
+    command: Rc<RefCell<DisplayWidget<'m>>>,
+    tags: Rc<RefCell<DisplayWidget<'m>>>,
+    namespace: Rc<RefCell<DisplayWidget<'m>>>,
+    description: Rc<RefCell<DisplayWidget<'m>>>,
+}
 
-        let selected_idx = context.commands.selected_command_idx();
-        let selected_command = filtered_commands
-            .get(selected_idx)
-            .expect("No command found");
+impl<'m> MainScreen<'m> {
+    pub fn new() -> Self {
+        let observers = Observers::new();
 
-        //
-        ui_context.select_command(Some(selected_command));
+        let command = display_widget!(FieldType::Command, "", true, true, "");
+        let tags = display_widget!(FieldType::Tags, "", true, true, "");
+        let namespace = display_widget!(FieldType::Namespace, "", true, true, "");
+        let description = display_widget!(FieldType::Description, "", true, true, "");
 
-        let should_highlight = context.should_highlight();
+        let command_refcell = Rc::new(RefCell::new(command));
+        let tags_refcell = Rc::new(RefCell::new(tags));
+        let namespace_refcell = Rc::new(RefCell::new(namespace));
+        let description_refcell = Rc::new(RefCell::new(description));
 
-        let namespaces = context.namespaces.items.to_owned();
-        let selected_namespace = context.namespaces.state.selected();
-
-        let command_state = context.commands.state();
-        let command_str = &selected_command.command;
-        let tags_str = &selected_command.tags_as_string();
-        let description_str = &selected_command.description();
-
-        let commands = List::new(&filtered_commands, command_state);
-        let tabs = create_namespaces_menu_widget(namespaces, selected_namespace);
-
-        let command = display_widget!("Command", command_str, true, should_highlight, &query);
-        let tags = display_widget!("Tags", tags_str, true, should_highlight, &query);
-        let namespace = display_widget!(
-            "Namespace",
-            &selected_command.namespace,
-            true,
-            should_highlight,
-            &query
-        );
-        let description = display_widget!(
-            "Description",
-            description_str,
-            true,
-            should_highlight,
-            &query
-        );
-
-        //
-        match frame.size().as_terminal_size() {
-            TerminalSize::Medium => {
-                render_form_medium(frame, tabs, command, commands, namespace, tags, description)
-            }
-            TerminalSize::Large => {
-                render_form_medium(frame, tabs, command, commands, namespace, tags, description)
-            }
-            TerminalSize::Small => render_form_small(frame, tabs, commands, command),
-        }
-
-        //
-        if ui_context.show_help() {
-            let help = popup!(&ui_context.view_mode());
-            frame.render_popup(help, frame.size());
-        }
-
-        //
-        if ui_context.popup.show_popup() {
-            let popup_ctx = &mut ui_context.popup;
-            let content = &popup_ctx.content;
-            let choices = popup_ctx.choices();
-            let popup = popup!(content, choices);
-            frame.render_stateful_popup(popup, frame.size(), popup_ctx);
-        }
-
-        //
-        let center = if ui_context.clipboard_state.yanked() {
-            let info = Info::new("Command copied to clipboard!");
-            ui_context.clipboard_state.check();
-
-            Some(info)
-        } else {
-            None
+        let mut screen = MainScreen {
+            observers,
+            command: Rc::clone(&command_refcell),
+            tags: tags_refcell.to_owned(),
+            namespace: namespace_refcell.to_owned(),
+            description: description_refcell.to_owned(),
         };
-        let left = ui_context.querybox.to_owned();
-        self.render_base(frame, Some(left), center, Some(Help::default()));
+
+        screen.register(Rc::clone(&command_refcell));
+        screen.register(tags_refcell.to_owned());
+        screen.register(namespace_refcell.to_owned());
+        screen.register(description_refcell.to_owned());
+
+        screen
     }
 }
 
-fn create_namespaces_menu_widget<'a>(namespaces: Vec<Namespace>, selected: usize) -> Tabs<'a> {
-    let namespaces = namespaces.into_iter().map(Line::from).collect();
+impl<'m> Screen for MainScreen<'m> {
+    fn render(&mut self, frame: &mut Frame, application: &mut Application, ui: &mut UI) {
+        let querybox = ui.querybox.to_owned();
+        let query = querybox.input();
+        let filtered_commands = application.filter_commands(&query);
+        let selected_idx = application.commands.selected_command_idx();
+        let selected_command = filtered_commands
+            .get(selected_idx)
+            .map(ToOwned::to_owned)
+            .unwrap_or_else(|| CommandBuilder::default().build())
+            .to_owned();
 
+        //
+        ui.select_command(Some(&selected_command));
+
+        let should_highlight = application.should_highlight();
+
+        let namespaces = application.namespaces.items.to_owned();
+        let selected_namespace = application.namespaces.state.selected();
+
+        let command_state = application.commands.state();
+
+        let aliases = List::new(&filtered_commands, command_state);
+        let tabs = create_tabs(namespaces, selected_namespace);
+
+        let event = Event::new(CommandEvent::new(selected_command, query, should_highlight));
+        self.notify(event);
+
+        match frame.size().as_terminal_size() {
+            TerminalSize::Medium | TerminalSize::Large => render_medium_size(
+                frame,
+                tabs,
+                self.command.borrow().to_owned(),
+                aliases,
+                self.namespace.borrow().to_owned(),
+                self.tags.borrow().to_owned(),
+                self.description.borrow().to_owned(),
+                querybox.to_owned(),
+                ClibpoardWidget::new(&mut ui.clipboard_state),
+                Help::new(),
+            ),
+            TerminalSize::Small => render_form_small(
+                frame,
+                tabs,
+                aliases,
+                self.command.borrow().to_owned(),
+                querybox,
+            ),
+        }
+
+        maybe_render! { frame , {ui.popup.active_popup(), frame.size(), &mut ui.popup} };
+    }
+}
+
+impl<'m> Subject<DisplayWidget<'m>> for MainScreen<'m> {
+    fn register(&mut self, observer: Rc<RefCell<DisplayWidget<'m>>>) {
+        self.get_observers_mut().push(observer);
+    }
+
+    fn notify(&mut self, event: Event<CommandEvent>) {
+        for observer in self.get_observers() {
+            observer.borrow_mut().update(event.to_owned());
+        }
+    }
+
+    fn get_observers<'s>(&'s self) -> &'s Vec<Rc<RefCell<DisplayWidget<'m>>>> {
+        &self.observers
+    }
+
+    fn get_observers_mut(&mut self) -> &mut Vec<Rc<RefCell<DisplayWidget<'m>>>> {
+        self.observers.as_mut()
+    }
+}
+
+fn create_tabs<'a>(namespaces: Vec<Namespace>, selected: usize) -> Tabs<'a> {
     Tabs::new(namespaces)
         .select(selected)
-        .block(default_block!("Namespaces"))
+        .block(default_widget_block!().title("Namespaces"))
         .highlight_style(
             Style::default()
-                .fg(DEFAULT_SELECTED_COLOR)
-                .add_modifier(Modifier::UNDERLINED),
+                .fg(DEFAULT_HIGHLIGHT_COLOR)
+                .add_modifier(Modifier::BOLD | Modifier::ITALIC),
         )
-        .divider(Span::raw("|"))
+        .divider('|')
 }
 
-fn render_form_medium(
+#[allow(clippy::too_many_arguments)]
+fn render_medium_size(
     frame: &mut Frame,
-    tabs: Tabs,
-    command: DisplayWidget,
-    commands: List,
-    namespace: DisplayWidget,
-    tags: DisplayWidget,
-    description: DisplayWidget,
+    tabs: impl Component,
+    command: impl Component,
+    aliases: impl Component,
+    namespace: impl Component,
+    tags: impl Component,
+    description: impl Component,
+    left: impl Component,
+    center: impl Component,
+    right: impl Component,
 ) {
+    let drawable_area = [
+        Constraint::Length(5), // drawable area
+        Constraint::Max(3),    // footer
+    ];
+    let areas = [
+        Constraint::Percentage(20), // name & aliases
+        Constraint::Percentage(80), // right side
+    ];
+
     let constraints = [
-        Constraint::Length(3),
-        Constraint::Length(5),
-        Constraint::Min(10),
-        Constraint::Length(3),
+        Constraint::Max(3),    // tabs
+        Constraint::Max(5),    // description
+        Constraint::Max(3),    // details
+        Constraint::Length(3), // command
+    ];
+
+    let drawable_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(drawable_area)
+        .split(frame.size());
+
+    let main_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(areas)
+        .split(drawable_chunks[0]);
+
+    let left_side = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Max(3), Constraint::Length(5)])
+        .split(main_chunks[0]);
+
+    let app_name = Paragraph::new(Text::styled(
+        format!("cl - {}", env!("CARGO_PKG_VERSION")),
+        Style::default()
+            .fg(DEFAULT_WIDGET_NAME_COLOR)
+            .add_modifier(Modifier::BOLD | Modifier::ITALIC),
+    ))
+    .alignment(Alignment::Center)
+    .block(
+        Block::default()
+            .borders(Borders::TOP | Borders::RIGHT)
+            .style(
+                Style::default()
+                    .bg(DEFAULT_BACKGROUND_COLOR)
+                    .fg(DEFAULT_TEXT_COLOR),
+            )
+            .border_type(BorderType::Rounded)
+            .padding(Padding::horizontal(2)),
+    );
+
+    let right_side = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(constraints)
+        .split(main_chunks[1]);
+
+    let details_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(40), Constraint::Percentage(60)])
+        .split(right_side[2]);
+
+    //
+    let footer = Block::default()
+        .borders(Borders::BOTTOM | Borders::RIGHT)
+        .style(
+            Style::default()
+                .bg(DEFAULT_BACKGROUND_COLOR)
+                .fg(DEFAULT_TEXT_COLOR),
+        );
+
+    let statusbar_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage(33),
+            Constraint::Percentage(33),
+            Constraint::Percentage(33),
+        ])
+        .split(footer.inner(drawable_chunks[1]));
+
+    render! { frame, {center, statusbar_layout[1]} };
+
+    render! { frame, {footer, drawable_chunks[1]} };
+    render! {
+            frame,
+            {left,  statusbar_layout[0]},
+            {right, statusbar_layout[2]}
+    };
+
+    render! {
+            frame,
+            {app_name, left_side[0]},
+            {aliases,  left_side[1]},
+    }
+    render! {
+            frame,
+            {tabs,        right_side[0]}, // top
+            {description, right_side[1]}, // middle
+            {command,     right_side[3]},
+            {namespace,   details_chunks[0]},
+            {tags,        details_chunks[1]},
+    }
+}
+
+fn render_form_small(
+    frame: &mut Frame,
+    tabs: impl Component,
+    commands: impl Component,
+    command: impl Component,
+    querybox: impl Component,
+) {
+    let areas = [
+        Constraint::Percentage(25), // name & aliases
+        Constraint::Percentage(75), // right side
     ];
     let chunks = Layout::default()
-        .direction(Direction::Vertical)
+        .direction(Direction::Horizontal)
         .margin(1)
-        .constraints(constraints)
+        .constraints(areas)
         .split(frame.size());
 
-    let central_chunk = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(30), Constraint::Percentage(70)].as_ref())
-        .split(chunks[2]);
-
-    let command_detail_chunks = Layout::default()
+    let left_side = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Min(5), Constraint::Length(3)].as_ref())
-        .split(central_chunk[1]);
+        .constraints([Constraint::Max(3), Constraint::Length(5)])
+        .split(chunks[0]);
 
-    let namespace_and_tags_chunk = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(40), Constraint::Percentage(60)].as_ref())
-        .split(command_detail_chunks[1]);
-
-    render!(
-        frame,
-        { tabs, chunks[0] },
-        { commands, central_chunk[0] },
-        { command, command_detail_chunks[0] },
-        { namespace, namespace_and_tags_chunk[0] },
-        { tags, namespace_and_tags_chunk[1] },
-        { description, chunks[1] },
-    );
-}
-
-fn render_form_small(frame: &mut Frame, tabs: Tabs, commands: List, command: DisplayWidget) {
-    let constraints = [Constraint::Length(3), Constraint::Min(5)];
-    let chunks = Layout::default()
+    let right_side = Layout::default()
         .direction(Direction::Vertical)
-        .margin(1)
-        .constraints(constraints)
-        .split(frame.size());
-
-    let central_chunk = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(30), Constraint::Percentage(70)].as_ref())
+        .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
         .split(chunks[1]);
 
-    let command_detail_chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(100)].as_ref())
-        .split(central_chunk[1]);
-    render!(
-        frame,
-        { tabs, chunks[0] },
-        { commands, central_chunk[0] },
-        { command, command_detail_chunks[0] },
-    );
+    let querybox_block = Block::default()
+        .borders(Borders::TOP | Borders::RIGHT)
+        .style(
+            Style::default()
+                .bg(DEFAULT_BACKGROUND_COLOR)
+                .fg(DEFAULT_TEXT_COLOR),
+        )
+        .border_type(BorderType::Rounded);
+
+    render! {
+            frame,
+            {querybox_block, left_side[0]},
+            {querybox, left_side[0]},
+            {commands, left_side[1]}
+    }
+
+    render! {
+            frame,
+            {tabs, right_side[0]},
+            {command, right_side[1]},
+    }
 }

@@ -1,5 +1,6 @@
 use super::display::DisplayWidget;
 use itertools::Itertools;
+use std::collections::HashSet;
 use tui::{
     style::{Modifier, Style},
     text::{Line, Span},
@@ -11,48 +12,48 @@ impl<'hl> DisplayWidget<'hl> {
     ///
     /// If the input is empty, returns `Self` without any modification
     #[inline]
-    pub fn highlight<T>(mut self, highlight_input: T) -> Self
+    pub fn highlight<T>(&mut self, highlight_input: T)
     where
         T: Into<String>,
     {
         let highlight_string: String = highlight_input.into();
+
         if !self.should_highlight() || highlight_string.is_empty() {
-            return self;
+            return;
         }
 
-        if highlight_string.eq(&self.content()) {
+        let content = self.raw_content();
+
+        if highlight_string == content {
             let line = Line::styled(
                 highlight_string,
                 Style::default().add_modifier(Modifier::UNDERLINED),
             );
-            self.set_highlighted_content(Some(line));
-            return self;
+            self.update_content(line);
+            return;
         }
 
-        let content = self.content();
         let splitted_content = self.split_preserve_chars(&content, &highlight_string);
         let grouped = self.group_by_newline(&splitted_content);
 
         let spans = grouped
             .into_iter()
-            .flat_map(|sv| {
-                sv.iter()
-                    .map(|i| {
-                        let style = if self.contains_ignore_case(&highlight_string, i) {
+            .flat_map(|line| {
+                line.into_iter()
+                    .map(|segment| {
+                        let style = if self.contains_ignore_case(&highlight_string, &segment) {
                             Style::default().add_modifier(Modifier::UNDERLINED)
                         } else {
                             Style::default()
                         };
 
-                        Span::styled(i.to_owned(), style)
+                        Span::styled(segment.to_owned(), style)
                     })
                     .collect_vec()
             })
             .collect_vec();
 
-        self.set_highlighted_content(Some(Line::from(spans)));
-
-        self
+        self.update_content(Line::from(spans));
     }
 
     /// Splits the given content based on the given pattern
@@ -64,27 +65,34 @@ impl<'hl> DisplayWidget<'hl> {
     /// the output should be `["thi", "s", " i", "s", " ", "a", " ", "s", "a", "n", "d", "box"]`
     #[inline]
     fn split_preserve_chars(&self, content: &'hl str, pattern: &'hl str) -> Vec<&'hl str> {
-        let mut idxs = Vec::default();
-
-        for p in pattern.chars().unique() {
-            let matches = content.match_indices(p);
-            idxs.extend(matches.map(|(i, _)| i));
-        }
+        let mut idxs = pattern
+            .chars()
+            .collect::<HashSet<_>>()
+            .iter()
+            .flat_map(|p| content.match_indices(*p).map(|(i, _)| i))
+            .collect::<Vec<usize>>();
 
         // must be sorted
         idxs.sort();
 
         let mut result = Vec::new();
         let mut previous_index = 0;
+
         for index in idxs {
-            let slice_untill_idx = &content[previous_index..index];
-            result.push(slice_untill_idx);
+            if previous_index < index {
+                result.push(&content[previous_index..index]);
+            }
+
             let inclusive_char = &content[index..index + 1];
             result.push(inclusive_char);
             previous_index = index + 1;
         }
-        result.push(&content[previous_index..]);
-        result.into_iter().filter(|s| !s.is_empty()).collect()
+
+        if previous_index < content.len() {
+            result.push(&content[previous_index..]);
+        }
+
+        result
     }
 
     /// Groups the content of a `Vec<&str>` in a `Vec<Vec<String>>`
@@ -101,16 +109,16 @@ impl<'hl> DisplayWidget<'hl> {
         let mut sub_vec = Vec::new();
 
         for item in input {
-            if item.contains('\n') {
-                let sub_items: Vec<&str> = item.split('\n').collect();
-                sub_vec.push(sub_items[0]);
+            if let Some((before, after)) = item.split_once('\n') {
+                sub_vec.push(before.to_string());
                 result.push(sub_vec);
                 sub_vec = Vec::new(); // here we finish one sub vec (representing an EOL) and starts a new empty sub vec
-                if sub_items.len() > 1 && !sub_items[1].is_empty() {
-                    sub_vec.push(sub_items[1]);
+
+                if !after.is_empty() {
+                    sub_vec.push(after.to_string());
                 }
             } else {
-                sub_vec.push(item);
+                sub_vec.push(item.to_string());
             }
         }
 
@@ -119,10 +127,6 @@ impl<'hl> DisplayWidget<'hl> {
         }
 
         result
-            .iter()
-            .filter(|sub_vec| !sub_vec.is_empty())
-            .map(|sub_vec| sub_vec.iter().cloned().map(String::from).collect_vec())
-            .collect()
     }
 
     #[inline]
@@ -136,13 +140,13 @@ impl<'hl> DisplayWidget<'hl> {
 
 #[cfg(test)]
 mod tests {
-    use crate::widget::display::DisplayWidget;
+    use crate::widget::{display::DisplayWidget, text_field::FieldType};
 
     #[test]
     fn should_group_highlighted_multilne_input() {
         let content = "multiline\ninput";
         let pattern = "in";
-        let d = DisplayWidget::new(content, false, true);
+        let d = DisplayWidget::new(FieldType::Command, content, false, true, true);
         let input = d.split_preserve_chars(content, pattern);
         let expected = vec![vec!["mult", "i", "l", "i", "n", "e"], vec!["i", "n", "put"]];
 
@@ -155,7 +159,7 @@ mod tests {
     fn should_group_multilne_input_if_there_is_no_pattern() {
         let content = "multiline\ninput";
         let pattern = "";
-        let d = DisplayWidget::new(content, false, true);
+        let d = DisplayWidget::new(FieldType::Command, content, false, true, true);
         let input = d.split_preserve_chars(content, pattern);
         let expected = vec![vec!["multiline"], vec!["input"]];
 
