@@ -153,7 +153,7 @@ impl Popup {
 
         let scaled_height = (SCALE_FACTOR * (content_height * 2)) / area.height;
         let max_height = (area.height as f32 * MAX_SCALE_RATIO) as u16;
-        let final_height = std::cmp::min(scaled_height, max_height) as u16;
+        let final_height = std::cmp::min(scaled_height, max_height);
 
         centered_rect!(content_width, final_height, area)
     }

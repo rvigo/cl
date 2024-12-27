@@ -71,8 +71,8 @@ impl<'d> Observer for DisplayWidget<'d> {
             _ => "".to_owned(),
         };
 
+        self.update_content(content);
         self.highlight(event.content.query);
-        self.content = content;
         self.should_highlight = event.content.highlight;
     }
 }

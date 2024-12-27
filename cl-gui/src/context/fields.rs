@@ -51,26 +51,15 @@ impl<'fields> Fields<'fields> {
 
     pub fn popuplate(&mut self, current_command: &Command) {
         self.state.items.iter_mut().for_each(|(field_type, field)| {
-            match field_type {
-                FieldType::Alias => {
-                    field.set_text(&current_command.alias);
-                }
-                FieldType::Command => {
-                    field.set_text(&current_command.command);
-                }
-                FieldType::Namespace => {
-                    field.set_text(&current_command.namespace);
-                }
-                FieldType::Description => {
-                    field.set_text(current_command.description.as_ref());
-                }
-                FieldType::Tags => {
-                    field.set_text(current_command.tags.as_ref().unwrap_or(&vec![]).join(", "));
-                }
-                FieldType::Popup(_) => todo!(),
-                FieldType::Info => todo!(),
+            let text = match field_type {
+                FieldType::Alias => current_command.alias.to_owned(),
+                FieldType::Command => current_command.command.to_owned(),
+                FieldType::Namespace => current_command.namespace.to_owned(),
+                FieldType::Description => current_command.description.clone().unwrap_or_default(),
+                FieldType::Tags => current_command.tags.as_ref().unwrap_or(&vec![]).join(", "),
+                _ => panic!("Invalid field type: {:?}", field_type),
             };
-
+            field.set_text(text.to_string());
             field.move_cursor_to_end_of_text();
 
             self.original_fields
@@ -179,6 +168,7 @@ impl State for Fields<'_> {
         self.selected_field = field_type;
     }
 }
+
 #[cfg(test)]
 mod test {
     use super::*;
