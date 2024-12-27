@@ -6,6 +6,7 @@ mod key_handler;
 mod screen;
 mod state;
 mod terminal;
+mod theme;
 mod tui_application;
 mod view_mode;
 mod widget;
@@ -19,10 +20,6 @@ use view_mode::ViewMode;
 
 use anyhow::Result;
 use cl_core::Config;
-use tui::style::Color;
-
-pub const DEFAULT_TEXT_COLOR: Color = Color::Rgb(229, 229, 229);
-pub const DEFAULT_SELECTED_COLOR: Color = Color::Rgb(201, 165, 249);
 
 pub async fn start_gui(config: Config) -> Result<()> {
     core::init(config).await

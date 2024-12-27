@@ -9,7 +9,6 @@ pub struct UI<'ui> {
     pub querybox: QueryBox<'ui>,
     pub clipboard_state: ClipboardState,
     view_mode: ViewMode,
-    show_help: bool,
 }
 
 impl<'ui> UI<'ui> {
@@ -21,7 +20,6 @@ impl<'ui> UI<'ui> {
             querybox: QueryBox::default(),
             clipboard_state: ClipboardState::default(),
             view_mode: ViewMode::Main,
-            show_help: false,
         }
     }
 }
@@ -50,14 +48,6 @@ impl<'ui> UI<'ui> {
         self.view_mode = view_mode;
         self.fields.reset();
     }
-
-    pub fn show_help(&self) -> bool {
-        self.show_help
-    }
-
-    pub fn set_show_help(&mut self, should_show: bool) {
-        self.show_help = should_show
-    }
 }
 
 #[cfg(test)]
@@ -79,7 +69,7 @@ mod tests {
         ui.fields.reset();
         ui.fields.clear_inputs();
 
-        let mut fields = ui.fields.iter();
-        assert!(fields.all(|c| c.text().is_empty()));
+        let fields = ui.fields.inner();
+        assert!(fields.iter().all(|c| c.text().is_empty()));
     }
 }
