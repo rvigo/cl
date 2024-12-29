@@ -26,10 +26,11 @@ impl Subcommand for Misc {
             .iter()
             .sorted_by_key(|c| c.alias.to_owned())
             .collect::<Vec<&Command>>();
+
         if self.description {
             if let Some(alias) = &self.alias {
                 let namespace = &self.namespace;
-                let command = commands.find(alias, namespace.to_owned())?;
+                let command = commands.find(alias, namespace.as_deref())?;
                 println!("{}", command.to_color_string());
             }
         } else if self.fzf {

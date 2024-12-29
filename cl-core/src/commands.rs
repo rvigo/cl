@@ -2,6 +2,7 @@ use crate::{
     command::Command, resource::errors::CommandError, CommandMap, CommandMapExt, CommandVec,
 };
 use anyhow::{bail, Context, Result};
+use log::warn;
 use std::env;
 
 #[derive(Default)]
@@ -24,13 +25,11 @@ impl Commands {
 
     pub fn add(&mut self, command: &Command) -> Result<CommandMap> {
         self.check_duplicated(command)?;
-        log::debug!("commands before insert: {:?}", self.commands);
         self.commands
             .entry(command.namespace.to_owned())
             .and_modify(|commands| commands.push(command.to_owned()))
             .or_insert_with(|| vec![command.to_owned()]);
 
-        log::debug!("commands after insert: {:?}", self.commands);
         Ok(self.commands.to_owned())
     }
 
@@ -67,55 +66,9 @@ impl Commands {
         Ok(self.commands.to_owned())
     }
 
-    /// Executes a command
-    ///
-    /// If no `$SHELL` is set, defaults to `sh`
-    ///
-    /// ## Arguments
-    /// * `command_item` - The command entity itself
-    /// * `dry_run` - A boolean flag representing if the command should be actually executed or just printed in the `stdout`
-    /// * `quiet_mode` - A boolean flag representing if the command string should be shown before the command output
-    pub fn exec(&self, command_item: &Command, dry_run: bool, quiet_mode: bool) -> Result<()> {
-        if dry_run {
-            println!("{}", command_item.command);
-        } else {
-            if !quiet_mode {
-                const MAX_LINE_LENGTH: usize = 120;
-                let command_description = if command_item.command.len() > MAX_LINE_LENGTH {
-                    format!(
-                        "{}{}",
-                        &command_item.command.clone()[..MAX_LINE_LENGTH],
-                        "..."
-                    )
-                } else {
-                    command_item.command.clone()
-                };
-                eprintln!(
-                    "{}.{} --> {}",
-                    command_item.namespace, command_item.alias, command_description
-                );
-            }
-
-            let shell = env::var("SHELL").unwrap_or_else(|_| {
-                eprintln!("Warning: $SHELL not found! Using sh");
-                String::from("sh")
-            });
-
-            std::process::Command::new(shell)
-                .env_clear()
-                .envs(env::vars())
-                .arg("-c")
-                .arg(&command_item.command)
-                .spawn()?
-                .wait()
-                .context("The command did not run")?;
-        }
-        Ok(())
-    }
-
-    pub fn find(&self, alias: &str, namespace: Option<String>) -> Result<Command> {
+    pub fn find(&self, alias: &str, namespace: Option<&str>) -> Result<Command> {
         let commands = if let Some(namespace) = namespace {
-            if let Some(commands) = self.commands.get(&namespace) {
+            if let Some(commands) = self.commands.get(namespace) {
                 commands
                     .iter()
                     .filter(|command| command.alias.eq(&alias))
@@ -184,6 +137,62 @@ impl Commands {
     }
 }
 
+pub trait CommandExec {
+    fn exec(&self, dry_run: bool, quiet_mode: bool) -> Result<()>;
+
+    fn truncate_command(&self) -> String;
+}
+
+impl CommandExec for Command {
+    /// Executes a command
+    ///
+    /// If no `$SHELL` is set, defaults to `sh`
+    ///
+    /// ## Arguments
+    /// * `command_item` - The command entity itself
+    /// * `dry_run` - A boolean flag representing if the command should be actually executed or just printed in the `stdout`
+    /// * `quiet_mode` - A boolean flag representing if the command string should be shown before the command output
+    fn exec(&self, dry_run: bool, quiet_mode: bool) -> Result<()> {
+        if dry_run {
+            println!("{}", self.command);
+            return Ok(());
+        }
+
+        if !quiet_mode {
+            let truncated_command = self.truncate_command();
+            eprintln!(
+                "{}.{} --> {}",
+                self.namespace, self.alias, truncated_command
+            );
+        }
+
+        let shell = env::var("SHELL").unwrap_or_else(|_| {
+            warn!("$SHELL not found! Using sh");
+            String::from("sh")
+        });
+
+        std::process::Command::new(shell)
+            .env_clear()
+            .envs(env::vars())
+            .arg("-c")
+            .arg(&self.command)
+            .spawn()?
+            .wait()
+            .context("The command did not run")?;
+
+        Ok(())
+    }
+
+    fn truncate_command(&self) -> String {
+        const MAX_LINE_LENGTH: usize = 120;
+        if self.command.len() > MAX_LINE_LENGTH {
+            format!("{}{}", &self.command.clone()[..MAX_LINE_LENGTH], "...")
+        } else {
+            self.command.to_string()
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -203,9 +212,24 @@ mod test {
     }
 
     macro_rules! commands {
-        ($commands:expr) => {
-            Commands::init($commands)
-        };
+        ($($command:expr),+ $(,)?) => {{
+            let command_map = vec![$($command),+].to_command_map();
+
+            Commands::init(command_map)
+        }};
+    }
+
+    trait PanicIfError<T> {
+        fn panic_if_error(&self) -> &T;
+    }
+
+    impl<T> PanicIfError<T> for Result<T> {
+        fn panic_if_error(&self) -> &T {
+            match self {
+                Ok(value) => value,
+                Err(err) => panic!("Error: {:?}", err),
+            }
+        }
     }
 
     #[test]
@@ -213,7 +237,7 @@ mod test {
         let command1 = create_command!("alias1", "command1", "namespace1", None, None);
         let command2 = create_command!("alias2", "command2", "namespace2", None, None);
 
-        let commands = commands!(vec![command1.to_owned(), command2.to_owned()].to_command_map());
+        let commands = commands!(command1.to_owned(), command2.to_owned());
         let all_command_items = commands.to_list();
         assert_eq!(2, all_command_items.len())
     }
@@ -221,7 +245,7 @@ mod test {
     #[test]
     fn should_return_an_error_when_add_a_duplicated_command() {
         let command = create_command!("alias1", "command1", "namespace1", None, None);
-        let mut commands = commands!(vec![command.to_owned()].to_command_map());
+        let mut commands = commands!(command.to_owned());
 
         let duplicated = command.clone();
         let result = commands.add(&duplicated);
@@ -243,7 +267,7 @@ mod test {
     #[test]
     fn should_remove_a_command() {
         let command = create_command!("alias1", "command1", "namespace1", None, None);
-        let mut commands = commands!(vec![command.to_owned()].to_command_map());
+        let mut commands = commands!(command.to_owned());
 
         let commands_list = commands.to_list();
         assert_eq!(1, commands_list.len());
@@ -251,37 +275,33 @@ mod test {
         let to_be_removed = commands_list.get(0).unwrap();
         let commands_after_item_removed = commands.remove(to_be_removed);
 
-        assert!(commands_after_item_removed.is_ok());
-        if let Ok(commands_map) = commands_after_item_removed {
-            assert!(!commands_map.contains_key(&command.namespace));
-        } else {
-            panic!("Error: {:?}", commands_after_item_removed.unwrap_err());
-        }
+        assert!(!commands_after_item_removed
+            .panic_if_error()
+            .contains_key(&command.namespace));
     }
 
     #[test]
     fn should_add_a_command() {
         let command = create_command!("old", "command", "namespace", None, None);
-        let mut commands = commands!(vec![command.to_owned()].to_command_map());
+        let mut commands = commands!(command.to_owned());
         let all_commands = commands.to_list();
 
         assert!(!all_commands.is_empty());
+
         let new_command = create_command!("new", "command", "namespace", None, None);
         let commands_with_new_command = commands.add(&new_command);
 
-        assert!(commands_with_new_command.is_ok());
-        if let Ok(commands) = commands_with_new_command {
-            let new_command_list = commands.get(&new_command.namespace).unwrap();
-            assert!(new_command_list.contains(&command))
-        } else {
-            panic!("Error: {:?}", commands_with_new_command.unwrap_err());
-        }
+        let new_command_list = commands_with_new_command
+            .panic_if_error()
+            .get(&new_command.namespace)
+            .unwrap();
+        assert!(new_command_list.contains(&command))
     }
 
     #[test]
     fn should_add_an_edited_command() {
         let new_command = create_command!("old", "command", "namespace", None, None);
-        let mut commands = commands!(vec![new_command.to_owned()].to_command_map());
+        let mut commands = commands!(new_command.to_owned());
 
         let mut edited_command = new_command.clone();
         edited_command.alias = String::from("new");
@@ -290,20 +310,19 @@ mod test {
         let commands_with_edited_command = commands.edit(&edited_command, &old_command);
 
         assert!(commands_with_edited_command.is_ok());
-        if let Ok(command_map) = commands_with_edited_command {
-            assert!(command_map.contains_key(&edited_command.namespace));
-            let entry = command_map.get(&edited_command.namespace).unwrap();
-            assert!(entry.contains(&edited_command));
-            assert!(!entry.contains(&old_command));
-        } else {
-            panic!("Error: {:?}", commands_with_edited_command.unwrap_err());
-        }
+
+        let command_map = commands_with_edited_command.panic_if_error();
+        assert!(command_map.contains_key(&edited_command.namespace));
+
+        let entry = command_map.get(&edited_command.namespace).unwrap();
+        assert!(entry.contains(&edited_command));
+        assert!(!entry.contains(&old_command));
     }
 
     #[test]
     fn should_add_an_edited_command_with_same_alias_but_different_namespace() {
         let new_command = create_command!("old", "command", "namespace", None, None);
-        let mut commands = commands!(vec![new_command.to_owned()].to_command_map());
+        let mut commands = commands!(new_command.to_owned());
 
         let mut edited_command = new_command.clone();
         edited_command.namespace = String::from("edited_namespace");
@@ -312,14 +331,13 @@ mod test {
         let commands_with_edited_command = commands.edit(&edited_command, &old_command);
 
         assert!(commands_with_edited_command.is_ok());
-        if let Ok(command_map) = commands_with_edited_command {
-            assert!(command_map.contains_key(&edited_command.namespace));
-            let entry = command_map.get(&edited_command.namespace).unwrap();
-            assert!(entry.contains(&edited_command));
-            assert!(!entry.contains(&old_command));
-        } else {
-            panic!("Error: {:?}", commands_with_edited_command.unwrap_err());
-        }
+
+        let command_map = commands_with_edited_command.panic_if_error();
+        assert!(command_map.contains_key(&edited_command.namespace));
+
+        let entry = command_map.get(&edited_command.namespace).unwrap();
+        assert!(entry.contains(&edited_command));
+        assert!(!entry.contains(&old_command));
     }
 
     #[test]
@@ -327,7 +345,7 @@ mod test {
     ) {
         let command1 = create_command!("alias1", "command", "namespace1", None, None);
         let command2 = create_command!("alias2", "command", "namespace1", None, None);
-        let mut commands = commands!(vec![command1, command2.to_owned()].to_command_map());
+        let mut commands = commands!(command1, command2.to_owned());
 
         let mut edited_command = command2.clone();
         edited_command.alias = String::from("alias1");
@@ -349,7 +367,7 @@ mod test {
     fn should_return_an_error_when_add_an_edited_command_with_duplicated_alias_and_namespace() {
         let command1 = create_command!("alias1", "command", "namespace1", None, None);
         let command2 = create_command!("alias2", "command", "namespace2", None, None);
-        let mut commands = commands!(vec![command1, command2.to_owned()].to_command_map());
+        let mut commands = commands!(command1, command2.to_owned());
 
         let mut edited_command = command2.clone();
         edited_command.alias = String::from("alias1");
@@ -371,7 +389,7 @@ mod test {
     fn should_find_a_command() {
         let command1 = create_command!("alias1", "command", "namespace1", None, None);
         let command2 = create_command!("alias2", "command", "namespace2", None, None);
-        let commands = commands!(vec![command1.to_owned(), command2.to_owned()].to_command_map());
+        let commands = commands!(command1.to_owned(), command2.to_owned());
 
         let result = commands.find(&command1.alias, None);
 
@@ -383,7 +401,7 @@ mod test {
     fn should_return_an_error_if_find_more_than_on_command_with_same_alias() {
         let command1 = create_command!("alias", "command", "namespace1", None, None);
         let command2 = create_command!("alias", "command", "namespace2", None, None);
-        let commands = commands!(vec![command1.to_owned(), command2.to_owned()].to_command_map());
+        let commands = commands!(command1.to_owned(), command2.to_owned());
 
         let result = commands.find(&command1.alias, None);
 
@@ -400,7 +418,7 @@ mod test {
     #[test]
     fn should_return_an_error_if_alias_does_not_exists() {
         let command1 = create_command!("alias", "command", "namespace1", None, None);
-        let commands = commands!(vec![command1].to_command_map());
+        let commands = commands!(command1);
         let invalid_alias = "invalid";
         let result = commands.find(&invalid_alias, None);
 
@@ -416,47 +434,36 @@ mod test {
         }
     }
 
-    // #[test]
-    // fn should_execute_a_command() {
-    //     // nothing much to test here without capturing the stdout, so just checks the method output
-    //     // note that this test function will actually run the provided command, BE CAREFUL
-    //     let commands = build_commands();
-    //     let mut command_be_executed = commands.commands[0].clone();
-    //     command_be_executed.command = "echo 'Hello, world!' > /dev/null 2>&1".to_owned();
+    #[test]
+    fn should_execute_a_command() {
+        // nothing much to test here without capturing the stdout, so just checks the method output
+        // note that this test function will actually run the provided command, BE CAREFUL
 
-    //     // dry run
-    //     let dry_run = true;
-    //     let quiet_mode = false;
-    //     let result = commands.exec_command(&command_be_executed, dry_run, quiet_mode);
-    //     assert!(result.is_ok());
+        let command_to_be_executed = "echo 'Hello, world!' > /dev/null 2>&1".to_owned();
+        let command = create_command!("alias", command_to_be_executed, "namespace1", None, None);
 
-    //     // dry run & quiet
-    //     let dry_run = true;
-    //     let quiet_mode = true;
-    //     let result = commands.exec_command(&command_be_executed, dry_run, quiet_mode);
-    //     assert!(result.is_ok());
+        // dry run
+        let dry_run = true;
+        let quiet_mode = false;
+        let result = command.exec(dry_run, quiet_mode);
+        assert!(result.is_ok());
 
-    //     // quiet
-    //     let dry_run = false;
-    //     let quiet_mode = true;
-    //     let result = commands.exec_command(&command_be_executed, dry_run, quiet_mode);
-    //     assert!(result.is_ok());
+        // dry run & quiet
+        let dry_run = true;
+        let quiet_mode = true;
+        let result = command.exec(dry_run, quiet_mode);
+        assert!(result.is_ok());
 
-    //     // false dry run & false quiet
-    //     let dry_run = false;
-    //     let quiet_mode = false;
-    //     let result = commands.exec_command(&command_be_executed, dry_run, quiet_mode);
-    //     assert!(result.is_ok());
+        // quiet
+        let dry_run = false;
+        let quiet_mode = true;
+        let result = command.exec(dry_run, quiet_mode);
+        assert!(result.is_ok());
 
-    //     command_be_executed.command =
-    //         "echo 'a very looooooooooooooooooooooooooooooooooooooooooooooooooo
-    //     ooooooooooooooooooooooooooooooooooooooooooooong command' > /dev/null 2>&1"
-    //             .to_owned();
-
-    //     // false dry run & false quiet
-    //     let dry_run = false;
-    //     let quiet_mode = false;
-    //     let result = commands.exec_command(&command_be_executed, dry_run, quiet_mode);
-    //     assert!(result.is_ok());
-    // }
+        // false dry run & false quiet
+        let dry_run = false;
+        let quiet_mode = false;
+        let result = command.exec(dry_run, quiet_mode);
+        assert!(result.is_ok());
+    }
 }

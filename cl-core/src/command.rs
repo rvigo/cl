@@ -105,7 +105,7 @@ pub struct CommandBuilder {
 }
 
 impl CommandBuilder {
-    pub fn namespace<T>(&mut self, namespace: T) -> &mut CommandBuilder
+    pub fn namespace<T>(mut self, namespace: T) -> CommandBuilder
     where
         T: Into<String>,
     {
@@ -113,7 +113,7 @@ impl CommandBuilder {
         self
     }
 
-    pub fn alias<T>(&mut self, alias: T) -> &mut CommandBuilder
+    pub fn alias<T>(mut self, alias: T) -> CommandBuilder
     where
         T: Into<String>,
     {
@@ -121,7 +121,7 @@ impl CommandBuilder {
         self
     }
 
-    pub fn command<T>(&mut self, command: T) -> &mut CommandBuilder
+    pub fn command<T>(mut self, command: T) -> CommandBuilder
     where
         T: Into<String>,
     {
@@ -129,7 +129,7 @@ impl CommandBuilder {
         self
     }
 
-    pub fn description<T>(&mut self, description: Option<T>) -> &mut CommandBuilder
+    pub fn description<T>(mut self, description: Option<T>) -> CommandBuilder
     where
         T: Into<String>,
     {
@@ -137,7 +137,7 @@ impl CommandBuilder {
         self
     }
 
-    pub fn tags<T, S, I>(&mut self, tags: Option<T>) -> &mut CommandBuilder
+    pub fn tags<T, S, I>(mut self, tags: Option<T>) -> CommandBuilder
     where
         T: IntoIterator<Item = S, IntoIter = I>,
         S: Into<String>,
@@ -163,8 +163,7 @@ mod test {
     use super::*;
 
     fn build_default_command() -> Command {
-        let mut command = CommandBuilder::default();
-        command
+        let command = CommandBuilder::default()
             .tags(Some(vec!["tag1"]))
             .alias("alias")
             .namespace("namespace")
@@ -197,8 +196,7 @@ mod test {
 
     #[test]
     fn should_not_validate_the_command_with_invalid_alias() {
-        let mut invalid_command = CommandBuilder::default();
-        invalid_command
+        let invalid_command = CommandBuilder::default()
             .tags(Some(vec!["tag1"]))
             .alias("invalid alias")
             .namespace("namespace")
@@ -215,8 +213,7 @@ mod test {
 
     #[test]
     fn should_not_validate_the_command_with_missing_mandatory_field() {
-        let mut invalid_command = CommandBuilder::default();
-        invalid_command
+        let invalid_command = CommandBuilder::default()
             .tags(Some(vec!["tag1"]))
             .alias("alias")
             .description(Some("description"))

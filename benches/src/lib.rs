@@ -1,12 +1,12 @@
 #[macro_export]
-macro_rules! load_command_handler {
+macro_rules! load_file_service {
     () => {{
-        use cl_core::resource::FileService;
+        use cl_core::resource::file_service::FileService;
         FileService::new("../benches/data/sample.toml".into())
     }};
     ($path:expr) => {
         use cl_core::resource::file_service::FileService;
-        CommandsFileHandler::new($path.into())
+        FileService::new($path.into())
     };
 }
 

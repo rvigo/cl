@@ -1,9 +1,9 @@
-use benches::load_command_handler;
+use benches::load_file_service;
 use cl_core::CommandMap;
 use criterion::{criterion_group, criterion_main};
 
 fn load_command_file() -> CommandMap {
-    load_command_handler!().load().unwrap()
+    load_file_service!().load().unwrap()
 }
 
 mod core {
@@ -35,7 +35,7 @@ mod core {
         });
 
         c.bench_function("find command with namespace", |b: &mut Bencher| {
-            b.iter(|| commands.find("cl", Some("bash".to_string())));
+            b.iter(|| commands.find("cl", Some("bash")));
         });
     }
 
