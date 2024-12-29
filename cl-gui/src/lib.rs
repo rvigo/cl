@@ -21,7 +21,7 @@ use view_mode::ViewMode;
 use anyhow::Result;
 use cl_core::Config;
 
-pub async fn start_gui(config: Config) -> Result<()> {
+pub async fn start_gui(config: impl Config) -> Result<()> {
     core::init(config).await
 }
 
@@ -42,7 +42,7 @@ mod core {
     use std::sync::{atomic::AtomicBool, Arc};
     use tokio::sync::mpsc::{channel, Receiver, Sender};
 
-    pub async fn init(config: Config) -> Result<()> {
+    pub async fn init(config: impl Config) -> Result<()> {
         debug!("creating channels");
         let (app_sx, app_rx) = channel::<AppEvent>(16);
         let (input_sx, input_rx) = channel::<InputEvent>(16);

@@ -2,13 +2,13 @@ use anyhow::{Context, Result};
 use cl_cli::{app::App, run_subcommands};
 use cl_core::{
     logger::{LoggerBuilder, LoggerType},
-    Config,
+    Config, DefaultConfig,
 };
 use cl_gui::start_gui;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let config = Config::load().context("Cannot load the config file")?;
+    let config = DefaultConfig::load().context("Cannot load the config file")?;
 
     let logger = LoggerBuilder::default()
         .with_log_level(config.preferences().log_level())

@@ -19,7 +19,7 @@ pub struct Misc {
 }
 
 impl Subcommand for Misc {
-    fn run(&self, config: Config) -> Result<()> {
+    fn run(&self, config: impl Config) -> Result<()> {
         let commands = load_commands!(config.command_file_path())?;
         let command_vec = commands.to_list();
         let sorted_commands = command_vec

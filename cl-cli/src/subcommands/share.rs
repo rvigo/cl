@@ -37,7 +37,7 @@ pub struct Share {
 }
 
 impl Subcommand for Share {
-    fn run(&self, config: Config) -> Result<()> {
+    fn run(&self, config: impl Config) -> Result<()> {
         let file_service = FileService::new(config.command_file_path())?;
         let command_list = file_service.load()?;
         let commands = Commands::init(command_list);

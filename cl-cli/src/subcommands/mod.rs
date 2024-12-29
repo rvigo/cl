@@ -16,5 +16,5 @@ use cl_core::Config as CoreConfig;
 /// Represents a CLI Subcommand
 pub trait Subcommand {
     /// Runs the subcommand with the given `Config`
-    fn run(&self, config: CoreConfig) -> Result<()>;
+    fn run(&self, config: impl CoreConfig) -> Result<()>;
 }

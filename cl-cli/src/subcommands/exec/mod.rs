@@ -47,7 +47,7 @@ pub struct Exec {
 }
 
 impl Subcommand for Exec {
-    fn run(&self, config: Config) -> Result<()> {
+    fn run(&self, config: impl Config) -> Result<()> {
         let commands = load_commands!(config.command_file_path())?;
         let alias = &self.alias;
         let namespace = &self.namespace;
