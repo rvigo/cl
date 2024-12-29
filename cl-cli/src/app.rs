@@ -1,4 +1,5 @@
-use super::subcommands::{config::Config, exec::Exec, misc::Misc, share::Share};
+use super::subcommands::{Add, Config, Exec, Misc, Share};
+use crate::subcommands::Subcommand;
 use clap::{Parser, Subcommand as ClapSubcommand};
 
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
@@ -38,6 +39,20 @@ pub enum Subcommands {
     #[clap(hide = true)]
     // this subcommand should not be visible
     Misc(Misc),
+    #[clap(about = "Add your command via cli")]
+    Add(Add),
+}
+
+impl Subcommands {
+    pub fn inner(&self) -> &dyn Subcommand {
+        match self {
+            Subcommands::Exec(exec) => exec,
+            Subcommands::Share(share) => share,
+            Subcommands::Config(config) => config,
+            Subcommands::Misc(misc) => misc,
+            Subcommands::Add(add) => add,
+        }
+    }
 }
 
 #[cfg(test)]
