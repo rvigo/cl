@@ -33,7 +33,7 @@ impl From<&LogLevel> for String {
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct Config {
+pub struct DefaultConfig {
     // serde `alias` should be removed in the future
     #[serde(alias = "app_home_dir")]
     root_dir: PathBuf,
@@ -49,33 +49,51 @@ pub struct Config {
     preferences: Option<Preferences>,
 }
 
-impl Config {
-    pub fn root_dir(&self) -> PathBuf {
+pub trait Config {
+    fn root_dir(&self) -> PathBuf;
+    fn preferences(&self) -> Preferences;
+    fn preferences_mut(&mut self) -> &mut Preferences;
+    fn command_file_path(&self) -> PathBuf;
+    fn config_file_path(&self) -> PathBuf;
+    fn load() -> Result<Self>
+    where
+        Self: Sized;
+    fn change_and_save<F>(&mut self, f: F) -> Result<()>
+    where
+        F: FnOnce(&mut Self);
+    fn new() -> Result<Self>
+    where
+        Self: Sized;
+    fn save(&self) -> Result<()>;
+}
+
+impl Config for DefaultConfig {
+    fn root_dir(&self) -> PathBuf {
         self.root_dir.to_owned()
     }
 
-    pub fn preferences(&self) -> Preferences {
+    fn preferences(&self) -> Preferences {
         self.preferences
             .as_ref()
             .map_or_else(Preferences::default, |p| p.to_owned())
     }
 
-    pub fn preferences_mut(&mut self) -> &mut Preferences {
+    fn preferences_mut(&mut self) -> &mut Preferences {
         self.preferences.get_or_insert_with(Preferences::default)
     }
 
-    pub fn command_file_path(&self) -> PathBuf {
+    fn command_file_path(&self) -> PathBuf {
         self.commands_file_path
             .as_ref()
             .map_or_else(|| self.root_dir().join(COMMAND_FILE), |p| p.to_owned())
     }
 
-    pub fn config_file_path(&self) -> PathBuf {
+    fn config_file_path(&self) -> PathBuf {
         self.root_dir().join(CONFIG_FILE)
     }
 
     /// Loads the config file
-    pub fn load() -> Result<Self> {
+    fn load() -> Result<Self> {
         let home = home_dir().context("Could not find home directory")?;
         let config_file_path = home.join(ROOT_DIR).join(CONFIG_FILE);
         if let Ok(config_data) = read_to_string!(config_file_path) {
@@ -87,7 +105,7 @@ impl Config {
         Self::new()
     }
 
-    pub fn change_and_save<F>(&mut self, f: F) -> Result<()>
+    fn change_and_save<F>(&mut self, f: F) -> Result<()>
     where
         F: FnOnce(&mut Self),
     {

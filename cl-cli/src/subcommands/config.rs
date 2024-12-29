@@ -1,6 +1,6 @@
 use super::Subcommand;
 use anyhow::{bail, Context, Result};
-use cl_core::{Config as AppConfig, LogLevel as ConfigLogLevel};
+use cl_core::{Config as CoreConfig, LogLevel as ConfigLogLevel};
 use clap::{Parser, Subcommand as ClapSubcommand, ValueEnum};
 use dirs::home_dir;
 use log::info;
@@ -73,7 +73,7 @@ pub struct Widget {
 }
 
 impl Subcommand for Config {
-    fn run(&self, mut config: AppConfig) -> Result<()> {
+    fn run(&self, mut config: impl CoreConfig) -> Result<()> {
         if let Some(ConfigSubcommand::ZshWidget(_)) = self.subcommand {
             return install_zsh_widget(config.root_dir()).context("Failed to install zsh widget");
         }
@@ -149,7 +149,10 @@ trait PrintableAppConfig {
     fn printable(&self) -> String;
 }
 
-impl PrintableAppConfig for AppConfig {
+impl<T> PrintableAppConfig for T
+where
+    T: CoreConfig,
+{
     fn printable(&self) -> String {
         let mut result = String::new();
         result.push_str(&format!("config-file: {:?}\n", self.config_file_path()));

@@ -17,7 +17,7 @@ pub struct Add {
 }
 
 impl Subcommand for Add {
-    fn run(&self, config: Config) -> Result<()> {
+    fn run(&self, config: impl Config) -> Result<()> {
         let command_string = self.command.value.to_owned();
 
         if command_string.is_empty() {
