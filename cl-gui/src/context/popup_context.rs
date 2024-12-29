@@ -25,7 +25,20 @@ impl PopupContext {
     }
 
     pub fn active_popup(&self) -> Option<Popup> {
-        self.factory()
+        if let Some(dialog) = &self.dialog_type {
+            let pop = match dialog {
+                DialogType::CommandDeletionConfimation => {
+                    CommandDeletionConfirmationDialog::create()
+                }
+                DialogType::EditedScreenExit => EditedScreenExitDialog::create(),
+                DialogType::GenericError(message) => GenericErrorDialog::create(message),
+                DialogType::HelpPopup(view_mode) => HelpPopup::create(view_mode),
+            };
+
+            Some(pop)
+        } else {
+            None
+        }
     }
 
     pub fn selected_choice(&self) -> Option<Choice> {
@@ -43,10 +56,6 @@ impl PopupContext {
         self.selected_choice_idx
     }
 
-    pub fn clear_choices(&mut self) {
-        self.selected_choice_idx = 0;
-    }
-
     pub fn set_dialog_type(&mut self, r#type: DialogType) {
         self.dialog_type = Some(r#type);
     }
@@ -57,21 +66,8 @@ impl PopupContext {
         self.clear_choices();
     }
 
-    fn factory(&self) -> Option<Popup> {
-        if let Some(dialog) = &self.dialog_type {
-            let pop = match dialog {
-                DialogType::CommandDeletionConfimation => {
-                    CommandDeletionConfirmationDialog::create()
-                }
-                DialogType::EditedScreenExit => EditedScreenExitDialog::create(),
-                DialogType::GenericError(message) => GenericErrorDialog::create(message),
-                DialogType::HelpPopup(view_mode) => HelpPopup::create(view_mode),
-            };
-
-            Some(pop)
-        } else {
-            None
-        }
+    fn clear_choices(&mut self) {
+        self.selected_choice_idx = 0;
     }
 }
 

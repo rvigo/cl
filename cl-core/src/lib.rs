@@ -6,6 +6,7 @@ mod preferences;
 pub mod resource;
 
 pub use command::{Command, CommandBuilder};
+pub use commands::CommandExec;
 pub use commands::Commands;
 pub use config::Config;
 pub use config::LogLevel;

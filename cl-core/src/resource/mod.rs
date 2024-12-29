@@ -13,7 +13,7 @@ macro_rules! load_commands {
         use std::path::PathBuf;
         use $crate::{resource::FileService, Commands};
 
-        let file_service = FileService::new($command_file_path).validate()?;
+        let file_service = FileService::new($command_file_path)?;
         let command_list = file_service
             .load()
             .context("Could not load the commands from file")?;

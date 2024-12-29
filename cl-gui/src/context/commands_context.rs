@@ -4,7 +4,9 @@ use super::{
 };
 use crate::{state::ListState, Fuzzy, State};
 use anyhow::Result;
-use cl_core::{resource::FileService, Command, CommandMap, CommandVec, CommandVecExt, Commands};
+use cl_core::{
+    resource::FileService, Command, CommandExec, CommandMap, CommandVec, CommandVecExt, Commands,
+};
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
 use log::debug;
@@ -191,7 +193,7 @@ impl CommandsContext {
                 eprintln!();
             }
 
-            self.commands.exec(command, false, quiet)?;
+            command.exec(false, quiet)?;
         }
 
         Ok(())
@@ -272,7 +274,7 @@ mod test {
         ($commands:expr, $path:expr) => {
             CommandsContext::new(
                 Commands::init($commands.to_command_map()),
-                FileService::new($path.join("commands.toml")),
+                FileService::new($path.join("commands.toml")).unwrap(),
             )
         };
     }

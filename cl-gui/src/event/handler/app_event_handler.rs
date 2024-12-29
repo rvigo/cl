@@ -72,6 +72,7 @@ impl<'a> AppEventHandler<'a> {
                         let mut ui = self.ui_context.lock();
 
                         let edited_command = ui.fields.collect();
+
                         if let Some(current_command) = ui.selected_command() {
                             match c.edit_command(edited_command, current_command) {
                                 Ok(()) => {
@@ -106,7 +107,6 @@ impl<'a> AppEventHandler<'a> {
                         let mut ui = self.ui_context.lock();
                         c.reload();
                         if ui.fields.is_modified() {
-                            debug!("fields modified");
                             ui.popup.set_dialog_type(DialogType::EditedScreenExit);
                         } else {
                             ui.set_view(ViewMode::Main);
@@ -154,7 +154,7 @@ impl<'a> AppEventHandler<'a> {
                                                 if let Some(command) = ui.selected_command() {
                                                     match c.remove_command(command) {
                                                         Ok(()) => {
-                                                            ui.popup.clear_choices();
+                                                            ui.popup.deactivate_popup();
                                                             c.reload();
                                                         }
                                                         Err(error) => {
@@ -185,7 +185,7 @@ impl<'a> AppEventHandler<'a> {
                                     }
                                 }
                                 Choice::Cancel => {
-                                    ui.popup.clear_choices();
+                                    ui.popup.deactivate_popup();
                                 }
                             };
                         } else {
@@ -194,8 +194,6 @@ impl<'a> AppEventHandler<'a> {
                     }
                     PopupEvent::Disable => {
                         let mut ui = self.ui_context.lock();
-                        debug!("disabling popup");
-                        ui.popup.clear_choices();
                         ui.popup.deactivate_popup();
                     }
                     PopupEvent::NextChoice => self.ui_context.lock().popup.next(),

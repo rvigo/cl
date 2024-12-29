@@ -1,7 +1,7 @@
-use super::{errors::FileError, fs_wrapper::read_to_string};
+use super::errors::FileError;
 use crate::CommandMap;
 use anyhow::Result;
-use std::path::Path;
+use std::{fs::read_to_string, path::Path};
 
 pub struct Toml;
 
@@ -10,7 +10,7 @@ impl Toml {
     where
         P: AsRef<Path>,
     {
-        let string_data = read_to_string!(path)?;
+        let string_data = read_to_string(path)?;
         let commands = toml::from_str::<CommandMap>(&string_data)?;
 
         Ok(commands)

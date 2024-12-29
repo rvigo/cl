@@ -9,16 +9,9 @@ pub struct FileService {
 }
 
 impl FileService {
-    pub fn new(file_path: PathBuf) -> FileService {
-        Self { file_path }
-    }
-
-    pub fn validate(self) -> Result<Self> {
-        if !self.file_path.exists() {
-            debug!("Creating a new commands.toml file at {:?}", self.file_path);
-            self.save(&hashmap!())?;
-        }
-        Ok(self)
+    pub fn new(file_path: PathBuf) -> Result<FileService> {
+        let service = Self { file_path };
+        service.validate()
     }
 
     pub fn save(&self, commands: &CommandMap) -> Result<(), FileError> {
@@ -44,6 +37,14 @@ impl FileService {
     {
         Toml::from_file(path)
     }
+
+    fn validate(self) -> Result<Self> {
+        if !self.file_path.exists() {
+            debug!("Creating a new commands.toml file at {:?}", self.file_path);
+            self.save(&hashmap!())?;
+        }
+        Ok(self)
+    }
 }
 
 #[cfg(test)]
@@ -58,7 +59,7 @@ mod test {
         let content = vec![Command::default()];
         let dir = TempDir::new("handler")?;
         let path = dir.path().join("test.toml");
-        let file_service = FileService::new(path.to_owned()).validate()?;
+        let file_service = FileService::new(path.to_owned())?;
 
         let result = file_service.save(&content.to_command_map());
         assert!(result.is_ok());
@@ -73,7 +74,7 @@ mod test {
     fn should_return_an_error() -> Result<()> {
         let dir = TempDir::new("handler")?;
         let path = dir.path().join("nonexistent/test.toml"); // .save() should not create any dir, so it will fail
-        let result = FileService::new(path.to_owned()).validate();
+        let result = FileService::new(path.to_owned());
 
         assert!(result.is_err());
 

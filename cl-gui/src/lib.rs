@@ -48,7 +48,7 @@ mod core {
         let (input_sx, input_rx) = channel::<InputEvent>(16);
 
         debug!("loading commands from file");
-        let file_service = FileService::new(config.command_file_path()).validate()?;
+        let file_service = FileService::new(config.command_file_path())?;
         let commands = file_service
             .load()
             .context("Cannot load commands from file")?;
