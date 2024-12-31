@@ -12,7 +12,7 @@ async fn main() -> Result<()> {
 
     let logger = LoggerBuilder::default()
         .with_log_level(config.preferences().log_level())
-        .with_path(config.root_dir());
+        .with_path(config.log_dir_path());
 
     let app = App::parse_app();
 

@@ -12,7 +12,7 @@ pub use ui::UI;
 
 use crate::widget::text_field::FieldType;
 use cl_core::Command;
-use std::{collections::HashMap, ops::Deref};
+use std::{borrow::Cow, collections::HashMap, ops::Deref};
 
 pub trait Selectable {
     fn next(&mut self);
@@ -27,22 +27,22 @@ pub trait ToOption {
         Self: Sized;
 }
 
-impl ToOption for String {
+impl ToOption for Cow<'_, str> {
     fn to_option(&self) -> Option<Self> {
         if self.is_empty() {
             None
         } else {
-            Some(self.to_owned())
+            Some(self.clone())
         }
     }
 }
 
-impl ToOption for Vec<String> {
+impl ToOption for Vec<Cow<'_, str>> {
     fn to_option(&self) -> Option<Self>
     where
         Self: Sized,
     {
-        if self.is_empty() || self.iter().all(String::is_empty) {
+        if self.is_empty() || self.iter().all(|s| s.is_empty()) {
             None
         } else {
             Some(self.to_owned())
@@ -60,26 +60,26 @@ impl Deref for FieldMap {
     }
 }
 
-impl From<FieldMap> for Command {
+// FIXME check all the unwraps
+impl From<FieldMap> for Command<'_> {
     fn from(value: FieldMap) -> Self {
-        let namespace = value.get(&FieldType::Namespace).unwrap();
-        let alias = value.get(&FieldType::Alias).unwrap();
-        let description = value.get(&FieldType::Description).unwrap();
-        let command = value.get(&FieldType::Command).unwrap();
+        let namespace = value.get(&FieldType::Namespace).unwrap().to_string();
+        let alias = value.get(&FieldType::Alias).unwrap().to_string();
+        let description = value.get(&FieldType::Description).unwrap().to_string();
+        let command = value.get(&FieldType::Command).unwrap().to_string();
         let tags = value.get(&FieldType::Tags).unwrap();
         let tags = tags
             .split(',')
-            .map(|tag| String::from(tag.trim()))
+            .map(|tag| Cow::Owned::<str>(tag.trim().to_owned()))
             .filter(|tag| !tag.is_empty())
-            .collect::<Vec<_>>()
-            .to_option();
+            .collect::<Vec<_>>();
 
         Command {
-            namespace: namespace.to_string(),
-            alias: alias.to_string(),
-            description: description.to_string().to_option(),
-            command: command.to_string(),
-            tags,
+            namespace: Cow::Owned(namespace),
+            alias: Cow::Owned(alias),
+            description: Cow::Owned::<str>(description).to_option(),
+            command: Cow::Owned(command),
+            tags: tags.to_option(),
         }
     }
 }

@@ -38,7 +38,7 @@ pub struct MainScreen<'m> {
 }
 
 impl<'m> MainScreen<'m> {
-    pub fn new() -> Self {
+    pub fn new() -> MainScreen<'m> {
         let observers = Observers::new();
 
         let command = display_widget!(FieldType::Command, "", true, true, "");
@@ -68,12 +68,19 @@ impl<'m> MainScreen<'m> {
     }
 }
 
-impl<'m> Screen for MainScreen<'m> {
-    fn render(&mut self, frame: &mut Frame, application: &mut Application, ui: &mut UI) {
+impl<'m> Screen<'m> for MainScreen<'m> {
+    fn render(&mut self, frame: &mut Frame, application: &mut Application<'m>, ui: &mut UI<'m>) {
         let querybox = ui.querybox.to_owned();
         let query = querybox.input();
-        let filtered_commands = application.filter_commands(&query);
         let selected_idx = application.commands.selected_command_idx();
+        let should_highlight = application.should_highlight();
+
+        let namespaces = application.namespaces.items.to_owned();
+        let selected_namespace = application.namespaces.state.selected();
+
+        let command_state = application.commands.state();
+
+        let filtered_commands = application.filter_commands(&query);
         let selected_command = filtered_commands
             .get(selected_idx)
             .map(ToOwned::to_owned)
@@ -83,17 +90,11 @@ impl<'m> Screen for MainScreen<'m> {
         //
         ui.select_command(Some(&selected_command));
 
-        let should_highlight = application.should_highlight();
-
-        let namespaces = application.namespaces.items.to_owned();
-        let selected_namespace = application.namespaces.state.selected();
-
-        let command_state = application.commands.state();
-
         let aliases = List::new(&filtered_commands, command_state);
         let tabs = create_tabs(namespaces, selected_namespace);
 
         let event = Event::new(CommandEvent::new(selected_command, query, should_highlight));
+
         self.notify(event);
 
         match frame.size().as_terminal_size() {
@@ -127,7 +128,7 @@ impl<'m> Subject<DisplayWidget<'m>> for MainScreen<'m> {
         self.get_observers_mut().push(observer);
     }
 
-    fn notify(&mut self, event: Event<CommandEvent>) {
+    fn notify(&mut self, event: Event<CommandEvent<'m>>) {
         for observer in self.get_observers() {
             observer.borrow_mut().update(event.to_owned());
         }

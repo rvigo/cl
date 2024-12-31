@@ -4,7 +4,7 @@ use cl_core::Command;
 
 pub struct UI<'ui> {
     pub fields: Fields<'ui>,
-    selected_command: Option<Command>,
+    selected_command: Option<Command<'ui>>,
     pub popup: PopupContext,
     pub querybox: QueryBox<'ui>,
     pub clipboard_state: ClipboardState,
@@ -31,11 +31,11 @@ impl<'ui> UI<'ui> {
         }
     }
 
-    pub fn selected_command(&self) -> Option<&Command> {
+    pub fn selected_command(&self) -> Option<&Command<'ui>> {
         self.selected_command.as_ref()
     }
 
-    pub fn select_command(&mut self, command: Option<&Command>) {
+    pub fn select_command(&mut self, command: Option<&Command<'ui>>) {
         self.selected_command = command.map(ToOwned::to_owned)
     }
 

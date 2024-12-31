@@ -1,56 +1,68 @@
 mod command;
+mod command_builder;
 mod commands;
-mod config;
-pub mod logger;
 mod preferences;
-pub mod resource;
+mod resource;
 
-pub use command::{Command, CommandBuilder};
+pub mod config;
+pub mod logger;
+
+pub use command::Command;
+pub use command_builder::CommandBuilder;
 pub use commands::CommandExec;
 pub use commands::Commands;
+pub use config::default_config::DefaultConfig;
 pub use config::Config;
-pub use config::DefaultConfig;
 pub use config::LogLevel;
 pub use preferences::Preferences;
+pub use resource::errors::CommandError;
+pub use resource::fs;
 
 use std::collections::HashMap;
 
 pub type Namespace = String;
-pub type CommandVec = Vec<Command>;
-pub type CommandMap = HashMap<Namespace, CommandVec>;
+pub type CommandVec<'cmd> = Vec<Command<'cmd>>;
+pub type CommandMap<'cmd> = HashMap<Namespace, CommandVec<'cmd>>;
 
-pub trait CommandVecExt {
-    fn sort_and_return(&mut self) -> CommandVec;
+pub trait CommandVecExt<'cmd> {
+    fn sort_and_return(&mut self) -> CommandVec<'cmd>;
 
-    fn to_command_map(&self) -> CommandMap;
+    fn to_command_map(&self) -> CommandMap<'cmd>;
+
+    fn filter(&self, predicate: impl Fn(&Command) -> bool) -> Vec<&Command<'cmd>>;
 }
 
-impl CommandVecExt for CommandVec {
-    fn sort_and_return(&mut self) -> CommandVec {
-        self.sort_by_key(|c| c.alias.to_lowercase());
-        self.iter_mut()
-            .map(|c| c.to_owned())
-            .collect::<CommandVec>()
+impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
+    fn sort_and_return(&mut self) -> CommandVec<'cmd> {
+        let mut sorted_commands = self.clone();
+        sorted_commands.sort_by_key(|c| c.alias.to_lowercase());
+
+        sorted_commands
     }
 
-    fn to_command_map(&self) -> CommandMap {
+    fn to_command_map(&self) -> CommandMap<'cmd> {
         let mut command_map = CommandMap::new();
+
         for command in self {
             command_map
-                .entry(command.namespace.to_owned())
-                .and_modify(|commands| commands.push(command.to_owned()))
-                .or_insert_with(|| vec![command.to_owned()]);
+                .entry(command.namespace.to_string())
+                .and_modify(|commands| commands.push(command.clone()))
+                .or_insert_with(|| vec![command.clone()]);
         }
         command_map
     }
+
+    fn filter(&self, predicate: impl Fn(&Command) -> bool) -> Vec<&Command<'cmd>> {
+        self.iter().filter(|c| predicate(c)).collect()
+    }
 }
 
-pub trait CommandMapExt {
-    fn to_vec(&self) -> CommandVec;
+pub trait CommandMapExt<'cmd> {
+    fn to_vec(&self) -> CommandVec<'cmd>;
 }
 
-impl CommandMapExt for CommandMap {
-    fn to_vec(&self) -> CommandVec {
+impl<'cmd> CommandMapExt<'cmd> for CommandMap<'cmd> {
+    fn to_vec(&self) -> CommandVec<'cmd> {
         self.iter()
             .flat_map(|(_, commands)| commands)
             .cloned()
@@ -73,3 +85,16 @@ macro_rules! hashmap {
             map
         }};
     }
+
+#[macro_export]
+macro_rules! initialize_commands {
+    ($command_file_path:expr) => {{
+        use anyhow::Context;
+        use $crate::fs;
+        use $crate::Commands;
+
+        let command_list =
+            fs::load_from($command_file_path).context("Cannot load the command file")?;
+        Commands::init(command_list)
+    }};
+}

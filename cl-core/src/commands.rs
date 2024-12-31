@@ -1,111 +1,118 @@
-use crate::{
-    command::Command, resource::errors::CommandError, CommandMap, CommandMapExt, CommandVec,
-};
+use crate::Command;
+use crate::CommandError;
+use crate::CommandMap;
+use crate::CommandMapExt;
+use crate::CommandVec;
+use crate::CommandVecExt;
+
 use anyhow::{bail, Context, Result};
 use log::warn;
-use std::env;
+use std::{borrow::Borrow, env};
 
 #[derive(Default)]
-pub struct Commands {
-    commands: CommandMap,
+pub struct Commands<'cmd> {
+    commands: CommandMap<'cmd>,
 }
 
-impl Commands {
-    pub fn init(commands: CommandMap) -> Commands {
+impl<'cmd> Commands<'cmd> {
+    pub fn init(commands: CommandMap<'cmd>) -> Self {
         Commands { commands }
     }
 
-    pub fn get(&self) -> CommandMap {
-        self.commands.to_owned()
-    }
-
-    pub fn to_list(&self) -> CommandVec {
-        self.commands.to_vec()
-    }
-
-    pub fn add(&mut self, command: &Command) -> Result<CommandMap> {
+    pub fn add(&mut self, command: &Command<'cmd>) -> Result<&CommandMap<'cmd>> {
         self.check_duplicated(command)?;
         self.commands
-            .entry(command.namespace.to_owned())
+            .entry(command.namespace.to_string())
             .and_modify(|commands| commands.push(command.to_owned()))
             .or_insert_with(|| vec![command.to_owned()]);
 
-        Ok(self.commands.to_owned())
+        Ok(&self.commands)
     }
 
-    pub fn edit(&mut self, new_command: &Command, old_command: &Command) -> Result<CommandMap> {
+    pub fn edit(
+        &mut self,
+        new_command: &Command<'cmd>,
+        old_command: &Command<'cmd>,
+    ) -> Result<&CommandMap<'cmd>> {
         self.compare_edited_command(new_command, old_command)?;
+        let old_command_namespace: &str = old_command.namespace.borrow();
+        let new_command_namespace = new_command.namespace.to_string();
 
-        if let Some(commands) = self.commands.get_mut(&old_command.namespace) {
+        if let Some(commands) = self.commands.get_mut(old_command_namespace) {
             commands.retain(|command| !command.eq(old_command));
         }
 
         self.commands
-            .entry(new_command.namespace.to_owned())
+            .entry(new_command_namespace)
             .and_modify(|commands| commands.push(new_command.to_owned()))
             .or_insert_with(|| vec![new_command.to_owned()]);
 
-        if let Some(commands) = self.commands.get(&old_command.namespace) {
+        if let Some(commands) = self.commands.get(old_command_namespace) {
             if commands.is_empty() {
-                self.commands.remove(&old_command.namespace);
+                self.commands.remove(old_command_namespace);
             }
         }
 
-        Ok(self.commands.to_owned())
+        Ok(&self.commands)
     }
 
-    pub fn remove(&mut self, command: &Command) -> Result<CommandMap> {
-        if let Some(commands) = self.commands.get_mut(&command.namespace) {
+    pub fn remove(&mut self, command: &Command) -> Result<&CommandMap<'cmd>> {
+        let namespace: &str = command.namespace.borrow();
+
+        if let Some(commands) = self.commands.get_mut(namespace) {
             if commands.len() <= 1 {
-                self.commands.remove(&command.namespace);
+                self.commands.remove(namespace);
             } else {
                 commands.retain(|c| !c.eq(command));
             }
         };
 
-        Ok(self.commands.to_owned())
+        Ok(&self.commands)
     }
 
-    pub fn find(&self, alias: &str, namespace: Option<&str>) -> Result<Command> {
-        let commands = if let Some(namespace) = namespace {
-            if let Some(commands) = self.commands.get(namespace) {
-                commands
-                    .iter()
-                    .filter(|command| command.alias.eq(&alias))
-                    .map(|c| c.to_owned())
-                    .collect::<CommandVec>()
-            } else {
-                CommandVec::new()
+    pub fn find(&self, alias: &str, namespace: Option<&str>) -> Result<Command<'cmd>> {
+        let binding = self.commands.to_vec();
+        let commands = match namespace {
+            Some(ns) => self
+                .commands
+                .get(ns)
+                .and_then(|cmds| cmds.iter().find(|command| command.alias == alias)),
+
+            None => {
+                let filter = binding.filter(|cmd| cmd.alias == alias);
+
+                if filter.len() > 1 {
+                    bail!(CommandError::CommandPresentInManyNamespaces {
+                        alias: alias.to_owned()
+                    })
+                }
+
+                filter.into_iter().next()
             }
-        } else {
-            self.commands
-                .to_vec()
-                .iter()
-                .filter(|command| {
-                    namespace
-                        .as_ref()
-                        .map_or(true, |ns| command.namespace.eq(ns))
-                        && command.alias.eq(&alias)
-                })
-                .map(|c| c.to_owned())
-                .collect::<CommandVec>()
         };
 
-        if commands.is_empty() {
-            bail!(CommandError::AliasNotFound {
+        match commands.map(|c| c.to_owned()) {
+            Some(c) => Ok(c),
+            None => bail!(CommandError::AliasNotFound {
                 alias: alias.to_owned()
-            })
-        } else if commands.len() == 1 {
-            Ok(commands[0].to_owned())
-        } else {
-            bail!(CommandError::CommandPresentInManyNamespaces {
-                alias: alias.to_owned()
-            })
+            }),
         }
+
+        // match commands.len() {
+        //     0 => bail!(CommandError::AliasNotFound {
+        //         alias: alias.to_owned()
+        //     }),
+        //     1 => Ok(commands.into_iter().next().unwrap()), // Safe to unwrap since len() is 1
+        //     _ => bail!(CommandError::CommandPresentInManyNamespaces {
+        //         alias: alias.to_owned()
+        //     }),
+        // }
     }
 
-    fn check_same_alias(&self, new_command: &Command) -> bool {
-        if let Some(commands) = self.commands.get(&new_command.namespace) {
+    fn check_same_alias(&self, new_command: &Command<'cmd>) -> bool {
+        let namespace: &str = new_command.namespace.borrow();
+
+        if let Some(commands) = self.commands.get(namespace) {
             commands
                 .iter()
                 .any(|command| command.alias.eq(&new_command.alias))
@@ -114,26 +121,40 @@ impl Commands {
         }
     }
 
-    fn check_duplicated(&self, new_command: &Command) -> Result<()> {
+    fn check_duplicated(&self, new_command: &Command<'cmd>) -> Result<()> {
         if self.check_same_alias(new_command) {
             bail!(CommandError::CommandAlreadyExists {
-                alias: new_command.alias.to_owned(),
-                namespace: new_command.namespace.to_owned(),
+                alias: new_command.alias.to_string(),
+                namespace: new_command.namespace.to_string(),
             });
         }
         Ok(())
     }
 
-    fn compare_edited_command(&self, new_command: &Command, old_command: &Command) -> Result<()> {
+    fn compare_edited_command(
+        &self,
+        new_command: &Command<'cmd>,
+        old_command: &Command<'cmd>,
+    ) -> Result<()> {
         let same_alias = self.check_same_alias(new_command);
         let has_changed = new_command.has_changes(old_command);
         if same_alias || !has_changed {
             bail!(CommandError::CommandAlreadyExists {
-                alias: new_command.alias.to_owned(),
-                namespace: new_command.namespace.to_owned()
+                alias: new_command.alias.to_string(),
+                namespace: new_command.namespace.to_string()
             });
         }
         Ok(())
+    }
+}
+
+impl<'cmd> Commands<'cmd> {
+    pub fn get(&self, namespace: &str) -> Option<&CommandVec<'cmd>> {
+        self.commands.get(namespace)
+    }
+
+    pub fn as_list(&self) -> CommandVec<'cmd> {
+        self.commands.to_vec()
     }
 }
 
@@ -143,7 +164,7 @@ pub trait CommandExec {
     fn truncate_command(&self) -> String;
 }
 
-impl CommandExec for Command {
+impl CommandExec for Command<'_> {
     /// Executes a command
     ///
     /// If no `$SHELL` is set, defaults to `sh`
@@ -175,10 +196,14 @@ impl CommandExec for Command {
             .env_clear()
             .envs(env::vars())
             .arg("-c")
-            .arg(&self.command)
+            .arg(self.command.borrow() as &str)
             .spawn()?
             .wait()
-            .context("The command did not run")?;
+            .context("The command did not run")
+            .map_err(|err| CommandError::CannotRunCommand {
+                command: self.command.to_string(),
+                cause: err.to_string(),
+            })?;
 
         Ok(())
     }
@@ -198,13 +223,14 @@ mod test {
     use super::*;
     use crate::CommandVecExt;
     use core::panic;
+    use std::borrow::Cow;
 
     macro_rules! create_command {
         ($alias:expr, $command:expr, $namespace:expr, $description:expr, $tags:expr) => {
             Command {
-                alias: $alias.to_owned(),
-                namespace: $namespace.to_owned(),
-                command: $command.to_owned(),
+                alias: Cow::Borrowed($alias),
+                namespace: Cow::Borrowed($namespace),
+                command: Cow::Borrowed($command),
                 description: $description,
                 tags: $tags,
             }
@@ -238,7 +264,7 @@ mod test {
         let command2 = create_command!("alias2", "command2", "namespace2", None, None);
 
         let commands = commands!(command1.to_owned(), command2.to_owned());
-        let all_command_items = commands.to_list();
+        let all_command_items = commands.as_list();
         assert_eq!(2, all_command_items.len())
     }
 
@@ -254,8 +280,8 @@ mod test {
             assert_eq!(
                 error.to_string(),
                 CommandError::CommandAlreadyExists {
-                    alias: duplicated.alias,
-                    namespace: duplicated.namespace
+                    alias: duplicated.alias.to_string(),
+                    namespace: duplicated.namespace.to_string()
                 }
                 .to_string()
             )
@@ -269,7 +295,7 @@ mod test {
         let command = create_command!("alias1", "command1", "namespace1", None, None);
         let mut commands = commands!(command.to_owned());
 
-        let commands_list = commands.to_list();
+        let commands_list = commands.as_list();
         assert_eq!(1, commands_list.len());
 
         let to_be_removed = commands_list.get(0).unwrap();
@@ -277,14 +303,14 @@ mod test {
 
         assert!(!commands_after_item_removed
             .panic_if_error()
-            .contains_key(&command.namespace));
+            .contains_key(&command.namespace.to_string()));
     }
 
     #[test]
     fn should_add_a_command() {
         let command = create_command!("old", "command", "namespace", None, None);
         let mut commands = commands!(command.to_owned());
-        let all_commands = commands.to_list();
+        let all_commands = commands.as_list();
 
         assert!(!all_commands.is_empty());
 
@@ -293,7 +319,7 @@ mod test {
 
         let new_command_list = commands_with_new_command
             .panic_if_error()
-            .get(&new_command.namespace)
+            .get(&new_command.namespace.to_string())
             .unwrap();
         assert!(new_command_list.contains(&command))
     }
@@ -304,7 +330,7 @@ mod test {
         let mut commands = commands!(new_command.to_owned());
 
         let mut edited_command = new_command.clone();
-        edited_command.alias = String::from("new");
+        edited_command.alias = Cow::Borrowed("new");
 
         let old_command = new_command;
         let commands_with_edited_command = commands.edit(&edited_command, &old_command);
@@ -312,9 +338,11 @@ mod test {
         assert!(commands_with_edited_command.is_ok());
 
         let command_map = commands_with_edited_command.panic_if_error();
-        assert!(command_map.contains_key(&edited_command.namespace));
+        assert!(command_map.contains_key(&edited_command.namespace.to_string()));
 
-        let entry = command_map.get(&edited_command.namespace).unwrap();
+        let entry = command_map
+            .get(&edited_command.namespace.to_string())
+            .unwrap();
         assert!(entry.contains(&edited_command));
         assert!(!entry.contains(&old_command));
     }
@@ -325,7 +353,7 @@ mod test {
         let mut commands = commands!(new_command.to_owned());
 
         let mut edited_command = new_command.clone();
-        edited_command.namespace = String::from("edited_namespace");
+        edited_command.namespace = Cow::Borrowed("edited_namespace");
 
         let old_command = new_command;
         let commands_with_edited_command = commands.edit(&edited_command, &old_command);
@@ -333,9 +361,11 @@ mod test {
         assert!(commands_with_edited_command.is_ok());
 
         let command_map = commands_with_edited_command.panic_if_error();
-        assert!(command_map.contains_key(&edited_command.namespace));
+        assert!(command_map.contains_key(&edited_command.namespace.to_string()));
 
-        let entry = command_map.get(&edited_command.namespace).unwrap();
+        let entry = command_map
+            .get(&edited_command.namespace.to_string())
+            .unwrap();
         assert!(entry.contains(&edited_command));
         assert!(!entry.contains(&old_command));
     }
@@ -348,15 +378,15 @@ mod test {
         let mut commands = commands!(command1, command2.to_owned());
 
         let mut edited_command = command2.clone();
-        edited_command.alias = String::from("alias1");
+        edited_command.alias = Cow::Borrowed("alias1");
 
         let command_list_with_edited_command = commands.edit(&edited_command, &command2);
 
         assert!(command_list_with_edited_command.is_err());
         assert_eq!(
             CommandError::CommandAlreadyExists {
-                alias: edited_command.alias,
-                namespace: edited_command.namespace
+                alias: edited_command.alias.to_string(),
+                namespace: edited_command.namespace.to_string()
             }
             .to_string(),
             command_list_with_edited_command.unwrap_err().to_string()
@@ -370,15 +400,15 @@ mod test {
         let mut commands = commands!(command1, command2.to_owned());
 
         let mut edited_command = command2.clone();
-        edited_command.alias = String::from("alias1");
-        edited_command.namespace = String::from("namespace1");
+        edited_command.alias = Cow::Borrowed("alias1");
+        edited_command.namespace = Cow::Borrowed("namespace1");
         let command_list_with_edited_command = commands.edit(&edited_command, &command2);
 
         assert!(command_list_with_edited_command.is_err());
         assert_eq!(
             CommandError::CommandAlreadyExists {
-                alias: edited_command.alias,
-                namespace: edited_command.namespace
+                alias: edited_command.alias.to_string(),
+                namespace: edited_command.namespace.to_string()
             }
             .to_string(),
             command_list_with_edited_command.unwrap_err().to_string()
@@ -408,7 +438,7 @@ mod test {
         assert!(result.is_err());
         assert_eq!(
             CommandError::CommandPresentInManyNamespaces {
-                alias: command1.alias
+                alias: command1.alias.to_string()
             }
             .to_string(),
             result.unwrap_err().to_string()
@@ -439,7 +469,7 @@ mod test {
         // nothing much to test here without capturing the stdout, so just checks the method output
         // note that this test function will actually run the provided command, BE CAREFUL
 
-        let command_to_be_executed = "echo 'Hello, world!' > /dev/null 2>&1".to_owned();
+        let command_to_be_executed = "echo 'Hello, world!' > /dev/null 2>&1";
         let command = create_command!("alias", command_to_be_executed, "namespace1", None, None);
 
         // dry run

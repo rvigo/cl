@@ -1,5 +1,6 @@
+pub mod context;
+
 mod clipboard;
-mod context;
 mod event;
 mod fuzzy;
 mod key_handler;
@@ -35,8 +36,8 @@ mod core {
         screen::Screens,
         Terminal, TuiApplication,
     };
-    use anyhow::{Context, Result};
-    use cl_core::{resource::FileService, Commands, Config};
+    use anyhow::Result;
+    use cl_core::{initialize_commands, Config};
     use log::debug;
     use parking_lot::Mutex;
     use std::sync::{atomic::AtomicBool, Arc};
@@ -48,11 +49,7 @@ mod core {
         let (input_sx, input_rx) = channel::<InputEvent>(16);
 
         debug!("loading commands from file");
-        let file_service = FileService::new(config.command_file_path())?;
-        let commands = file_service
-            .load()
-            .context("Cannot load commands from file")?;
-        let commands = Commands::init(commands);
+        let commands = initialize_commands!(config.command_file_path());
 
         debug!("creating terminal");
         let mut terminal = Terminal::new()?;
@@ -64,8 +61,8 @@ mod core {
         let ui_context = Arc::new(Mutex::new(UI::new(size)));
         let context = Arc::new(Mutex::new(Application::init(
             commands,
-            file_service,
-            config.preferences(),
+            config.command_file_path(),
+            config.preferences().to_owned(),
         )));
 
         debug!("creating screens");
@@ -90,7 +87,7 @@ mod core {
 
     async fn start_event_handler(
         app_rx: Receiver<AppEvent>,
-        context: &Arc<Mutex<Application>>,
+        context: &Arc<Mutex<Application<'static>>>,
         ui_context: &Arc<Mutex<UI<'static>>>,
         should_quit: &Arc<AtomicBool>,
     ) {

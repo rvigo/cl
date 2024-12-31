@@ -23,7 +23,7 @@ pub trait Fuzzy {
     fn lookup_string(&self) -> String;
 }
 
-impl Fuzzy for Command {
+impl Fuzzy for Command<'_> {
     fn lookup_string(&self) -> String {
         format!(
             "{} {} {} {} {}",
@@ -31,7 +31,7 @@ impl Fuzzy for Command {
             self.command,
             self.namespace,
             self.tags_as_string(),
-            self.description.as_ref().unwrap_or(&String::default()),
+            self.description()
         )
         .trim()
         .to_owned()
