@@ -1,33 +1,35 @@
+use std::{borrow::Borrow, path::PathBuf};
+
 use super::{
     namespace_context::{NamespaceContext, DEFAULT_NAMESPACE},
     CommandsContext, FieldMap,
 };
 use crate::Clipboard;
 use anyhow::Result;
-use cl_core::{resource::FileService, Command, CommandVec, Commands, Preferences};
+use cl_core::{Command, CommandVec, Commands, Preferences};
 
-pub struct Application {
-    pub commands: CommandsContext,
+pub struct Application<'app> {
+    pub commands: CommandsContext<'app>,
     pub namespaces: NamespaceContext,
     preferences: Preferences,
     clipboard: Option<Clipboard>,
 }
 
-impl Application {
+impl<'app> Application<'app> {
     pub fn init(
-        commands: Commands,
-        file_service: FileService,
+        commands: Commands<'app>,
+        command_file_path: PathBuf,
         preferences: Preferences,
-    ) -> Application {
+    ) -> Self {
         let clipboard = Clipboard::new().ok();
-        let namespaces = commands
-            .to_list()
+        let command_list = commands.as_list();
+        let namespaces = command_list
             .iter()
-            .map(|c| c.namespace.to_owned())
-            .collect::<Vec<_>>();
+            .map(|c| c.namespace.borrow())
+            .collect::<Vec<&str>>();
 
         Application {
-            commands: CommandsContext::new(commands, file_service),
+            commands: CommandsContext::new(commands, command_file_path),
             namespaces: NamespaceContext::new(namespaces),
             preferences,
             clipboard,
@@ -51,12 +53,12 @@ impl Application {
     }
 
     // other
-    pub fn should_highlight(&mut self) -> bool {
+    pub fn should_highlight(&self) -> bool {
         self.preferences.highlight()
     }
 
     /// Filters the command list using the querybox input as query
-    pub fn filter_commands(&mut self, query_string: &str) -> CommandVec {
+    pub fn filter_commands(&mut self, query_string: &str) -> CommandVec<'app> {
         let current_namespace = self.namespaces.current();
         self.commands
             .filter_commands(&current_namespace, query_string)
@@ -64,14 +66,14 @@ impl Application {
 }
 
 // Callback
-impl Application {
+impl Application<'_> {
     /// Executes the callback command
     pub fn execute_callback(&self) -> Result<()> {
         self.commands.execute(self.preferences.quiet_mode())
     }
 }
 
-impl Application {
+impl<'app> Application<'app> {
     pub fn add_command(&mut self, command_value_map: FieldMap) -> Result<()> {
         let commands = self.commands.add(&command_value_map.into())?;
         self.namespaces.update(&commands.keys().collect::<Vec<_>>());
@@ -81,16 +83,15 @@ impl Application {
     pub fn edit_command(
         &mut self,
         edited_command: FieldMap,
-        current_command: &Command,
+        current_command: &Command<'app>,
     ) -> Result<()> {
-        let commands = self
-            .commands
-            .edit(&edited_command.into(), current_command)?;
+        let edited_command: &Command<'app> = &edited_command.into();
+        let commands = self.commands.edit(edited_command, current_command)?;
         self.namespaces.update(&commands.keys().collect::<Vec<_>>());
         Ok(())
     }
 
-    pub fn remove_command(&mut self, command: &Command) -> Result<()> {
+    pub fn remove_command(&mut self, command: &Command<'app>) -> Result<()> {
         let commands = self.commands.remove(command)?;
         self.namespaces.update(&commands.keys().collect::<Vec<_>>());
         Ok(())

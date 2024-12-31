@@ -24,8 +24,8 @@ pub struct TuiApplication<'tui> {
     input_sx: Sender<InputEvent>,
     should_quit: Arc<AtomicBool>,
     ui: Arc<Mutex<UI<'tui>>>,
-    context: Arc<Mutex<Application>>,
-    screens: Screens,
+    context: Arc<Mutex<Application<'tui>>>,
+    screens: Screens<'tui>,
 }
 
 impl<'tui> TuiApplication<'tui> {
@@ -33,9 +33,9 @@ impl<'tui> TuiApplication<'tui> {
         input_sx: Sender<InputEvent>,
         should_quit: Arc<AtomicBool>,
         ui: Arc<Mutex<UI<'tui>>>,
-        context: Arc<Mutex<Application>>,
+        context: Arc<Mutex<Application<'tui>>>,
         terminal: Terminal<CrosstermBackend<Stdout>>,
-        screens: Screens,
+        screens: Screens<'tui>,
     ) -> Result<TuiApplication<'tui>> {
         let tui = TuiApplication {
             terminal,

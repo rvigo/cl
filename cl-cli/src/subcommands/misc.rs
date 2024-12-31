@@ -1,6 +1,6 @@
 use super::Subcommand;
 use anyhow::Result;
-use cl_core::{load_commands, Command, Config};
+use cl_core::{initialize_commands, Command, Config};
 use clap::Parser;
 use itertools::Itertools;
 use owo_colors::{colors::CustomColor, OwoColorize};
@@ -20,11 +20,11 @@ pub struct Misc {
 
 impl Subcommand for Misc {
     fn run(&self, config: impl Config) -> Result<()> {
-        let commands = load_commands!(config.command_file_path())?;
-        let command_vec = commands.to_list();
+        let commands = initialize_commands!(config.command_file_path());
+        let command_vec = commands.as_list();
         let sorted_commands = command_vec
             .iter()
-            .sorted_by_key(|c| c.alias.to_owned())
+            .sorted_by_key(|c| c.alias.clone())
             .collect::<Vec<&Command>>();
 
         if self.description {
@@ -38,17 +38,17 @@ impl Subcommand for Misc {
             let duplicated: Vec<String> = command_vec
                 .iter()
                 .filter_map(|c| {
-                    if seen.contains(&c.alias) {
-                        Some(c.alias.to_owned())
+                    if seen.contains(&c.alias.clone()) {
+                        Some(c.alias.to_string())
                     } else {
-                        seen.insert(c.alias.to_owned());
+                        seen.insert(c.alias.clone());
                         None
                     }
                 })
                 .collect();
 
             sorted_commands.iter().for_each(|c| {
-                if duplicated.contains(&c.alias) {
+                if duplicated.contains(&c.alias.to_string()) {
                     println!(
                         "{} ({})",
                         c.alias,
@@ -73,16 +73,13 @@ trait ToColorString {
     fn to_color_string(&self) -> String;
 }
 
-impl ToColorString for Command {
+impl ToColorString for Command<'_> {
     fn to_color_string(&self) -> String {
         format!(
             "Alias: {}\nNamespace: {}\nDescription: {}\nTags: {}\nCommand: {}",
             self.alias.fg::<CustomColor<201, 165, 249>>(),
             self.namespace.fg::<CustomColor<201, 165, 249>>(),
-            self.description
-                .as_ref()
-                .unwrap_or(&String::default())
-                .fg::<CustomColor<201, 165, 249>>(),
+            self.description().fg::<CustomColor<201, 165, 249>>(),
             self.tags_as_string().fg::<CustomColor<201, 165, 249>>(),
             self.command.fg::<CustomColor<201, 165, 249>>(),
         )
@@ -94,7 +91,8 @@ trait Sumarize {
     fn sumarize(&self) -> String;
 }
 
-impl Sumarize for Command {
+// TODO wtf?
+impl Sumarize for Command<'_> {
     fn sumarize(&self) -> String {
         let command_string = &self.command;
         let max_lenght_command: String = command_string.chars().take(50).collect();
@@ -106,7 +104,7 @@ impl Sumarize for Command {
             let short_command = format!("{}{}", &self.command[..50], "...");
             short_command
         } else {
-            self.command.to_owned()
+            self.command.to_string()
         };
 
         if let Some(ref desc) = self.description {
@@ -123,14 +121,15 @@ impl Sumarize for Command {
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::borrow::Cow;
 
     #[test]
     fn should_format_a_command_with_description_to_string() {
         let command = Command {
-            namespace: "namespace".to_owned(),
-            command: "command".to_owned(),
-            description: Some("description".to_owned()),
-            alias: "alias".to_owned(),
+            namespace: Cow::Borrowed("namespace"),
+            command: Cow::Borrowed("command"),
+            description: Some(Cow::Borrowed("description")),
+            alias: Cow::Borrowed("alias"),
             tags: None,
         };
         let expected_output = "namespace.alias: description --> command".to_owned();
@@ -140,10 +139,10 @@ mod test {
     #[test]
     fn should_format_a_command_without_description_to_string() {
         let command = Command {
-            namespace: "namespace".to_owned(),
-            command: "command".to_owned(),
+            namespace: Cow::Borrowed("namespace"),
+            command: Cow::Borrowed("command"),
             description: None,
-            alias: "alias".to_owned(),
+            alias: Cow::Borrowed("alias"),
             tags: None,
         };
         let expected_output = "namespace.alias --> command".to_owned();

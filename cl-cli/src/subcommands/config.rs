@@ -1,6 +1,6 @@
 use super::Subcommand;
 use anyhow::{bail, Context, Result};
-use cl_core::{Config as CoreConfig, LogLevel as ConfigLogLevel};
+use cl_core::{config, Config as CoreConfig, LogLevel as ConfigLogLevel};
 use clap::{Parser, Subcommand as ClapSubcommand, ValueEnum};
 use dirs::home_dir;
 use log::info;
@@ -74,8 +74,9 @@ pub struct Widget {
 
 impl Subcommand for Config {
     fn run(&self, mut config: impl CoreConfig) -> Result<()> {
-        if let Some(ConfigSubcommand::ZshWidget(_)) = self.subcommand {
-            return install_zsh_widget(config.root_dir()).context("Failed to install zsh widget");
+        if let Some(ConfigSubcommand::ZshWidget(_)) = &self.subcommand {
+            return install_zsh_widget(config::get_config_path())
+                .context("Failed to install zsh widget");
         }
 
         if let Some(quiet) = self.quiet_mode {
@@ -98,10 +99,9 @@ impl Subcommand for Config {
 }
 
 fn install_zsh_widget(app_home_dir: PathBuf) -> Result<()> {
-    if let Ok(shell) = env::var("SHELL") {
-        if !shell.contains("zsh") {
-            bail!("Cannot install zsh widget on non zsh shell! Actual $SHELL value is {shell}")
-        }
+    let shell = env::var("SHELL").unwrap_or_default();
+    if !shell.contains("zsh") {
+        bail!("Cannot install zsh widget on non-zsh shell! Actual $SHELL value is {shell}");
     }
 
     validate_fzf()?;
@@ -127,6 +127,7 @@ fn install_zsh_widget(app_home_dir: PathBuf) -> Result<()> {
     ))?;
 
     info!("Done!!! Please restart your terminal and press <Ctrl+O> to access the widget");
+
     Ok(())
 }
 
@@ -139,9 +140,9 @@ fn validate_fzf() -> Result<()> {
 
     if !output.status.success() {
         bail!("This widget needs fzf to work. Please first install it and then reinstall de widget")
-    } else {
-        Ok(())
     }
+
+    Ok(())
 }
 
 trait PrintableAppConfig {
@@ -155,7 +156,6 @@ where
 {
     fn printable(&self) -> String {
         let mut result = String::new();
-        result.push_str(&format!("config-file: {:?}\n", self.config_file_path()));
         result.push_str(&format!("command-file: {:?}\n", self.command_file_path()));
         let preferences = self.preferences();
         result.push_str("preferences:\n");
@@ -194,6 +194,25 @@ impl<T> IfOk<T> for Result<T> {
             }
             Err(err) => Err(err),
         }
+    }
+}
+
+trait ConfigExt {
+    fn change_and_save<F>(&mut self, f: F) -> Result<()>
+    where
+        F: FnOnce(&mut Self);
+}
+
+impl<T> ConfigExt for T
+where
+    T: CoreConfig,
+{
+    fn change_and_save<F>(&mut self, f: F) -> Result<()>
+    where
+        F: FnOnce(&mut Self),
+    {
+        f(self);
+        self.save()
     }
 }
 

@@ -1,28 +1,29 @@
-use crate::resource::errors::CommandError;
+use crate::CommandError;
 use anyhow::{ensure, Result};
 use itertools::Itertools;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialOrd, Ord)]
-pub struct Command {
+pub struct Command<'cmd> {
     /// The command's alias. Is a `required` field and should not have empty spaces in it
-    pub alias: String,
+    pub alias: Cow<'cmd, str>,
     /// The command's namespace. Is a `required` field and should not have empty spaces in it
-    pub namespace: String,
+    pub namespace: Cow<'cmd, str>,
     /// The command itself. Is a `required` field and can have multiple lines
-    pub command: String,
+    pub command: Cow<'cmd, str>,
     /// The command's description. Not a required field
-    pub description: Option<String>,
+    pub description: Option<Cow<'cmd, str>>,
     /// The command's tags. Not a required field
-    pub tags: Option<Vec<String>>,
+    pub tags: Option<Vec<Cow<'cmd, str>>>,
 }
 
-impl Command {
+impl<'cmd> Command<'cmd> {
     pub fn tags_as_string(&self) -> String {
         self.tags
-            .as_ref()
-            .unwrap_or(&vec![String::from("")])
+            .as_deref()
+            .unwrap_or(&[])
             .iter()
             .sorted()
             .join(", ")
@@ -31,8 +32,8 @@ impl Command {
     pub fn description(&self) -> String {
         self.description
             .as_ref()
-            .unwrap_or(&String::from(""))
-            .to_string()
+            .map(ToString::to_string)
+            .unwrap_or_default()
     }
 
     pub fn validate(&self) -> Result<()> {
@@ -45,11 +46,12 @@ impl Command {
             !self.namespace.trim().contains(' '),
             CommandError::NamespaceWithWhitespaces
         );
+
         Ok(())
     }
 
     pub fn has_named_parameter(&self) -> bool {
-        let re = Regex::new(r"#\{[^}]*\}").unwrap();
+        let re = Regex::new(r"#\{[^}]*\}").expect("Invalid regex pattern");
 
         re.is_match(&self.command)
     }
@@ -69,100 +71,38 @@ impl Command {
     }
 }
 
-impl Default for Command {
+impl Default for Command<'_> {
     fn default() -> Self {
         Command {
-            namespace: String::from(""),
-            command: String::from("echo \"this is your command\""),
-            description: Some(String::from(
+            namespace: Cow::Borrowed("Namespace"),
+            command: Cow::Borrowed("echo \"this is your command\""),
+            description: (Some(Cow::Borrowed(
                 "This is a demo entry and will be removed as soon you save your first command.
                 Also, a nice description of your command goes here (optional)",
-            )),
-            alias: String::from("your command alias"),
+            ))),
+            alias: Cow::Borrowed("your command alias"),
             tags: Some(vec![
-                String::from("optional"),
-                String::from("tags"),
-                String::from("comma"),
-                String::from("separated"),
+                Cow::Borrowed("optional"),
+                Cow::Borrowed("tags"),
+                Cow::Borrowed("comma"),
+                Cow::Borrowed("separated"),
             ]),
         }
     }
 }
 
-impl PartialEq for Command {
+impl PartialEq for Command<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.alias.eq(&other.alias) && self.namespace.eq(&other.namespace)
-    }
-}
-
-#[derive(Default)]
-pub struct CommandBuilder {
-    namespace: String,
-    command: String,
-    description: Option<String>,
-    alias: String,
-    tags: Option<Vec<String>>,
-}
-
-impl CommandBuilder {
-    pub fn namespace<T>(mut self, namespace: T) -> CommandBuilder
-    where
-        T: Into<String>,
-    {
-        self.namespace = namespace.into().trim().to_owned();
-        self
-    }
-
-    pub fn alias<T>(mut self, alias: T) -> CommandBuilder
-    where
-        T: Into<String>,
-    {
-        self.alias = alias.into().trim().to_owned();
-        self
-    }
-
-    pub fn command<T>(mut self, command: T) -> CommandBuilder
-    where
-        T: Into<String>,
-    {
-        self.command = command.into();
-        self
-    }
-
-    pub fn description<T>(mut self, description: Option<T>) -> CommandBuilder
-    where
-        T: Into<String>,
-    {
-        self.description = description.map(|d| d.into());
-        self
-    }
-
-    pub fn tags<T, S, I>(mut self, tags: Option<T>) -> CommandBuilder
-    where
-        T: IntoIterator<Item = S, IntoIter = I>,
-        S: Into<String>,
-        I: Iterator<Item = S>,
-    {
-        self.tags = tags.map(|v| v.into_iter().map(|t| t.into()).collect());
-        self
-    }
-
-    pub fn build(self) -> Command {
-        Command {
-            namespace: self.namespace,
-            command: self.command,
-            description: self.description,
-            alias: self.alias,
-            tags: self.tags,
-        }
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::CommandBuilder;
 
-    fn build_default_command() -> Command {
+    fn build_default_command() -> Command<'static> {
         let command = CommandBuilder::default()
             .tags(Some(vec!["tag1"]))
             .alias("alias")
@@ -230,9 +170,9 @@ mod test {
     #[test]
     fn should_return_an_error_when_command_is_not_valid() {
         let mut command = build_default_command();
-        command.alias = String::from("");
-        command.command = String::from("");
-        command.namespace = String::from("");
+        command.alias = Cow::Borrowed("");
+        command.command = Cow::Borrowed("");
+        command.namespace = Cow::Borrowed("");
 
         assert!(command.validate().is_err());
     }
@@ -243,7 +183,7 @@ mod test {
 
         assert!(!command.has_named_parameter());
 
-        command.command = String::from("echo \"hello, #{name}\"");
+        command.command = Cow::Borrowed("echo \"hello, #{name}\"");
 
         assert!(command.has_named_parameter())
     }

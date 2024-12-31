@@ -1,6 +1,6 @@
 use super::Subcommand;
 use anyhow::{Context, Result};
-use cl_core::{resource::FileService, Command, CommandMapExt, CommandVecExt, Commands, Config};
+use cl_core::{fs, initialize_commands, Command, CommandMapExt, CommandVecExt, Commands, Config};
 use clap::{Parser, ValueEnum};
 use log::{info, warn};
 use std::{borrow::Cow, collections::HashSet, path::PathBuf};
@@ -38,25 +38,24 @@ pub struct Share {
 
 impl Subcommand for Share {
     fn run(&self, config: impl Config) -> Result<()> {
-        let file_service = FileService::new(config.command_file_path())?;
-        let command_list = file_service.load()?;
-        let commands = Commands::init(command_list);
+        let commands = initialize_commands!(config.command_file_path());
 
         match self.mode {
-            Mode::Import => self.handle_import(&commands, &file_service),
-            Mode::Export => self.handle_export(&commands, &file_service),
+            Mode::Import => self.handle_import(&commands, config),
+            Mode::Export => self.handle_export(&commands),
         }
     }
 }
-
 impl Share {
-    fn handle_import(&self, commands: &Commands, fs: &FileService) -> Result<()> {
-        let mut stored_commands = commands.to_list();
-        let mut commands_from_file: Vec<Command> = fs.load_from(&self.file_location)?.to_vec();
+    fn handle_import(&self, commands: &Commands, config: impl Config) -> Result<()> {
+        let mut stored_commands = commands.as_list();
+        let binding = fs::load_from(&self.file_location)?;
+        let mut commands_from_file: Vec<Command> = binding.to_vec();
 
         let namespace_filter = self.create_namespace_filter();
-        commands_from_file
-            .retain(|cmd| namespace_filter.is_empty() || namespace_filter.contains(&cmd.namespace));
+        commands_from_file.retain(|cmd| {
+            namespace_filter.is_empty() || namespace_filter.contains(&cmd.namespace.to_string())
+        });
 
         let duplicates = self.find_duplicates(&stored_commands, &commands_from_file);
         if !duplicates.is_empty() {
@@ -79,8 +78,11 @@ impl Share {
 
         if !commands_from_file.is_empty() {
             stored_commands.extend(commands_from_file.clone());
-            fs.save(&stored_commands.to_command_map())
-                .context("Could not import the aliases")?;
+            fs::save_at(
+                &stored_commands.to_command_map(),
+                config.command_file_path(),
+            )
+            .context("Could not import the aliases")?;
             info!("Successfully imported {} aliases", commands_from_file.len());
         } else {
             info!("There are no aliases to be imported");
@@ -89,18 +91,18 @@ impl Share {
         Ok(())
     }
 
-    fn handle_export(&self, commands: &Commands, fs: &FileService) -> Result<()> {
+    fn handle_export(&self, commands: &Commands) -> Result<()> {
         let filtered_commands = if let Some(namespaces) = &self.namespace {
             commands
-                .to_list()
+                .as_list()
                 .into_iter()
-                .filter(|cmd| namespaces.contains(&cmd.namespace))
+                .filter(|cmd| namespaces.contains(&cmd.namespace.to_string()))
                 .collect()
         } else {
-            commands.to_list()
+            commands.as_list()
         };
 
-        fs.save_at(&filtered_commands.to_command_map(), &self.file_location)
+        fs::save_at(&filtered_commands.to_command_map(), &self.file_location)
             .context("Could not export the aliases")?;
         info!("Exported {} aliases", filtered_commands.len());
 
@@ -114,7 +116,7 @@ impl Share {
     }
 
     fn find_duplicates<'a>(
-        &self,
+        &'a self,
         stored_commands: &'a [Command],
         new_commands: &'a [Command],
     ) -> Vec<Cow<'a, Command>> {

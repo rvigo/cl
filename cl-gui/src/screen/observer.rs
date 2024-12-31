@@ -42,14 +42,14 @@ impl<T> Event<T> {
 }
 
 #[derive(Clone)]
-pub struct CommandEvent {
-    pub command: Command,
+pub struct CommandEvent<'event> {
+    pub command: Command<'event>,
     pub highlight: bool,
     pub query: String,
 }
 
-impl CommandEvent {
-    pub fn new(command: Command, query: String, highlight: bool) -> Self {
+impl<'event> CommandEvent<'event> {
+    pub fn new(command: Command<'event>, query: String, highlight: bool) -> Self {
         CommandEvent {
             command,
             highlight,
@@ -59,13 +59,13 @@ impl CommandEvent {
 }
 
 impl<'d> Observer for DisplayWidget<'d> {
-    type ContentType = CommandEvent;
+    type ContentType = CommandEvent<'d>;
 
     fn update(&mut self, event: Event<Self::ContentType>) {
         let command = event.content.command;
         let content = match self.r#type {
-            FieldType::Command => command.command.to_owned(),
-            FieldType::Namespace => command.namespace.to_owned(),
+            FieldType::Command => command.command.to_string(),
+            FieldType::Namespace => command.namespace.to_string(),
             FieldType::Tags => command.tags_as_string(),
             FieldType::Description => command.description(),
             _ => "".to_owned(),

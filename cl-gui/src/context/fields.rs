@@ -49,24 +49,39 @@ impl<'fields> Fields<'fields> {
         FieldMap(fields)
     }
 
-    pub fn popuplate(&mut self, current_command: &Command) {
-        self.state.items.iter_mut().for_each(|(field_type, field)| {
+    pub fn popuplate(&mut self, current_command: &Command<'fields>) {
+        for (field_type, field) in &mut self.state.items {
+            // Match the field type and derive the corresponding text
             let text = match field_type {
-                FieldType::Alias => current_command.alias.to_owned(),
-                FieldType::Command => current_command.command.to_owned(),
-                FieldType::Namespace => current_command.namespace.to_owned(),
-                FieldType::Description => current_command.description.clone().unwrap_or_default(),
-                FieldType::Tags => current_command.tags.as_ref().unwrap_or(&vec![]).join(", "),
-                _ => panic!("Invalid field type: {:?}", field_type),
+                FieldType::Alias => current_command.alias.to_string(),
+                FieldType::Command => current_command.command.to_string(),
+                FieldType::Namespace => current_command.namespace.to_string(),
+                FieldType::Description => current_command
+                    .description
+                    .clone()
+                    .unwrap_or_default()
+                    .to_string(),
+                FieldType::Tags => current_command
+                    .tags
+                    .as_ref()
+                    .map(|tags| {
+                        tags.iter()
+                            .map(|tag| tag.as_ref())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    })
+                    .unwrap_or_default()
+                    .to_string(),
+                _ => unreachable!("Unexpected field type encountered: {:?}", field_type),
             };
-            field.set_text(text.to_string());
+            field.set_text(text);
             field.move_cursor_to_end_of_text();
 
             self.original_fields
                 .insert(field.field_type(), field.text());
 
             self.edited_fields.insert(field.field_type(), field.text());
-        });
+        }
     }
 
     pub fn handle_input(&mut self, input: KeyEvent) {

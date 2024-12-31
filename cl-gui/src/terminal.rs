@@ -65,9 +65,9 @@ impl Terminal<CrosstermBackend<Stdout>> {
 
     pub fn draw<'terminal>(
         &mut self,
-        ui: &mut UI,
-        application: &mut Application,
-        screen: &mut (dyn Screen + 'terminal),
+        ui: &mut UI<'terminal>,
+        application: &mut Application<'terminal>,
+        screen: &mut dyn Screen<'terminal>,
     ) -> Result<()> {
         self.tui_terminal
             .draw(|frame| screen.render(frame, application, ui))?;

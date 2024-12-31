@@ -1,9 +1,11 @@
 pub mod args;
 pub mod command;
 
+use std::borrow::Cow;
+
 use super::Subcommand;
 use anyhow::{Context, Result};
-use cl_core::{load_commands, CommandExec, Config};
+use cl_core::{initialize_commands, CommandExec, Config};
 use clap::Parser;
 use command::Command;
 use log::debug;
@@ -48,7 +50,7 @@ pub struct Exec {
 
 impl Subcommand for Exec {
     fn run(&self, config: impl Config) -> Result<()> {
-        let commands = load_commands!(config.command_file_path())?;
+        let commands = initialize_commands!(config.command_file_path());
         let alias = &self.alias;
         let namespace = &self.namespace;
         let args = &self.command_args;
@@ -65,7 +67,7 @@ impl Subcommand for Exec {
 
         debug!("Command to be executed: {}", new_command);
 
-        command_item.command = new_command;
+        command_item.command = Cow::Owned(new_command);
         command_item
             .exec(dry_run, quiet_mode)
             .context("Cannot run the command")

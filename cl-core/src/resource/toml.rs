@@ -6,7 +6,7 @@ use std::{fs::read_to_string, path::Path};
 pub struct Toml;
 
 impl Toml {
-    pub fn from_file<P>(path: P) -> Result<CommandMap>
+    pub fn from_file<'f, P>(path: P) -> Result<CommandMap<'f>>
     where
         P: AsRef<Path>,
     {

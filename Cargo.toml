@@ -1,5 +1,5 @@
 [workspace]
-members = ["cl-core", "cl-cli", "cl-gui", "benches"]
+members = ["cl-core", "cl-cli", "cl-gui"]
 
 [workspace.package]
 version = "0.9.3"
@@ -36,7 +36,6 @@ cl-gui = { path = "cl-gui" }
 anyhow.workspace = true
 tokio.workspace = true
 
-
 [profile.release]
 opt-level = 3
 strip = "symbols"
@@ -50,3 +49,14 @@ panic = "abort"
 opt-level = 3
 strip = "symbols"
 lto = "thin"
+
+[dev-dependencies]
+cl-core.workspace = true
+itertools.workspace = true
+criterion = "0.5.1"
+rand = "0.8.5"
+
+[[bench]]
+name = "core"
+path = "benches/core.rs"
+harness = false

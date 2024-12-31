@@ -26,7 +26,7 @@ impl Component for List<'_> {}
 
 impl<'a> List<'a> {
     pub fn new(commands: &CommandVec, state: ListState) -> List<'a> {
-        let items: Vec<String> = commands.iter().map(|c| c.alias.to_owned()).collect();
+        let items: Vec<String> = commands.iter().map(|c| c.alias.to_string()).collect();
 
         List {
             block: None,

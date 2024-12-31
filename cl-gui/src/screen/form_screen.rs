@@ -25,7 +25,7 @@ use tui::{
 
 pub struct FormScreen;
 
-impl Screen for FormScreen {
+impl<'s> Screen<'s> for FormScreen {
     fn render(&mut self, frame: &mut Frame, _: &mut Application, ui: &mut UI) {
         let terminal_size = frame.size().as_terminal_size();
         ui.fields.sort(&terminal_size);

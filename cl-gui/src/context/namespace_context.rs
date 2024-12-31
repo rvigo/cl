@@ -11,7 +11,7 @@ pub struct NamespaceContext {
 }
 
 impl NamespaceContext {
-    pub fn new(namespaces: Vec<Namespace>) -> Self {
+    pub fn new(namespaces: Vec<impl Into<Namespace> + Clone>) -> Self {
         let sorted_namespaces = namespaces.fold_default();
 
         log::debug!("Namespaces: {:?}", sorted_namespaces);
@@ -39,43 +39,25 @@ pub trait NamespacesExt {
     fn fold_default(&self) -> Vec<Namespace>;
 }
 
-impl NamespacesExt for Vec<Namespace> {
+impl<N> NamespacesExt for Vec<N>
+where
+    N: Into<Namespace> + Clone,
+{
     fn include_default(&mut self) -> Vec<Namespace> {
-        self.insert(0, DEFAULT_NAMESPACE.to_owned());
-        self.to_owned()
+        let mut namespaces = vec![DEFAULT_NAMESPACE.to_string()];
+        namespaces.extend(self.iter().cloned().map(|ns| ns.into()));
+        namespaces
     }
 
     fn fold_default(&self) -> Vec<Namespace> {
-        let namespaces_set = self.iter().fold(
-            Vec::<Namespace>::new()
-                .include_default()
-                .into_iter()
-                .collect::<HashSet<String>>(),
-            |mut set, ns| {
-                set.insert(ns.to_owned());
-                set
-            },
-        );
+        let mut namespaces_set: HashSet<String> =
+            self.iter().cloned().map(|ns| ns.into()).collect();
+
+        namespaces_set.insert(DEFAULT_NAMESPACE.to_string());
 
         let mut namespaces = namespaces_set.into_iter().collect::<Vec<Namespace>>();
         namespaces.sort();
-
         namespaces
-    }
-}
-
-impl NamespacesExt for Vec<&Namespace> {
-    fn include_default(&mut self) -> Vec<Namespace> {
-        let mut namespaces = self.iter_mut().map(|n| n.to_owned()).collect::<Vec<_>>();
-        namespaces.include_default();
-        namespaces
-    }
-
-    fn fold_default(&self) -> Vec<Namespace> {
-        self.iter()
-            .map(|n| n.to_string())
-            .collect::<Vec<Namespace>>()
-            .fold_default()
     }
 }
 
@@ -83,14 +65,15 @@ impl NamespacesExt for Vec<&Namespace> {
 mod tests {
     use super::*;
     use crate::context::Selectable;
+    use std::borrow::Cow;
 
     macro_rules! create_command {
         ($alias:expr, $command:expr, $namespace:expr, $description:expr, $tags:expr) => {{
             use cl_core::Command;
             Command {
-                alias: $alias.to_owned(),
-                namespace: $namespace.to_owned(),
-                command: $command.to_owned(),
+                alias: Cow::Borrowed($alias),
+                namespace: Cow::Borrowed($namespace),
+                command: Cow::Borrowed($command),
                 description: $description,
                 tags: $tags,
             }
@@ -104,7 +87,7 @@ mod tests {
         let command3 = create_command!("alias3", "command", "namespace2", None, None);
         let n = vec![command1, command2, command3]
             .iter()
-            .map(|c| c.namespace.to_owned())
+            .map(|c| c.namespace.to_string())
             .collect::<Vec<_>>();
         let mut namespaces = NamespaceContext::new(n);
         assert_eq!(namespaces.current(), DEFAULT_NAMESPACE);
@@ -126,7 +109,7 @@ mod tests {
         let command3 = create_command!("alias3", "command", "namespace2", None, None);
         let n = vec![command1, command2, command3]
             .iter()
-            .map(|c| c.namespace.to_owned())
+            .map(|c| c.namespace.to_string())
             .collect::<Vec<_>>();
         let mut namespaces = NamespaceContext::new(n);
 

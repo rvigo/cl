@@ -9,15 +9,18 @@ use crate::{
 };
 use log::debug;
 use parking_lot::Mutex;
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
+use std::{
+    borrow::Borrow,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
 };
 use tokio::sync::mpsc::Receiver;
 
 pub struct AppEventHandler<'a> {
     app_rx: Receiver<AppEvent>,
-    app_context: Arc<Mutex<Application>>,
+    app_context: Arc<Mutex<Application<'a>>>,
     ui_context: Arc<Mutex<UI<'a>>>,
     should_quit: Arc<AtomicBool>,
 }
@@ -25,11 +28,11 @@ pub struct AppEventHandler<'a> {
 impl<'a> AppEventHandler<'a> {
     pub async fn init(
         app_rx: Receiver<AppEvent>,
-        context: Arc<Mutex<Application>>,
+        context: Arc<Mutex<Application<'a>>>,
         ui_context: Arc<Mutex<UI<'a>>>,
         should_quit: Arc<AtomicBool>,
     ) {
-        let mut app_router = Self {
+        let app_router = Self {
             app_rx,
             app_context: context,
             ui_context,
@@ -39,7 +42,7 @@ impl<'a> AppEventHandler<'a> {
         app_router.handle().await
     }
 
-    async fn handle(&mut self) {
+    async fn handle(mut self) {
         while let Some(message) = self.app_rx.recv().await {
             match message {
                 AppEvent::Run(command_event) => match command_event {
@@ -90,8 +93,10 @@ impl<'a> AppEventHandler<'a> {
                     CommandEvent::Copy => {
                         let mut ui = self.ui_context.lock();
                         if let Some(command) = ui.selected_command() {
-                            if let Err(error) =
-                                self.app_context.lock().copy_to_clipboard(&command.command)
+                            if let Err(error) = self
+                                .app_context
+                                .lock()
+                                .copy_to_clipboard(command.command.borrow() as &str)
                             {
                                 ui.popup
                                     .set_dialog_type(DialogType::GenericError(error.to_string()));
@@ -230,7 +235,7 @@ impl<'a> AppEventHandler<'a> {
         }
     }
 
-    fn quit(&mut self) {
+    fn quit(&self) {
         debug!("quitting app");
         self.should_quit.store(true, Ordering::SeqCst)
     }

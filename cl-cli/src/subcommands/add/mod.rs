@@ -2,7 +2,7 @@ mod maybe_stdin;
 
 use super::Subcommand;
 use anyhow::Result;
-use cl_core::{resource::FileService, CommandBuilder, Commands, Config};
+use cl_core::{fs, initialize_commands, CommandBuilder, Config};
 use clap::Parser;
 use log::{info, warn};
 use maybe_stdin::MaybeStdin;
@@ -37,12 +37,10 @@ impl Subcommand for Add {
             .namespace(DEFAULT_NAMESPACE.to_owned())
             .build();
 
-        let commands_service = FileService::new(config.command_file_path())?;
-        let commands = commands_service.load()?;
-        let mut commands = Commands::init(commands);
+        let mut commands = initialize_commands!(config.command_file_path());
 
         let result = commands.add(&command)?;
-        commands_service.save(&result)?;
+        fs::save_at(result, config.command_file_path())?;
 
         if !config.preferences().quiet_mode() {
             info!("Command added: {}", command_string);
