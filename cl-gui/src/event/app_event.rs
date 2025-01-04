@@ -1,12 +1,11 @@
+use crate::impl_event;
+use crate::sync_cell::SyncCell;
 use crate::view_mode::ViewMode;
 use crossterm::event::KeyEvent;
+use tokio::sync::mpsc;
 
-#[derive(Clone, Debug)]
-pub enum RenderEvent {
-    Main,
-    Edit,
-    Insert,
-}
+static TX: SyncCell<mpsc::UnboundedSender<AppEvent>> = SyncCell::new();
+static RX: SyncCell<mpsc::UnboundedReceiver<AppEvent>> = SyncCell::new();
 
 #[derive(Clone, Debug)]
 pub enum AppEvent {
@@ -16,6 +15,15 @@ pub enum AppEvent {
     Popup(PopupEvent),
     QueryBox(QueryboxEvent),
     Quit,
+}
+
+impl_event!(AppEvent);
+
+#[derive(Clone, Debug)]
+pub enum RenderEvent {
+    Main,
+    Edit,
+    Insert,
 }
 
 #[derive(Clone, Debug)]

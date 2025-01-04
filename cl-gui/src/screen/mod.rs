@@ -1,9 +1,8 @@
-pub mod dialog_factory;
-
 mod command_publisher;
+pub mod dialog_factory;
 mod form_screen;
-mod main_screen;
 mod listener;
+mod main_screen;
 
 use crate::{
     context::{Application, UI},

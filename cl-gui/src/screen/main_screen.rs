@@ -8,7 +8,7 @@ use crate::theme::{DEFAULT_BACKGROUND_COLOR, DEFAULT_TEXT_COLOR, DEFAULT_WIDGET_
 use crate::widget::statusbar::Help;
 use crate::widget::tabs::Tabs;
 use crate::widget::text_field::FieldType;
-use crate::widget::{ClibpoardWidget, Component, DisplayWidget, CommandList};
+use crate::widget::{ClibpoardWidget, CommandList, Component, DisplayWidget};
 use crate::{default_commands, default_display_widget, default_tabs, maybe_render, render};
 use std::{cell::RefCell, rc::Rc};
 use tui::{
@@ -72,7 +72,7 @@ impl<'m> Screen<'m> for MainScreen<'m> {
         // aliases
         let list_state = application.commands.state();
         let filtered_commands = application.filter(&query);
-        self.commands.update(&filtered_commands, list_state);
+        self.commands.update(filtered_commands, list_state);
 
         //
         let selected_command = application.get_current_command();

@@ -151,7 +151,7 @@ impl<'ctx> CommandsContext<'ctx> {
         let commands = self.filter(current_namespace, query_string);
 
         if idx >= commands.len() {
-            self.state.select(None)
+            self.state.select(Some(0))
         }
 
         self.filtered_commands = commands.to_vec();

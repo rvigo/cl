@@ -16,12 +16,10 @@ use std::{
     },
     time::Duration,
 };
-use tokio::sync::mpsc::Sender;
 use tui::backend::CrosstermBackend;
 
 pub struct TuiApplication<'tui> {
     terminal: Terminal<CrosstermBackend<Stdout>>,
-    input_sx: Sender<InputEvent>,
     should_quit: Arc<AtomicBool>,
     ui: Arc<Mutex<UI<'tui>>>,
     context: Arc<Mutex<Application<'tui>>>,
@@ -30,7 +28,6 @@ pub struct TuiApplication<'tui> {
 
 impl<'tui> TuiApplication<'tui> {
     pub fn create(
-        input_sx: Sender<InputEvent>,
         should_quit: Arc<AtomicBool>,
         ui: Arc<Mutex<UI<'tui>>>,
         context: Arc<Mutex<Application<'tui>>>,
@@ -39,7 +36,6 @@ impl<'tui> TuiApplication<'tui> {
     ) -> Result<TuiApplication<'tui>> {
         let tui = TuiApplication {
             terminal,
-            input_sx,
             should_quit,
             ui,
             context,
@@ -59,7 +55,7 @@ impl<'tui> TuiApplication<'tui> {
 
                 if event::poll(Duration::from_millis(50))? {
                     if let Ok(Event::Key(key)) = event::read() {
-                        self.input_sx.send(InputEvent::KeyPress(key)).await?;
+                        InputEvent::KeyPress(key).emit();
                     }
                 }
             }

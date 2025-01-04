@@ -1,5 +1,3 @@
-use std::{borrow::Borrow, path::PathBuf};
-
 use super::{
     namespace_context::{NamespaceContext, DEFAULT_NAMESPACE},
     CommandsContext, FieldMap,
@@ -7,6 +5,7 @@ use super::{
 use crate::Clipboard;
 use anyhow::Result;
 use cl_core::{Command, CommandVec, CommandVecExt, Commands, Preferences};
+use std::{borrow::Borrow, path::PathBuf};
 
 pub struct Application<'app> {
     pub commands: CommandsContext<'app>,
@@ -43,7 +42,7 @@ impl<'app> Application<'app> {
         if let Some(ref mut clipboard) = &mut self.clipboard {
             clipboard.set_content(content.into())?;
         }
-        
+
         Ok(())
     }
 
