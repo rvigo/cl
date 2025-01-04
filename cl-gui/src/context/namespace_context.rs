@@ -1,42 +1,51 @@
-use crate::state::{NamespacesState, State};
+use crate::state::State;
 use cl_core::Namespace;
 use itertools::Itertools;
 use std::collections::HashSet;
 
 pub const DEFAULT_NAMESPACE: &str = "All";
 
+#[derive(Default)]
 pub struct NamespaceContext {
     pub items: Vec<Namespace>,
-    pub state: NamespacesState,
+    selected_idx: usize,
 }
 
 impl NamespaceContext {
     pub fn new(namespaces: Vec<impl Into<Namespace> + Clone>) -> Self {
-        let sorted_namespaces = namespaces.fold_default();
-
-        log::debug!("Namespaces: {:?}", sorted_namespaces);
-
         Self {
-            items: sorted_namespaces,
-            state: NamespacesState::default(),
+            items: namespaces.fold_with_default(),
+            ..Default::default()
         }
     }
 
     pub fn current(&self) -> Namespace {
-        self.items[self.state.selected()].to_owned()
+        self.items[self.selected()].to_owned()
     }
 
     pub fn update(&mut self, namespaces: &[&Namespace]) {
         let namespaces = namespaces.iter().map(|n| n.to_owned()).collect_vec();
 
-        self.items = namespaces.fold_default()
+        self.items = namespaces.fold_with_default()
+    }
+}
+
+impl State for NamespaceContext {
+    type Output = usize;
+
+    fn select(&mut self, selected: Self::Output) {
+        self.selected_idx = selected
+    }
+
+    fn selected(&self) -> Self::Output {
+        self.selected_idx
     }
 }
 
 pub trait NamespacesExt {
     fn include_default(&mut self) -> Vec<Namespace>;
 
-    fn fold_default(&self) -> Vec<Namespace>;
+    fn fold_with_default(&self) -> Vec<Namespace>;
 }
 
 impl<N> NamespacesExt for Vec<N>
@@ -49,7 +58,7 @@ where
         namespaces
     }
 
-    fn fold_default(&self) -> Vec<Namespace> {
+    fn fold_with_default(&self) -> Vec<Namespace> {
         let mut namespaces_set: HashSet<String> =
             self.iter().cloned().map(|ns| ns.into()).collect();
 

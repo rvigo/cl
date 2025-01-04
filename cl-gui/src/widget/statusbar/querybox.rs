@@ -16,15 +16,15 @@ use tui::{
 use tui_textarea::TextArea;
 
 #[derive(Clone, Default)]
-pub struct QueryBox<'querybox> {
-    text_area: TextArea<'querybox>,
+pub struct QueryBox<'qb> {
+    text_area: TextArea<'qb>,
     focus: bool,
     buffer: String,
 }
 
 impl Component for QueryBox<'_> {}
 
-impl<'querybox> QueryBox<'querybox> {
+impl<'qb> QueryBox<'qb> {
     pub fn focus(&self) -> bool {
         self.focus
     }
@@ -57,7 +57,7 @@ impl WidgetKeyHandler for QueryBox<'_> {
     }
 }
 
-impl<'querybox> Widget for QueryBox<'querybox> {
+impl<'qb> Widget for QueryBox<'qb> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
         let inner_b = dummy_block!();
         let inner_area = inner_b.inner(area);

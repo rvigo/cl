@@ -19,7 +19,7 @@ impl KeyEventHandler for MainScreenHandler {
                 code: KeyCode::Char('/'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => Ok(Some(AppEvent::QueryBox(QueryboxEvent::Active))),
+            } => Ok(Some(AppEvent::QueryBox(QueryboxEvent::Activate))),
             KeyEvent {
                 code: KeyCode::Char('q') | KeyCode::Esc,
                 modifiers: KeyModifiers::NONE,

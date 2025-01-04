@@ -1,22 +1,15 @@
-use super::{
-    observer::{CommandEvent, Event, Observer, Subject},
-    Screen,
-};
-use crate::{
-    context::{Application, UI},
-    default_widget_block, display_widget, maybe_render, render,
-    terminal::{TerminalSize, TerminalSizeExt},
-    theme::{
-        DEFAULT_BACKGROUND_COLOR, DEFAULT_HIGHLIGHT_COLOR, DEFAULT_TEXT_COLOR,
-        DEFAULT_WIDGET_NAME_COLOR,
-    },
-    widget::{
-        statusbar::Help, tabs::Tabs, text_field::FieldType, ClibpoardWidget, Component,
-        DisplayWidget, List,
-    },
-    State,
-};
-use cl_core::{CommandBuilder, Namespace};
+use crate::context::{Application, UI};
+use crate::screen::command_publisher::CommandPublisher;
+use crate::screen::listener::{Event, Publisher};
+use crate::screen::Screen;
+use crate::state::{CommandListState, State};
+use crate::terminal::TerminalSize;
+use crate::theme::{DEFAULT_BACKGROUND_COLOR, DEFAULT_TEXT_COLOR, DEFAULT_WIDGET_NAME_COLOR};
+use crate::widget::statusbar::Help;
+use crate::widget::tabs::Tabs;
+use crate::widget::text_field::FieldType;
+use crate::widget::{ClibpoardWidget, Component, DisplayWidget, CommandList};
+use crate::{default_commands, default_display_widget, default_tabs, maybe_render, render};
 use std::{cell::RefCell, rc::Rc};
 use tui::{
     layout::{Alignment, Constraint, Direction, Layout},
@@ -26,45 +19,48 @@ use tui::{
     Frame,
 };
 
-type Observers<'m> = Vec<Rc<RefCell<DisplayWidget<'m>>>>;
-
 #[derive(Clone)]
 pub struct MainScreen<'m> {
-    observers: Observers<'m>,
+    command_publisher: CommandPublisher<'m>,
     command: Rc<RefCell<DisplayWidget<'m>>>,
     tags: Rc<RefCell<DisplayWidget<'m>>>,
     namespace: Rc<RefCell<DisplayWidget<'m>>>,
     description: Rc<RefCell<DisplayWidget<'m>>>,
+    commands: CommandList<'m>,
+    tabs: Tabs<'m>,
 }
 
 impl<'m> MainScreen<'m> {
     pub fn new() -> MainScreen<'m> {
-        let observers = Observers::new();
+        let command = default_display_widget!(FieldType::Command);
+        let tags = default_display_widget!(FieldType::Tags);
+        let namespace = default_display_widget!(FieldType::Namespace);
+        let description = default_display_widget!(FieldType::Description);
 
-        let command = display_widget!(FieldType::Command, "", true, true, "");
-        let tags = display_widget!(FieldType::Tags, "", true, true, "");
-        let namespace = display_widget!(FieldType::Namespace, "", true, true, "");
-        let description = display_widget!(FieldType::Description, "", true, true, "");
+        let commands = default_commands!();
+        let tabs = default_tabs!();
 
         let command_refcell = Rc::new(RefCell::new(command));
         let tags_refcell = Rc::new(RefCell::new(tags));
         let namespace_refcell = Rc::new(RefCell::new(namespace));
         let description_refcell = Rc::new(RefCell::new(description));
 
-        let mut screen = MainScreen {
-            observers,
+        let mut command_publisher = CommandPublisher::new();
+
+        command_publisher.register(Rc::clone(&command_refcell));
+        command_publisher.register(Rc::clone(&tags_refcell));
+        command_publisher.register(Rc::clone(&namespace_refcell));
+        command_publisher.register(Rc::clone(&description_refcell));
+
+        MainScreen {
+            command_publisher,
             command: Rc::clone(&command_refcell),
-            tags: tags_refcell.to_owned(),
-            namespace: namespace_refcell.to_owned(),
-            description: description_refcell.to_owned(),
-        };
-
-        screen.register(Rc::clone(&command_refcell));
-        screen.register(tags_refcell.to_owned());
-        screen.register(namespace_refcell.to_owned());
-        screen.register(description_refcell.to_owned());
-
-        screen
+            tags: Rc::clone(&tags_refcell),
+            namespace: Rc::clone(&namespace_refcell),
+            description: Rc::clone(&description_refcell),
+            commands,
+            tabs,
+        }
     }
 }
 
@@ -72,37 +68,35 @@ impl<'m> Screen<'m> for MainScreen<'m> {
     fn render(&mut self, frame: &mut Frame, application: &mut Application<'m>, ui: &mut UI<'m>) {
         let querybox = ui.querybox.to_owned();
         let query = querybox.input();
-        let selected_idx = application.commands.selected_command_idx();
-        let should_highlight = application.should_highlight();
 
-        let namespaces = application.namespaces.items.to_owned();
-        let selected_namespace = application.namespaces.state.selected();
-
-        let command_state = application.commands.state();
-
-        let filtered_commands = application.filter_commands(&query);
-        let selected_command = filtered_commands
-            .get(selected_idx)
-            .map(ToOwned::to_owned)
-            .unwrap_or_else(|| CommandBuilder::default().build())
-            .to_owned();
+        // aliases
+        let list_state = application.commands.state();
+        let filtered_commands = application.filter(&query);
+        self.commands.update(&filtered_commands, list_state);
 
         //
+        let selected_command = application.get_current_command();
         ui.select_command(Some(&selected_command));
 
-        let aliases = List::new(&filtered_commands, command_state);
-        let tabs = create_tabs(namespaces, selected_namespace);
+        // namespaces
+        let namespace_context = &application.namespaces;
+        self.tabs.update(
+            namespace_context.items.to_owned(),
+            namespace_context.selected(),
+        );
 
-        let event = Event::new(CommandEvent::new(selected_command, query, should_highlight));
+        let should_highlight = application.should_highlight();
+        let event = Event::new(selected_command, should_highlight, query);
 
-        self.notify(event);
+        // widgets
+        self.command_publisher.notify(event);
 
-        match frame.size().as_terminal_size() {
+        match frame.size().into() {
             TerminalSize::Medium | TerminalSize::Large => render_medium_size(
                 frame,
-                tabs,
+                self.tabs.to_owned(),
                 self.command.borrow().to_owned(),
-                aliases,
+                self.commands.to_owned(),
                 self.namespace.borrow().to_owned(),
                 self.tags.borrow().to_owned(),
                 self.description.borrow().to_owned(),
@@ -112,8 +106,8 @@ impl<'m> Screen<'m> for MainScreen<'m> {
             ),
             TerminalSize::Small => render_form_small(
                 frame,
-                tabs,
-                aliases,
+                self.tabs.to_owned(),
+                self.commands.to_owned(),
                 self.command.borrow().to_owned(),
                 querybox,
             ),
@@ -121,38 +115,6 @@ impl<'m> Screen<'m> for MainScreen<'m> {
 
         maybe_render! { frame , {ui.popup.active_popup(), frame.size(), &mut ui.popup} };
     }
-}
-
-impl<'m> Subject<DisplayWidget<'m>> for MainScreen<'m> {
-    fn register(&mut self, observer: Rc<RefCell<DisplayWidget<'m>>>) {
-        self.get_observers_mut().push(observer);
-    }
-
-    fn notify(&mut self, event: Event<CommandEvent<'m>>) {
-        for observer in self.get_observers() {
-            observer.borrow_mut().update(event.to_owned());
-        }
-    }
-
-    fn get_observers<'s>(&'s self) -> &'s Vec<Rc<RefCell<DisplayWidget<'m>>>> {
-        &self.observers
-    }
-
-    fn get_observers_mut(&mut self) -> &mut Vec<Rc<RefCell<DisplayWidget<'m>>>> {
-        self.observers.as_mut()
-    }
-}
-
-fn create_tabs<'a>(namespaces: Vec<Namespace>, selected: usize) -> Tabs<'a> {
-    Tabs::new(namespaces)
-        .select(selected)
-        .block(default_widget_block!().title("Namespaces"))
-        .highlight_style(
-            Style::default()
-                .fg(DEFAULT_HIGHLIGHT_COLOR)
-                .add_modifier(Modifier::BOLD | Modifier::ITALIC),
-        )
-        .divider('|')
 }
 
 #[allow(clippy::too_many_arguments)]

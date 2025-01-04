@@ -156,19 +156,54 @@ macro_rules! maybe_render {
 
 #[macro_export]
 macro_rules! display_widget {
-    ($type:expr, $content:expr, $trim:expr, $highlight:expr) => {
-        $crate::widget::DisplayWidget::new($type, $content, $trim, $highlight)
+    ($type:expr, $content:expr, $trim:expr, $highlight:expr, $show_title:expr) => {
+        $crate::widget::DisplayWidget::new($type, $content, $trim, $highlight, $show_title)
             .block(default_widget_block!())
     };
 
-    ($type:expr,  $content:expr, $trim:expr, $highlight:expr, $query:expr) => {{
+    ($type:expr,  $content:expr, $trim:expr, $highlight:expr, $query:expr, $show_title:expr) => {{
         use $crate::default_widget_block;
         let mut widget =
-            $crate::widget::DisplayWidget::new($type, $content, $trim, $highlight, true)
+            $crate::widget::DisplayWidget::new($type, $content, $trim, $highlight, $show_title)
                 .block(default_widget_block!());
 
         widget.highlight($query);
 
         widget
     }};
+}
+
+#[macro_export]
+macro_rules! default_display_widget {
+    ($type:expr) => {{
+        use $crate::default_widget_block;
+        
+        $crate::display_widget!($type, "", true, true, true)
+    }};
+    
+}
+
+#[macro_export]
+macro_rules! default_tabs {
+    () => {{
+        use $crate::default_widget_block;
+        use $crate::theme::DEFAULT_HIGHLIGHT_COLOR;
+        
+        Tabs::new(vec![])
+            .select(0)
+            .block(default_widget_block!().title("Namespaces"))
+            .highlight_style(
+                Style::default()
+                    .fg(DEFAULT_HIGHLIGHT_COLOR)
+                    .add_modifier(Modifier::BOLD | Modifier::ITALIC),
+            )
+            .divider('|')
+    }};
+}
+
+#[macro_export]
+macro_rules! default_commands {
+    () => {
+        CommandList::new(&vec![], CommandListState::default())
+    };
 }

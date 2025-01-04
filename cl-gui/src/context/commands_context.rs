@@ -2,21 +2,21 @@ use super::{
     namespace_context::{NamespaceContext, DEFAULT_NAMESPACE},
     Selectable,
 };
-use crate::{state::ListState, Fuzzy, State};
+use crate::{state::CommandListState, Fuzzy, State};
 use anyhow::Result;
 use cl_core::{fs, Command, CommandExec, CommandMap, CommandVec, CommandVecExt, Commands};
 use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
 use itertools::Itertools;
 use log::debug;
-use std::{borrow::Cow, cmp::Reverse, path::PathBuf, thread, time::Duration};
+use std::{cmp::Reverse, path::PathBuf, thread, time::Duration};
 
 /// Groups all `Command`'s related stuff
+#[derive(Default)]
 pub struct CommandsContext<'ctx> {
     command_file_path: PathBuf,
     commands: Commands<'ctx>,
-    filtered_commands: CommandVec<'ctx>,
-    matcher: SkimMatcherV2,
-    state: ListState,
+    pub filtered_commands: CommandVec<'ctx>,
+    state: CommandListState,
     to_be_executed: Option<Command<'ctx>>,
 }
 
@@ -25,10 +25,7 @@ impl<'ctx> CommandsContext<'ctx> {
         let mut context = Self {
             command_file_path,
             commands,
-            filtered_commands: vec![],
-            matcher: SkimMatcherV2::default(),
-            state: ListState::default(), // TODO move this to another place
-            to_be_executed: None,
+            ..Default::default()
         };
 
         context.state.select(Some(0));
@@ -75,81 +72,59 @@ impl<'ctx> CommandsContext<'ctx> {
 
     /// Filters the commands based on a query and a namespace
     ///
-    /// First loads all namespaces from the `CacheInfo` (if available) and then filters them.   
-    ///  
-    /// If the chache is empty for the current namespace, searchs for all commands and then updates the cache
-    ///
     /// ## Arguments
     /// * `current_namespace` - A &str representing the app current namespace
     /// * `query_string` - A &str representing the user's query string
     ///
-    fn filter(&mut self, current_namespace: &str, query_string: &str) -> CommandVec<'ctx> {
-        let commands = if current_namespace != DEFAULT_NAMESPACE {
-            let command_namespace = self.commands.get(current_namespace);
+    fn filter(&self, namespace: &str, query: &str) -> CommandVec<'ctx> {
+        let commands = self.get_command_subset(namespace);
 
-            let result = if let Some(command_namespace) = command_namespace {
-                Cow::Borrowed(command_namespace)
-            } else {
-                let command_list = self.commands.as_list();
-                Cow::Owned(command_list)
-            };
-
-            result
-        } else {
-            let command_list = self.commands.as_list();
-
-            if command_list.is_empty() {
-                Cow::Owned(vec![Command::default()])
-            } else {
-                Cow::Owned(command_list)
-            }
-        };
-
-        let commands = if !commands.is_empty() && !query_string.is_empty() {
-            let fuzzy_commands =
-                self.fuzzy_find(current_namespace, query_string, commands.to_vec());
-            Cow::Owned(fuzzy_commands)
-        } else {
+        let commands = if query.is_empty() {
             commands
+        } else {
+            Self::fuzzy_find(commands, query)
         };
 
-        commands.to_vec().sort_and_return()
+        commands.to_owned().sort_and_return()
     }
 
-    /// Does a fuzzy search in the given vec
-    ///
-    /// Tries to return an ordered vec based on the score
+    fn get_command_subset(&self, namespace: &str) -> CommandVec<'ctx> {
+        if namespace != DEFAULT_NAMESPACE {
+            let content = self.commands.get_namespace_content(namespace);
+            match content {
+                None => vec![],
+                Some(c) => c.to_vec(),
+            }
+        } else {
+            self.commands.as_list()
+        }
+    }
+
     #[inline(always)]
-    fn fuzzy_find(
-        &self,
-        namespace: &str,
-        query_string: &str,
-        commands: CommandVec<'ctx>,
-    ) -> CommandVec<'ctx> {
+    fn fuzzy_find(commands: CommandVec<'ctx>, query: &str) -> CommandVec<'ctx> {
         if commands.is_empty() {
             return commands;
         }
 
         let mut scored_commands: Vec<(i64, Command)> = commands
             .iter()
-            .filter(|&c| (namespace.eq(DEFAULT_NAMESPACE) || c.namespace.eq(namespace)))
             .cloned()
             .filter_map(|c| {
-                self.matcher
-                    .fuzzy_indices(&c.lookup_string(), query_string)
-                    .map(|(score, _)| (score, c))
-                    .filter(|(score, _)| *score > 1)
+                SkimMatcherV2::default()
+                    .fuzzy_indices(&c.lookup_string(), query)
+                    .and_then(|(score, _)| if score > 1 { Some((score, c)) } else { None })
             })
+            .sorted_unstable_by(|s, c| c.0.cmp(&s.0))
             .collect();
 
         scored_commands.sort_by_key(|&(score, _)| Reverse(score));
-        scored_commands.into_iter().map(|(_, c)| c).collect_vec()
+        scored_commands.into_iter().map(|(_, c)| c).collect()
     }
 }
 
 impl<'ctx> CommandsContext<'ctx> {
     /// Returns a `ListState`, representing the state of the command list in the app
-    pub fn state(&self) -> ListState {
+    pub fn state(&self) -> CommandListState {
         self.state.to_owned()
     }
 
@@ -171,20 +146,17 @@ impl<'ctx> CommandsContext<'ctx> {
         &mut self,
         current_namespace: &str,
         query_string: &str,
-    ) -> CommandVec<'ctx> {
+    ) -> &CommandVec<'ctx> {
         let idx = self.selected_command_idx();
-        let commands = {
-            let filtered = self.filter(current_namespace, query_string);
-            filtered
-        };
+        let commands = self.filter(current_namespace, query_string);
 
         if idx >= commands.len() {
-            self.state.select(Some(0))
+            self.state.select(None)
         }
 
         self.filtered_commands = commands.to_vec();
 
-        self.filtered_commands.to_owned()
+        &self.filtered_commands
     }
 
     /// Runs a previously selected command
@@ -251,17 +223,17 @@ impl Selectable for CommandsContext<'_> {
 
 impl Selectable for NamespaceContext {
     fn next(&mut self) {
-        let current = self.state.selected();
+        let current = self.selected();
         let next = (current + 1) % self.items.len();
 
-        self.state.select(next);
+        self.select(next);
     }
 
     fn previous(&mut self) {
-        let current = self.state.selected();
+        let current = self.selected();
         let previous = (current + self.items.len() - 1) % self.items.len();
 
-        self.state.select(previous);
+        self.select(previous);
     }
 }
 
@@ -304,7 +276,9 @@ mod test {
 
         assert!(result.is_ok());
         let commands_lock = context.commands;
-        let commands = commands_lock.get(&command.namespace).unwrap();
+        let commands = commands_lock
+            .get_namespace_content(&command.namespace)
+            .unwrap();
 
         assert_eq!(commands.len(), 2);
     }
@@ -319,7 +293,7 @@ mod test {
 
         assert!(result.is_ok());
         let commands_lock = context.commands;
-        let entry = commands_lock.get(&command.namespace);
+        let entry = commands_lock.get_namespace_content(&command.namespace);
 
         assert!(entry.is_none());
     }

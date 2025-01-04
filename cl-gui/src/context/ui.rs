@@ -2,6 +2,7 @@ use super::{fields::Fields, PopupContext};
 use crate::{state::ClipboardState, terminal::TerminalSize, widget::statusbar::QueryBox, ViewMode};
 use cl_core::Command;
 
+#[derive(Default)]
 pub struct UI<'ui> {
     pub fields: Fields<'ui>,
     selected_command: Option<Command<'ui>>,
@@ -15,11 +16,7 @@ impl<'ui> UI<'ui> {
     pub fn new(size: TerminalSize) -> UI<'ui> {
         UI {
             fields: Fields::new(&size),
-            selected_command: None,
-            popup: PopupContext::new(),
-            querybox: QueryBox::default(),
-            clipboard_state: ClipboardState::default(),
-            view_mode: ViewMode::Main,
+            ..Default::default()
         }
     }
 }

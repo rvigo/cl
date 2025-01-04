@@ -1,4 +1,5 @@
 use super::Component;
+use cl_core::Namespace;
 use tui::{
     buffer::Buffer,
     layout::Rect,
@@ -49,6 +50,11 @@ impl<'tabs> Tabs<'tabs> {
     pub fn highlight_style(mut self, style: Style) -> Self {
         self.highlight_style = style;
         self
+    }
+
+    pub fn update(&mut self, titles: Vec<Namespace>, selected: usize) {
+        self.titles = titles;
+        self.selected = selected
     }
 }
 

@@ -10,7 +10,7 @@ pub mod text_field;
 
 pub use clipboard::ClibpoardWidget;
 pub use display::DisplayWidget;
-pub use list::List;
+pub use list::CommandList;
 pub use text_field::TextField;
 
 use crossterm::event::KeyEvent;

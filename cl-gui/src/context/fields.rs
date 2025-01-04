@@ -8,6 +8,7 @@ use cl_core::{hashmap, Command};
 use crossterm::event::KeyEvent;
 use std::collections::HashMap;
 
+#[derive(Default)]
 pub struct Fields<'fields> {
     state: FieldState<'fields>,
     selected_field: Option<FieldType>,
@@ -19,9 +20,7 @@ impl<'fields> Fields<'fields> {
     pub fn new(size: &TerminalSize) -> Self {
         Self {
             state: FieldState::new(size),
-            selected_field: None,
-            original_fields: hashmap!(),
-            edited_fields: hashmap!(),
+            ..Default::default()
         }
     }
 

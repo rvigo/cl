@@ -149,7 +149,7 @@ impl<'cmd> Commands<'cmd> {
 }
 
 impl<'cmd> Commands<'cmd> {
-    pub fn get(&self, namespace: &str) -> Option<&CommandVec<'cmd>> {
+    pub fn get_namespace_content(&self, namespace: &str) -> Option<&CommandVec<'cmd>> {
         self.commands.get(namespace)
     }
 

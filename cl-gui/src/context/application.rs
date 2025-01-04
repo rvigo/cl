@@ -6,7 +6,7 @@ use super::{
 };
 use crate::Clipboard;
 use anyhow::Result;
-use cl_core::{Command, CommandVec, Commands, Preferences};
+use cl_core::{Command, CommandVec, CommandVecExt, Commands, Preferences};
 
 pub struct Application<'app> {
     pub commands: CommandsContext<'app>,
@@ -43,6 +43,7 @@ impl<'app> Application<'app> {
         if let Some(ref mut clipboard) = &mut self.clipboard {
             clipboard.set_content(content.into())?;
         }
+        
         Ok(())
     }
 
@@ -58,10 +59,17 @@ impl<'app> Application<'app> {
     }
 
     /// Filters the command list using the querybox input as query
-    pub fn filter_commands(&mut self, query_string: &str) -> CommandVec<'app> {
+    pub fn filter(&mut self, query_string: &str) -> &CommandVec<'app> {
         let current_namespace = self.namespaces.current();
         self.commands
             .filter_commands(&current_namespace, query_string)
+    }
+
+    pub fn get_current_command(&self) -> Command<'app> {
+        let selected_idx = self.commands.selected_command_idx();
+        let filtered_commands = self.commands.filtered_commands.to_owned();
+
+        filtered_commands.get_selected(selected_idx)
     }
 }
 
@@ -77,6 +85,7 @@ impl<'app> Application<'app> {
     pub fn add_command(&mut self, command_value_map: FieldMap) -> Result<()> {
         let commands = self.commands.add(&command_value_map.into())?;
         self.namespaces.update(&commands.keys().collect::<Vec<_>>());
+
         Ok(())
     }
 
@@ -88,12 +97,14 @@ impl<'app> Application<'app> {
         let edited_command: &Command<'app> = &edited_command.into();
         let commands = self.commands.edit(edited_command, current_command)?;
         self.namespaces.update(&commands.keys().collect::<Vec<_>>());
+
         Ok(())
     }
 
     pub fn remove_command(&mut self, command: &Command<'app>) -> Result<()> {
         let commands = self.commands.remove(command)?;
         self.namespaces.update(&commands.keys().collect::<Vec<_>>());
+
         Ok(())
     }
 }

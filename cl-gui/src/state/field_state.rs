@@ -22,7 +22,7 @@ const MEDIUM_SIZE_FIELD_SEQUENCE: &[FieldType] = &[
     FieldType::Tags,
 ];
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct FieldState<'a> {
     pub items: HashMap<FieldType, TextField<'a>>,
     sequence: Vec<FieldType>,
