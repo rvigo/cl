@@ -59,8 +59,8 @@ pub enum PopupCallbackAction {
 
 #[derive(Clone, Debug)]
 pub enum QueryboxEvent {
-    Active,
-    Deactive,
+    Activate,
+    Deactivate,
     Input(KeyEvent),
 }
 

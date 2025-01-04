@@ -16,14 +16,6 @@ pub struct PopupContext {
 }
 
 impl PopupContext {
-    pub fn new() -> PopupContext {
-        Self {
-            selected_choice_idx: 0,
-            callback: PopupCallbackAction::None,
-            dialog_type: None,
-        }
-    }
-
     pub fn active_popup(&self) -> Option<Popup> {
         if let Some(dialog) = &self.dialog_type {
             let pop = match dialog {
@@ -115,7 +107,7 @@ mod tests {
 
     #[test]
     fn should_handle_empty_choices() {
-        let mut popup = super::PopupContext::new();
+        let mut popup = super::PopupContext::default();
         assert_eq!(popup.selected_choice_idx(), 0);
 
         popup.next();

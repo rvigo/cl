@@ -2,7 +2,6 @@ use super::Screen;
 use crate::{
     context::{Application, UI},
     default_widget_block, maybe_render, render,
-    terminal::TerminalSizeExt,
     theme::{
         DEFAULT_BACKGROUND_COLOR, DEFAULT_HIGHLIGHT_COLOR, DEFAULT_TEXT_COLOR,
         DEFAULT_WIDGET_NAME_COLOR,
@@ -27,7 +26,7 @@ pub struct FormScreen;
 
 impl<'s> Screen<'s> for FormScreen {
     fn render(&mut self, frame: &mut Frame, _: &mut Application, ui: &mut UI) {
-        let terminal_size = frame.size().as_terminal_size();
+        let terminal_size = frame.size().into();
         ui.fields.sort(&terminal_size);
 
         let view_mode = ui.view_mode();

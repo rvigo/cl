@@ -30,6 +30,8 @@ pub trait CommandVecExt<'cmd> {
     fn to_command_map(&self) -> CommandMap<'cmd>;
 
     fn filter(&self, predicate: impl Fn(&Command) -> bool) -> Vec<&Command<'cmd>>;
+
+    fn get_selected(&self, idx: usize) -> Command<'cmd>;
 }
 
 impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
@@ -54,6 +56,13 @@ impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
 
     fn filter(&self, predicate: impl Fn(&Command) -> bool) -> Vec<&Command<'cmd>> {
         self.iter().filter(|c| predicate(c)).collect()
+    }
+
+    fn get_selected(&self, idx: usize) -> Command<'cmd> {
+        self.get(idx)
+            .map(ToOwned::to_owned)
+            .unwrap_or_else(|| CommandBuilder::default().build())
+            .to_owned()
     }
 }
 

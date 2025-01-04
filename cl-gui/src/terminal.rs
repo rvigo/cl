@@ -46,7 +46,7 @@ impl Terminal<CrosstermBackend<Stdout>> {
     }
 
     pub fn size(&mut self) -> TerminalSize {
-        self.tui_terminal.get_frame().size().as_terminal_size()
+        self.tui_terminal.get_frame().size().into()
     }
 
     pub fn restore(&mut self) -> Result<()> {
@@ -75,13 +75,10 @@ impl Terminal<CrosstermBackend<Stdout>> {
     }
 }
 
-pub trait TerminalSizeExt {
-    fn as_terminal_size(&self) -> TerminalSize;
-}
 
-impl TerminalSizeExt for Rect {
-    fn as_terminal_size(&self) -> TerminalSize {
-        let height = self.height;
+impl From<Rect> for TerminalSize {
+    fn from(value: Rect) -> Self {
+        let height = value.height;
         if height <= 20 {
             TerminalSize::Small
         } else if height <= 30 {

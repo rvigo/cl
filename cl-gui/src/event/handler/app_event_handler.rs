@@ -207,8 +207,8 @@ impl<'a> AppEventHandler<'a> {
                 AppEvent::QueryBox(event) => {
                     let mut ui = self.ui_context.lock();
                     match event {
-                        QueryboxEvent::Active => ui.querybox.activate_focus(),
-                        QueryboxEvent::Deactive => ui.querybox.deactivate_focus(),
+                        QueryboxEvent::Activate => ui.querybox.activate_focus(),
+                        QueryboxEvent::Deactivate => ui.querybox.deactivate_focus(),
                         QueryboxEvent::Input(key_event) => ui.querybox.handle_input(key_event),
                     }
                 }

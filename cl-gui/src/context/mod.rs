@@ -7,6 +7,7 @@ mod ui;
 
 pub use application::Application;
 pub use commands_context::CommandsContext;
+pub use namespace_context::NamespaceContext;
 pub use popup_context::PopupContext;
 pub use ui::UI;
 

@@ -1,5 +1,5 @@
 use super::Component;
-use crate::{default_widget_block, state::ListState, theme::DEFAULT_TEXT_COLOR};
+use crate::{default_widget_block, state::CommandListState, theme::DEFAULT_TEXT_COLOR};
 use cl_core::CommandVec;
 use tui::{
     buffer::Buffer,
@@ -10,7 +10,8 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-pub struct List<'a> {
+#[derive(Clone)]
+pub struct CommandList<'a> {
     block: Option<Block<'a>>,
     items: Vec<String>,
     style: Style,
@@ -19,16 +20,16 @@ pub struct List<'a> {
     highlight_symbol: Option<&'a str>,
     repeat_highlight_symbol: bool,
     highlight_spacing: HighlightSpacing,
-    state: ListState,
+    state: CommandListState,
 }
 
-impl Component for List<'_> {}
+impl Component for CommandList<'_> {}
 
-impl<'a> List<'a> {
-    pub fn new(commands: &CommandVec, state: ListState) -> List<'a> {
+impl<'a> CommandList<'a> {
+    pub fn new(commands: &CommandVec, state: CommandListState) -> CommandList<'a> {
         let items: Vec<String> = commands.iter().map(|c| c.alias.to_string()).collect();
 
-        List {
+        CommandList {
             block: None,
             style: Style::default(),
             items,
@@ -37,7 +38,6 @@ impl<'a> List<'a> {
                 .fg(Color::Black)
                 .bg(DEFAULT_TEXT_COLOR)
                 .add_modifier(Modifier::BOLD | Modifier::ITALIC),
-
             highlight_symbol: Some("> "),
             repeat_highlight_symbol: false,
             highlight_spacing: HighlightSpacing::default(),
@@ -45,7 +45,7 @@ impl<'a> List<'a> {
         }
     }
 
-    pub fn style(mut self, style: Style) -> List<'a> {
+    pub fn style(mut self, style: Style) -> CommandList<'a> {
         self.style = style;
         self
     }
@@ -87,9 +87,14 @@ impl<'a> List<'a> {
         }
         (start, end)
     }
+
+    pub fn update(&mut self, commands: &CommandVec, state: CommandListState) {
+        self.items = commands.iter().map(|c| c.alias.to_string()).collect();
+        self.state = state
+    }
 }
 
-impl<'a> Widget for List<'a> {
+impl<'a> Widget for CommandList<'a> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
         buf.set_style(area, self.style);
         let list_area = match self.block.take() {
@@ -181,8 +186,8 @@ impl<'a> Widget for List<'a> {
     }
 }
 
-impl<'a> Styled for List<'a> {
-    type Item = List<'a>;
+impl<'a> Styled for CommandList<'a> {
+    type Item = CommandList<'a>;
 
     fn style(&self) -> Style {
         self.style

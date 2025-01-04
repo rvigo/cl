@@ -10,7 +10,7 @@ impl KeyEventHandler for QueryboxHandler {
             KeyEvent {
                 code: KeyCode::Esc | KeyCode::Enter | KeyCode::Down | KeyCode::Up,
                 ..
-            } => Ok(Some(AppEvent::QueryBox(QueryboxEvent::Deactive))),
+            } => Ok(Some(AppEvent::QueryBox(QueryboxEvent::Deactivate))),
             input => Ok(Some(AppEvent::QueryBox(QueryboxEvent::Input(input)))),
         }
     }
