@@ -177,10 +177,9 @@ macro_rules! display_widget {
 macro_rules! default_display_widget {
     ($type:expr) => {{
         use $crate::default_widget_block;
-        
+
         $crate::display_widget!($type, "", true, true, true)
     }};
-    
 }
 
 #[macro_export]
@@ -188,7 +187,7 @@ macro_rules! default_tabs {
     () => {{
         use $crate::default_widget_block;
         use $crate::theme::DEFAULT_HIGHLIGHT_COLOR;
-        
+
         Tabs::new(vec![])
             .select(0)
             .block(default_widget_block!().title("Namespaces"))

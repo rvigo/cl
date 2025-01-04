@@ -75,7 +75,6 @@ impl Terminal<CrosstermBackend<Stdout>> {
     }
 }
 
-
 impl From<Rect> for TerminalSize {
     fn from(value: Rect) -> Self {
         let height = value.height;

@@ -16,10 +16,10 @@ use std::{
         Arc,
     },
 };
-use tokio::sync::mpsc::Receiver;
+use tokio::sync::mpsc::UnboundedReceiver;
 
 pub struct AppEventHandler<'a> {
-    app_rx: Receiver<AppEvent>,
+    app_rx: UnboundedReceiver<AppEvent>,
     app_context: Arc<Mutex<Application<'a>>>,
     ui_context: Arc<Mutex<UI<'a>>>,
     should_quit: Arc<AtomicBool>,
@@ -27,7 +27,7 @@ pub struct AppEventHandler<'a> {
 
 impl<'a> AppEventHandler<'a> {
     pub async fn init(
-        app_rx: Receiver<AppEvent>,
+        app_rx: UnboundedReceiver<AppEvent>,
         context: Arc<Mutex<Application<'a>>>,
         ui_context: Arc<Mutex<UI<'a>>>,
         should_quit: Arc<AtomicBool>,

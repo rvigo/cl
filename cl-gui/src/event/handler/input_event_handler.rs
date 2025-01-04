@@ -12,7 +12,6 @@ use crate::{
 use anyhow::{anyhow, Result};
 use cl_core::hashmap;
 use crossterm::event::KeyEvent;
-use log::debug;
 use parking_lot::Mutex;
 use std::{
     collections::HashMap,
@@ -21,13 +20,12 @@ use std::{
         Arc,
     },
 };
-use tokio::sync::mpsc::{error::SendError, Receiver, Sender};
+use tokio::sync::mpsc::UnboundedReceiver;
 
 type ThreadSafeKeyEventHandler<'a> = &'a (dyn KeyEventHandler + Send + Sync);
 
 pub struct InputEventHandler {
-    input_rx: Receiver<InputEvent>,
-    app_sx: Sender<AppEvent>,
+    input_rx: UnboundedReceiver<InputEvent>,
     ui_context: Arc<Mutex<UI<'static>>>,
     should_quit: Arc<AtomicBool>,
     handlers: HashMap<HandlerType, ThreadSafeKeyEventHandler<'static>>,
@@ -35,8 +33,7 @@ pub struct InputEventHandler {
 
 impl InputEventHandler {
     pub async fn init(
-        input_rx: Receiver<InputEvent>,
-        app_sx: Sender<AppEvent>,
+        input_rx: UnboundedReceiver<InputEvent>,
         ui_context: Arc<Mutex<UI<'static>>>,
         should_quit: Arc<AtomicBool>,
     ) -> Result<()> {
@@ -54,7 +51,6 @@ impl InputEventHandler {
 
         let mut handler = Self {
             input_rx,
-            app_sx,
             ui_context,
             should_quit,
             handlers,
@@ -69,7 +65,7 @@ impl InputEventHandler {
                 InputEvent::KeyPress(key_event) => {
                     let event = self.handle_input(key_event)?;
                     if let Some(event) = event {
-                        self.dispatch(event).await?;
+                        event.emit()
                     }
                 }
             };
@@ -85,7 +81,7 @@ impl InputEventHandler {
     fn handle_input(&mut self, key_event: KeyEvent) -> Result<Option<AppEvent>> {
         let ui_context = self.ui_context.lock();
 
-        let handler_type = self.get_handler(&ui_context);
+        let handler_type = self.get_handler_type(&ui_context);
 
         match self.handlers.get(&handler_type) {
             Some(handler) => handler.handle(key_event),
@@ -93,12 +89,7 @@ impl InputEventHandler {
         }
     }
 
-    async fn dispatch(&self, event: AppEvent) -> Result<(), SendError<AppEvent>> {
-        debug!("dispatching event: {:?}", event);
-        self.app_sx.send(event).await
-    }
-
-    fn get_handler(&self, ui_context: &UI<'static>) -> HandlerType {
+    fn get_handler_type(&self, ui_context: &UI<'_>) -> HandlerType {
         if let Some(active_popup) = ui_context.popup.active_popup() {
             match active_popup.r#type {
                 Type::Error | Type::Warning => HandlerType::Popup,

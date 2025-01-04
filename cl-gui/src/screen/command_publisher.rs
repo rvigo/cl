@@ -1,4 +1,4 @@
-use crate::screen::listener::{ Event, Listener, Publisher};
+use crate::screen::listener::{Event, Listener, Publisher};
 use crate::widget::DisplayWidget;
 use std::cell::RefCell;
 use std::rc::Rc;
