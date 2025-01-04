@@ -43,7 +43,7 @@ pub enum PopupType {
 
 #[derive(Clone, Debug)]
 pub enum DialogType {
-    CommandDeletionConfimation,
+    CommandDeletionConfirmation,
     EditedScreenExit,
     GenericError(String),
     HelpPopup(ViewMode),

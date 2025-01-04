@@ -83,7 +83,7 @@ impl KeyEventHandler for MainScreenHandler {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => Ok(Some(AppEvent::Popup(PopupEvent::Enable(
-                PopupType::Dialog(DialogType::CommandDeletionConfimation),
+                PopupType::Dialog(DialogType::CommandDeletionConfirmation),
             )))),
             KeyEvent {
                 code: KeyCode::Enter,

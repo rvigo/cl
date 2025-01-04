@@ -19,7 +19,7 @@ impl PopupContext {
     pub fn active_popup(&self) -> Option<Popup> {
         if let Some(dialog) = &self.dialog_type {
             let pop = match dialog {
-                DialogType::CommandDeletionConfimation => {
+                DialogType::CommandDeletionConfirmation => {
                     CommandDeletionConfirmationDialog::create()
                 }
                 DialogType::EditedScreenExit => EditedScreenExitDialog::create(),
