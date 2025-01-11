@@ -5,65 +5,39 @@ use crate::{
         EditScreenHandler, HandlerType, HelpPopupHandler, InsertScreenHandler, KeyEventHandler,
         MainScreenHandler, PopupHandler, QueryboxHandler,
     },
-    register,
     widget::popup::Type,
     ViewMode,
 };
-use anyhow::{anyhow, Result};
-use cl_core::hashmap;
+use anyhow::Result;
 use crossterm::event::KeyEvent;
+use log::debug;
 use parking_lot::Mutex;
-use std::{
-    collections::HashMap,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
 };
 use tokio::sync::mpsc::UnboundedReceiver;
 
 type ThreadSafeKeyEventHandler<'a> = &'a (dyn KeyEventHandler + Send + Sync);
 
 pub struct InputEventHandler {
-    input_rx: UnboundedReceiver<InputEvent>,
     ui_context: Arc<Mutex<UI<'static>>>,
     should_quit: Arc<AtomicBool>,
-    handlers: HashMap<HandlerType, ThreadSafeKeyEventHandler<'static>>,
 }
 
 impl InputEventHandler {
-    pub async fn init(
-        input_rx: UnboundedReceiver<InputEvent>,
-        ui_context: Arc<Mutex<UI<'static>>>,
-        should_quit: Arc<AtomicBool>,
-    ) -> Result<()> {
-        let mut handlers: HashMap<HandlerType, ThreadSafeKeyEventHandler<'static>> = hashmap!();
-
-        register!(
-                handlers,
-                HandlerType::Popup => &PopupHandler,
-                HandlerType::Help => &HelpPopupHandler,
-                HandlerType::Main => &MainScreenHandler,
-                HandlerType::Insert => &InsertScreenHandler,
-                HandlerType::Edit => &EditScreenHandler,
-                HandlerType::QueryBox => &QueryboxHandler
-        );
-
-        let mut handler = Self {
-            input_rx,
+    pub fn init(ui_context: Arc<Mutex<UI<'static>>>, should_quit: Arc<AtomicBool>) -> Self {
+        Self {
             ui_context,
             should_quit,
-            handlers,
-        };
-
-        handler.start().await
+        }
     }
 
-    async fn start(&mut self) -> Result<()> {
-        while let Some(message) = self.input_rx.recv().await {
+    pub async fn handle(self, mut rx: UnboundedReceiver<InputEvent>) -> Result<()> {
+        while let Some(message) = rx.recv().await {
             match message {
                 InputEvent::KeyPress(key_event) => {
-                    let event = self.handle_input(key_event)?;
+                    let event = Self::handle_input(key_event, &self.ui_context.lock())?;
                     if let Some(event) = event {
                         event.emit()
                     }
@@ -78,18 +52,21 @@ impl InputEventHandler {
         Ok(())
     }
 
-    fn handle_input(&mut self, key_event: KeyEvent) -> Result<Option<AppEvent>> {
-        let ui_context = self.ui_context.lock();
+    fn handle_input(key_event: KeyEvent, ui_context: &UI) -> Result<Option<AppEvent>> {
+        let handler_type = Self::get_handler_type(ui_context);
+        let handler: ThreadSafeKeyEventHandler<'static> = match handler_type {
+            HandlerType::Popup => &PopupHandler,
+            HandlerType::Help => &HelpPopupHandler,
+            HandlerType::Main => &MainScreenHandler,
+            HandlerType::Insert => &InsertScreenHandler,
+            HandlerType::Edit => &EditScreenHandler,
+            HandlerType::QueryBox => &QueryboxHandler,
+        };
 
-        let handler_type = self.get_handler_type(&ui_context);
-
-        match self.handlers.get(&handler_type) {
-            Some(handler) => handler.handle(key_event),
-            None => Err(anyhow!("Key handler not found for {:?}", handler_type)),
-        }
+        handler.handle(key_event)
     }
 
-    fn get_handler_type(&self, ui_context: &UI<'_>) -> HandlerType {
+    fn get_handler_type(ui_context: &UI<'_>) -> HandlerType {
         if let Some(active_popup) = ui_context.popup.active_popup() {
             match active_popup.r#type {
                 Type::Error | Type::Warning => HandlerType::Popup,
