@@ -7,6 +7,7 @@ use crate::{
     widget::{popup::Choice, WidgetKeyHandler},
     ViewMode,
 };
+use anyhow::Result;
 use log::debug;
 use parking_lot::Mutex;
 use std::{
@@ -19,31 +20,26 @@ use std::{
 use tokio::sync::mpsc::UnboundedReceiver;
 
 pub struct AppEventHandler<'a> {
-    app_rx: UnboundedReceiver<AppEvent>,
     app_context: Arc<Mutex<Application<'a>>>,
     ui_context: Arc<Mutex<UI<'a>>>,
     should_quit: Arc<AtomicBool>,
 }
 
 impl<'a> AppEventHandler<'a> {
-    pub async fn init(
-        app_rx: UnboundedReceiver<AppEvent>,
+    pub fn init(
         context: Arc<Mutex<Application<'a>>>,
         ui_context: Arc<Mutex<UI<'a>>>,
         should_quit: Arc<AtomicBool>,
-    ) {
-        let app_router = Self {
-            app_rx,
+    ) -> AppEventHandler<'a> {
+        Self {
             app_context: context,
             ui_context,
             should_quit,
-        };
-
-        app_router.handle().await
+        }
     }
 
-    async fn handle(mut self) {
-        while let Some(message) = self.app_rx.recv().await {
+    pub async fn handle(self, mut rx: UnboundedReceiver<AppEvent>) -> Result<()> {
+        while let Some(message) = rx.recv().await {
             match message {
                 AppEvent::Run(command_event) => match command_event {
                     CommandEvent::Execute => {
@@ -233,6 +229,8 @@ impl<'a> AppEventHandler<'a> {
                 },
             };
         }
+
+        Ok(())
     }
 
     fn quit(&self) {

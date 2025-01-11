@@ -299,6 +299,7 @@ version = "0.9.3"
 dependencies = [
  "anyhow",
  "cl-core",
+ "cl-new-gui",
  "copypasta",
  "crossterm",
  "fuzzy-matcher",
@@ -309,6 +310,27 @@ dependencies = [
  "tempdir",
  "thiserror",
  "tokio",
+ "tui-textarea",
+ "unicode-width",
+]
+
+[[package]]
+name = "cl-new-gui"
+version = "0.9.3"
+dependencies = [
+ "anyhow",
+ "cl-core",
+ "copypasta",
+ "crossterm",
+ "fuzzy-matcher",
+ "itertools 0.11.0",
+ "log",
+ "parking_lot",
+ "ratatui",
+ "tempdir",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
  "tui-textarea",
  "unicode-width",
 ]
@@ -470,6 +492,7 @@ checksum = "f476fe445d41c9e991fd07515a6f463074b782242ccf4a5b7b1d1012e70824df"
 dependencies = [
  "bitflags 2.4.1",
  "crossterm_winapi",
+ "futures-core",
  "libc",
  "mio",
  "parking_lot",
@@ -559,6 +582,12 @@ name = "fuchsia-cprng"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a06f77d526c1a601b7c4cdd98f54b5eaabffc14d5f2f0296febdc7f357c6d3ba"
+
+[[package]]
+name = "futures-core"
+version = "0.3.31"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05f29059c0c2090612e8d742178b0580d2dc940c837851ad723096f87af6663e"
 
 [[package]]
 name = "fuzzy-matcher"
@@ -1518,9 +1547,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0c014766411e834f7af5b8f4cf46257aab4036ca95e9d2c144a10f59ad6f5b9"
 dependencies = [
  "backtrace",
+ "libc",
+ "mio",
  "num_cpus",
  "pin-project-lite",
+ "signal-hook-registry",
  "tokio-macros",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -1532,6 +1565,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "tokio-stream"
+version = "0.1.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eca58d7bba4a75707817a2c44174253f9236b2d5fbd055602e9d5c07c139a047"
+dependencies = [
+ "futures-core",
+ "pin-project-lite",
+ "tokio",
 ]
 
 [[package]]
