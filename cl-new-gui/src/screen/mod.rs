@@ -1,4 +1,7 @@
-use crate::textbox::TextBox;
+mod main_screen;
+
+use crate::observer::ComponentPublisher;
+use crate::screen::main_screen::MainScreen;
 use tui::Frame;
 
 #[derive(Default)]
@@ -7,7 +10,6 @@ pub enum ActiveScreen {
     Main,
 }
 
-#[derive(Default)]
 pub struct Screens {
     pub active_screen: ActiveScreen,
     pub main: MainScreen,
@@ -16,7 +18,8 @@ pub struct Screens {
 impl Screens {
     pub fn new() -> Screens {
         Self {
-            ..Default::default()
+            active_screen: ActiveScreen::Main,
+            main: MainScreen::new(),
         }
     }
 
@@ -25,31 +28,20 @@ impl Screens {
             ActiveScreen::Main => &self.main,
         }
     }
+
+    pub fn get_active_screen_mut(&mut self) -> &mut dyn Screen {
+        match self.active_screen {
+            ActiveScreen::Main => &mut self.main,
+        }
+    }
 }
 
 pub trait Screen {
-    fn new(component: TextBox) -> Self
+    fn new() -> Self
     where
         Self: Sized;
 
-    fn render(&self, frame: &mut Frame);
-}
+    fn render(&mut self, frame: &mut Frame);
 
-#[derive(Default)]
-pub struct MainScreen {
-    pub component: TextBox,
-}
-
-impl Screen for MainScreen {
-    fn new(component: TextBox) -> Self {
-        Self { component }
-    }
-
-    fn render(&self, frame: &mut Frame) {
-        self.component.render(frame)
-    }
-}
-
-pub trait Component {
-    fn render(&self, frame: &mut Frame);
+    fn get_publisher(&mut self) -> &mut ComponentPublisher;
 }
