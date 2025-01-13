@@ -1,10 +1,10 @@
-use std::fmt::Display;
 use crate::component::Component;
+use std::fmt::Display;
 use tui::layout::Rect;
 use tui::widgets::{Block, Borders, Paragraph};
 use tui::Frame;
 
-#[derive(Default, Clone)]
+#[derive(Default, Debug, Clone, Eq, PartialEq, Hash)]
 pub struct TextBox {
     pub name: TextBoxName,
     pub content: String,
@@ -25,7 +25,7 @@ impl Component for TextBox {
     }
 }
 
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum TextBoxName {
     #[default]
     Command,

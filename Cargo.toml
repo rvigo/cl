@@ -1,5 +1,5 @@
 [workspace]
-members = ["cl-core", "cl-cli", "cl-gui"]
+members = ["cl-core", "cl-cli", "cl-gui", "cl-new-gui"]
 
 [workspace.package]
 version = "0.9.3"
