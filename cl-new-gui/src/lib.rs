@@ -10,7 +10,7 @@ pub mod state;
 pub mod termination;
 pub mod ui;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SharedCell<T>(Rc<RefCell<T>>);
 
 impl<T> SharedCell<T> {

@@ -1,6 +1,7 @@
-use crate::component::List;
+use crate::component::TextBox;
 use crate::crossterm::{restore_terminal, setup_terminal};
-use crate::observer::{ObserverEvent, Publisher};
+use crate::observer::event::TextboxEvent;
+use crate::observer::listener::Listener;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::{
     ExecuteCommand, GetAllItems, SelectNextCommand, SelectPreviousCommand,
@@ -64,14 +65,15 @@ impl UiActor {
             })
             .unwrap_or_default();
 
-        self.ui.screens.main.list = List::new(items);
+        self.ui.update_list_items(items).await;
 
         if let Some(first_item) = result.and_then(|data| data.first().cloned()) {
+            // TODO validate which event should be triggered here
             self.ui
                 .screens
                 .get_active_screen_mut()
-                .get_publisher()
-                .notify(ObserverEvent::new(first_item.clone()))
+                .get_publisher(TextBox::get_id())
+                .notify(TextboxEvent::new(first_item.clone()))
                 .await;
         } else {
             eprintln!("No items available to update components");

@@ -1,6 +1,7 @@
 mod main_screen;
 
-use crate::observer::ComponentPublisher;
+use crate::observer::listener::ListenerId;
+use crate::observer::publisher::PublisherContainer;
 use crate::screen::main_screen::MainScreen;
 use tui::Frame;
 
@@ -43,5 +44,5 @@ pub trait Screen {
 
     fn render(&mut self, frame: &mut Frame);
 
-    fn get_publisher(&mut self) -> &mut ComponentPublisher;
+    fn get_publisher(&mut self, id: ListenerId) -> &mut PublisherContainer;
 }

@@ -1,21 +1,21 @@
-use crate::component::{Component, StatefulComponent, TextBox};
+use crate::component::StatefulComponent;
 use tui::layout::Rect;
 use tui::prelude::{Modifier, Style};
 use tui::style::Color;
-use tui::widgets::{List as TuiList, ListItem, ListState, Widget};
+use tui::widgets::{List as TuiList, ListItem, ListState};
 use tui::Frame;
 
-#[derive(Default)]
+#[derive(Default, Clone, Debug, Eq, PartialEq)]
 pub struct List {
     pub items: Vec<String>,
     pub state: ListState,
 }
 
 impl List {
-    pub fn new(items: Vec<String>) -> Self {
+    pub fn new() -> Self {
         Self {
-            items,
             state: ListState::default().with_selected(Some(0)),
+            ..Default::default()
         }
     }
 
