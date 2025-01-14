@@ -1,5 +1,6 @@
 mod list_listener;
 mod textbox_listener;
+mod tabs_listener;
 
 use crate::observer::event::Event;
 

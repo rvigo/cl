@@ -13,7 +13,10 @@ impl Listener for List {
         match &event.action {
             ListAction::Next(idx) => self.next(*idx),
             ListAction::Previous(idx) => self.previous(*idx),
-            ListAction::UpdateAll(items) => self.items = items.to_vec(),
+            ListAction::UpdateAll(items) => {
+                self.items = items.to_vec();
+                self.state.select(Some(0))
+            }
         }
     }
 }

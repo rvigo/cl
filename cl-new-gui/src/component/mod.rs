@@ -1,9 +1,11 @@
 mod list;
 mod textbox;
+mod tabs;
 
 pub use list::List;
 pub use textbox::TextBox;
 pub use textbox::TextBoxName;
+pub use tabs::Tabs;
 
 use tui::layout::Rect;
 use tui::Frame;
