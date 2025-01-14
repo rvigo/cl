@@ -1,17 +1,18 @@
-use crate::component::TextBox;
 use crate::crossterm::{restore_terminal, setup_terminal};
-use crate::observer::event::TextboxEvent;
-use crate::observer::listener::Listener;
+use crate::oneshot;
+use crate::state::state::SelectedCommand;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::{
-    ExecuteCommand, GetAllItems, SelectNextCommand, SelectPreviousCommand,
+    ExecuteCommand, GetAllListItems, GetAllNamespaces, NextTab, PreviousTab, SelectNextCommand,
+    SelectPreviousCommand,
 };
 use crate::ui::ui::Ui;
 use crate::ui::ui_actor::KeyHandleResult::{Close, Continue};
 use crate::ui::ui_event::UiEvent;
 use anyhow::Result;
+use cl_core::{Command, CommandVec};
 use crossterm::event::{Event, EventStream, KeyCode, KeyEvent, KeyModifiers};
-use log::{error, info};
+use log::{debug, error, info};
 use std::time::Duration;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio_stream::StreamExt;
@@ -41,43 +42,27 @@ impl UiActor {
 
     async fn first_load(&mut self, state_tx: Sender<StateEvent>) {
         let (tx, rx) = tokio::sync::oneshot::channel();
-        let event = GetAllItems { respond_to: tx };
+        let event = GetAllListItems { respond_to: tx };
 
-        if let Err(e) = state_tx.send(event).await {
-            eprintln!("Failed to send state event: {:?}", e);
-            return;
-        }
+        state_tx.send(event).await.ok();
 
-        let result = match rx.await {
-            Ok(data) => Some(data),
-            Err(e) => {
-                eprintln!("Failed to receive items: {:?}", e);
-                None
-            }
-        };
+        let result = rx.await.ok();
 
-        let items = result
-            .as_ref()
-            .map(|data| {
-                data.iter()
-                    .map(|item| item.alias.to_string())
-                    .collect::<Vec<String>>()
-            })
-            .unwrap_or_default();
+        self.ui.update_list_items(result.aliases()).await;
 
-        self.ui.update_list_items(items).await;
+        self.ui
+            .select_command(SelectedCommand::new(result.first(), 0))
+            .await;
 
-        if let Some(first_item) = result.and_then(|data| data.first().cloned()) {
-            // TODO validate which event should be triggered here
-            self.ui
-                .screens
-                .get_active_screen_mut()
-                .get_publisher(TextBox::get_id())
-                .notify(TextboxEvent::new(first_item.clone()))
-                .await;
-        } else {
-            eprintln!("No items available to update components");
-        }
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        let event = GetAllNamespaces { respond_to: tx };
+
+        state_tx.send(event).await.ok();
+        let result = rx.await.ok();
+
+        self.ui
+            .update_tabs(result.clone().unwrap_or_default())
+            .await;
     }
 
     pub async fn run(&mut self, state_tx: Sender<StateEvent>) -> Result<()> {
@@ -139,12 +124,8 @@ impl UiActor {
                         // Also, an oneshot channel will be created:
                         // - TX: the state_actor will respond with the selected command
                         // - RX: the ui_actor will receive the selected command and update the ui
-                        let (tx, rx) = tokio::sync::oneshot::channel();
-                        let event = SelectNextCommand { respond_to: tx };
-
-                        state_tx.send(event).await.ok();
-                        let maybe_cmd = rx.await.ok();
-                        if let Some(selected_command) = maybe_cmd {
+                        let result = oneshot!(state_tx, SelectNextCommand );
+                        if let Some(selected_command) = result{
                             self.ui.next_command(selected_command).await;
                         }
 
@@ -155,13 +136,40 @@ impl UiActor {
                         modifiers: KeyModifiers::NONE,
                         ..
                     } => {
-                        let (tx, rx) = tokio::sync::oneshot::channel();
-                        let event = SelectPreviousCommand { respond_to: tx };
-
-                        state_tx.send(event).await.ok();
-                        let maybe_cmd = rx.await.ok();
-                        if let Some(selected_command) = maybe_cmd {
+                        let result = oneshot!(state_tx, SelectPreviousCommand);
+                        if let Some(selected_command) = result {
                             self.ui.previous_command(selected_command).await;
+                        }
+
+                        Continue
+                    }
+                    KeyEvent {
+                        code: KeyCode::Char('l'),
+                        modifiers: KeyModifiers::NONE,
+                        ..
+                    } => {
+                        let result = oneshot!(state_tx, NextTab);
+
+                        if let Some((selected_namespace, selected_command, new_items)) = result {
+                            self.ui.update_list_items(new_items.aliases()).await;
+                            self.ui.next_tab(selected_namespace).await;
+                            self.ui.select_command(selected_command).await;
+                        }
+
+                        Continue
+                    }
+                    KeyEvent {
+                        code: KeyCode::Char('h'),
+                        modifiers: KeyModifiers::NONE,
+                        ..
+                    } => {
+                        let result = oneshot!(state_tx, PreviousTab);
+
+                        // TODO validate if this should be inside of Ui state
+                        if let Some((selected_namespace, selected_command, new_items)) = result {
+                            self.ui.update_list_items(new_items.aliases()).await;
+                            self.ui.previous_tab(selected_namespace).await;
+                            self.ui.select_command(selected_command).await;
                         }
 
                         Continue
@@ -188,4 +196,42 @@ impl UiActor {
 enum KeyHandleResult {
     Continue,
     Close,
+}
+
+trait CommandVecExt {
+    fn aliases(&self) -> Vec<String>;
+
+    fn namespaces(&self) -> Vec<String>;
+
+    fn first(&self) -> Command<'static>;
+}
+
+impl CommandVecExt for CommandVec<'static> {
+    fn aliases(&self) -> Vec<String> {
+        self.iter().map(|cmd| cmd.alias.to_string()).collect()
+    }
+
+    fn namespaces(&self) -> Vec<String> {
+        self.iter().map(|cmd| cmd.namespace.to_string()).collect()
+    }
+
+    fn first(&self) -> Command<'static> {
+        self.get(0)
+            .cloned()
+            .expect("List is empty, cannot retrieve the first element")
+    }
+}
+
+impl CommandVecExt for Option<CommandVec<'static>> {
+    fn aliases(&self) -> Vec<String> {
+        self.as_ref().map_or_else(Vec::new, |vec| vec.aliases())
+    }
+
+    fn namespaces(&self) -> Vec<String> {
+        self.as_ref().map_or_else(Vec::new, |vec| vec.namespaces())
+    }
+
+    fn first(&self) -> Command<'static> {
+        self.as_ref().unwrap_or(&vec![]).first()
+    }
 }

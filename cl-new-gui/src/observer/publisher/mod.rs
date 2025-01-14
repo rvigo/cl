@@ -1,11 +1,13 @@
 mod list_publisher;
+mod tabs_publisher;
 mod textbox_publisher;
 
-use crate::component::{List, TextBox};
+use crate::component::{List, Tabs, TextBox};
 use crate::observer::event::Event;
 use crate::observer::listener::Listener;
 use crate::SharedCell;
 pub use list_publisher::ListPublisher;
+pub use tabs_publisher::TabsPublisher;
 pub use textbox_publisher::TextBoxPublisher;
 
 pub trait Publisher<O>
@@ -30,6 +32,7 @@ where
 pub enum PublisherContainer {
     TextBox(TextBoxPublisher),
     List(ListPublisher),
+    Tabs(TabsPublisher),
 }
 
 impl PublisherContainer {
@@ -43,11 +46,18 @@ impl PublisherContainer {
                     p.notify(inner.clone()).await;
                 }
             }
-
             PublisherContainer::List(p) => {
                 if let Some(inner) = event
                     .as_any()
                     .downcast_ref::<<List as Listener>::EventType>()
+                {
+                    p.notify(inner.clone()).await;
+                }
+            }
+            PublisherContainer::Tabs(p) => {
+                if let Some(inner) = event
+                    .as_any()
+                    .downcast_ref::<<Tabs as Listener>::EventType>()
                 {
                     p.notify(inner.clone()).await;
                 }

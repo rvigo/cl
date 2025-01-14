@@ -14,3 +14,13 @@ macro_rules! render {
         )+
     };
 }
+
+#[macro_export]
+macro_rules! oneshot {
+    ($state_tx:expr, $event:ident) => {{
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        let _event = $event { respond_to: tx };
+        $state_tx.send(_event).await.ok();
+        rx.await.ok()
+    }};
+}

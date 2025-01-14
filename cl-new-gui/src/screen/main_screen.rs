@@ -1,6 +1,8 @@
-use crate::component::{Component, List, StatefulComponent, TextBox, TextBoxName};
+use crate::component::{Component, List, StatefulComponent, Tabs, TextBox, TextBoxName};
 use crate::observer::listener::{Listener, ListenerId};
-use crate::observer::publisher::{ListPublisher, Publisher, TextBoxPublisher, PublisherContainer};
+use crate::observer::publisher::{
+    ListPublisher, Publisher, PublisherContainer, TabsPublisher, TextBoxPublisher,
+};
 use crate::screen::Screen;
 use crate::{render, SharedCell};
 use std::collections::HashMap;
@@ -25,13 +27,12 @@ pub struct MainScreen {
     pub tags: SharedCell<TextBox>,
     pub namespace: SharedCell<TextBox>,
     pub list: SharedCell<List>,
+    pub tabs: SharedCell<Tabs>,
     pub publishers: HashMap<ListenerId, PublisherContainer>,
 }
 
 impl Screen for MainScreen {
     fn new() -> Self {
-        let mut component_publisher = TextBoxPublisher::default();
-
         let command = TextBox {
             name: TextBoxName::Command,
             ..Default::default()
@@ -57,17 +58,32 @@ impl Screen for MainScreen {
         let namespace_refcell = SharedCell::new(namespace);
         let list_refcell = SharedCell::new(list);
 
-        component_publisher.register(SharedCell::clone(&command_refcell));
-        component_publisher.register(SharedCell::clone(&description_refcell));
-        component_publisher.register(SharedCell::clone(&tags_refcell));
-        component_publisher.register(SharedCell::clone(&namespace_refcell));
+        // texbox
+        let mut textbox_publisher = TextBoxPublisher::default();
+        textbox_publisher.register(SharedCell::clone(&command_refcell));
+        textbox_publisher.register(SharedCell::clone(&description_refcell));
+        textbox_publisher.register(SharedCell::clone(&tags_refcell));
+        textbox_publisher.register(SharedCell::clone(&namespace_refcell));
 
+        // list
         let mut list_publisher = ListPublisher::new();
         list_publisher.register(SharedCell::clone(&list_refcell));
+
+        // tabs
+        let tabs = Tabs::new();
+        let tabs_refcell = SharedCell::new(tabs);
+
+        let mut tabs_publisher = TabsPublisher::new();
+        tabs_publisher.register(SharedCell::clone(&tabs_refcell));
         
+        // publisher container
         let mut map: HashMap<ListenerId, PublisherContainer> = HashMap::new();
         map.insert(List::get_id(), PublisherContainer::List(list_publisher));
-        map.insert(TextBox::get_id(), PublisherContainer::TextBox(component_publisher));
+        map.insert(
+            TextBox::get_id(),
+            PublisherContainer::TextBox(textbox_publisher),
+        );
+        map.insert(Tabs::get_id(), PublisherContainer::Tabs(tabs_publisher));
 
         Self {
             command: SharedCell::clone(&command_refcell),
@@ -75,6 +91,7 @@ impl Screen for MainScreen {
             tags: SharedCell::clone(&tags_refcell),
             namespace: SharedCell::clone(&namespace_refcell),
             list: SharedCell::clone(&list_refcell),
+            tabs: SharedCell::clone(&tabs_refcell),
             publishers: map,
         }
     }
@@ -172,6 +189,7 @@ impl Screen for MainScreen {
         self.command.borrow().render(frame, right_side[3]);
         self.namespace.borrow().render(frame, namespace_area);
         self.tags.borrow().render(frame, tags_area);
+        self.tabs.borrow().render(frame, right_side[0])
     }
 
     fn get_publisher(&mut self, id: ListenerId) -> &mut PublisherContainer {

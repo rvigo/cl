@@ -1,7 +1,6 @@
 use crate::component::StatefulComponent;
 use tui::layout::Rect;
 use tui::prelude::{Modifier, Style};
-use tui::style::Color;
 use tui::widgets::{List as TuiList, ListItem, ListState};
 use tui::Frame;
 
@@ -39,7 +38,6 @@ impl StatefulComponent for List {
         )
         .highlight_style(
             Style::default()
-                .fg(Color::Black)
                 .add_modifier(Modifier::BOLD),
         )
         .highlight_symbol("> ");
