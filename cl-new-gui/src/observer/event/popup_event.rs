@@ -1,5 +1,3 @@
-use crate::observer::event::Event;
-
 #[derive(Clone)]
 pub enum PopupEvent {
     ShowPopup,
@@ -13,4 +11,4 @@ pub enum PopupAction {
     Cancel,
 }
 
-impl Event for PopupEvent {}
+

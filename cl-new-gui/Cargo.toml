@@ -8,19 +8,16 @@ repository.workspace = true
 [dependencies]
 cl-core.workspace = true
 anyhow.workspace = true
-itertools.workspace = true
 log.workspace = true
 tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread", "sync", "signal", "time"] }
 
-copypasta = "0.8.2"
 crossterm = { version = "0.27.0", features = ["event-stream"] }
-fuzzy-matcher = "0.3.7"
-parking_lot = "0.12.1"
-thiserror = "1.0.47"
 tui = { package = "ratatui", version = "0.24.0" }
-tui-textarea = "0.4.0"
 unicode-width = "0.1"
 tokio-stream = { version = "0.1.14" }
+dyn-clone = "1.0.17"
+downcast-rs = "2.0.1"
+lazy_static = "1.4.0"
 
 [dev-dependencies]
 tempdir.workspace = true

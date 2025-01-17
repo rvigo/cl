@@ -1,5 +1,6 @@
 use crate::component::button::Button;
 use crate::component::Component;
+use crate::Pipe;
 use std::fmt::Debug;
 use std::rc::Rc;
 use tui::layout::Alignment::Center;
@@ -9,7 +10,7 @@ use tui::widgets::{Block, Borders, Clear, Paragraph, Widget, Wrap};
 use tui::Frame;
 use unicode_width::UnicodeWidthStr;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Popup {
     pub title: String,
     pub content: String,
@@ -17,9 +18,9 @@ pub struct Popup {
 }
 
 impl Popup {
-    pub fn new(title: String, content: impl Into<String>, buttons: Vec<Button>) -> Self {
+    pub fn new(title: impl Into<String>, content: impl Into<String>, buttons: Vec<Button>) -> Self {
         Self {
-            title,
+            title: title.into(),
             content: content.into(),
             buttons,
         }
@@ -125,19 +126,4 @@ fn compute_popup_area(content: &str, area: Rect) -> Rect {
                 ])
                 .split(new_area)[1]
         })
-}
-
-trait Pipe: Sized {
-    fn pipe<F, R>(self, f: F) -> R
-    where
-        F: FnOnce(Self) -> R;
-}
-
-impl<T> Pipe for T {
-    fn pipe<F, R>(self, f: F) -> R
-    where
-        F: FnOnce(Self) -> R,
-    {
-        f(self)
-    }
 }

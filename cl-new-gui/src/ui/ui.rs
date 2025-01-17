@@ -1,5 +1,5 @@
-use crate::observer::event::{Event, ListAction, ListEvent, TabsEvent, TextboxEvent};
-use crate::observer::publisher::publisher_container::PublisherContainer;
+use crate::component::{List, Tabs, TextBox};
+use crate::observer::event::Event;
 use crate::screen::Screens;
 use crate::state::state::{SelectedCommand, SelectedNamespace};
 use cl_core::Command;
@@ -29,59 +29,68 @@ impl Ui {
         self.update_tabs(tabs_items).await;
 
         // select the first command
-        let event = TextboxEvent::UpdateCommand(items[0].clone());
-        self.notify(event).await;
+        let event = Event::UpdateCommand(items[0].clone());
+        self.notify(TypeId::of::<TextBox>(), event).await;
     }
 
     pub async fn update_list_items(&mut self, items: Vec<String>) {
-        self.notify(ListEvent::new(ListAction::UpdateAll(items)))
+        self.notify(TypeId::of::<List>(), Event::UpdateAll(items))
             .await;
     }
 
     pub async fn update_tabs(&mut self, namespaces: Vec<String>) {
-        self.notify(TabsEvent::UpdateItems(namespaces)).await;
+        self.notify(TypeId::of::<Tabs>(), Event::UpdateAll(namespaces))
+            .await;
     }
 
     pub async fn select_command(&mut self, selected_command: SelectedCommand) {
-        self.notify(TextboxEvent::UpdateCommand(selected_command.value.clone()))
-            .await;
+        self.notify(
+            TypeId::of::<TextBox>(),
+            Event::UpdateCommand(selected_command.value.clone()),
+        )
+        .await;
 
         self.selected_command = selected_command;
     }
 
     pub async fn next_command(&mut self, selected_command: SelectedCommand) {
-        self.notify(ListEvent::new(ListAction::Next(
-            selected_command.current_idx,
-        )))
+        self.notify(
+            TypeId::of::<List>(),
+            Event::Next(selected_command.current_idx),
+        )
         .await;
 
         self.select_command(selected_command).await;
     }
 
     pub async fn previous_command(&mut self, selected_command: SelectedCommand) {
-        self.notify(ListEvent::new(ListAction::Previous(
-            selected_command.current_idx,
-        )))
+        self.notify(
+            TypeId::of::<List>(),
+            Event::Previous(selected_command.current_idx),
+        )
         .await;
 
         self.select_command(selected_command).await;
     }
 
     pub async fn next_tab(&mut self, selected_namespace: SelectedNamespace) {
-        self.notify(TabsEvent::Next(selected_namespace.idx)).await;
-    }
-
-    pub async fn previous_tab(&mut self, selected_namespace: SelectedNamespace) {
-        self.notify(TabsEvent::Previous(selected_namespace.idx))
+        self.notify(TypeId::of::<Tabs>(), Event::Next(selected_namespace.idx))
             .await;
     }
 
-    async fn notify<E: Event>(&mut self, event: E) {
-        self.get_publisher(TypeId::of::<E>()).notify(event).await;
+    pub async fn previous_tab(&mut self, selected_namespace: SelectedNamespace) {
+        self.notify(
+            TypeId::of::<Tabs>(),
+            Event::Previous(selected_namespace.idx),
+        )
+        .await;
     }
 
-    fn get_publisher(&mut self, id: TypeId) -> &mut PublisherContainer {
-        let active_screen = self.screens.get_active_screen_mut();
-        active_screen.get_publisher(id)
+    pub async fn modify_popup(&mut self) {
+        // self.notify(PopupEvent::Action(PopupAction::Confirm)).await
+    }
+
+    async fn notify(&mut self, id: TypeId, event: Event) {
+        self.screens.notify(id, event);
     }
 }

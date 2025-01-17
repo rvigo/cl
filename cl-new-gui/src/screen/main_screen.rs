@@ -1,12 +1,10 @@
-use crate::component::{Component, List, StatefulComponent, Tabs, TextBox, TextBoxName};
-use crate::observer::event::{ListEvent, TabsEvent, TextboxEvent};
-use crate::observer::listener::Listener;
-use crate::observer::publisher::publisher_container::PublisherContainer;
-use crate::observer::publisher::Publisher;
-use crate::screen::Screen;
-use crate::{render, SharedCell};
+use crate::component::{
+    List, SharedComponent, SharedStatefulComponent, Tabs, TextBox, TextBoxName,
+};
+use crate::render;
+use crate::screen::{Listeners, Screen, StatefulListeners};
 use std::any::TypeId;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use tui::layout::{Alignment, Constraint, Direction, Layout};
 use tui::prelude::{Modifier, Style, Text};
 use tui::style::Color as TuiColor;
@@ -23,13 +21,14 @@ pub const DEFAULT_CURSOR_COLOR: TuiColor = TuiColor::Rgb(245, 224, 220);
 pub const DEFAULT_INACTIVE_TEXTBOX_COLOR: TuiColor = TuiColor::Rgb(108, 112, 134);
 
 pub struct MainScreen {
-    pub command: SharedCell<TextBox>,
-    pub description: SharedCell<TextBox>,
-    pub tags: SharedCell<TextBox>,
-    pub namespace: SharedCell<TextBox>,
-    pub list: SharedCell<List>,
-    pub tabs: SharedCell<Tabs>,
-    pub publishers: HashMap<TypeId, PublisherContainer>,
+    pub command: SharedComponent,
+    pub description: SharedComponent,
+    pub tags: SharedComponent,
+    pub namespace: SharedComponent,
+    pub list: SharedStatefulComponent,
+    pub tabs: SharedComponent,
+    pub listeners: Listeners,
+    pub stateful_listeners: StatefulListeners,
 }
 
 impl Screen for MainScreen {
@@ -53,52 +52,43 @@ impl Screen for MainScreen {
         let list = List::new();
         let tabs = Tabs::new();
 
-        let command_refcell = SharedCell::new(command);
-        let description_refcell = SharedCell::new(description);
-        let tags_refcell = SharedCell::new(tags);
-        let namespace_refcell = SharedCell::new(namespace);
-        let list_refcell = SharedCell::new(list);
-        let tabs_refcell = SharedCell::new(tabs);
+        // stateful
+        let mut stateful_listeners = StatefulListeners::new();
 
-        let mut list_publisher = Publisher::<List>::new();
-        let mut tabs_publisher = Publisher::<Tabs>::new();
-        let mut textbox_publisher = Publisher::<TextBox>::new();
+        let list_shared = SharedStatefulComponent::new(list);
 
-        // texbox
-        textbox_publisher.register(Listener::from(command_refcell.clone()));
-        textbox_publisher.register(Listener::from(description_refcell.clone()));
-        textbox_publisher.register(Listener::from(tags_refcell.clone()));
-        textbox_publisher.register(Listener::from(namespace_refcell.clone()));
+        stateful_listeners.insert(TypeId::of::<List>(), vec![list_shared.clone()]);
 
-        // list
-        list_publisher.register(Listener::from(list_refcell.clone()));
-        
-        // tabs
-        tabs_publisher.register(Listener::from(tabs_refcell.clone()));
+        // components
+        let mut listeners = Listeners::new();
 
-        // publisher container
-        let mut map: HashMap<TypeId, PublisherContainer> = HashMap::new();
-        map.insert(
-            TypeId::of::<ListEvent>(),
-            PublisherContainer::List(list_publisher),
+        let command_shared = SharedComponent::new(command);
+        let description_shared = SharedComponent::new(description);
+        let tags_shared = SharedComponent::new(tags);
+        let namespace_shared = SharedComponent::new(namespace);
+        let tabs_shared = SharedComponent::new(tabs);
+
+        listeners.insert(
+            TypeId::of::<TextBox>(),
+            vec![
+                command_shared.clone(),
+                description_shared.clone(),
+                tags_shared.clone(),
+                namespace_shared.clone(),
+            ],
         );
-        map.insert(
-            TypeId::of::<TextboxEvent>(),
-            PublisherContainer::TextBox(textbox_publisher),
-        );
-        map.insert(
-            TypeId::of::<TabsEvent>(),
-            PublisherContainer::Tabs(tabs_publisher),
-        );
+
+        listeners.insert(TypeId::of::<Tabs>(), vec![tabs_shared.clone()]);
 
         Self {
-            command: SharedCell::clone(&command_refcell),
-            description: SharedCell::clone(&description_refcell),
-            tags: SharedCell::clone(&tags_refcell),
-            namespace: SharedCell::clone(&namespace_refcell),
-            list: SharedCell::clone(&list_refcell),
-            tabs: SharedCell::clone(&tabs_refcell),
-            publishers: map,
+            command: command_shared.clone(),
+            description: description_shared.clone(),
+            tags: tags_shared.clone(),
+            namespace: namespace_shared.clone(),
+            list: list_shared.clone(),
+            tabs: tabs_shared.clone(),
+            listeners,
+            stateful_listeners,
         }
     }
 
@@ -198,9 +188,11 @@ impl Screen for MainScreen {
         self.tabs.borrow().render(frame, right_side[0])
     }
 
-    fn get_publisher(&mut self, id: TypeId) -> &mut PublisherContainer {
-        self.publishers
-            .get_mut(&id)
-            .expect(&format!("Invalid publisher with id: {:?}", id))
+    fn get_listeners(&self) -> &BTreeMap<TypeId, Vec<SharedComponent>> {
+        &self.listeners
+    }
+
+    fn get_stateful_listeners(&self) -> &BTreeMap<TypeId, Vec<SharedStatefulComponent>> {
+        &self.stateful_listeners
     }
 }

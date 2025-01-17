@@ -1,13 +1,13 @@
 use crate::component::{TextBox, TextBoxName};
-use crate::observer::event::TextboxEvent;
-use crate::observer::listener::Observable;
+use crate::observer::event::Event;
+use crate::observer::observable::Observable;
+use crate::observer::ObservableComponent;
 
 impl Observable for TextBox {
-    type EventType = TextboxEvent;
-
-    fn on_listen(&mut self, event: TextboxEvent) {
+    fn on_listen(&mut self, event: Event) {
         let command = match event {
-            TextboxEvent::UpdateCommand(cmd) => cmd,
+            Event::UpdateCommand(cmd) => cmd,
+            _ => return,
         };
 
         let content = match self.name {
@@ -20,3 +20,5 @@ impl Observable for TextBox {
         self.update_content(content);
     }
 }
+
+impl ObservableComponent for TextBox {}
