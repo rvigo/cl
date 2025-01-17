@@ -1,10 +1,11 @@
 use crate::component::{Component, List, StatefulComponent, Tabs, TextBox, TextBoxName};
-use crate::observer::listener::{Listener, ListenerId};
-use crate::observer::publisher::{
-    ListPublisher, Publisher, PublisherContainer, TabsPublisher, TextBoxPublisher,
-};
+use crate::observer::event::{ListEvent, TabsEvent, TextboxEvent};
+use crate::observer::listener::Listener;
+use crate::observer::publisher::publisher_container::PublisherContainer;
+use crate::observer::publisher::Publisher;
 use crate::screen::Screen;
 use crate::{render, SharedCell};
+use std::any::TypeId;
 use std::collections::HashMap;
 use tui::layout::{Alignment, Constraint, Direction, Layout};
 use tui::prelude::{Modifier, Style, Text};
@@ -28,7 +29,7 @@ pub struct MainScreen {
     pub namespace: SharedCell<TextBox>,
     pub list: SharedCell<List>,
     pub tabs: SharedCell<Tabs>,
-    pub publishers: HashMap<ListenerId, PublisherContainer>,
+    pub publishers: HashMap<TypeId, PublisherContainer>,
 }
 
 impl Screen for MainScreen {
@@ -49,41 +50,46 @@ impl Screen for MainScreen {
             name: TextBoxName::Namespace,
             ..Default::default()
         };
-
         let list = List::new();
+        let tabs = Tabs::new();
 
         let command_refcell = SharedCell::new(command);
         let description_refcell = SharedCell::new(description);
         let tags_refcell = SharedCell::new(tags);
         let namespace_refcell = SharedCell::new(namespace);
         let list_refcell = SharedCell::new(list);
-
-        // texbox
-        let mut textbox_publisher = TextBoxPublisher::default();
-        textbox_publisher.register(SharedCell::clone(&command_refcell));
-        textbox_publisher.register(SharedCell::clone(&description_refcell));
-        textbox_publisher.register(SharedCell::clone(&tags_refcell));
-        textbox_publisher.register(SharedCell::clone(&namespace_refcell));
-
-        // list
-        let mut list_publisher = ListPublisher::new();
-        list_publisher.register(SharedCell::clone(&list_refcell));
-
-        // tabs
-        let tabs = Tabs::new();
         let tabs_refcell = SharedCell::new(tabs);
 
-        let mut tabs_publisher = TabsPublisher::new();
-        tabs_publisher.register(SharedCell::clone(&tabs_refcell));
+        let mut list_publisher = Publisher::<List>::new();
+        let mut tabs_publisher = Publisher::<Tabs>::new();
+        let mut textbox_publisher = Publisher::<TextBox>::new();
+
+        // texbox
+        textbox_publisher.register(Listener::from(command_refcell.clone()));
+        textbox_publisher.register(Listener::from(description_refcell.clone()));
+        textbox_publisher.register(Listener::from(tags_refcell.clone()));
+        textbox_publisher.register(Listener::from(namespace_refcell.clone()));
+
+        // list
+        list_publisher.register(Listener::from(list_refcell.clone()));
         
+        // tabs
+        tabs_publisher.register(Listener::from(tabs_refcell.clone()));
+
         // publisher container
-        let mut map: HashMap<ListenerId, PublisherContainer> = HashMap::new();
-        map.insert(List::get_id(), PublisherContainer::List(list_publisher));
+        let mut map: HashMap<TypeId, PublisherContainer> = HashMap::new();
         map.insert(
-            TextBox::get_id(),
+            TypeId::of::<ListEvent>(),
+            PublisherContainer::List(list_publisher),
+        );
+        map.insert(
+            TypeId::of::<TextboxEvent>(),
             PublisherContainer::TextBox(textbox_publisher),
         );
-        map.insert(Tabs::get_id(), PublisherContainer::Tabs(tabs_publisher));
+        map.insert(
+            TypeId::of::<TabsEvent>(),
+            PublisherContainer::Tabs(tabs_publisher),
+        );
 
         Self {
             command: SharedCell::clone(&command_refcell),
@@ -192,11 +198,9 @@ impl Screen for MainScreen {
         self.tabs.borrow().render(frame, right_side[0])
     }
 
-    fn get_publisher(&mut self, id: ListenerId) -> &mut PublisherContainer {
-        if let Some(p) = self.publishers.get_mut(&id) {
-            p
-        } else {
-            panic!("Publisher not found for {}", id.0)
-        }
+    fn get_publisher(&mut self, id: TypeId) -> &mut PublisherContainer {
+        self.publishers
+            .get_mut(&id)
+            .expect(&format!("Invalid publisher with id: {:?}", id))
     }
 }

@@ -1,16 +1,38 @@
 mod list_listener;
-mod textbox_listener;
 mod tabs_listener;
+mod textbox_listener;
 
-use crate::observer::event::Event;
+use crate::SharedCell;
 
-#[derive(Eq, Hash, PartialEq)]
-pub struct ListenerId(pub String);
+pub struct Listener<C> {
+    component: SharedCell<C>,
+}
 
-pub trait Listener {
-    type EventType: Event + Sized;
+impl<C> Listener<C>
+where
+    C: Observable,
+{
+    pub fn new(component: C) -> Self {
+        Self {
+            component: SharedCell::new(component),
+        }
+    }
 
-    fn get_id() -> ListenerId;
+    pub fn listen(&mut self, event: C::EventType) {
+        let mut component = self.component.borrow_mut();
 
-    async fn on_event(&mut self, event: Self::EventType);
+        component.on_listen(event);
+    }
+}
+
+impl<T> From<SharedCell<T>> for Listener<T> {
+    fn from(value: SharedCell<T>) -> Self {
+        Self { component: value }
+    }
+}
+
+pub trait Observable {
+    type EventType: Clone;
+
+    fn on_listen(&mut self, event: Self::EventType);
 }

@@ -11,8 +11,15 @@ pub struct TextBox {
 }
 
 impl TextBox {
-    pub fn update_content(&mut self, content: String) {
-        self.content = content
+    pub fn new(name: TextBoxName, content: impl Into<String>) -> Self {
+        Self {
+            name,
+            content: content.into(),
+        }
+    }
+
+    pub fn update_content(&mut self, content: impl Into<String>) {
+        self.content = content.into();
     }
 }
 
