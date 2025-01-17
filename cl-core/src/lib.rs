@@ -32,6 +32,8 @@ pub trait CommandVecExt<'cmd> {
     fn filter(&self, predicate: impl Fn(&Command) -> bool) -> Vec<&Command<'cmd>>;
 
     fn get_selected(&self, idx: usize) -> Command<'cmd>;
+
+    fn first(&self) -> Command<'cmd>;
 }
 
 impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
@@ -63,6 +65,12 @@ impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
             .map(ToOwned::to_owned)
             .unwrap_or_else(|| CommandBuilder::default().build())
             .to_owned()
+    }
+
+    fn first(&self) -> Command<'cmd> {
+        self.get(0)
+            .cloned()
+            .expect("List is empty, cannot retrieve the first element")
     }
 }
 

@@ -156,6 +156,10 @@ impl<'cmd> Commands<'cmd> {
     pub fn as_list(&self) -> CommandVec<'cmd> {
         self.commands.to_vec()
     }
+
+    pub fn as_map(&self) -> &CommandMap<'cmd> {
+        &self.commands
+    }
 }
 
 pub trait CommandExec {

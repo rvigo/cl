@@ -1,15 +1,11 @@
 use crate::component::Tabs;
 use crate::observer::event::TabsEvent;
-use crate::observer::listener::{Listener, ListenerId};
+use crate::observer::listener::Observable;
 
-impl Listener for Tabs {
+impl Observable for Tabs {
     type EventType = TabsEvent;
 
-    fn get_id() -> ListenerId {
-        ListenerId("Tabs".to_string())
-    }
-
-    async fn on_event(&mut self, event: Self::EventType) {
+    fn on_listen(&mut self, event: Self::EventType) {
         match event {
             TabsEvent::Next(idx) => self.next(idx),
             TabsEvent::Previous(idx) => self.previous(idx),

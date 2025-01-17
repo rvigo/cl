@@ -1,13 +1,15 @@
-use cl_core::{fs, Command, CommandExec, CommandVec, Commands, Config, DefaultConfig};
-use log::debug;
+use cl_core::{
+    fs, Command, CommandExec, CommandVec, CommandVecExt, Commands, Config, DefaultConfig,
+};
+use log::{debug, error};
 
-#[derive(Default)]
 pub struct State {
     pub commands: Commands<'static>,
     pub current_items: CommandVec<'static>,
     pub selected_command: SelectedCommand,
     pub selected_namespace: SelectedNamespace,
     pub namespaces: Vec<String>,
+    config: DefaultConfig,
 }
 
 #[derive(Default, PartialEq, Debug, Clone, Eq)]
@@ -26,18 +28,20 @@ impl SelectedCommand {
         Self { value, current_idx }
     }
 }
+const DEFAULT_NAMESPACE: &str = "All";
 
 impl State {
     pub fn new() -> State {
         let cfg = DefaultConfig::load().unwrap();
         let command_map = fs::load_from(cfg.command_file_path()).unwrap();
         let commands = Commands::init(command_map);
-        let selected = commands.as_list()[0].clone();
-        let current_items = commands
-            .get_namespace_content(&selected.namespace)
-            .cloned()
-            .unwrap_or_default();
-        let namespaces = commands.commands.keys().cloned().collect();
+        let current_items = commands.as_list().sort_and_return();
+        let selected = current_items.first();
+
+        // namespaces
+        let mut namespaces: Vec<String> = commands.as_map().keys().cloned().collect();
+        namespaces.push(DEFAULT_NAMESPACE.to_string());
+        namespaces.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
 
         Self {
             commands,
@@ -48,6 +52,7 @@ impl State {
                 current_idx: 0,
             },
             namespaces,
+            config: cfg,
         }
     }
 
@@ -77,20 +82,19 @@ impl State {
 
         self.selected_command.to_owned()
     }
+
     pub fn next_tab(&mut self) -> SelectedNamespace {
         let current = self.selected_namespace.idx;
         let items = &self.namespaces;
         let next = (current + 1) % items.len();
-        let target_namespace = self.namespaces[next].to_owned();
+        let next_namespace = &self.namespaces[next];
 
-        let filtered = self
-            .commands
-            .get_namespace_content(&target_namespace)
-            .cloned()
-            .unwrap_or_default();
-
-        self.current_items = filtered;
+        self.current_items = self.filter_command_by_namespace(next_namespace);
         self.selected_namespace = SelectedNamespace { idx: next };
+        self.selected_command = SelectedCommand {
+            current_idx: 0,
+            value: self.current_items.first(),
+        };
 
         self.selected_namespace.to_owned()
     }
@@ -99,23 +103,53 @@ impl State {
         let current = self.selected_namespace.idx;
         let items = &self.namespaces;
         let previous = (current + items.len() - 1) % items.len();
-        let target_namespace = self.namespaces[previous].to_owned();
+        let previous_namespace = &self.namespaces[previous];
 
-        let filtered = self
-            .commands
-            .get_namespace_content(&target_namespace)
-            .cloned()
-            .unwrap_or_default();
-
-        self.current_items = filtered;
+        self.current_items = self.filter_command_by_namespace(previous_namespace);
         self.selected_namespace = SelectedNamespace { idx: previous };
+        self.selected_command = SelectedCommand {
+            current_idx: 0,
+            value: self.current_items.first(),
+        };
 
         self.selected_namespace.to_owned()
     }
-    
+
     pub fn execute(&self) {
         let command = &self.selected_command.value;
         debug!("Executing command: {:?}", command);
-        command.exec(true, false).unwrap();
+        command
+            .exec(false, self.config.preferences().quiet_mode())
+            .unwrap();
+    }
+
+    pub fn delete_command(&mut self) {
+        let command = &self.selected_command.value;
+        match self.commands.remove(command) {
+            Ok(_) => {
+                self.current_items = self.commands.as_list().sort_and_return();
+                self.selected_command = SelectedCommand {
+                    value: self.current_items.first(),
+                    current_idx: 0,
+                };
+            }
+            Err(e) => {
+                error!("Error deleting command: {:?}", e);
+            }
+        }
+    }
+
+    fn filter_command_by_namespace(&self, namespace: &str) -> CommandVec<'static> {
+        {
+            if namespace == DEFAULT_NAMESPACE {
+                self.commands.as_list()
+            } else {
+                self.commands
+                    .get_namespace_content(namespace)
+                    .cloned()
+                    .unwrap_or_default()
+            }
+        }
+        .sort_and_return()
     }
 }

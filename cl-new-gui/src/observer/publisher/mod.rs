@@ -1,67 +1,28 @@
-mod list_publisher;
-mod tabs_publisher;
-mod textbox_publisher;
+pub mod publisher_container;
 
-use crate::component::{List, Tabs, TextBox};
-use crate::observer::event::Event;
-use crate::observer::listener::Listener;
-use crate::SharedCell;
-pub use list_publisher::ListPublisher;
-pub use tabs_publisher::TabsPublisher;
-pub use textbox_publisher::TextBoxPublisher;
+use crate::observer::listener::{Listener, Observable};
 
-pub trait Publisher<O>
+pub struct Publisher<O> {
+    subscriber_set: Vec<Listener<O>>,
+}
+
+impl<O> Publisher<O>
 where
-    O: Listener,
-    O::EventType: Clone,
+    O: Observable,
 {
-    fn get_listeners(&self) -> &Vec<SharedCell<O>>;
-
-    fn get_listeners_mut(&mut self) -> &mut Vec<SharedCell<O>>;
-
-    fn register(&mut self, listener: SharedCell<O>);
-
-    async fn notify(&mut self, event: O::EventType) {
-        for listener in self.get_listeners_mut() {
-            listener.borrow_mut().on_event(event.clone()).await
+    pub fn new() -> Self {
+        Self {
+            subscriber_set: Vec::new(),
         }
     }
-}
 
-#[derive(Debug, Eq, PartialEq)]
-pub enum PublisherContainer {
-    TextBox(TextBoxPublisher),
-    List(ListPublisher),
-    Tabs(TabsPublisher),
-}
+    pub fn register(&mut self, listener: Listener<O>) {
+        self.subscriber_set.push(listener);
+    }
 
-impl PublisherContainer {
-    pub async fn notify(&mut self, event: impl Event) {
-        match self {
-            PublisherContainer::TextBox(p) => {
-                if let Some(inner) = event
-                    .as_any()
-                    .downcast_ref::<<TextBox as Listener>::EventType>()
-                {
-                    p.notify(inner.clone()).await;
-                }
-            }
-            PublisherContainer::List(p) => {
-                if let Some(inner) = event
-                    .as_any()
-                    .downcast_ref::<<List as Listener>::EventType>()
-                {
-                    p.notify(inner.clone()).await;
-                }
-            }
-            PublisherContainer::Tabs(p) => {
-                if let Some(inner) = event
-                    .as_any()
-                    .downcast_ref::<<Tabs as Listener>::EventType>()
-                {
-                    p.notify(inner.clone()).await;
-                }
-            }
-        }
+    async fn notify(&mut self, event: O::EventType) {
+        self.subscriber_set.iter_mut().for_each(|listener| {
+            listener.listen(event.clone());
+        });
     }
 }
