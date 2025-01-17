@@ -1,4 +1,5 @@
 use crate::component::Component;
+use crate::observer::ObservableComponent;
 use tui::layout::Rect;
 use tui::style::{Color, Style};
 use tui::Frame;

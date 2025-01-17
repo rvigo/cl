@@ -1,4 +1,4 @@
-pub mod context;
+mod context;
 
 mod clipboard;
 mod event;
@@ -24,7 +24,29 @@ use anyhow::Result;
 use cl_core::Config;
 
 pub async fn start_gui(config: impl Config) -> Result<()> {
-    core::init(config).await
+    // core::init(config).await
+
+    new_core::init().await
+
+}
+
+mod new_core {
+    use anyhow::Result;
+    use cl_new_gui::state::state_actor::StateActor;
+    use cl_new_gui::ui::ui_actor::UiActor;
+    use tokio::try_join;
+
+    pub async fn init() -> Result<()> {
+        let (state_tx, state_rx) = tokio::sync::mpsc::channel(8);
+        let (ui_tx, ui_rx) = tokio::sync::mpsc::channel(8);
+
+        let mut state_actor = StateActor::new(state_rx);
+        let mut ui_actor = UiActor::new(ui_rx);
+
+        try_join!(state_actor.run(), ui_actor.run(state_tx))?;
+
+        Ok(())
+    }
 }
 
 mod core {
@@ -42,7 +64,7 @@ mod core {
     use log::debug;
     use parking_lot::Mutex;
     use std::sync::{atomic::AtomicBool, Arc};
-    use tokio::sync::mpsc::UnboundedReceiver;
+    use tokio::{select, try_join};
 
     pub async fn init(config: impl Config) -> Result<()> {
         debug!("starting events");
@@ -74,47 +96,41 @@ mod core {
         let screens = Screens::default();
 
         debug!("starting components");
-        start_input_handler(input_rx, &ui_context, &should_quit).await;
-        start_event_handler(app_rx, &context, &ui_context, &should_quit).await;
-
+        let input_handler = start_input_handler(&ui_context, &should_quit);
+        let event_handler = start_event_handler(&context, &ui_context, &should_quit);
         debug!("creating tui");
-        let tui = TuiApplication::create(should_quit, ui_context, context, terminal, screens)?;
+        let mut tui = TuiApplication::create(should_quit, ui_context, context, terminal, screens)?;
 
-        start_ui(tui).await.and_then(|mut tui| tui.shutdown())
+        // tokio::spawn(input_handler.handle(input_rx));
+        // tokio::spawn(event_handler.handle(app_rx));
+        select! {
+            _ = input_handler.handle(input_rx) => {debug!("input handler done")},
+            _ = event_handler.handle(app_rx) => {debug!("event handler done")},
+            _ = tui.render() => {debug!("tui done")},
+        }
+        // input_handler.handle(input_rx), event_handler.handle(app_rx))?;
+        // tui.render().await?;
+        tui.shutdown()
     }
 
-    async fn start_event_handler(
-        app_rx: UnboundedReceiver<AppEvent>,
+    fn start_event_handler(
         context: &Arc<Mutex<Application<'static>>>,
         ui_context: &Arc<Mutex<UI<'static>>>,
         should_quit: &Arc<AtomicBool>,
-    ) {
+    ) -> AppEventHandler<'static> {
         debug!("starting event listener");
-        tokio::spawn(AppEventHandler::init(
-            app_rx,
+        AppEventHandler::init(
             context.to_owned(),
             ui_context.to_owned(),
             should_quit.to_owned(),
-        ));
+        )
     }
 
-    async fn start_ui(mut tui: TuiApplication<'_>) -> Result<TuiApplication<'_>> {
-        debug!("starting ui");
-        tui.render().await?;
-
-        Ok(tui)
-    }
-
-    async fn start_input_handler(
-        input_rx: UnboundedReceiver<InputEvent>,
+    fn start_input_handler(
         ui_context: &Arc<Mutex<UI<'static>>>,
         should_quit: &Arc<AtomicBool>,
-    ) {
+    ) -> InputEventHandler {
         debug!("starting input handler");
-        tokio::spawn(InputEventHandler::init(
-            input_rx,
-            ui_context.to_owned(),
-            should_quit.to_owned(),
-        ));
+        InputEventHandler::init(ui_context.to_owned(), should_quit.to_owned())
     }
 }

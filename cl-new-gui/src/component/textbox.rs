@@ -4,7 +4,7 @@ use tui::layout::Rect;
 use tui::widgets::{Block, Borders, Paragraph};
 use tui::Frame;
 
-#[derive(Default, Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Default, Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct TextBox {
     pub name: TextBoxName,
     pub content: String,
@@ -32,7 +32,7 @@ impl Component for TextBox {
     }
 }
 
-#[derive(Default, Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Default, Clone, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub enum TextBoxName {
     #[default]
     Command,

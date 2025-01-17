@@ -1,3 +1,4 @@
+use crate::screen::Screen;
 use crate::crossterm::{restore_terminal, setup_terminal};
 use crate::oneshot;
 use crate::state::state::SelectedCommand;
@@ -12,7 +13,7 @@ use crate::ui::ui_event::UiEvent;
 use anyhow::Result;
 use cl_core::{Command, CommandVec};
 use crossterm::event::{Event, EventStream, KeyCode, KeyEvent, KeyModifiers};
-use log::{debug, error, info};
+use log::{error, info};
 use std::time::Duration;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio_stream::StreamExt;
@@ -171,6 +172,24 @@ impl UiActor {
                             self.ui.previous_tab(selected_namespace).await;
                             self.ui.select_command(selected_command).await;
                         }
+
+                        Continue
+                    }
+                    KeyEvent {
+                        code: KeyCode::Char('d'),
+                        modifiers: KeyModifiers::NONE,
+                        ..
+                    } => {
+                        
+                        Continue
+                    }
+
+                    KeyEvent {
+                        code: KeyCode::Char('p'),
+                        modifiers: KeyModifiers::NONE,
+                        ..
+                    } => {
+                        self.ui.modify_popup().await;
 
                         Continue
                     }
