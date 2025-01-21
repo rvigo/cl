@@ -41,7 +41,7 @@ impl State {
         // namespaces
         let mut namespaces: Vec<String> = commands.as_map().keys().cloned().collect();
         namespaces.push(DEFAULT_NAMESPACE.to_string());
-        namespaces.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+        namespaces.sort_by_key(|a| a.to_lowercase());
 
         Self {
             commands,

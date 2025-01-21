@@ -1,4 +1,4 @@
-use crate::component::Component;
+use crate::component::{Component };
 use std::fmt::Display;
 use tui::layout::Rect;
 use tui::widgets::{Block, Borders, Paragraph};
@@ -24,7 +24,7 @@ impl TextBox {
 }
 
 impl Component for TextBox {
-    fn render(&self, frame: &mut Frame, area: Rect) {
+    fn render(&mut self, frame: &mut Frame, area: Rect) {
         let paragraph = Paragraph::new(format!("{:#?}", self.content))
             .block(Block::default().borders(Borders::all()));
 

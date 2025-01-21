@@ -1,8 +1,8 @@
-use crate::component::StatefulComponent;
 use tui::layout::Rect;
 use tui::prelude::{Modifier, Style};
 use tui::widgets::{List as TuiList, ListItem, ListState};
 use tui::Frame;
+use crate::component::Component;
 
 #[derive(Default, Clone, Debug, Eq, PartialEq)]
 pub struct List {
@@ -27,8 +27,8 @@ impl List {
     }
 }
 
-impl StatefulComponent for List {
-    fn render_stateful(&mut self, frame: &mut Frame, area: Rect) {
+impl Component for List {
+    fn render(&mut self, frame: &mut Frame, area: Rect) {
         let tui_list = TuiList::new(
             self.items
                 .iter()

@@ -35,7 +35,7 @@ impl fmt::Debug for Button {
 }
 
 impl Component for Button {
-    fn render(&self, frame: &mut Frame, area: Rect) {
+    fn render(&mut self, frame: &mut Frame, area: Rect) {
         let paragraph = Paragraph::new(self.content.to_owned()).alignment(Center);
         if self.is_selected {
             match self.action {

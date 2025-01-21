@@ -1,8 +1,7 @@
-use log::debug;
 use crate::component::List;
 use crate::observer::event::Event;
 use crate::observer::observable::Observable;
-use crate::observer::ObservableStatefulComponent;
+use crate::observer::ObservableComponent;
 
 impl Observable for List {
     fn on_listen(&mut self, event: Event) {
@@ -18,4 +17,4 @@ impl Observable for List {
     }
 }
 
-impl ObservableStatefulComponent for List {}
+impl ObservableComponent for List {}
