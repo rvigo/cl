@@ -32,7 +32,7 @@ impl Tabs {
 }
 
 impl Component for Tabs {
-    fn render(&self, frame: &mut Frame, area: Rect) {
+    fn render(&mut self, frame: &mut Frame, area: Rect) {
         let tabs = tui::widgets::Tabs::new(self.items.clone())
             .select(self.selected)
             .divider("|")

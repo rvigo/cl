@@ -1,8 +1,7 @@
-use crate::component::{
-    List, SharedComponent, SharedStatefulComponent, Tabs, TextBox, TextBoxName,
-};
+use crate::component::{List, SharedComponent, Tabs, TextBox, TextBoxName};
 use crate::render;
-use crate::screen::{Listeners, Screen, StatefulListeners};
+use crate::screen::layer::Layer;
+use crate::screen::Listeners;
 use std::any::TypeId;
 use std::collections::BTreeMap;
 use tui::layout::{Alignment, Constraint, Direction, Layout};
@@ -20,18 +19,17 @@ pub const DEFAULT_INFO_COLOR: TuiColor = TuiColor::Rgb(148, 226, 213);
 pub const DEFAULT_CURSOR_COLOR: TuiColor = TuiColor::Rgb(245, 224, 220);
 pub const DEFAULT_INACTIVE_TEXTBOX_COLOR: TuiColor = TuiColor::Rgb(108, 112, 134);
 
-pub struct MainScreen {
+pub struct MainScreenLayer {
     pub command: SharedComponent,
     pub description: SharedComponent,
     pub tags: SharedComponent,
     pub namespace: SharedComponent,
-    pub list: SharedStatefulComponent,
+    pub list: SharedComponent,
     pub tabs: SharedComponent,
     pub listeners: Listeners,
-    pub stateful_listeners: StatefulListeners,
 }
 
-impl Screen for MainScreen {
+impl Layer for MainScreenLayer {
     fn new() -> Self {
         let command = TextBox {
             name: TextBoxName::Command,
@@ -52,13 +50,6 @@ impl Screen for MainScreen {
         let list = List::new();
         let tabs = Tabs::new();
 
-        // stateful
-        let mut stateful_listeners = StatefulListeners::new();
-
-        let list_shared = SharedStatefulComponent::new(list);
-
-        stateful_listeners.insert(TypeId::of::<List>(), vec![list_shared.clone()]);
-
         // components
         let mut listeners = Listeners::new();
 
@@ -67,6 +58,7 @@ impl Screen for MainScreen {
         let tags_shared = SharedComponent::new(tags);
         let namespace_shared = SharedComponent::new(namespace);
         let tabs_shared = SharedComponent::new(tabs);
+        let list_shared = SharedComponent::new(list);
 
         listeners.insert(
             TypeId::of::<TextBox>(),
@@ -77,8 +69,8 @@ impl Screen for MainScreen {
                 namespace_shared.clone(),
             ],
         );
-
         listeners.insert(TypeId::of::<Tabs>(), vec![tabs_shared.clone()]);
+        listeners.insert(TypeId::of::<List>(), vec![list_shared.clone()]);
 
         Self {
             command: command_shared.clone(),
@@ -88,7 +80,6 @@ impl Screen for MainScreen {
             list: list_shared.clone(),
             tabs: tabs_shared.clone(),
             listeners,
-            stateful_listeners,
         }
     }
 
@@ -180,19 +171,15 @@ impl Screen for MainScreen {
                 // {aliases,  left_side[1]},
         }
 
-        self.list.borrow_mut().render_stateful(frame, left_side[1]);
-        self.description.borrow().render(frame, right_side[1]); // middle
-        self.command.borrow().render(frame, right_side[3]);
-        self.namespace.borrow().render(frame, namespace_area);
-        self.tags.borrow().render(frame, tags_area);
-        self.tabs.borrow().render(frame, right_side[0])
+        self.list.borrow_mut().render(frame, left_side[1]);
+        self.description.borrow_mut().render(frame, right_side[1]); // middle
+        self.command.borrow_mut().render(frame, right_side[3]);
+        self.namespace.borrow_mut().render(frame, namespace_area);
+        self.tags.borrow_mut().render(frame, tags_area);
+        self.tabs.borrow_mut().render(frame, right_side[0])
     }
 
-    fn get_listeners(&self) -> &BTreeMap<TypeId, Vec<SharedComponent>> {
-        &self.listeners
-    }
-
-    fn get_stateful_listeners(&self) -> &BTreeMap<TypeId, Vec<SharedStatefulComponent>> {
-        &self.stateful_listeners
+    fn get_listeners(&self) -> BTreeMap<TypeId, Vec<SharedComponent>> {
+        self.listeners.clone()
     }
 }

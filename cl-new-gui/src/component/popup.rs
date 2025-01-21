@@ -6,11 +6,11 @@ use std::rc::Rc;
 use tui::layout::Alignment::Center;
 use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use tui::style::Style;
-use tui::widgets::{Block, Borders, Clear, Paragraph, Widget, Wrap};
+use tui::widgets::{Block, Borders, Clear, Paragraph, Wrap};
 use tui::Frame;
 use unicode_width::UnicodeWidthStr;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Popup {
     pub title: String,
     pub content: String,
@@ -36,7 +36,7 @@ impl PartialEq for Popup {
 impl Eq for Popup {}
 
 impl Component for Popup {
-    fn render(&self, frame: &mut Frame, area: Rect) {
+    fn render(&mut self, frame: &mut Frame, area: Rect) {
         let paragraph = Paragraph::new(self.content.to_owned())
             .alignment(Center)
             .style(Style::default())
@@ -44,6 +44,7 @@ impl Component for Popup {
             .wrap(Wrap { trim: true })
             .block(Block::default().borders(Borders::ALL));
 
+        
         let popup_area = compute_popup_area(&self.content, area);
 
         frame.render_widget(Clear, popup_area);

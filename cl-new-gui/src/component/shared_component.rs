@@ -1,7 +1,7 @@
-use std::cell::{Ref, RefCell, RefMut};
-use std::ops::Deref;
-use std::rc::Rc;
 use crate::observer::ObservableComponent;
+use std::cell::{Ref, RefCell, RefMut};
+use std::ops::{Deref, DerefMut};
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct SharedComponent(pub Rc<RefCell<dyn ObservableComponent + 'static>>);
@@ -34,3 +34,8 @@ impl Deref for SharedComponent {
     }
 }
 
+impl DerefMut for SharedComponent {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}

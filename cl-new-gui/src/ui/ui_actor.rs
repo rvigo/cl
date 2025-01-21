@@ -1,6 +1,6 @@
-use crate::screen::Screen;
 use crate::crossterm::{restore_terminal, setup_terminal};
 use crate::oneshot;
+use crate::screen::layer::{Layer, PopupLayer};
 use crate::state::state::SelectedCommand;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::{
@@ -91,9 +91,7 @@ impl UiActor {
                 }
             }
 
-            if let Err(err) =
-                terminal.draw(|frame| self.ui.screens.get_active_screen_mut().render(frame))
-            {
+            if let Err(err) = terminal.draw(|frame| self.ui.screens.render_layers(frame)) {
                 error!("an error occurred: {err}")
             }
         };
@@ -125,8 +123,8 @@ impl UiActor {
                         // Also, an oneshot channel will be created:
                         // - TX: the state_actor will respond with the selected command
                         // - RX: the ui_actor will receive the selected command and update the ui
-                        let result = oneshot!(state_tx, SelectNextCommand );
-                        if let Some(selected_command) = result{
+                        let result = oneshot!(state_tx, SelectNextCommand);
+                        if let Some(selected_command) = result {
                             self.ui.next_command(selected_command).await;
                         }
 
@@ -180,7 +178,8 @@ impl UiActor {
                         modifiers: KeyModifiers::NONE,
                         ..
                     } => {
-                        
+                        self.ui.screens.add_layer(PopupLayer::new()).await;
+                        self.ui.modify_popup().await;
                         Continue
                     }
 
@@ -189,7 +188,7 @@ impl UiActor {
                         modifiers: KeyModifiers::NONE,
                         ..
                     } => {
-                        self.ui.modify_popup().await;
+                        self.ui.screens.remove_last_layer().await;
 
                         Continue
                     }

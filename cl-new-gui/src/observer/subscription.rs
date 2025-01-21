@@ -1,30 +1,24 @@
-use std::any::Any;
 use std::collections::BTreeMap;
 
 pub struct SubscriptionSet<Publisher, V> {
-    pub subscriptions: BTreeMap<Publisher, Vec<Subscription<V>>>,
+    pub subscriptions: BTreeMap<Publisher, Vec<Subscriber<V>>>,
 }
 
-pub struct Subscription<V> {
-    pub is_stateful: bool,
+pub struct Subscriber<V> {
+    pub is_active: bool,
     pub listener: V,
 }
 
-impl<V: 'static> Subscription<V> {
-    pub fn new(listener: V, is_stateful: bool) -> Subscription<V> {
+impl<V: 'static> Subscriber<V> {
+    pub fn new(listener: V) -> Subscriber<V> {
         Self {
-            is_stateful,
+            is_active: true,
             listener,
         }
     }
 
-    pub fn as_any(&self) -> Subscription<Box<dyn Any + '_>> {
-        let listener: Box<dyn Any> = Box::new(&self.listener);
-
-        Subscription {
-            is_stateful: self.is_stateful,
-            listener,
-        }
+    pub fn deactivate(&mut self) {
+        self.is_active = false;
     }
 }
 
@@ -39,8 +33,8 @@ where
     }
 
     pub fn add(&mut self, key: K, listener: V) {
-        let subscription = Subscription {
-            is_stateful: true,
+        let subscription = Subscriber {
+            is_active: true,
             listener,
         };
 
@@ -54,12 +48,21 @@ where
         self.subscriptions.remove(&key);
     }
 
-    pub fn get(&self, key: &K) -> Option<&Vec<Subscription<V>>> {
+    pub fn get(&self, key: &K) -> Option<&Vec<Subscriber<V>>> {
         self.subscriptions.get(key)
     }
 
-    pub fn get_mut(&mut self, key: &K) -> Option<&mut Vec<Subscription<V>>> {
+    pub fn get_mut(&mut self, key: &K) -> Option<&mut Vec<Subscriber<V>>> {
         self.subscriptions.get_mut(key)
+    }
+
+    pub fn extend(&mut self, other: Self) {
+        for (key, subscriptions) in other.subscriptions {
+            self.subscriptions
+                .entry(key)
+                .or_default()
+                .extend(subscriptions);
+        }
     }
 }
 
@@ -71,8 +74,8 @@ impl<K: Ord, T> From<BTreeMap<K, Vec<T>>> for SubscriptionSet<K, T> {
                 .map(|(key, value)| {
                     let subscriptions = value
                         .into_iter()
-                        .map(|listener| Subscription {
-                            is_stateful: true,
+                        .map(|listener| Subscriber {
+                            is_active: true,
                             listener,
                         })
                         .collect();

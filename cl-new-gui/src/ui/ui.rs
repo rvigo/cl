@@ -1,4 +1,4 @@
-use crate::component::{List, Tabs, TextBox};
+use crate::component::{List, Popup, Tabs, TextBox};
 use crate::observer::event::Event;
 use crate::screen::Screens;
 use crate::state::state::{SelectedCommand, SelectedNamespace};
@@ -87,10 +87,10 @@ impl Ui {
     }
 
     pub async fn modify_popup(&mut self) {
-        // self.notify(PopupEvent::Action(PopupAction::Confirm)).await
+        self.notify(TypeId::of::<Popup>(), Event::Next(1)).await
     }
 
     async fn notify(&mut self, id: TypeId, event: Event) {
-        self.screens.notify(id, event);
+        self.screens.notify(id, event).await;
     }
 }
