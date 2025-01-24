@@ -37,13 +37,3 @@ impl From<(TypeId, Event)> for ScreenCommand {
         ScreenCommand::Notify(value)
     }
 }
-
-pub trait ScreenCommandVecExt {
-    fn into_notify(self) -> Vec<ScreenCommand>;
-}
-
-impl ScreenCommandVecExt for Vec<(TypeId, Event)> {
-    fn into_notify(self) -> Vec<ScreenCommand> {
-        self.into_iter().map(ScreenCommand::from).collect()
-    }
-}
