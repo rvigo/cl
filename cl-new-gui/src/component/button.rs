@@ -1,21 +1,29 @@
 use crate::component::Component;
 use crate::observer::event::PopupAction;
+use crate::state::state_event::StateEvent;
 use std::fmt;
+use std::future::Future;
+use std::pin::Pin;
+use tokio::sync::mpsc::Sender;
 use tui::layout::Alignment::Center;
 use tui::layout::Rect;
-use tui::widgets::{Block, Borders, Paragraph, Widget};
+use tui::style::Color::Yellow;
+use tui::style::Style;
+use tui::widgets::Paragraph;
 use tui::Frame;
+
+type FutureFn = fn(Sender<StateEvent>) -> Pin<Box<dyn Future<Output = ()> + Send>>;
 
 #[derive(Clone)]
 pub struct Button {
     content: String,
     pub action: PopupAction,
-    pub on_click: fn() -> (),
-    is_selected: bool,
+    pub on_click: FutureFn,
+    pub is_selected: bool,
 }
 
 impl Button {
-    pub fn new(content: impl Into<String>, action: PopupAction, on_click: fn() -> ()) -> Self {
+    pub fn new(content: impl Into<String>, action: PopupAction, on_click: FutureFn) -> Self {
         Self {
             content: content.into(),
             action,
@@ -36,13 +44,14 @@ impl fmt::Debug for Button {
 
 impl Component for Button {
     fn render(&mut self, frame: &mut Frame, area: Rect) {
-        let paragraph = Paragraph::new(self.content.to_owned()).alignment(Center);
-        if self.is_selected {
-            match self.action {
-                PopupAction::Confirm => &self.on_click,
-                PopupAction::Cancel => &self.on_click,
-            };
-        }
+        let style = if self.is_selected {
+            Style::default()
+        } else {
+            Style::default().fg(Yellow)
+        };
+        let paragraph = Paragraph::new(self.content.to_owned())
+            .alignment(Center)
+            .style(style);
 
         frame.render_widget(paragraph, area)
     }

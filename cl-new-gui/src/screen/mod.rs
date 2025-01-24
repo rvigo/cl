@@ -1,22 +1,19 @@
+mod key_mapping;
 pub mod layer;
 
 use crate::component::SharedComponent;
-use crate::listen;
 use crate::observer::event::Event;
 use crate::observer::subscription::SubscriptionSet;
+use crate::screen::key_mapping::ScreenCommand;
 use crate::screen::layer::Layer;
+use crate::state::state_event::StateEvent;
+use crossterm::event::Event as CrosstermEvent;
 use layer::MainScreenLayer;
-use log::error;
+use log::{debug, error};
 use std::any::TypeId;
 use std::collections::BTreeMap;
+use tokio::sync::mpsc::Sender;
 use tui::Frame;
-
-#[macro_export]
-macro_rules! listen {
-    ($what:expr, $event:expr) => {
-        $what.borrow_mut().on_listen($event.clone())
-    };
-}
 
 #[derive(Default)]
 pub enum ActiveScreen {
@@ -49,6 +46,14 @@ impl Screens {
            should I create a `handler` structure again?
            where should it go?
         */
+        
+        /* TODO
+            need to handle a `quit` event.
+            may it be a signal?
+            may it be a `break`?
+            we'll see
+        
+         */
         let mut screens = Self {
             active_screen: ActiveScreen::Main,
             subscriptions: SubscriptionSet::new(),
@@ -66,8 +71,34 @@ impl Screens {
         screens
     }
 
-    pub async fn add_layer(&mut self, layer: impl Layer + 'static) {
-        self.layers.push(Box::new(layer));
+    pub async fn handle_key_event(
+        &mut self,
+        event: Option<std::io::Result<CrosstermEvent>>,
+        state_tx: &Sender<StateEvent>,
+    ) {
+        if let Some(Ok(CrosstermEvent::Key(event))) = event {
+            if let Some(layer) = self.layers.last_mut() {
+                match layer.handle_key_event(event, state_tx.clone()).await {
+                    None => {}
+                    Some(commands) => {
+                        for cmd in commands {
+                            match cmd {
+                                ScreenCommand::AddLayer(layer) => self.add_layer(layer).await,
+                                ScreenCommand::PopLastLayer => self.remove_last_layer().await,
+                                ScreenCommand::Notify((tid, event)) => {
+                                    self.notify(tid, event).await
+                                }
+                                ScreenCommand::Quit => todo!(),
+                            }
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    pub async fn add_layer(&mut self, layer: Box<dyn Layer + 'static>) {
+        self.layers.push(layer);
         self.update_listeners().await;
     }
 
@@ -99,7 +130,7 @@ impl Screens {
     pub async fn notify(&mut self, id: TypeId, event: Event) {
         if let Some(subscriptions) = self.subscriptions.get(&id) {
             for sub in subscriptions {
-                listen!(sub.listener, event);
+                sub.listener.borrow_mut().on_listen(event.clone()).await;
             }
         } else {
             error!("No listeners found for TypeId {:?}", id);

@@ -15,9 +15,8 @@ crossterm = { version = "0.27.0", features = ["event-stream"] }
 tui = { package = "ratatui", version = "0.24.0" }
 unicode-width = "0.1"
 tokio-stream = { version = "0.1.14" }
-dyn-clone = "1.0.17"
 downcast-rs = "2.0.1"
-lazy_static = "1.4.0"
+async-trait = "0.1.85"
 
 [dev-dependencies]
 tempdir.workspace = true

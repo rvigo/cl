@@ -2,9 +2,11 @@ use crate::component::{TextBox, TextBoxName};
 use crate::observer::event::Event;
 use crate::observer::observable::Observable;
 use crate::observer::ObservableComponent;
+use async_trait::async_trait;
 
+#[async_trait(?Send)]
 impl Observable for TextBox {
-    fn on_listen(&mut self, event: Event) {
+    async fn on_listen(&mut self, event: Event) {
         let command = match event {
             Event::UpdateCommand(cmd) => cmd,
             _ => return,

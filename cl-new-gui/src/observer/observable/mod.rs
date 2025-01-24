@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use downcast_rs::{impl_downcast, Downcast};
 use crate::observer::event::Event;
 
@@ -6,9 +7,10 @@ mod popup_observable;
 pub mod tabs_observable;
 pub mod textbox_observable;
 
-pub trait Observable: Downcast {
 
-    fn on_listen(&mut self, event: Event);
+#[async_trait(?Send)]
+pub trait Observable {
+
+    async fn on_listen(&mut self, event: Event);
 }
 
-impl_downcast!(Observable);
