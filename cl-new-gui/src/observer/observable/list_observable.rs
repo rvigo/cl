@@ -2,9 +2,11 @@ use crate::component::List;
 use crate::observer::event::Event;
 use crate::observer::observable::Observable;
 use crate::observer::ObservableComponent;
+use async_trait::async_trait;
 
+#[async_trait(?Send)]
 impl Observable for List {
-    fn on_listen(&mut self, event: Event) {
+    async fn on_listen(&mut self, event: Event) {
         match &event {
             Event::Next(idx) => self.next(*idx),
             Event::Previous(idx) => self.previous(*idx),

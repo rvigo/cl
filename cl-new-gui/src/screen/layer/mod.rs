@@ -4,12 +4,13 @@ mod popup_layer;
 pub use main_screen_layer::MainScreenLayer;
 pub use popup_layer::PopupLayer;
 
+use crate::component::SharedComponent;
+use crate::screen::key_mapping::KeyMapping;
 use std::any::TypeId;
 use std::collections::BTreeMap;
 use tui::Frame;
-use crate::component::SharedComponent;
 
-pub trait Layer {
+pub trait Layer: KeyMapping {
     fn new() -> Self
     where
         Self: Sized;

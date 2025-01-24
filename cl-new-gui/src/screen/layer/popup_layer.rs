@@ -32,9 +32,9 @@ impl Layer for PopupLayer {
     }
 
     fn get_listeners(&self) -> BTreeMap<TypeId, Vec<SharedComponent>> {
-        let mut bt = BTreeMap::new();
-        bt.insert(TypeId::of::<Popup>(), vec![self.popup.clone()]);
+        let mut listeners = BTreeMap::new();
+        listeners.insert(TypeId::of::<Popup>(), vec![self.popup.clone()]);
 
-        bt
+        listeners
     }
 }

@@ -1,8 +1,10 @@
 use crate::component::button::Button;
 use crate::component::Component;
+use crate::state::state_event::StateEvent;
 use crate::Pipe;
 use std::fmt::Debug;
 use std::rc::Rc;
+use tokio::sync::mpsc::Sender;
 use tui::layout::Alignment::Center;
 use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use tui::style::Style;
@@ -11,19 +13,45 @@ use tui::Frame;
 use unicode_width::UnicodeWidthStr;
 
 #[derive(Debug, Clone, Default)]
+pub struct PopupState {
+    pub selected: usize,
+}
+
+impl PopupState {
+    pub fn selected(&self) -> usize {
+        self.selected
+    }
+
+    pub fn select(&mut self, index: usize) {
+        self.selected = index;
+    }
+}
+
+#[derive(Debug, Clone, Default)]
 pub struct Popup {
     pub title: String,
     pub content: String,
     pub buttons: Vec<Button>,
+    pub state: PopupState,
 }
 
 impl Popup {
-    pub fn new(title: impl Into<String>, content: impl Into<String>, buttons: Vec<Button>) -> Self {
-        Self {
-            title: title.into(),
-            content: content.into(),
-            buttons,
-        }
+    pub fn next(&mut self) {
+        let current = self.state.selected;
+        let next = (current + 1) % self.buttons.len();
+        self.state.select(next);
+    }
+
+    pub fn previous(&mut self) {
+        let current = self.state.selected;
+        let previous = (current + self.buttons.len() - 1) % self.buttons.len();
+        self.state.select(previous);
+    }
+
+    pub async fn run_button_callback(&mut self, state_tx: Sender<StateEvent>) {
+        let selected = &self.buttons[self.state.selected];
+
+        (selected.on_click)(state_tx).await
     }
 }
 
@@ -44,7 +72,6 @@ impl Component for Popup {
             .wrap(Wrap { trim: true })
             .block(Block::default().borders(Borders::ALL));
 
-        
         let popup_area = compute_popup_area(&self.content, area);
 
         frame.render_widget(Clear, popup_area);
@@ -54,7 +81,13 @@ impl Component for Popup {
         let button_area = button_area(self.buttons.len(), popup_area);
         // render buttons inside that area
         button_area.iter().enumerate().for_each(|(i, area)| {
-            self.buttons[i].render(frame, *area);
+            let current_button = &mut self.buttons[i];
+            if i == self.state.selected {
+                current_button.is_selected = true
+            } else {
+                current_button.is_selected = false
+            }
+            current_button.render(frame, *area);
         });
     }
 }
