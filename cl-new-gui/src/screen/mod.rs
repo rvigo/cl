@@ -6,10 +6,12 @@ use crate::observer::event::Event;
 use crate::observer::subscription::SubscriptionSet;
 use crate::screen::key_mapping::ScreenCommand;
 use crate::screen::layer::Layer;
+use crate::signal_handler::Signal::UserInt;
+use crate::signal_handler::{SigHandler, Signal};
 use crate::state::state_event::StateEvent;
 use crossterm::event::Event as CrosstermEvent;
 use layer::MainScreenLayer;
-use log::{debug, error};
+use log::error;
 use std::any::TypeId;
 use std::collections::BTreeMap;
 use tokio::sync::mpsc::Sender;
@@ -32,28 +34,16 @@ pub type Listeners = BTreeMap<TypeId, Vec<SharedComponent>>;
 impl Screens {
     pub fn new() -> Screens {
         /* TODO
-        .  add handlers to this field [layers] (getters, setters, add, etc)
-        .  remove the main screen from the options and change the get_active_screen_mut method
-           to return the current layer pile
-        .  all items inside the layers field should be rendered from the lowest to the highest value
-
-        .  when an item is registered in the layers field, it should be added to the subscriptions field
-        .  when an item is removed from the layers field, it should be removed from the subscriptions field
+           need to handle a `quit` event.
+           may it be a signal?
+           may it be a `break`?
+           we'll see
         */
 
         /* TODO
-           need a way to isolate the keystroke handler from each layer
-           should I create a `handler` structure again?
-           where should it go?
+           how can I handle error at the `backend` level?
+           should it have its own signal handler? Should I check the returns of the methods?
         */
-        
-        /* TODO
-            need to handle a `quit` event.
-            may it be a signal?
-            may it be a `break`?
-            we'll see
-        
-         */
         let mut screens = Self {
             active_screen: ActiveScreen::Main,
             subscriptions: SubscriptionSet::new(),
@@ -75,6 +65,7 @@ impl Screens {
         &mut self,
         event: Option<std::io::Result<CrosstermEvent>>,
         state_tx: &Sender<StateEvent>,
+        sig_handler: &mut SigHandler,
     ) {
         if let Some(Ok(CrosstermEvent::Key(event))) = event {
             if let Some(layer) = self.layers.last_mut() {
@@ -83,18 +74,24 @@ impl Screens {
                     Some(commands) => {
                         for cmd in commands {
                             match cmd {
-                                ScreenCommand::AddLayer(layer) => self.add_layer(layer).await,
-                                ScreenCommand::PopLastLayer => self.remove_last_layer().await,
-                                ScreenCommand::Notify((tid, event)) => {
-                                    self.notify(tid, event).await
+                                ScreenCommand::AddLayer(layer) => {
+                                    self.add_layer(layer).await;
                                 }
-                                ScreenCommand::Quit => todo!(),
-                            }
+                                ScreenCommand::PopLastLayer => {
+                                    self.remove_last_layer().await;
+                                }
+                                ScreenCommand::Notify((tid, event)) => {
+                                    self.notify(tid, event).await;
+                                }
+                                ScreenCommand::Quit => {
+                                    sig_handler.send_signal(UserInt).ok();
+                                }
+                            };
                         }
                     }
                 }
             }
-        };
+        }
     }
 
     pub async fn add_layer(&mut self, layer: Box<dyn Layer + 'static>) {
@@ -141,6 +138,12 @@ impl Screens {
         for layer in &mut self.layers {
             layer.render(frame);
         }
+    }
+
+    pub fn quit(&mut self) -> Signal {
+        self.layers.clear();
+
+        UserInt
     }
 
     fn get_active_screen_mut(&mut self) -> impl Layer {

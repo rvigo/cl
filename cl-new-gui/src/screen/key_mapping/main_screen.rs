@@ -1,12 +1,12 @@
 use crate::component::{List, Popup, Tabs, TextBox};
 use crate::observer::event::PopupType::Dialog;
 use crate::observer::event::{Event, PopupEvent};
-use crate::screen::key_mapping::ScreenCommand::AddLayer;
+use crate::screen::key_mapping::ScreenCommand::{AddLayer, Quit};
 use crate::screen::key_mapping::{KeyMapping, ScreenCommand};
 use crate::screen::layer::{Layer, MainScreenLayer, PopupLayer};
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::{
-    NextTab, PreviousTab, SelectNextCommand, SelectPreviousCommand,
+    ExecuteCommand, NextTab, PreviousTab, SelectNextCommand, SelectPreviousCommand,
 };
 use crate::ui::ui_actor::CommandVecExt;
 use crate::{event, oneshot};
@@ -117,6 +117,19 @@ impl KeyMapping for MainScreenLayer {
                     None
                 }
             }
+            KeyEvent {
+                code: KeyCode::Enter,
+                modifiers: KeyModifiers::NONE,
+                ..
+            } => {
+                state_tx.send(ExecuteCommand).await.ok();
+                Some(vec![Quit])
+            }
+            KeyEvent {
+                code: KeyCode::Char('q'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            } => Some(vec![Quit]),
             _ => None,
         }
     }

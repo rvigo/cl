@@ -38,10 +38,9 @@ mod new_core {
 
     pub async fn init() -> Result<()> {
         let (state_tx, state_rx) = tokio::sync::mpsc::channel(8);
-        let (ui_tx, ui_rx) = tokio::sync::mpsc::channel(8);
 
         let mut state_actor = StateActor::new(state_rx);
-        let mut ui_actor = UiActor::new(ui_rx);
+        let mut ui_actor = UiActor::new();
 
         try_join!(state_actor.run(), ui_actor.run(state_tx))?;
 

@@ -1,37 +1,34 @@
 use crate::crossterm::{restore_terminal, setup_terminal};
+use crate::signal_handler::{SigHandler, Signal};
 use crate::state::state::SelectedCommand;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::{GetAllListItems, GetAllNamespaces};
 use crate::ui::ui::Ui;
-use crate::ui::ui_event::UiEvent;
 use anyhow::Result;
 use cl_core::{Command, CommandVec};
 use crossterm::event::EventStream;
-use log::{error, info};
+use log::{debug, error};
 use std::time::Duration;
-use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::sync::broadcast;
+use tokio::sync::mpsc::Sender;
 use tokio_stream::StreamExt;
 
 pub struct UiActor {
     ui: Ui,
-    receiver: Receiver<UiEvent>,
+    sig_handler: SigHandler,
+    sig_receiver: broadcast::Receiver<Signal>,
 }
 
 const RENDERING_TICK_RATE: Duration = Duration::from_millis(250);
 
 impl UiActor {
-    pub fn new(receiver: Receiver<UiEvent>) -> Self {
+    pub fn new() -> Self {
+        let (sig_handler, receiver) = SigHandler::create();
+
         Self {
             ui: Ui::new(),
-            receiver,
-        }
-    }
-
-    pub fn handle_message(&mut self, message: UiEvent) {
-        match message {
-            UiEvent::ShowCommand(command) => {
-                info!("showing command: {:?}", command);
-            }
+            sig_handler,
+            sig_receiver: receiver,
         }
     }
 
@@ -60,7 +57,10 @@ impl UiActor {
             .await;
     }
 
-    pub async fn run(&mut self, state_tx: Sender<StateEvent>) -> Result<()> {
+    pub async fn run(
+        &mut self,
+        state_tx: Sender<StateEvent>,
+    ) -> Result<()> {
         let mut terminal = setup_terminal()?;
         let mut crossterm_events = EventStream::new();
         let mut ticker = tokio::time::interval(RENDERING_TICK_RATE);
@@ -71,15 +71,12 @@ impl UiActor {
             tokio::select! {
                 _ = ticker.tick() => (),
                 event = crossterm_events.next() => {
-                        self.ui.screens.handle_key_event(event, &state_tx).await;
+                        self.ui.screens.handle_key_event(event, &state_tx, &mut self.sig_handler).await;
                 },
 
-                message = self.receiver.recv() => {
-                    if let Some(message) = message {
-                        self.handle_message(message);
-                    } else {
-                        break Ok(());
-                    }
+                Ok(message) = self.sig_receiver.recv() => {
+                    debug!("Received signal: {:?}", message);
+                    break Ok(())
                 }
             }
 

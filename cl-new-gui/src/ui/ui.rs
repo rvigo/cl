@@ -1,8 +1,7 @@
-use crate::component::{List, Popup, Tabs, TextBox};
+use crate::component::{List, Tabs, TextBox};
 use crate::observer::event::Event;
 use crate::screen::Screens;
-use crate::state::state::{SelectedCommand, SelectedNamespace};
-use cl_core::Command;
+use crate::state::state::SelectedCommand;
 use std::any::TypeId;
 
 pub struct Ui {

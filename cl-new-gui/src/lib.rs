@@ -5,8 +5,8 @@ mod observer;
 pub mod crossterm;
 pub mod screen;
 pub mod state;
-pub mod termination;
 pub mod ui;
+pub mod signal_handler;
 
 pub trait Pipe: Sized {
     fn pipe<F, R>(self, f: F) -> R
