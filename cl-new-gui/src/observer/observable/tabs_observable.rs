@@ -1,7 +1,6 @@
 use crate::component::Tabs;
 use crate::observer::event::Event;
 use crate::observer::observable::Observable;
-use crate::observer::ObservableComponent;
 use async_trait::async_trait;
 
 #[async_trait(?Send)]
@@ -11,12 +10,10 @@ impl Observable for Tabs {
             Event::Next(idx) => self.next(idx),
             Event::Previous(idx) => self.previous(idx),
             Event::UpdateAll(items) => {
-                self.items = items;
-                self.selected = 0
+                self.update_items(items);
+                self.reset_selected()
             }
             _ => {}
         }
     }
 }
-
-impl ObservableComponent for Tabs {}

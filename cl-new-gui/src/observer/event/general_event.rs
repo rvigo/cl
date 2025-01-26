@@ -1,9 +1,9 @@
+use crate::screen::{ActiveScreen, ScreenCommandCallback};
 use crate::state::state_event::StateEvent;
 use cl_core::Command;
 use tokio::sync::mpsc::Sender;
 
 // TODO rethink the name of these events
-
 #[derive(Clone, Debug)]
 pub enum Event {
     Next(usize),
@@ -18,17 +18,11 @@ pub enum PopupEvent {
     Create(PopupType),
     NextChoice,
     PreviousChoice,
-    Run(Sender<StateEvent>),
-    Action(PopupAction),
-}
-
-#[derive(Clone, Debug)]
-pub enum PopupAction {
-    Confirm,
-    Cancel,
+    Run(Sender<StateEvent>, Sender<ScreenCommandCallback>),
 }
 
 #[derive(Clone, Debug)]
 pub enum PopupType {
     Dialog(String),
+    Help(ActiveScreen)
 }

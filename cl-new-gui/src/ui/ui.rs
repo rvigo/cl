@@ -1,19 +1,19 @@
 use crate::component::{List, Tabs, TextBox};
 use crate::observer::event::Event;
-use crate::screen::Screens;
+use crate::screen::Screen;
 use crate::state::state::SelectedCommand;
 use std::any::TypeId;
 
 pub struct Ui {
     pub selected_command: SelectedCommand,
-    pub screens: Screens,
+    pub screens: Screen,
 }
 
 impl Ui {
     pub fn new() -> Ui {
         Self {
             selected_command: SelectedCommand::default(),
-            screens: Screens::new(),
+            screens: Screen::new(),
         }
     }
 

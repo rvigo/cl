@@ -1,12 +1,12 @@
+use crate::component::Renderable;
 use tui::layout::Rect;
 use tui::prelude::{Modifier, Style};
 use tui::widgets::{List as TuiList, ListItem, ListState};
 use tui::Frame;
-use crate::component::Component;
 
 #[derive(Default, Clone, Debug, Eq, PartialEq)]
 pub struct List {
-    pub items: Vec<String>,
+    items: Vec<String>,
     pub state: ListState,
 }
 
@@ -25,9 +25,13 @@ impl List {
     pub fn previous(&mut self, previous: usize) {
         self.state.select(Some(previous));
     }
+
+    pub fn update_items(&mut self, items: Vec<String>) {
+        self.items = items
+    }
 }
 
-impl Component for List {
+impl Renderable for List {
     fn render(&mut self, frame: &mut Frame, area: Rect) {
         let tui_list = TuiList::new(
             self.items
@@ -36,10 +40,7 @@ impl Component for List {
                 .map(ListItem::new)
                 .collect::<Vec<ListItem>>(),
         )
-        .highlight_style(
-            Style::default()
-                .add_modifier(Modifier::BOLD),
-        )
+        .highlight_style(Style::default().add_modifier(Modifier::BOLD))
         .highlight_symbol("> ");
 
         frame.render_stateful_widget(tui_list, area, &mut self.state);

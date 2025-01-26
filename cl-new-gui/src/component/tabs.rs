@@ -1,13 +1,12 @@
-use crate::component::Component;
-use crate::observer::ObservableComponent;
+use crate::component::Renderable;
 use tui::layout::Rect;
 use tui::style::{Color, Style};
 use tui::Frame;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Tabs {
-    pub items: Vec<String>,
-    pub selected: usize,
+    items: Vec<String>,
+    selected: usize,
 }
 
 impl Tabs {
@@ -29,9 +28,13 @@ impl Tabs {
     pub fn update_items(&mut self, items: Vec<String>) {
         self.items = items;
     }
+
+    pub fn reset_selected(&mut self) {
+        self.selected = 0
+    }
 }
 
-impl Component for Tabs {
+impl Renderable for Tabs {
     fn render(&mut self, frame: &mut Frame, area: Rect) {
         let tabs = tui::widgets::Tabs::new(self.items.clone())
             .select(self.selected)

@@ -1,4 +1,4 @@
-use crate::component::{Component };
+use crate::component::Renderable;
 use std::fmt::Display;
 use tui::layout::Rect;
 use tui::widgets::{Block, Borders, Paragraph};
@@ -7,26 +7,22 @@ use tui::Frame;
 #[derive(Default, Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct TextBox {
     pub name: TextBoxName,
-    pub content: String,
+    pub content: Option<String>,
 }
 
 impl TextBox {
-    pub fn new(name: TextBoxName, content: impl Into<String>) -> Self {
-        Self {
-            name,
-            content: content.into(),
-        }
-    }
-
-    pub fn update_content(&mut self, content: impl Into<String>) {
-        self.content = content.into();
+    pub fn update_content(&mut self, content: Option<impl Into<String>>) {
+        self.content = content.map(|content| content.into());
     }
 }
 
-impl Component for TextBox {
+impl Renderable for TextBox {
     fn render(&mut self, frame: &mut Frame, area: Rect) {
-        let paragraph = Paragraph::new(format!("{:#?}", self.content))
-            .block(Block::default().borders(Borders::all()));
+        let content = match &self.content {
+            None => "",
+            Some(c) => &c,
+        };
+        let paragraph = Paragraph::new(content).block(Block::default().borders(Borders::all()));
 
         frame.render_widget(paragraph, area)
     }

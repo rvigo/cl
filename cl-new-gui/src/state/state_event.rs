@@ -34,4 +34,6 @@ pub enum StateEvent {
     NextTab {
         respond_to: oneshot::Sender<(SelectedNamespace, SelectedCommand, Vec<Command<'static>>)>,
     },
+    /// Delete the command
+    DeleteCommand
 }
