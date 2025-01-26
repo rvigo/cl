@@ -1,12 +1,17 @@
 use crate::component::button::Button;
-use crate::component::Component;
+use crate::component::Renderable;
 use crate::state::state_event::StateEvent;
-use crate::Pipe;
+use crate::state::state_event::StateEvent::DeleteCommand;
+use crate::{async_fn_body, Pipe};
+use log::debug;
+use std::fmt;
 use std::fmt::Debug;
+use std::ops::Deref;
 use std::rc::Rc;
+use std::slice::Iter;
 use tokio::sync::mpsc::Sender;
 use tui::layout::Alignment::Center;
-use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
+use tui::layout::{Constraint, Direction, Layout, Rect};
 use tui::style::Style;
 use tui::widgets::{Block, Borders, Clear, Paragraph, Wrap};
 use tui::Frame;
@@ -14,14 +19,10 @@ use unicode_width::UnicodeWidthStr;
 
 #[derive(Debug, Clone, Default)]
 pub struct PopupState {
-    pub selected: usize,
+    selected: usize,
 }
 
 impl PopupState {
-    pub fn selected(&self) -> usize {
-        self.selected
-    }
-
     pub fn select(&mut self, index: usize) {
         self.selected = index;
     }
@@ -48,44 +49,75 @@ impl Popup {
         self.state.select(previous);
     }
 
-    pub async fn run_button_callback(&mut self, state_tx: Sender<StateEvent>) {
+    pub async fn click(&mut self, state_tx: Sender<StateEvent>) {
         let selected = &self.buttons[self.state.selected];
-
         (selected.on_click)(state_tx).await
     }
 }
 
-impl PartialEq for Popup {
-    fn eq(&self, other: &Self) -> bool {
-        self.title == other.title && self.content == other.content
+impl Popup {
+    pub fn dialog(message: String) -> Self {
+        let mut popup = Popup::default();
+        popup.title = "Warning".to_string();
+        popup.content = message;
+        popup.buttons = vec![
+            Button::new("Yes", true, |state| {
+                async_fn_body! {
+                    match state.send(DeleteCommand).await.ok() {
+                      Some(_) => { debug!("command deleted") }
+                      None => { debug!("something went wrong") }
+                    }
+                }
+            }),
+            Button::new("No", false, |_| {
+                async_fn_body! {
+                    debug!("No button clicked")
+                }
+            }),
+        ];
+
+        popup
+    }
+
+    pub fn help_main() -> Self {
+        let mut popup = Popup::default();
+        popup.title = "Help".to_string();
+        popup.content = main_options().to_string(); // TODO rewrite this
+        popup.buttons = vec![Button::new("Ok", true, |_| {
+            async_fn_body! {
+                debug!("Ok button clicked")
+            }
+        })];
+
+        popup
     }
 }
 
-impl Eq for Popup {}
-
-impl Component for Popup {
+impl Renderable for Popup {
     fn render(&mut self, frame: &mut Frame, area: Rect) {
         let paragraph = Paragraph::new(self.content.to_owned())
             .alignment(Center)
             .style(Style::default())
-            .alignment(Alignment::Left)
             .wrap(Wrap { trim: true })
             .block(Block::default().borders(Borders::ALL));
 
         let popup_area = compute_popup_area(&self.content, area);
-
+        let [content_area, buttons_area] = *split_content_and_buttons(popup_area) else {
+            panic!()
+        };
         frame.render_widget(Clear, popup_area);
-        frame.render_widget(paragraph, popup_area);
+        // TODO needs to render a block with all the popup_area
+        frame.render_widget(paragraph, content_area);
 
         // crate are for the buttons
-        let button_area = button_area(self.buttons.len(), popup_area);
+        let button_area = button_area(self.buttons.len(), buttons_area);
         // render buttons inside that area
         button_area.iter().enumerate().for_each(|(i, area)| {
             let current_button = &mut self.buttons[i];
             if i == self.state.selected {
-                current_button.is_selected = true
+                current_button.is_active = true
             } else {
-                current_button.is_selected = false
+                current_button.is_active = false
             }
             current_button.render(frame, *area);
         });
@@ -106,26 +138,21 @@ fn button_area(number_of_buttons: usize, area: Rect) -> Rc<[Rect]> {
 fn create_button_layout(area: Rect, constraints: &[Constraint]) -> Rc<[Rect]> {
     Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(100); 1])
-        .split(area)[0]
-        .pipe(|sub_area| {
-            Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([Constraint::Percentage(25); 4])
-                .split(sub_area)[3]
-        })
-        .pipe(|bottom_rect| {
-            Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints(constraints)
-                .split(bottom_rect)
-        })
+        .constraints(constraints)
+        .split(area)
+}
+
+fn split_content_and_buttons(rect: Rect) -> Rc<[Rect]> {
+    Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(85), Constraint::Percentage(15)])
+        .split(rect)
 }
 
 fn compute_popup_area(content: &str, area: Rect) -> Rect {
     use tui::layout::{Constraint, Direction, Layout};
 
-    let width = content.width() as u16;
+    let width = content.custom_width();
     let height = 5;
 
     const SCALE_FACTOR: u16 = 100;
@@ -140,7 +167,7 @@ fn compute_popup_area(content: &str, area: Rect) -> Rect {
     } else {
         final_height
     };
-    let width = if width > 100 { 100 } else { width };
+    let width = if width > 50 { 50 } else { width };
 
     Layout::default()
         .direction(Direction::Vertical)
@@ -160,4 +187,232 @@ fn compute_popup_area(content: &str, area: Rect) -> Rect {
                 ])
                 .split(new_area)[1]
         })
+}
+
+macro_rules! cell {
+    ($text:expr) => {
+        Cell::from($text)
+    };
+}
+
+macro_rules! row {
+    ($( $cell:expr),+ $(,)?) => {{
+        let mut row = Row::default();
+        $(
+            row.add_cell($cell);
+        )*
+
+        row
+        }};
+
+}
+macro_rules! table {
+    ($( $row:expr),+ $(,)?) => {{
+        let mut table= vec![];
+        $(
+           table.push($row);
+        )*
+
+       table.into()
+        }};
+
+}
+
+fn main_options() -> Table {
+    table! {
+            row! {cell!("Quit"), cell!("<Q/Esc/Ctrl-C>")},
+            row! {cell!("Create new command"), cell!("<I/Insert>")},
+            row! {cell!("Delete selected command"), cell!("<D/Delete>")},
+            row! {cell!("Edit selected command"), cell!("<E>")},
+            row! {cell!("Move to next namespace"), cell!("<L/→/Tab>")},
+            row! {cell!("Move to previous namespace"), cell!("<H/←/Shift-Tab>")},
+            row! {cell!("Move up"), cell!("<K/↑>")},
+            row! {cell!("Move down"), cell!("<J/↓>")},
+            row! {cell!("Copy selected command"), cell!("<Y>")},
+            row! {cell!("Search commands"), cell!("<F//>")},
+            row! {cell!("Show help"), cell!("<F1/?>")},
+    }
+}
+
+fn edit_options() -> Table {
+    table! {
+            row! { cell!("Return"), cell!("<Esc/Ctrl-C>")},
+            row! { cell!("Next Field"), cell!("<Tab>")},
+            row! { cell!("Previous Field"), cell!("<Shift-Tab>")},
+            row! { cell!("Update command"), cell!("<Enter/Ctrl-S>")},
+            row! { cell!("Help"), cell!("<F1>")},
+    }
+}
+
+fn insert_options() -> Table {
+    table! {
+            row! { cell!("Return"), cell!("<Esc/Ctrl-C>")},
+            row! { cell!("Next Field"), cell!("<Tab>")},
+            row! { cell!("Previous Field"), cell!("<Shift-Tab>")},
+            row! { cell!("Create command"), cell!("<Enter/Ctrl-S>")},
+            row! { cell!("Help"), cell!("<F1>")},
+    }
+}
+
+#[derive(Clone)]
+pub struct Table {
+    pub content: Vec<Row>,
+}
+
+impl fmt::Display for Table {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.content
+                .iter()
+                .map(|row| row.to_string())
+                .collect::<Vec<_>>()
+                .join("\n")
+        )
+    }
+}
+
+impl Table {
+    fn new(content: Vec<Row>) -> Table {
+        Table { content }.build()
+    }
+
+    fn build(&self) -> Self {
+        let row_bigger_cell_width = self.content.iter().fold(0, |mut acc, row| {
+            let current_cell_width = row.width();
+            if acc < current_cell_width {
+                acc = current_cell_width
+            }
+            acc
+        });
+
+        let mut content = vec![];
+
+        for row in &self.content {
+            let new_row = row
+                .cells()
+                .map(|cell| {
+                    let new_cell_content = cell.text.to_owned()
+                        + &" ".repeat((row_bigger_cell_width - cell.width()) as usize);
+
+                    Cell::from(new_cell_content)
+                })
+                .collect::<Row>();
+
+            content.push(new_row);
+        }
+
+        Table { content }
+    }
+}
+
+impl From<Vec<Row>> for Table {
+    fn from(content: Vec<Row>) -> Self {
+        Table::new(content)
+    }
+}
+
+impl Deref for Table {
+    type Target = Vec<Row>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.content
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct Row {
+    pub cells: Vec<Cell>,
+}
+
+impl fmt::Display for Row {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let row = self
+            .cells
+            .iter()
+            .map(|cell| cell.to_string())
+            .collect::<Vec<_>>()
+            .join(" ");
+        write!(f, "{}", row)
+    }
+}
+
+impl Row {
+    pub fn add_cell(&mut self, cell: Cell) {
+        self.cells.push(cell);
+    }
+
+    pub fn width(&self) -> u16 {
+        self.cells
+            .iter()
+            .map(|cell| cell.width())
+            .max()
+            .unwrap_or(0)
+    }
+
+    pub fn cells(&self) -> Iter<'_, Cell> {
+        self.cells.iter()
+    }
+}
+
+impl FromIterator<Cell> for Row {
+    fn from_iter<T: IntoIterator<Item = Cell>>(iter: T) -> Self {
+        let mut row = Row::default();
+        for i in iter {
+            row.add_cell(i);
+        }
+        row
+    }
+}
+
+#[derive(Clone)]
+pub struct Cell {
+    pub text: String,
+}
+
+impl fmt::Display for Cell {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.text)
+    }
+}
+
+impl Cell {
+    fn new(text: String) -> Cell {
+        Cell { text }
+    }
+
+    fn width(&self) -> u16 {
+        self.text.custom_width() as u16
+    }
+}
+
+impl From<&'_ str> for Cell {
+    fn from(text: &'_ str) -> Self {
+        Cell::new(text.to_owned())
+    }
+}
+
+impl From<String> for Cell {
+    fn from(text: String) -> Self {
+        Cell::new(text)
+    }
+}
+
+trait CustomWidth {
+    fn custom_width(&self) -> u16;
+}
+
+impl CustomWidth for str {
+    fn custom_width(&self) -> u16 {
+        let lines = self.lines();
+        lines.into_iter().fold(0, |mut acc, line| {
+            let cur_row_width = line.width() as u16;
+            if acc < cur_row_width {
+                acc = cur_row_width
+            };
+
+            acc
+        })
+    }
 }

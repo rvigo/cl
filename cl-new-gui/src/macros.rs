@@ -1,16 +1,8 @@
 #[macro_export]
 macro_rules! render {
-    ($frame:ident, $({ $what:tt, $_where:expr}),* $(,)?) => {
+    ($frame:ident, $({ $what:expr, $_where:expr}),* $(,)?) => {
         $(
-            $frame.render_widget($what, $_where);
-        )+
-    };
-
-
-
-    ($frame:ident, $({ $what:path, $_where:expr, $state:expr}),* $(,)?) => {
-        $(
-            $frame.render_stateful_widget($what, $_where, $state);
+            $what.borrow_mut().render($frame, $_where);
         )+
     };
 }
@@ -23,4 +15,13 @@ macro_rules! oneshot {
         $state_tx.send(_event).await.ok();
         rx.await.ok()
     }};
+}
+
+#[macro_export]
+macro_rules! async_fn_body {
+    ($($body:stmt);*) => {
+        Box::pin(async move {
+            $($body)*
+        })
+    };
 }

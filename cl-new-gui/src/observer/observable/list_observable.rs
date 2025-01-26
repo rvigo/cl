@@ -1,7 +1,6 @@
 use crate::component::List;
 use crate::observer::event::Event;
 use crate::observer::observable::Observable;
-use crate::observer::ObservableComponent;
 use async_trait::async_trait;
 
 #[async_trait(?Send)]
@@ -11,12 +10,10 @@ impl Observable for List {
             Event::Next(idx) => self.next(*idx),
             Event::Previous(idx) => self.previous(*idx),
             Event::UpdateAll(items) => {
-                self.items = items.to_vec();
+                self.update_items(items.to_vec());
                 self.state.select(Some(0))
             }
             _ => {}
         }
     }
 }
-
-impl ObservableComponent for List {}

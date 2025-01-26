@@ -1,20 +1,9 @@
-use crate::component::{Button, Popup};
-use crate::observer::event::PopupAction::{Cancel, Confirm};
+use crate::component::Popup;
 use crate::observer::event::{Event, PopupEvent, PopupType};
 use crate::observer::observable::Observable;
-use crate::observer::ObservableComponent;
-use crate::state::state_event::StateEvent::ExecuteCommand;
+use crate::screen::{ActiveScreen, ScreenCommandCallback};
 use async_trait::async_trait;
 use log::debug;
-
-#[macro_export]
-macro_rules! async_fn_body {
-    ($($body:stmt);*) => {
-        Box::pin(async move {
-            $($body)*
-        })
-    };
-}
 
 #[async_trait(?Send)]
 impl Observable for Popup {
@@ -22,36 +11,22 @@ impl Observable for Popup {
         match event {
             Event::Popup(popup) => match popup {
                 PopupEvent::Create(type_) => match type_ {
-                    // TODO move this to a popup factory
-                    PopupType::Dialog(message) => {
-                        self.title = "Warning".to_string();
-                        self.content = message;
-                        self.buttons = vec![
-                            Button::new("Yes", Confirm, |state| {
-                                async_fn_body! {
-                                    let result = state.send(ExecuteCommand).await.ok();
-                                    match result {
-                                      Some(_) => { debug!("worked!") }
-                                      None => { debug!("something went wrong") }
-                                    }
-                                }
-                            }),
-                            Button::new("No", Cancel, |_| {
-                                async_fn_body! {
-                                    debug!("asdasd")
-                                }
-                            }),
-                        ]
-                    }
+                    PopupType::Dialog(message) => *self = Popup::dialog(message),
+                    PopupType::Help(active_screen) => match active_screen {
+                        ActiveScreen::Main => *self = Popup::help_main(),
+                    },
                 },
                 PopupEvent::NextChoice => self.next(),
                 PopupEvent::PreviousChoice => self.previous(),
-                PopupEvent::Action(_) => {}
-                PopupEvent::Run(state_tx) => self.run_button_callback(state_tx).await,
+                PopupEvent::Run(state_tx, tx) => {
+                    debug!("running code inside the button");
+                    self.click(state_tx).await;
+
+                    debug!("sending a callback response to the previous layer");
+                    tx.send(ScreenCommandCallback::UpdateAll).await.ok();
+                }
             },
             _ => {}
         }
     }
 }
-
-impl ObservableComponent for Popup {}

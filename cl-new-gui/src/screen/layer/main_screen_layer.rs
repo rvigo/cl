@@ -1,13 +1,13 @@
-use crate::component::{List, SharedComponent, Tabs, TextBox, TextBoxName};
+use crate::component::{Component, List, Tabs, TextBox, TextBoxName};
+use crate::render;
 use crate::screen::layer::Layer;
 use crate::screen::Listeners;
-use crate::render;
 use std::any::TypeId;
 use std::collections::BTreeMap;
-use tui::layout::{Alignment, Constraint, Direction, Layout};
-use tui::prelude::{Modifier, Style, Text};
+use tui::layout::{Constraint, Direction, Layout};
+use tui::prelude::Style;
 use tui::style::Color as TuiColor;
-use tui::widgets::{Block, BorderType, Borders, Padding, Paragraph};
+use tui::widgets::{Block, Borders};
 use tui::Frame;
 
 pub const DEFAULT_TEXT_COLOR: TuiColor = TuiColor::Rgb(205, 214, 244);
@@ -20,13 +20,14 @@ pub const DEFAULT_CURSOR_COLOR: TuiColor = TuiColor::Rgb(245, 224, 220);
 pub const DEFAULT_INACTIVE_TEXTBOX_COLOR: TuiColor = TuiColor::Rgb(108, 112, 134);
 
 pub struct MainScreenLayer {
-    pub command: SharedComponent,
-    pub description: SharedComponent,
-    pub tags: SharedComponent,
-    pub namespace: SharedComponent,
-    pub list: SharedComponent,
-    pub tabs: SharedComponent,
+    pub command: Component,
+    pub description: Component,
+    pub tags: Component,
+    pub namespace: Component,
+    pub list: Component,
+    pub tabs: Component,
     pub listeners: Listeners,
+    pub app_name: Component,
 }
 
 impl Layer for MainScreenLayer {
@@ -53,12 +54,12 @@ impl Layer for MainScreenLayer {
         // components
         let mut listeners = Listeners::new();
 
-        let command_shared = SharedComponent::new(command);
-        let description_shared = SharedComponent::new(description);
-        let tags_shared = SharedComponent::new(tags);
-        let namespace_shared = SharedComponent::new(namespace);
-        let tabs_shared = SharedComponent::new(tabs);
-        let list_shared = SharedComponent::new(list);
+        let command_shared = Component::new(command);
+        let description_shared = Component::new(description);
+        let tags_shared = Component::new(tags);
+        let namespace_shared = Component::new(namespace);
+        let tabs_shared = Component::new(tabs);
+        let list_shared = Component::new(list);
 
         listeners.insert(
             TypeId::of::<TextBox>(),
@@ -72,6 +73,12 @@ impl Layer for MainScreenLayer {
         listeners.insert(TypeId::of::<Tabs>(), vec![tabs_shared.clone()]);
         listeners.insert(TypeId::of::<List>(), vec![list_shared.clone()]);
 
+        // static value
+        let app_name = Component::new(TextBox {
+            name: TextBoxName::Command,
+            content: Some(format!("cl - {}", env!("CARGO_PKG_VERSION"))),
+        });
+
         Self {
             command: command_shared.clone(),
             description: description_shared.clone(),
@@ -80,6 +87,7 @@ impl Layer for MainScreenLayer {
             list: list_shared.clone(),
             tabs: tabs_shared.clone(),
             listeners,
+            app_name,
         }
     }
 
@@ -110,39 +118,26 @@ impl Layer for MainScreenLayer {
             .constraints(areas)
             .split(drawable_chunks[0]);
 
-        let left_side = Layout::default()
+        let [app_name_rect, list_rect] = *Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Max(3), Constraint::Length(5)])
-            .split(main_chunks[0]);
+            .split(main_chunks[0])
+        else {
+            todo!()
+        };
 
-        let app_name = Paragraph::new(Text::styled(
-            format!("cl - {}", env!("CARGO_PKG_VERSION")),
-            Style::default()
-                .fg(DEFAULT_WIDGET_NAME_COLOR)
-                .add_modifier(Modifier::BOLD | Modifier::ITALIC),
-        ))
-        .alignment(Alignment::Center)
-        .block(
-            Block::default()
-                .borders(Borders::TOP | Borders::RIGHT)
-                .style(
-                    Style::default()
-                        .bg(DEFAULT_BACKGROUND_COLOR)
-                        .fg(DEFAULT_TEXT_COLOR),
-                )
-                .border_type(BorderType::Rounded)
-                .padding(Padding::horizontal(2)),
-        );
-
-        let right_side = Layout::default()
+        let [tabs_rect, description_rect, details_rect, command_rect] = *Layout::default()
             .direction(Direction::Vertical)
             .constraints(constraints)
-            .split(main_chunks[1]);
+            .split(main_chunks[1])
+        else {
+            todo!()
+        };
 
         let [namespace_area, tags_area] = *Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Percentage(40), Constraint::Percentage(60)])
-            .split(right_side[2])
+            .split(details_rect)
         else {
             panic!() // TODO improve this
         };
@@ -166,20 +161,18 @@ impl Layer for MainScreenLayer {
             .split(footer.inner(drawable_chunks[1]));
 
         render! {
-                frame,
-                {app_name, left_side[0]},
-                // {aliases,  left_side[1]},
+            frame,
+            { self.app_name, app_name_rect},
+            { self.list, list_rect },
+            { self.tabs, tabs_rect },
+            { self.description, description_rect},
+            { self.namespace, namespace_area },
+            { self.tags, tags_area },
+            { self.command, command_rect },
         }
-
-        self.list.borrow_mut().render(frame, left_side[1]);
-        self.description.borrow_mut().render(frame, right_side[1]); // middle
-        self.command.borrow_mut().render(frame, right_side[3]);
-        self.namespace.borrow_mut().render(frame, namespace_area);
-        self.tags.borrow_mut().render(frame, tags_area);
-        self.tabs.borrow_mut().render(frame, right_side[0])
     }
 
-    fn get_listeners(&self) -> BTreeMap<TypeId, Vec<SharedComponent>> {
+    fn get_listeners(&self) -> BTreeMap<TypeId, Vec<Component>> {
         self.listeners.clone()
     }
 }

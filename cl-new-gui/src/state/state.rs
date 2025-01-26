@@ -123,6 +123,7 @@ impl State {
             .unwrap();
     }
 
+    // TODO should persist the changes
     pub fn delete_command(&mut self) {
         let command = &self.selected_command.value;
         match self.commands.remove(command) {

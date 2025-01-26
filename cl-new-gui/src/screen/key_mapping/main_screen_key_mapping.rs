@@ -1,9 +1,10 @@
 use crate::component::{List, Popup, Tabs, TextBox};
-use crate::observer::event::PopupType::Dialog;
+use crate::observer::event::PopupType::{Dialog, Help};
 use crate::observer::event::{Event, PopupEvent};
 use crate::screen::key_mapping::ScreenCommand::{AddLayer, Quit};
 use crate::screen::key_mapping::{KeyMapping, ScreenCommand};
 use crate::screen::layer::{Layer, MainScreenLayer, PopupLayer};
+use crate::screen::ActiveScreen::Main;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::{
     ExecuteCommand, NextTab, PreviousTab, SelectNextCommand, SelectPreviousCommand,
@@ -39,8 +40,7 @@ impl KeyMapping for MainScreenLayer {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                let result = oneshot!(state_tx, SelectNextCommand);
-                if let Some(selected_command) = result {
+                if let Some(selected_command) = oneshot!(state_tx, SelectNextCommand) {
                     let events = vec![
                         event!(List, Event::Next(selected_command.current_idx)),
                         event!(
@@ -59,8 +59,7 @@ impl KeyMapping for MainScreenLayer {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                let result = oneshot!(state_tx, SelectPreviousCommand);
-                if let Some(selected_command) = result {
+                if let Some(selected_command) = oneshot!(state_tx, SelectPreviousCommand) {
                     let events = vec![
                         event!(List, Event::Previous(selected_command.current_idx)),
                         event!(
@@ -78,9 +77,8 @@ impl KeyMapping for MainScreenLayer {
                 code: KeyCode::Char('l'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => {
-                let result = oneshot!(state_tx, NextTab);
-                if let Some((selected_namespace, selected_command, new_items)) = result {
+            } => match oneshot!(state_tx, NextTab) {
+                Some((selected_namespace, selected_command, new_items)) => {
                     let events = vec![
                         event!(List, Event::UpdateAll(new_items.aliases())),
                         event!(Tabs, Event::Next(selected_namespace.idx)),
@@ -91,18 +89,15 @@ impl KeyMapping for MainScreenLayer {
                     ];
 
                     Some(events)
-                } else {
-                    None
                 }
-            }
+                _ => None,
+            },
             KeyEvent {
                 code: KeyCode::Char('h'),
                 modifiers: KeyModifiers::NONE,
                 ..
-            } => {
-                let result = oneshot!(state_tx, PreviousTab);
-
-                if let Some((selected_namespace, selected_command, new_items)) = result {
+            } => match oneshot!(state_tx, PreviousTab) {
+                Some((selected_namespace, selected_command, new_items)) => {
                     let events = vec![
                         event!(List, Event::UpdateAll(new_items.aliases())),
                         event!(Tabs, Event::Previous(selected_namespace.idx)),
@@ -113,10 +108,18 @@ impl KeyMapping for MainScreenLayer {
                     ];
 
                     Some(events)
-                } else {
-                    None
                 }
-            }
+                _ => None,
+            },
+
+            KeyEvent {
+                code: KeyCode::Char('?'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            } => Some(vec![
+                AddLayer(Box::new(PopupLayer::new())),
+                event!(Popup, Event::Popup(PopupEvent::Create(Help(Main)))),
+            ]),
             KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,

@@ -1,7 +1,9 @@
 mod key_mapping;
 pub mod layer;
 
-use crate::component::SharedComponent;
+pub use crate::screen::key_mapping::ScreenCommandCallback;
+
+use crate::component::Component;
 use crate::observer::event::Event;
 use crate::observer::subscription::SubscriptionSet;
 use crate::screen::key_mapping::ScreenCommand;
@@ -14,25 +16,25 @@ use layer::MainScreenLayer;
 use log::error;
 use std::any::TypeId;
 use std::collections::BTreeMap;
-use tokio::sync::mpsc::Sender;
+use tokio::sync::mpsc::{Receiver, Sender};
 use tui::Frame;
 
-#[derive(Default)]
+#[derive(Default, Clone, Debug)]
 pub enum ActiveScreen {
     #[default]
     Main,
 }
 
-pub struct Screens {
+pub struct Screen {
     pub active_screen: ActiveScreen,
-    pub subscriptions: SubscriptionSet<TypeId, SharedComponent>,
+    pub subscriptions: SubscriptionSet<TypeId, Component>,
     pub layers: Vec<Box<dyn Layer>>,
 }
 
-pub type Listeners = BTreeMap<TypeId, Vec<SharedComponent>>;
+pub type Listeners = BTreeMap<TypeId, Vec<Component>>;
 
-impl Screens {
-    pub fn new() -> Screens {
+impl Screen {
+    pub fn new() -> Screen {
         /* TODO
            need to handle a `quit` event.
            may it be a signal?
@@ -77,8 +79,12 @@ impl Screens {
                                 ScreenCommand::AddLayer(layer) => {
                                     self.add_layer(layer).await;
                                 }
-                                ScreenCommand::PopLastLayer => {
+                                ScreenCommand::PopLastLayer(mut callback_receiver) => {
                                     self.remove_last_layer().await;
+
+                                    if let Some(mut events) = callback_receiver.take() {
+                                        self.handle_callback_receiver(&mut events, state_tx).await
+                                    }
                                 }
                                 ScreenCommand::Notify((tid, event)) => {
                                     self.notify(tid, event).await;
@@ -91,6 +97,17 @@ impl Screens {
                     }
                 }
             }
+        }
+    }
+
+    pub async fn handle_callback_receiver(
+        &mut self,
+        callback_receiver: &mut Receiver<ScreenCommandCallback>,
+        state_tx: &Sender<StateEvent>,
+    ) {
+        if let Some(message) = callback_receiver.recv().await {
+            let events = message.handle(state_tx).await;
+            self.notify_all(events.unwrap_or_default()).await;
         }
     }
 
@@ -131,6 +148,13 @@ impl Screens {
             }
         } else {
             error!("No listeners found for TypeId {:?}", id);
+        }
+    }
+
+    pub async fn notify_all(&mut self, events: Vec<impl Into<(TypeId, Event)>>) {
+        for event in events {
+            let (tid, event) = event.into();
+            self.notify(tid, event).await
         }
     }
 
