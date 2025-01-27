@@ -1,14 +1,17 @@
 mod button;
+mod clipboard_status;
 mod list;
 mod popup;
 mod renderable;
+mod static_info;
 mod tabs;
 mod textbox;
 
-pub use button::Button;
+pub use clipboard_status::ClipboardStatus;
 pub use list::List;
 pub use popup::Popup;
 pub use renderable::Renderable;
+pub use static_info::StaticInfo;
 pub use tabs::Tabs;
 pub use textbox::TextBox;
 pub use textbox::TextBoxName;
@@ -17,6 +20,8 @@ use crate::observer::ObservableComponent;
 use std::cell::{Ref, RefCell, RefMut};
 use std::ops::{Deref, DerefMut};
 use std::rc::Rc;
+use tui::layout::Rect;
+use tui::Frame;
 
 #[derive(Debug)]
 pub struct Component(pub Rc<RefCell<dyn ObservableComponent + 'static>>);
@@ -52,5 +57,11 @@ impl Deref for Component {
 impl DerefMut for Component {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
+    }
+}
+
+impl Renderable for Component {
+    fn render(&mut self, frame: &mut Frame, area: Rect) {
+        self.borrow_mut().render(frame, area)
     }
 }

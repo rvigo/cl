@@ -1,8 +1,8 @@
 #[macro_export]
 macro_rules! render {
-    ($frame:ident, $({ $what:expr, $_where:expr}),* $(,)?) => {
+    ($frame:ident, $({ $what:expr , $_where:expr}),* $(,)?) => {
         $(
-            $what.borrow_mut().render($frame, $_where);
+            $what.render($frame, $_where);
         )+
     };
 }
@@ -23,5 +23,12 @@ macro_rules! async_fn_body {
         Box::pin(async move {
             $($body)*
         })
+    };
+}
+
+#[macro_export]
+macro_rules! event {
+    ($type_:ty, $event:expr) => {
+        ScreenCommand::Notify((std::any::TypeId::of::<$type_>(), $event))
     };
 }

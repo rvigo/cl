@@ -1,4 +1,7 @@
-use crate::component::{Component, List, Tabs, TextBox, TextBoxName};
+use crate::clipboard::Clipboard;
+use crate::component::{
+    ClipboardStatus, Component, List, Renderable, StaticInfo, Tabs, TextBox, TextBoxName,
+};
 use crate::render;
 use crate::screen::layer::Layer;
 use crate::screen::Listeners;
@@ -26,8 +29,9 @@ pub struct MainScreenLayer {
     pub namespace: Component,
     pub list: Component,
     pub tabs: Component,
+    pub clipboard: Component,
     pub listeners: Listeners,
-    pub app_name: Component,
+    pub app_name: StaticInfo,
 }
 
 impl Layer for MainScreenLayer {
@@ -73,11 +77,11 @@ impl Layer for MainScreenLayer {
         listeners.insert(TypeId::of::<Tabs>(), vec![tabs_shared.clone()]);
         listeners.insert(TypeId::of::<List>(), vec![list_shared.clone()]);
 
-        // static value
-        let app_name = Component::new(TextBox {
-            name: TextBoxName::Command,
-            content: Some(format!("cl - {}", env!("CARGO_PKG_VERSION"))),
-        });
+        let clipboard = Component::new(ClipboardStatus::new());
+
+        listeners.insert(TypeId::of::<Clipboard>(), vec![clipboard.clone()]);
+
+        let app_name = StaticInfo::new(format!("cl - {}", env!("CARGO_PKG_VERSION")));
 
         Self {
             command: command_shared.clone(),
@@ -88,6 +92,7 @@ impl Layer for MainScreenLayer {
             tabs: tabs_shared.clone(),
             listeners,
             app_name,
+            clipboard,
         }
     }
 
@@ -151,24 +156,25 @@ impl Layer for MainScreenLayer {
                     .fg(DEFAULT_TEXT_COLOR),
             );
 
-        let statusbar_layout = Layout::default()
+        let [_, clipboard_rect, _] = *Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
                 Constraint::Percentage(33),
                 Constraint::Percentage(33),
                 Constraint::Percentage(33),
             ])
-            .split(footer.inner(drawable_chunks[1]));
+            .split(footer.inner(drawable_chunks[1])) else { todo!() };
 
         render! {
             frame,
-            { self.app_name, app_name_rect},
+            { self.app_name, app_name_rect },
             { self.list, list_rect },
             { self.tabs, tabs_rect },
             { self.description, description_rect},
             { self.namespace, namespace_area },
             { self.tags, tags_area },
             { self.command, command_rect },
+            { self.clipboard, clipboard_rect }
         }
     }
 

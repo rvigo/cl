@@ -14,13 +14,6 @@ use std::any::TypeId;
 use tokio::sync::mpsc::Receiver;
 use tokio::sync::mpsc::Sender;
 
-#[macro_export]
-macro_rules! event {
-    {$type:ty, $event:expr} => {
-        ScreenCommand::Notify((std::any::TypeId::of::<$type>(), $event))
-    };
-}
-
 #[async_trait(?Send)]
 pub trait KeyMapping {
     async fn handle_key_event(
@@ -38,6 +31,8 @@ pub enum ScreenCommand {
     AddLayer(Box<dyn Layer + 'static>),
     /// Pop the last layer from the screen and send a callback to the previous layer
     PopLastLayer(Option<Receiver<ScreenCommandCallback>>),
+    /// Copy content to clipboard
+    CopyToClipboard,
     /// Quit the app
     Quit,
 }

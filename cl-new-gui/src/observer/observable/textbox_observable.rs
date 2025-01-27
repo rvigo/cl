@@ -23,6 +23,7 @@ impl Observable for TextBox {
             }),
 
             TextBoxName::Namespace => command.namespace.some_or_none(),
+            _ => None, // FIXME static components should not be here
         };
 
         self.update_content(content);

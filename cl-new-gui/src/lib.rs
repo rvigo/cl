@@ -7,6 +7,7 @@ pub mod screen;
 pub mod state;
 pub mod ui;
 pub mod signal_handler;
+pub mod clipboard;
 
 pub trait Pipe: Sized {
     fn pipe<F, R>(self, f: F) -> R
