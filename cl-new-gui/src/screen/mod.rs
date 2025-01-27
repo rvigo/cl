@@ -3,14 +3,18 @@ pub mod layer;
 
 pub use crate::screen::key_mapping::ScreenCommandCallback;
 
+use crate::clipboard::Clipboard;
 use crate::component::Component;
+use crate::observer::event::ClipboardAction::Copied;
 use crate::observer::event::Event;
 use crate::observer::subscription::SubscriptionSet;
+use crate::oneshot;
 use crate::screen::key_mapping::ScreenCommand;
 use crate::screen::layer::Layer;
 use crate::signal_handler::Signal::UserInt;
 use crate::signal_handler::{SigHandler, Signal};
 use crate::state::state_event::StateEvent;
+use crate::state::state_event::StateEvent::CurrentCommand;
 use crossterm::event::Event as CrosstermEvent;
 use layer::MainScreenLayer;
 use log::error;
@@ -29,27 +33,18 @@ pub struct Screen {
     pub active_screen: ActiveScreen,
     pub subscriptions: SubscriptionSet<TypeId, Component>,
     pub layers: Vec<Box<dyn Layer>>,
+    pub clipboard: Option<Clipboard>,
 }
 
 pub type Listeners = BTreeMap<TypeId, Vec<Component>>;
 
 impl Screen {
     pub fn new() -> Screen {
-        /* TODO
-           need to handle a `quit` event.
-           may it be a signal?
-           may it be a `break`?
-           we'll see
-        */
-
-        /* TODO
-           how can I handle error at the `backend` level?
-           should it have its own signal handler? Should I check the returns of the methods?
-        */
         let mut screens = Self {
             active_screen: ActiveScreen::Main,
             subscriptions: SubscriptionSet::new(),
             layers: Vec::new(),
+            clipboard: Clipboard::new().ok(),
         };
 
         let active_screen = screens.get_active_screen_mut();
@@ -91,6 +86,18 @@ impl Screen {
                                 }
                                 ScreenCommand::Quit => {
                                     sig_handler.send_signal(UserInt).ok();
+                                }
+                                ScreenCommand::CopyToClipboard => {
+                                    if let Some(clipboard) = &mut self.clipboard {
+                                        if let Some(cmd) = oneshot!(state_tx, CurrentCommand) {
+                                            clipboard.set_content(cmd.value.command).ok();
+                                            self.notify(
+                                                TypeId::of::<Clipboard>(),
+                                                Event::Clipboard(Copied),
+                                            )
+                                            .await
+                                        }
+                                    }
                                 }
                             };
                         }

@@ -11,6 +11,7 @@ pub enum Event {
     UpdateAll(Vec<String>),
     UpdateCommand(Command<'static>),
     Popup(PopupEvent),
+    Clipboard(ClipboardAction),
 }
 
 #[derive(Clone, Debug)]
@@ -24,5 +25,10 @@ pub enum PopupEvent {
 #[derive(Clone, Debug)]
 pub enum PopupType {
     Dialog(String),
-    Help(ActiveScreen)
+    Help(ActiveScreen),
+}
+
+#[derive(Clone, Debug)]
+pub enum ClipboardAction {
+    Copied,
 }

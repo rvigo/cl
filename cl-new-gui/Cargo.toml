@@ -16,6 +16,7 @@ tui = { package = "ratatui", version = "0.24.0" }
 unicode-width = "0.2.0"
 tokio-stream = { version = "0.1.14" }
 async-trait = "0.1.85"
+copypasta = "0.10.1"
 
 [dev-dependencies]
 tempdir.workspace = true

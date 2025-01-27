@@ -1,7 +1,7 @@
 use crate::component::{List, Popup, Tabs, TextBox};
 use crate::observer::event::PopupType::{Dialog, Help};
 use crate::observer::event::{Event, PopupEvent};
-use crate::screen::key_mapping::ScreenCommand::{AddLayer, Quit};
+use crate::screen::key_mapping::ScreenCommand::{AddLayer, CopyToClipboard, Quit};
 use crate::screen::key_mapping::{KeyMapping, ScreenCommand};
 use crate::screen::layer::{Layer, MainScreenLayer, PopupLayer};
 use crate::screen::ActiveScreen::Main;
@@ -111,7 +111,6 @@ impl KeyMapping for MainScreenLayer {
                 }
                 _ => None,
             },
-
             KeyEvent {
                 code: KeyCode::Char('?'),
                 modifiers: KeyModifiers::NONE,
@@ -120,6 +119,11 @@ impl KeyMapping for MainScreenLayer {
                 AddLayer(Box::new(PopupLayer::new())),
                 event!(Popup, Event::Popup(PopupEvent::Create(Help(Main)))),
             ]),
+            KeyEvent {
+                code: KeyCode::Char('y'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            } => Some(vec![CopyToClipboard]),
             KeyEvent {
                 code: KeyCode::Enter,
                 modifiers: KeyModifiers::NONE,
