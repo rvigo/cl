@@ -2,15 +2,15 @@ use crate::clipboard::Clipboard;
 use crate::component::{
     ClipboardStatus, Component, List, Renderable, StaticInfo, Tabs, TextBox, TextBoxName,
 };
+
+use crate::component::Search;
 use crate::render;
 use crate::screen::layer::Layer;
 use crate::screen::Listeners;
 use std::any::TypeId;
 use std::collections::BTreeMap;
 use tui::layout::{Constraint, Direction, Layout};
-use tui::prelude::Style;
 use tui::style::Color as TuiColor;
-use tui::widgets::{Block, Borders};
 use tui::Frame;
 
 pub const DEFAULT_TEXT_COLOR: TuiColor = TuiColor::Rgb(205, 214, 244);
@@ -32,6 +32,8 @@ pub struct MainScreenLayer {
     pub clipboard: Component,
     pub listeners: Listeners,
     pub app_name: StaticInfo,
+    pub help: StaticInfo,
+    pub quick_search: Component,
 }
 
 impl Layer for MainScreenLayer {
@@ -52,6 +54,11 @@ impl Layer for MainScreenLayer {
             name: TextBoxName::Namespace,
             ..Default::default()
         };
+
+        let quick_search = TextBox {
+            ..Default::default()
+        };
+
         let list = List::new();
         let tabs = Tabs::new();
 
@@ -64,6 +71,9 @@ impl Layer for MainScreenLayer {
         let namespace_shared = Component::new(namespace);
         let tabs_shared = Component::new(tabs);
         let list_shared = Component::new(list);
+
+        let quick_search_share = Component::new(quick_search);
+        listeners.insert(TypeId::of::<Search>(), vec![quick_search_share.clone()]);
 
         listeners.insert(
             TypeId::of::<TextBox>(),
@@ -81,7 +91,9 @@ impl Layer for MainScreenLayer {
 
         listeners.insert(TypeId::of::<Clipboard>(), vec![clipboard.clone()]);
 
+        // statics
         let app_name = StaticInfo::new(format!("cl - {}", env!("CARGO_PKG_VERSION")));
+        let help = StaticInfo::new("F1/? for Help");
 
         Self {
             command: command_shared.clone(),
@@ -93,30 +105,29 @@ impl Layer for MainScreenLayer {
             listeners,
             app_name,
             clipboard,
+            help,
+            quick_search: quick_search_share.clone(),
         }
     }
 
     fn render(&mut self, frame: &mut Frame) {
-        let drawable_area = [
-            Constraint::Length(5), // drawable area
-            Constraint::Max(3),    // footer
-        ];
+        let drawable_area = [Constraint::Fill(2), Constraint::Max(3)];
         let areas = [
-            Constraint::Percentage(20), // name & aliases
-            Constraint::Percentage(80), // right side
+            Constraint::Length(30), // name & aliases
+            Constraint::Fill(1),    // right side
         ];
 
-        let constraints = [
-            Constraint::Max(3),    // tabs
-            Constraint::Max(5),    // description
-            Constraint::Max(3),    // details
-            Constraint::Length(3), // command
+        let details = [
+            Constraint::Length(3),   // tabs
+            Constraint::Ratio(1, 2), // description
+            Constraint::Length(3),   // details
+            Constraint::Ratio(1, 2), // command
         ];
 
         let drawable_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints(drawable_area)
-            .split(frame.size());
+            .split(frame.area());
 
         let main_chunks = Layout::default()
             .direction(Direction::Horizontal)
@@ -125,7 +136,7 @@ impl Layer for MainScreenLayer {
 
         let [app_name_rect, list_rect] = *Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Max(3), Constraint::Length(5)])
+            .constraints([Constraint::Max(3), Constraint::Fill(1)])
             .split(main_chunks[0])
         else {
             todo!()
@@ -133,7 +144,7 @@ impl Layer for MainScreenLayer {
 
         let [tabs_rect, description_rect, details_rect, command_rect] = *Layout::default()
             .direction(Direction::Vertical)
-            .constraints(constraints)
+            .constraints(details)
             .split(main_chunks[1])
         else {
             todo!()
@@ -141,29 +152,24 @@ impl Layer for MainScreenLayer {
 
         let [namespace_area, tags_area] = *Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(40), Constraint::Percentage(60)])
+            .constraints(Constraint::from_percentages([30, 70]))
             .split(details_rect)
         else {
             panic!() // TODO improve this
         };
 
         //
-        let footer = Block::default()
-            .borders(Borders::BOTTOM | Borders::RIGHT)
-            .style(
-                Style::default()
-                    .bg(DEFAULT_BACKGROUND_COLOR)
-                    .fg(DEFAULT_TEXT_COLOR),
-            );
-
-        let [_, clipboard_rect, _] = *Layout::default()
+        let [quick_search_rect, clipboard_rect, help_rect] = *Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
                 Constraint::Percentage(33),
                 Constraint::Percentage(33),
                 Constraint::Percentage(33),
             ])
-            .split(footer.inner(drawable_chunks[1])) else { todo!() };
+            .split(drawable_chunks[1])
+        else {
+            todo!()
+        };
 
         render! {
             frame,
@@ -174,7 +180,9 @@ impl Layer for MainScreenLayer {
             { self.namespace, namespace_area },
             { self.tags, tags_area },
             { self.command, command_rect },
-            { self.clipboard, clipboard_rect }
+            { self.clipboard, clipboard_rect },
+            { self.help, help_rect },
+            { self.quick_search, quick_search_rect }
         }
     }
 

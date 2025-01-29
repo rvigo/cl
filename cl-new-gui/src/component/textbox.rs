@@ -1,6 +1,7 @@
 use crate::component::Renderable;
 use std::fmt::Display;
 use tui::layout::Rect;
+use tui::widgets::BorderType::Rounded;
 use tui::widgets::{Block, Borders, Paragraph};
 use tui::Frame;
 
@@ -22,7 +23,7 @@ impl Renderable for TextBox {
             None => "",
             Some(c) => &c,
         };
-        let paragraph = Paragraph::new(content).block(Block::default().borders(Borders::all()));
+        let paragraph = Paragraph::new(content).block(Block::bordered());
 
         frame.render_widget(paragraph, area)
     }

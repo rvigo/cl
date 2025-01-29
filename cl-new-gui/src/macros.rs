@@ -32,3 +32,18 @@ macro_rules! event {
         ScreenCommand::Notify((std::any::TypeId::of::<$type_>(), $event))
     };
 }
+
+#[macro_export]
+macro_rules! run_if_some {
+    (
+        $option:expr,
+        $callback:expr
+    ) => {
+        if let Some(value) = $option {
+            $callback(value)
+        }
+        else { 
+            None
+        }
+    };
+}

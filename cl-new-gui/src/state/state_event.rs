@@ -1,16 +1,17 @@
-use crate::state::state::{SelectedCommand, SelectedNamespace};
+use crate::state::selected_command::SelectedCommand;
 use cl_core::Command;
 use tokio::sync::oneshot;
+use crate::state::selected_namespace::SelectedNamespace;
 
 #[derive(Debug)]
 pub enum StateEvent {
     /// Select the next command in the list
     SelectNextCommand {
-        respond_to: oneshot::Sender<SelectedCommand>,
+        respond_to: oneshot::Sender<Option<SelectedCommand>>,
     },
     /// Select the previous command in the list
     SelectPreviousCommand {
-        respond_to: oneshot::Sender<SelectedCommand>,
+        respond_to: oneshot::Sender<Option<SelectedCommand>>,
     },
     /// Execute the selected command
     ExecuteCommand,
@@ -24,7 +25,7 @@ pub enum StateEvent {
     },
     /// Get the current selected command
     CurrentCommand {
-        respond_to: oneshot::Sender<SelectedCommand>,
+        respond_to: oneshot::Sender<Option<SelectedCommand>>,
     },
     /// Get the previous tab info
     PreviousTab {
@@ -35,5 +36,9 @@ pub enum StateEvent {
         respond_to: oneshot::Sender<(SelectedNamespace, SelectedCommand, Vec<Command<'static>>)>,
     },
     /// Delete the command
-    DeleteCommand
+    DeleteCommand,
+    /// Filter
+    Filter(String),
+    /// Get current query
+    GetCurrentQuery { respond_to: oneshot::Sender<String> },
 }
