@@ -1,4 +1,4 @@
-use crate::component::{Popup, Component};
+use crate::component::{Component, Popup, Renderable};
 use crate::screen::layer::Layer;
 use std::any::TypeId;
 use std::collections::BTreeMap;
@@ -28,7 +28,7 @@ impl Layer for PopupLayer {
     }
 
     fn render(&mut self, frame: &mut Frame) {
-        self.popup.borrow_mut().render(frame, frame.size());
+        self.popup.render(frame, frame.area());
     }
 
     fn get_listeners(&self) -> BTreeMap<TypeId, Vec<Component>> {

@@ -1,8 +1,10 @@
 mod main_screen_layer;
 mod popup_layer;
+mod quick_search_layer;
 
 pub use main_screen_layer::MainScreenLayer;
 pub use popup_layer::PopupLayer;
+pub use quick_search_layer::QuickSearchLayer;
 
 use crate::component::Component;
 use crate::screen::key_mapping::KeyMapping;

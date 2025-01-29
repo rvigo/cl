@@ -1,8 +1,8 @@
 use crate::component::{List, Tabs, TextBox};
 use crate::observer::event::Event;
 use crate::screen::Screen;
-use crate::state::state::SelectedCommand;
 use std::any::TypeId;
+use crate::state::selected_command::SelectedCommand;
 
 pub struct Ui {
     pub selected_command: SelectedCommand,

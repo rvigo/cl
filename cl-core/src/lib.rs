@@ -18,6 +18,7 @@ pub use preferences::Preferences;
 pub use resource::errors::CommandError;
 pub use resource::fs;
 
+use itertools::Itertools;
 use std::collections::HashMap;
 
 pub type Namespace = String;
@@ -34,6 +35,12 @@ pub trait CommandVecExt<'cmd> {
     fn get_selected(&self, idx: usize) -> Command<'cmd>;
 
     fn first(&self) -> Command<'cmd>;
+
+    fn aliases(&self) -> Vec<String>;
+
+    fn namespaces(&self) -> Vec<String>;
+
+    fn as_map(&self) -> CommandMap<'cmd>;
 }
 
 impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
@@ -71,6 +78,22 @@ impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
         self.get(0)
             .cloned()
             .expect("List is empty, cannot retrieve the first element")
+    }
+
+    fn aliases(&self) -> Vec<String> {
+        self.iter().map(|cmd| cmd.alias.to_string()).collect()
+    }
+
+    fn namespaces(&self) -> Vec<String> {
+        self.iter().map(|cmd| cmd.namespace.to_string()).collect()
+    }
+
+    fn as_map(&self) -> CommandMap<'cmd> {
+        self.iter()
+            .group_by(|c| &c.namespace)
+            .into_iter()
+            .map(|(n, c)| (n.to_string(), c.cloned().collect()))
+            .collect::<CommandMap<'cmd>>()
     }
 }
 

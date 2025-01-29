@@ -5,7 +5,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialOrd, Ord, Hash)]
 pub struct Command<'cmd> {
     /// The command's alias. Is a `required` field and should not have empty spaces in it
     pub alias: Cow<'cmd, str>,

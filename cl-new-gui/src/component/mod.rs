@@ -6,6 +6,7 @@ mod renderable;
 mod static_info;
 mod tabs;
 mod textbox;
+mod search;
 
 pub use clipboard_status::ClipboardStatus;
 pub use list::List;
@@ -15,6 +16,7 @@ pub use static_info::StaticInfo;
 pub use tabs::Tabs;
 pub use textbox::TextBox;
 pub use textbox::TextBoxName;
+pub use search::Search;
 
 use crate::observer::ObservableComponent;
 use std::cell::{Ref, RefCell, RefMut};

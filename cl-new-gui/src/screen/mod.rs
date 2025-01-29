@@ -69,6 +69,7 @@ impl Screen {
                 match layer.handle_key_event(event, state_tx.clone()).await {
                     None => {}
                     Some(commands) => {
+                        // TODO normalize this enum handler
                         for cmd in commands {
                             match cmd {
                                 ScreenCommand::AddLayer(layer) => {
@@ -90,16 +91,22 @@ impl Screen {
                                 ScreenCommand::CopyToClipboard => {
                                     if let Some(clipboard) = &mut self.clipboard {
                                         if let Some(cmd) = oneshot!(state_tx, CurrentCommand) {
-                                            clipboard.set_content(cmd.value.command).ok();
-                                            self.notify(
-                                                TypeId::of::<Clipboard>(),
-                                                Event::Clipboard(Copied),
-                                            )
-                                            .await
+                                            if let Some(cmd) = cmd {
+                                                clipboard.set_content(cmd.value.command).ok();
+                                                self.notify(
+                                                    TypeId::of::<Clipboard>(),
+                                                    Event::Clipboard(Copied),
+                                                )
+                                                .await
+                                            }
                                         }
                                     }
                                 }
-                            };
+                                ScreenCommand::Callback(cb) => match cb.handle(state_tx).await {
+                                    Some(events) => self.notify_all(events).await,
+                                    None => {}
+                                },
+                            }
                         }
                     }
                 }
@@ -130,8 +137,8 @@ impl Screen {
 
         if let Some(last) = self.layers.pop() {
             let listeners = last.get_listeners();
-            for (key, _) in listeners {
-                self.subscriptions.remove(key);
+            for (_, components) in listeners {
+                self.subscriptions.remove(&components);
             }
         }
     }

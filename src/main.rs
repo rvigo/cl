@@ -4,7 +4,6 @@ use cl_core::{
     logger::{LoggerBuilder, LoggerType},
     Config, DefaultConfig,
 };
-use cl_gui::start_gui;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -29,6 +28,25 @@ async fn main() -> Result<()> {
             .build()
             .init()?;
 
-        start_gui(config).await
+        new_core::init(config).await
+    }
+}
+
+mod new_core {
+    use anyhow::Result;
+    use cl_core::Config;
+    use cl_new_gui::state::state_actor::StateActor;
+    use cl_new_gui::ui::ui_actor::UiActor;
+    use tokio::try_join;
+
+    pub async fn init(config: impl Config + 'static) -> Result<()> {
+        let (state_tx, state_rx) = tokio::sync::mpsc::channel(8);
+
+        let mut state_actor = StateActor::new(config, state_rx);
+        let mut ui_actor = UiActor::new();
+
+        try_join!(state_actor.run(), ui_actor.run(state_tx))?;
+
+        Ok(())
     }
 }

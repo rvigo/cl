@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::ptr;
 
 pub struct SubscriptionSet<Publisher, V> {
     pub subscriptions: BTreeMap<Publisher, Vec<Subscriber<V>>>,
@@ -6,6 +7,7 @@ pub struct SubscriptionSet<Publisher, V> {
 
 pub struct Subscriber<V> {
     pub is_active: bool,
+    // TODO should it be a Rc<V>?
     pub listener: V,
 }
 
@@ -44,8 +46,18 @@ where
             .push(subscription);
     }
 
-    pub fn remove(&mut self, key: K) {
-        self.subscriptions.remove(&key);
+    pub fn remove(&mut self, targets: &[V]) {
+        // not sure if this `ptr::eq` is ok, but it works
+        for subscribers in self.subscriptions.values_mut() {
+            subscribers.retain(|subscriber| {
+                !targets
+                    .iter()
+                    .any(|target| ptr::eq(&subscriber.listener, target))
+            });
+        }
+
+        self.subscriptions
+            .retain(|_, subscribers| !subscribers.is_empty());
     }
 
     pub fn get(&self, key: &K) -> Option<&Vec<Subscriber<V>>> {
