@@ -112,32 +112,38 @@ impl State {
         self.selected_command.clone()
     }
 
-    pub fn next_tab(&mut self) -> SelectedNamespace {
+    pub fn next_tab(&mut self) -> (SelectedNamespace, CommandVec<'static>) {
         let current = self.selected_namespace.idx;
         let items = &self.namespaces;
         let next = (current + 1) % items.len();
         let next_namespace = &self.namespaces[next];
 
         self.selected_namespace = SelectedNamespace::new(next, next_namespace.to_string());
+        
+        let filtered_commands = &self.filter_command_by_namespace(next_namespace);
+        self.selected_command = SelectedCommand::from_vec(filtered_commands);
 
-        self.selected_command =
-            SelectedCommand::from_vec(&self.filter_command_by_namespace(next_namespace));
-
-        self.selected_namespace.to_owned()
+        (
+            self.selected_namespace.to_owned(),
+            filtered_commands.to_vec(),
+        )
     }
 
-    pub fn previous_tab(&mut self) -> SelectedNamespace {
+    pub fn previous_tab(&mut self) -> (SelectedNamespace, CommandVec<'static>) {
         let current = self.selected_namespace.idx;
         let items = &self.namespaces;
         let previous = (current + items.len() - 1) % items.len();
         let previous_namespace = &self.namespaces[previous];
 
         self.selected_namespace = SelectedNamespace::new(previous, previous_namespace.to_string());
+        
+        let filtered_commands = &self.filter_command_by_namespace(previous_namespace);
+        self.selected_command = SelectedCommand::from_vec(filtered_commands);
 
-        self.selected_command =
-            SelectedCommand::from_vec(&self.filter_command_by_namespace(previous_namespace));
-
-        self.selected_namespace.to_owned()
+        (
+            self.selected_namespace.to_owned(),
+            filtered_commands.to_vec(),
+        )
     }
 
     pub fn execute(&self) {
@@ -231,13 +237,16 @@ impl State {
     #[inline(always)]
     fn filter_command_by_namespace(&self, namespace: &str) -> CommandVec<'static> {
         debug!("filtering commands by namespace: {}", namespace);
+        if namespace == DEFAULT_NAMESPACE {
+            return self.current_items.to_vec().sort_and_return();
+        }
+
         let result = self
             .cmd_map
             .get(namespace)
             .unwrap_or(&vec![])
             .to_vec()
             .sort_and_return();
-
         if let Some(query) = &self.current_query {
             self.ff_vec(query, &result)
         } else {

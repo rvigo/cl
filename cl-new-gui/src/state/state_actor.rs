@@ -12,10 +12,7 @@ pub struct StateActor {
 }
 
 impl StateActor {
-    pub fn new(
-        config: impl Config + 'static,
-        receiver: Receiver<StateEvent>
-    ) -> Self {
+    pub fn new(config: impl Config + 'static, receiver: Receiver<StateEvent>) -> Self {
         Self {
             state: State::new(config),
             receiver,
@@ -50,14 +47,12 @@ impl StateActor {
                 let _ = respond_to.send(selected_command);
             }
             StateEvent::PreviousTab { respond_to } => {
-                let selected_namespace = self.state.previous_tab();
-                let commands = self.state.current_commands();
+                let (selected_namespace, commands) = self.state.previous_tab();
                 let selected_command = SelectedCommand::new(commands[0].clone(), 0);
                 let _ = respond_to.send((selected_namespace, selected_command, commands));
             }
             StateEvent::NextTab { respond_to } => {
-                let selected_namespace = self.state.next_tab();
-                let commands = self.state.current_commands();
+                let (selected_namespace, commands) = self.state.next_tab();
                 let selected_command = SelectedCommand::new(commands[0].clone(), 0);
                 let _ = respond_to.send((selected_namespace, selected_command, commands));
             }
