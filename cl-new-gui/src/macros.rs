@@ -1,10 +1,11 @@
 #[macro_export]
 macro_rules! render {
-    ($frame:ident, $({ $what:expr , $_where:expr}),* $(,)?) => {
+     ($frame:ident, $theme:expr, $({ $what:expr , $_where:expr}),* $(,)?) => {
         $(
-            $what.render($frame, $_where);
+            $what.render($frame, $_where, $theme);
         )+
     };
+    
 }
 
 #[macro_export]

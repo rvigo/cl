@@ -1,10 +1,10 @@
 use crate::component::Renderable;
+use crate::screen::theme::Theme;
 use std::time::{Duration, Instant};
 use tui::layout::Alignment::Center;
 use tui::layout::Rect;
-use tui::style::Color::{Black, Green};
 use tui::style::Style;
-use tui::widgets::Paragraph;
+use tui::widgets::{Block, Paragraph};
 use tui::Frame;
 
 #[derive(Debug)]
@@ -35,11 +35,30 @@ impl ClipboardStatus {
 }
 
 impl Renderable for ClipboardStatus {
-    fn render(&mut self, frame: &mut Frame, area: Rect) {
+    fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
+        let theme = theme.to_owned();
         if self.copied {
-            let paragraph = Paragraph::new("copied")
+            let paragraph = Paragraph::new("Command copied to the clipboard")
                 .alignment(Center)
-                .style(Style::default().fg(Black).bg(Green));
+                .style(
+                    Style::default()
+                        .fg(theme.highlight_color.into())
+                        .bg(theme.background_color.into()),
+                )
+                .block(Block::bordered());
+
+            frame.render_widget(paragraph, area);
+
+            self.check_if_need_to_stop()
+        } else {
+            let paragraph = Paragraph::new("Press Y to copy the command")
+                .alignment(Center)
+                .style(
+                    Style::default()
+                        .fg(theme.text_color.into())
+                        .bg(theme.background_color.into()),
+                )
+                .block(Block::bordered());
 
             frame.render_widget(paragraph, area);
 

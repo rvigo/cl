@@ -6,21 +6,12 @@ use crate::component::{
 use crate::component::Search;
 use crate::render;
 use crate::screen::layer::Layer;
+use crate::screen::theme::Theme;
 use crate::screen::Listeners;
 use std::any::TypeId;
 use std::collections::BTreeMap;
 use tui::layout::{Constraint, Direction, Layout};
-use tui::style::Color as TuiColor;
 use tui::Frame;
-
-pub const DEFAULT_TEXT_COLOR: TuiColor = TuiColor::Rgb(205, 214, 244);
-pub const DEFAULT_WIDGET_NAME_COLOR: TuiColor = TuiColor::Rgb(203, 166, 247);
-pub const DEFAULT_SELECTED_COLOR: TuiColor = TuiColor::Rgb(203, 166, 247);
-pub const DEFAULT_HIGHLIGHT_COLOR: TuiColor = TuiColor::Rgb(180, 190, 254);
-pub const DEFAULT_BACKGROUND_COLOR: TuiColor = TuiColor::Rgb(30, 30, 46);
-pub const DEFAULT_INFO_COLOR: TuiColor = TuiColor::Rgb(148, 226, 213);
-pub const DEFAULT_CURSOR_COLOR: TuiColor = TuiColor::Rgb(245, 224, 220);
-pub const DEFAULT_INACTIVE_TEXTBOX_COLOR: TuiColor = TuiColor::Rgb(108, 112, 134);
 
 pub struct MainScreenLayer {
     pub command: Component,
@@ -30,10 +21,10 @@ pub struct MainScreenLayer {
     pub list: Component,
     pub tabs: Component,
     pub clipboard: Component,
+    pub quick_search: Component,
     pub listeners: Listeners,
     pub app_name: StaticInfo,
     pub help: StaticInfo,
-    pub quick_search: Component,
 }
 
 impl Layer for MainScreenLayer {
@@ -102,15 +93,15 @@ impl Layer for MainScreenLayer {
             namespace: namespace_shared.clone(),
             list: list_shared.clone(),
             tabs: tabs_shared.clone(),
+            quick_search: quick_search_share.clone(),
             listeners,
             app_name,
             clipboard,
             help,
-            quick_search: quick_search_share.clone(),
         }
     }
 
-    fn render(&mut self, frame: &mut Frame) {
+    fn render(&mut self, frame: &mut Frame, theme: &Theme) {
         let drawable_area = [Constraint::Fill(2), Constraint::Max(3)];
         let areas = [
             Constraint::Length(30), // name & aliases
@@ -173,6 +164,7 @@ impl Layer for MainScreenLayer {
 
         render! {
             frame,
+            theme,
             { self.app_name, app_name_rect },
             { self.list, list_rect },
             { self.tabs, tabs_rect },

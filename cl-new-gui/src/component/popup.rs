@@ -1,8 +1,10 @@
 use crate::component::button::Button;
 use crate::component::Renderable;
+use crate::screen::theme::Theme;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::DeleteCommand;
-use crate::{async_fn_body, Pipe};
+use crate::{async_fn_body, oneshot, Pipe};
+use anyhow::bail;
 use log::debug;
 use std::fmt;
 use std::fmt::Debug;
@@ -13,7 +15,7 @@ use tokio::sync::mpsc::Sender;
 use tui::layout::Alignment::Center;
 use tui::layout::{Constraint, Direction, Layout, Rect};
 use tui::style::Style;
-use tui::widgets::{Block, Borders, Clear, Paragraph, Wrap};
+use tui::widgets::{Block, Clear, Paragraph, Wrap};
 use tui::Frame;
 use unicode_width::UnicodeWidthStr;
 
@@ -49,7 +51,7 @@ impl Popup {
         self.state.select(previous);
     }
 
-    pub async fn click(&mut self, state_tx: Sender<StateEvent>) {
+    pub async fn click(&mut self, state_tx: Sender<StateEvent>) -> anyhow::Result<()> {
         let selected = &self.buttons[self.state.selected];
         (selected.on_click)(state_tx).await
     }
@@ -63,15 +65,29 @@ impl Popup {
         popup.buttons = vec![
             Button::new("Yes", true, |state| {
                 async_fn_body! {
-                    match state.send(DeleteCommand).await.ok() {
-                      Some(_) => { debug!("command deleted") }
-                      None => { debug!("something went wrong") }
+                    let result = oneshot!(state, DeleteCommand);
+                    match result{
+                        // TODO handle error
+                      Some((ok, reason)) => {
+                            if !ok {
+                                debug!("Something went wrong!");
+                                bail!(reason.unwrap())
+                            }
+                            else {
+                                debug!("Command deleted");
+                                Ok(())
+                            }
+                        }
+                      None => {
+                            debug!("Something went wrong");
+                        Ok(())
+                        }
                     }
                 }
             }),
             Button::new("No", false, |_| {
                 async_fn_body! {
-                    debug!("No button clicked")
+                    Ok(())
                 }
             }),
         ];
@@ -85,7 +101,7 @@ impl Popup {
         popup.content = main_options().to_string(); // TODO rewrite this
         popup.buttons = vec![Button::new("Ok", true, |_| {
             async_fn_body! {
-                debug!("Ok button clicked")
+                Ok(())
             }
         })];
 
@@ -94,20 +110,23 @@ impl Popup {
 }
 
 impl Renderable for Popup {
-    fn render(&mut self, frame: &mut Frame, area: Rect) {
+    fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
         let paragraph = Paragraph::new(self.content.to_owned())
             .alignment(Center)
-            .style(Style::default())
+            .style(
+                Style::default()
+                    .fg(theme.to_owned().text_color.into())
+                    .bg(theme.to_owned().background_color.into()),
+            )
             .wrap(Wrap { trim: true })
-            .block(Block::default().borders(Borders::ALL));
+            .block(Block::bordered());
 
         let popup_area = compute_popup_area(&self.content, area);
-        let [content_area, buttons_area] = *split_content_and_buttons(popup_area) else {
+        let [_, buttons_area] = *split_content_and_buttons(popup_area) else {
             panic!()
         };
         frame.render_widget(Clear, popup_area);
-        // TODO needs to render a block with all the popup_area
-        frame.render_widget(paragraph, content_area);
+        frame.render_widget(paragraph, popup_area);
 
         // crate are for the buttons
         let button_area = button_area(self.buttons.len(), buttons_area);
@@ -119,7 +138,7 @@ impl Renderable for Popup {
             } else {
                 current_button.is_active = false
             }
-            current_button.render(frame, *area);
+            current_button.render(frame, *area, theme);
         });
     }
 }
@@ -145,7 +164,7 @@ fn create_button_layout(area: Rect, constraints: &[Constraint]) -> Rc<[Rect]> {
 fn split_content_and_buttons(rect: Rect) -> Rc<[Rect]> {
     Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(85), Constraint::Percentage(15)])
+        .constraints([Constraint::Percentage(80), Constraint::Percentage(20)])
         .split(rect)
 }
 
@@ -167,6 +186,7 @@ fn compute_popup_area(content: &str, area: Rect) -> Rect {
     } else {
         final_height
     };
+
     let width = if width > 50 { 50 } else { width };
 
     Layout::default()

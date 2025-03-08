@@ -1,7 +1,9 @@
 use crate::component::Renderable;
+use crate::screen::theme::Theme;
 use tui::layout::Alignment::Center;
 use tui::layout::Rect;
-use tui::widgets::Paragraph;
+use tui::style::Style;
+use tui::widgets::{Block, Paragraph};
 use tui::Frame;
 
 pub struct StaticInfo {
@@ -17,8 +19,17 @@ impl StaticInfo {
 }
 
 impl Renderable for StaticInfo {
-    fn render(&mut self, frame: &mut Frame, area: Rect) {
-        let paragraph = Paragraph::new(self.content.clone()).alignment(Center);
+    fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
+        let theme = theme.to_owned();
+        let paragraph = Paragraph::new(self.content.clone())
+            .block(
+                Block::bordered().style(
+                    Style::default()
+                        .fg(theme.text_color.into())
+                        .bg(theme.background_color.into()),
+                ),
+            )
+            .alignment(Center);
 
         frame.render_widget(paragraph, area);
     }

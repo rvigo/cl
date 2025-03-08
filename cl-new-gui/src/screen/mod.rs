@@ -1,5 +1,6 @@
 mod key_mapping;
 pub mod layer;
+pub mod theme;
 
 pub use crate::screen::key_mapping::ScreenCommandCallback;
 
@@ -11,6 +12,7 @@ use crate::observer::subscription::SubscriptionSet;
 use crate::oneshot;
 use crate::screen::key_mapping::ScreenCommand;
 use crate::screen::layer::Layer;
+use crate::screen::theme::Theme;
 use crate::signal_handler::Signal::UserInt;
 use crate::signal_handler::{SigHandler, Signal};
 use crate::state::state_event::StateEvent;
@@ -34,6 +36,7 @@ pub struct Screen {
     pub subscriptions: SubscriptionSet<TypeId, Component>,
     pub layers: Vec<Box<dyn Layer>>,
     pub clipboard: Option<Clipboard>,
+    pub theme: Theme,
 }
 
 pub type Listeners = BTreeMap<TypeId, Vec<Component>>;
@@ -45,6 +48,7 @@ impl Screen {
             subscriptions: SubscriptionSet::new(),
             layers: Vec::new(),
             clipboard: Clipboard::new().ok(),
+            theme: Theme::load(),
         };
 
         let active_screen = screens.get_active_screen_mut();
@@ -174,7 +178,7 @@ impl Screen {
 
     pub fn render_layers(&mut self, frame: &mut Frame) {
         for layer in &mut self.layers {
-            layer.render(frame);
+            layer.render(frame, &self.theme);
         }
     }
 

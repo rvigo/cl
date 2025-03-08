@@ -1,6 +1,7 @@
 use crate::component::Renderable;
+use crate::screen::theme::Theme;
 use tui::layout::Rect;
-use tui::style::{Color, Style};
+use tui::style::Style;
 use tui::widgets::Block;
 use tui::Frame;
 
@@ -36,12 +37,23 @@ impl Tabs {
 }
 
 impl Renderable for Tabs {
-    fn render(&mut self, frame: &mut Frame, area: Rect) {
+    fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
+        let theme = theme.to_owned();
+        let highlight_style = Style::default().fg(theme.highlight_color.into());
+
+        let block_style = Style::default()
+            .fg(theme.text_color.into())
+            .bg(theme.background_color.into());
         let tabs = tui::widgets::Tabs::new(self.items.clone())
-            .select(self.selected)
             .divider("|")
-            .highlight_style(Style::default().fg(Color::Yellow))
-            .block(Block::bordered());
+            .highlight_style(highlight_style)
+            .block(Block::bordered().style(block_style));
+
+        let tabs = if !self.items.is_empty() {
+            tabs.select(self.selected)
+        } else {
+            tabs
+        };
 
         frame.render_widget(tabs, area);
     }

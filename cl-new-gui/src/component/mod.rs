@@ -3,22 +3,23 @@ mod clipboard_status;
 mod list;
 mod popup;
 mod renderable;
+mod search;
 mod static_info;
 mod tabs;
 mod textbox;
-mod search;
 
 pub use clipboard_status::ClipboardStatus;
 pub use list::List;
 pub use popup::Popup;
 pub use renderable::Renderable;
+pub use search::Search;
 pub use static_info::StaticInfo;
 pub use tabs::Tabs;
 pub use textbox::TextBox;
 pub use textbox::TextBoxName;
-pub use search::Search;
 
 use crate::observer::ObservableComponent;
+use crate::screen::theme::Theme;
 use std::cell::{Ref, RefCell, RefMut};
 use std::ops::{Deref, DerefMut};
 use std::rc::Rc;
@@ -63,7 +64,7 @@ impl DerefMut for Component {
 }
 
 impl Renderable for Component {
-    fn render(&mut self, frame: &mut Frame, area: Rect) {
-        self.borrow_mut().render(frame, area)
+    fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
+        self.borrow_mut().render(frame, area, theme)
     }
 }
