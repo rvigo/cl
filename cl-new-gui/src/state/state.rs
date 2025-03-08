@@ -1,6 +1,7 @@
 use crate::fuzzy::Fuzzy;
 use crate::state::selected_command::SelectedCommand;
 use crate::state::selected_namespace::SelectedNamespace;
+use anyhow::bail;
 use cl_core::{
     fs, Command, CommandExec, CommandMap, CommandMapExt, CommandVec, CommandVecExt, Commands,
     Config,
@@ -90,78 +91,94 @@ impl State {
     }
 
     pub fn next_item(&mut self) -> Option<SelectedCommand> {
-        let items = self.current_items.to_owned();
+        let items = self.current_items.to_vec();
         if let Some(selected_command) = &self.selected_command {
             let current = selected_command.current_idx;
             let next = (current + 1) % items.len();
 
             self.select(next);
+        } else {
+            panic!("selected command is None");
         }
 
         self.selected_command.clone()
     }
 
     pub fn previous_item(&mut self) -> Option<SelectedCommand> {
-        let items = self.current_items.to_owned();
+        let items = self.current_items.to_vec();
         if let Some(selected_command) = &self.selected_command {
             let current = selected_command.current_idx;
             let previous = (current + items.len() - 1) % items.len();
 
             self.select(previous);
+        } else {
+            panic!("selected command is None");
         }
+
         self.selected_command.clone()
     }
 
     pub fn next_tab(&mut self) -> (SelectedNamespace, CommandVec<'static>) {
-        let current = self.selected_namespace.idx;
-        let items = &self.namespaces;
-        let next = (current + 1) % items.len();
+        let current_idx = self.selected_namespace.idx;
+        let namespaces = &self.namespaces;
+        if namespaces.is_empty() {
+            error!("no namespaces found");
+            return (self.selected_namespace.to_owned(), vec![]);
+        }
+        let next = (current_idx + 1) % namespaces.len();
         let next_namespace = &self.namespaces[next];
 
         self.selected_namespace = SelectedNamespace::new(next, next_namespace.to_string());
-        
+
         let filtered_commands = &self.filter_command_by_namespace(next_namespace);
+
+        self.current_items = HashSet::from_vec(filtered_commands.to_vec());
         self.selected_command = SelectedCommand::from_vec(filtered_commands);
 
         (
             self.selected_namespace.to_owned(),
-            filtered_commands.to_vec(),
+            filtered_commands.to_vec().sort_and_return(),
         )
     }
 
     pub fn previous_tab(&mut self) -> (SelectedNamespace, CommandVec<'static>) {
         let current = self.selected_namespace.idx;
         let items = &self.namespaces;
+        if items.is_empty() {
+            error!("no namespaces found");
+            return (self.selected_namespace.to_owned(), vec![]);
+        }
         let previous = (current + items.len() - 1) % items.len();
         let previous_namespace = &self.namespaces[previous];
 
         self.selected_namespace = SelectedNamespace::new(previous, previous_namespace.to_string());
-        
+
         let filtered_commands = &self.filter_command_by_namespace(previous_namespace);
+        self.current_items = HashSet::from_vec(filtered_commands.to_vec());
         self.selected_command = SelectedCommand::from_vec(filtered_commands);
 
         (
             self.selected_namespace.to_owned(),
-            filtered_commands.to_vec(),
+            filtered_commands.to_vec().sort_and_return(),
         )
     }
 
     pub fn execute(&self) {
         if let Some(selected_command) = &self.selected_command {
             let command = selected_command.value.to_owned();
-            debug!("Executing command: {:?}", command);
+            debug!("executing command: {:?}", command);
             command
                 .exec(false, self.config.preferences().quiet_mode())
                 .unwrap();
         }
     }
 
-    // TODO should persist the changes
-    pub fn delete_command(&mut self) {
+    pub fn delete_command(&mut self) -> anyhow::Result<()> {
         if let Some(selected_command) = &self.selected_command {
             let command = &selected_command.value;
             match self.commands.remove(command) {
-                Ok(_) => {
+                Ok(map) => {
+                    fs::save_at(&map, self.config.command_file_path())?;
                     self.current_items =
                         HashSet::from_iter(self.commands.as_list().sort_and_return());
                     self.selected_command = if !self.current_items.is_empty() {
@@ -171,10 +188,12 @@ impl State {
                     };
                 }
                 Err(e) => {
-                    error!("Error deleting command: {:?}", e);
+                    bail!("Error deleting command: {:?}", e);
                 }
             }
         }
+        debug!("command deleted");
+        Ok(())
     }
 
     /// Filters the commands based on a query and a namespace
@@ -238,7 +257,7 @@ impl State {
     fn filter_command_by_namespace(&self, namespace: &str) -> CommandVec<'static> {
         debug!("filtering commands by namespace: {}", namespace);
         if namespace == DEFAULT_NAMESPACE {
-            return self.current_items.to_vec().sort_and_return();
+            return self.cmd_map.to_vec().sort_and_return();
         }
 
         let result = self
@@ -275,6 +294,8 @@ trait HashSetExt<T> {
     fn to_vec(&self) -> Vec<T>;
 
     fn first(&self) -> T;
+
+    fn from_vec(vec: Vec<T>) -> HashSet<T>;
 }
 
 impl HashSetExt<Command<'static>> for HashSet<Command<'static>> {
@@ -284,6 +305,10 @@ impl HashSetExt<Command<'static>> for HashSet<Command<'static>> {
 
     fn first(&self) -> Command<'static> {
         self.to_vec().first()
+    }
+
+    fn from_vec(vec: Vec<Command<'static>>) -> HashSet<Command<'static>> {
+        vec.into_iter().collect()
     }
 }
 

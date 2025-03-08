@@ -11,13 +11,14 @@ use crate::screen::key_mapping::KeyMapping;
 use std::any::TypeId;
 use std::collections::BTreeMap;
 use tui::Frame;
+use crate::screen::theme::Theme;
 
 pub trait Layer: KeyMapping {
     fn new() -> Self
     where
         Self: Sized;
 
-    fn render(&mut self, frame: &mut Frame);
+    fn render(&mut self, frame: &mut Frame, theme: &Theme);
 
     fn get_listeners(&self) -> BTreeMap<TypeId, Vec<Component>>;
 }

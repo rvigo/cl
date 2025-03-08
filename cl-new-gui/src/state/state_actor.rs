@@ -21,13 +21,13 @@ impl StateActor {
 
     pub async fn run(&mut self) -> Result<()> {
         while let Some(message) = self.receiver.recv().await {
-            self.handle_message(message);
+            self.handle_message(message)?;
         }
 
         Ok(())
     }
 
-    fn handle_message(&mut self, message: StateEvent) {
+    fn handle_message(&mut self, message: StateEvent) -> Result<()> {
         match message {
             StateEvent::SelectNextCommand { respond_to } => {
                 let selected_command = self.state.next_item();
@@ -53,6 +53,7 @@ impl StateActor {
             }
             StateEvent::NextTab { respond_to } => {
                 let (selected_namespace, commands) = self.state.next_tab();
+                // TODO make SelectedCommand and SelectedNamespace optionals
                 let selected_command = SelectedCommand::new(commands[0].clone(), 0);
                 let _ = respond_to.send((selected_namespace, selected_command, commands));
             }
@@ -60,7 +61,14 @@ impl StateActor {
                 let namespaces = self.state.get_all_namespaces();
                 let _ = respond_to.send(namespaces);
             }
-            StateEvent::DeleteCommand => self.state.delete_command(),
+            // TODO handle errors from state to popup (or any layer)
+            StateEvent::DeleteCommand { respond_to } => {
+                let res = match self.state.delete_command() {
+                    Ok(_) => (true, None),
+                    Err(e) => (false, Some(e.to_string())),
+                };
+                let _ = respond_to.send(res);
+            }
             StateEvent::Filter(query) => {
                 debug!("filtering with query: {}", query);
                 self.state.filter(query)
@@ -69,5 +77,7 @@ impl StateActor {
                 let _ = respond_to.send(self.state.get_current_query());
             }
         }
+
+        Ok(())
     }
 }

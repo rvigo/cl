@@ -1,7 +1,7 @@
 use crate::state::selected_command::SelectedCommand;
+use crate::state::selected_namespace::SelectedNamespace;
 use cl_core::Command;
 use tokio::sync::oneshot;
-use crate::state::selected_namespace::SelectedNamespace;
 
 #[derive(Debug)]
 pub enum StateEvent {
@@ -36,7 +36,7 @@ pub enum StateEvent {
         respond_to: oneshot::Sender<(SelectedNamespace, SelectedCommand, Vec<Command<'static>>)>,
     },
     /// Delete the command
-    DeleteCommand,
+    DeleteCommand { respond_to: oneshot::Sender<(bool, Option<String>)> },
     /// Filter
     Filter(String),
     /// Get current query

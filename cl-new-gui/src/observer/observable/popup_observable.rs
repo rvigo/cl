@@ -20,10 +20,16 @@ impl Observable for Popup {
                 PopupEvent::PreviousChoice => self.previous(),
                 PopupEvent::Run(state_tx, tx) => {
                     debug!("running code inside the button");
-                    self.click(state_tx).await;
-
-                    debug!("sending a callback response to the previous layer");
-                    tx.send(ScreenCommandCallback::UpdateAll).await.ok();
+                    match self.click(state_tx).await {
+                        Ok(_) => {
+                            debug!("sending a callback response to the previous layer");
+                            tx.send(ScreenCommandCallback::UpdateAll).await.ok();
+                        }
+                        Err(err) => {
+                            // TODO find a way to hold the PopLastLayer event
+                            *self = Popup::dialog(err.to_string());
+                        }
+                    }
                 }
             },
             _ => {}

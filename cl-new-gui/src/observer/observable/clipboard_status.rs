@@ -10,7 +10,7 @@ impl Observable for ClipboardStatus {
             Event::Clipboard(action) => match action {
                 ClipboardAction::Copied => self.start_counter(),
             },
-            _ => (),
+            _ => {},
         }
     }
 }

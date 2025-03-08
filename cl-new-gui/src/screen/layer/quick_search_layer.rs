@@ -1,5 +1,6 @@
 use crate::component::{Component, Renderable, Search};
 use crate::screen::layer::Layer;
+use crate::screen::theme::Theme;
 use std::any::TypeId;
 use std::collections::BTreeMap;
 use tui::layout::Direction::{Horizontal, Vertical};
@@ -25,7 +26,7 @@ impl Layer for QuickSearchLayer {
         Self { search, listeners }
     }
 
-    fn render(&mut self, frame: &mut Frame) {
+    fn render(&mut self, frame: &mut Frame, theme: &Theme) {
         let [_, second_row] = *Layout::default()
             .direction(Vertical)
             .constraints([Constraint::Percentage(50); 2])
@@ -42,7 +43,8 @@ impl Layer for QuickSearchLayer {
             todo!()
         };
 
-        self.search.render(frame, first_col)
+        // TODO adjust theme
+        self.search.render(frame, first_col, theme)
     }
 
     fn get_listeners(&self) -> BTreeMap<TypeId, Vec<Component>> {

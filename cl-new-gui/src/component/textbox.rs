@@ -1,8 +1,9 @@
 use crate::component::Renderable;
+use crate::screen::theme::Theme;
 use std::fmt::Display;
 use tui::layout::Rect;
-use tui::widgets::BorderType::Rounded;
-use tui::widgets::{Block, Borders, Paragraph};
+use tui::style::Style;
+use tui::widgets::{Block, Paragraph};
 use tui::Frame;
 
 #[derive(Default, Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
@@ -18,12 +19,16 @@ impl TextBox {
 }
 
 impl Renderable for TextBox {
-    fn render(&mut self, frame: &mut Frame, area: Rect) {
+    fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
+        let theme = theme.to_owned();
         let content = match &self.content {
             None => "",
             Some(c) => &c,
         };
-        let paragraph = Paragraph::new(content).block(Block::bordered());
+        let style = Style::default()
+            .fg(theme.text_color.into())
+            .bg(theme.background_color.into());
+        let paragraph = Paragraph::new(content).block(Block::bordered().style(style));
 
         frame.render_widget(paragraph, area)
     }

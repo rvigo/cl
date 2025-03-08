@@ -1,18 +1,18 @@
 use crate::crossterm::{restore_terminal, setup_terminal};
 use crate::oneshot;
 use crate::signal_handler::{SigHandler, Signal};
+use crate::state::selected_command::SelectedCommand;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::{GetAllListItems, GetAllNamespaces};
 use crate::ui::ui::Ui;
 use anyhow::Result;
-use cl_core::{Command, CommandMap, CommandVec, CommandVecExt};
+use cl_core::CommandVecExt;
 use crossterm::event::EventStream;
 use log::{debug, error};
 use std::time::Duration;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc::Sender;
 use tokio_stream::StreamExt;
-use crate::state::selected_command::SelectedCommand;
 
 pub struct UiActor {
     ui: Ui,

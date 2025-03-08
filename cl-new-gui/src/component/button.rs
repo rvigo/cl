@@ -1,4 +1,5 @@
 use crate::component::Renderable;
+use crate::screen::theme::Theme;
 use crate::state::state_event::StateEvent;
 use std::fmt;
 use std::future::Future;
@@ -6,12 +7,11 @@ use std::pin::Pin;
 use tokio::sync::mpsc::Sender;
 use tui::layout::Alignment::Center;
 use tui::layout::Rect;
-use tui::style::Color::Yellow;
 use tui::style::Style;
 use tui::widgets::Paragraph;
 use tui::Frame;
 
-type FutureFn = fn(Sender<StateEvent>) -> Pin<Box<dyn Future<Output = ()> + Send>>;
+type FutureFn = fn(Sender<StateEvent>) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>>;
 
 #[derive(Clone)]
 pub struct Button {
@@ -40,15 +40,16 @@ impl fmt::Debug for Button {
 }
 
 impl Renderable for Button {
-    fn render(&mut self, frame: &mut Frame, area: Rect) {
+    fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
+        let theme = theme.to_owned();
         let style = if self.is_active {
-            Style::default().fg(Yellow)
+            Style::default().fg(theme.selected_color.into())
         } else {
-            Style::default()
+            Style::default().fg(theme.text_color.into())
         };
         let paragraph = Paragraph::new(self.content.to_owned())
             .alignment(Center)
-            .style(style);
+            .style(style.bg(theme.background_color.into()));
 
         frame.render_widget(paragraph, area)
     }
