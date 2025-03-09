@@ -33,16 +33,17 @@ impl State {
         // cmd load
         let command_map = fs::load_from(cfg.command_file_path()).unwrap();
         let commands = Commands::init(command_map);
-
+        let commands_as_list = commands.as_list().sorted();
         let cmd_map = commands.as_map().clone();
-        let current_items = HashSet::from_iter(commands.as_list());
+
+        let selected = SelectedCommand::from_vec(&commands_as_list);
+
+        let current_items = HashSet::from_iter(commands_as_list);
 
         // namespaces
         let namespaces: Vec<String> = commands.as_list().namespaces();
         let mut namespaces = append_default_namespace(namespaces);
         namespaces.sort_by_key(|a| a.to_lowercase());
-
-        let selected = SelectedCommand::from_vec(&commands.as_list());
 
         Self {
             commands,
@@ -69,7 +70,7 @@ impl State {
 
     pub fn get_all_items(&self) -> CommandVec<'static> {
         debug!("got all items");
-        self.current_items.to_vec().sort_and_return()
+        self.current_items.to_vec().sorted()
     }
 
     pub fn get_all_namespaces(&self) -> Vec<String> {
@@ -87,11 +88,11 @@ impl State {
 
     /// Commands based on the current namespace
     pub fn current_commands(&self) -> CommandVec<'static> {
-        self.filter_command_by_namespace(&self.selected_namespace.name)
+        self.get_commands_by_namespace(&self.selected_namespace.name)
     }
 
     pub fn next_item(&mut self) -> Option<SelectedCommand> {
-        let items = self.current_items.to_vec();
+        let items = self.current_items.to_owned();
         if let Some(selected_command) = &self.selected_command {
             let current = selected_command.current_idx;
             let next = (current + 1) % items.len();
@@ -105,7 +106,7 @@ impl State {
     }
 
     pub fn previous_item(&mut self) -> Option<SelectedCommand> {
-        let items = self.current_items.to_vec();
+        let items = self.current_items.to_owned();
         if let Some(selected_command) = &self.selected_command {
             let current = selected_command.current_idx;
             let previous = (current + items.len() - 1) % items.len();
@@ -130,14 +131,14 @@ impl State {
 
         self.selected_namespace = SelectedNamespace::new(next, next_namespace.to_string());
 
-        let filtered_commands = &self.filter_command_by_namespace(next_namespace);
+        let filtered_commands = &self.get_commands_by_namespace(next_namespace);
 
-        self.current_items = HashSet::from_vec(filtered_commands.to_vec());
+        self.current_items = HashSet::from_vec(filtered_commands.clone());
         self.selected_command = SelectedCommand::from_vec(filtered_commands);
 
         (
             self.selected_namespace.to_owned(),
-            filtered_commands.to_vec().sort_and_return(),
+            filtered_commands.to_vec().sorted(),
         )
     }
 
@@ -153,13 +154,13 @@ impl State {
 
         self.selected_namespace = SelectedNamespace::new(previous, previous_namespace.to_string());
 
-        let filtered_commands = &self.filter_command_by_namespace(previous_namespace);
-        self.current_items = HashSet::from_vec(filtered_commands.to_vec());
+        let filtered_commands = &self.get_commands_by_namespace(previous_namespace);
+        self.current_items = HashSet::from_vec(filtered_commands.clone());
         self.selected_command = SelectedCommand::from_vec(filtered_commands);
 
         (
             self.selected_namespace.to_owned(),
-            filtered_commands.to_vec().sort_and_return(),
+            filtered_commands.to_vec().sorted(),
         )
     }
 
@@ -179,8 +180,7 @@ impl State {
             match self.commands.remove(command) {
                 Ok(map) => {
                     fs::save_at(&map, self.config.command_file_path())?;
-                    self.current_items =
-                        HashSet::from_iter(self.commands.as_list().sort_and_return());
+                    self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
                     self.selected_command = if !self.current_items.is_empty() {
                         Some(SelectedCommand::new(self.current_items.first(), 0))
                     } else {
@@ -254,23 +254,22 @@ impl State {
     }
 
     #[inline(always)]
-    fn filter_command_by_namespace(&self, namespace: &str) -> CommandVec<'static> {
+    fn get_commands_by_namespace(&self, namespace: &str) -> CommandVec<'static> {
         debug!("filtering commands by namespace: {}", namespace);
         if namespace == DEFAULT_NAMESPACE {
-            return self.cmd_map.to_vec().sort_and_return();
+            return self.cmd_map.to_vec().sorted();
         }
 
-        let result = self
-            .cmd_map
-            .get(namespace)
-            .unwrap_or(&vec![])
-            .to_vec()
-            .sort_and_return();
-        if let Some(query) = &self.current_query {
-            self.ff_vec(query, &result)
-        } else {
-            result
+        let result = self.cmd_map.get(namespace).unwrap_or(&vec![]).to_vec();
+
+        {
+            if let Some(query) = &self.current_query {
+                self.ff_vec(query, &result)
+            } else {
+                result
+            }
         }
+        .sorted()
     }
 }
 
@@ -300,7 +299,10 @@ trait HashSetExt<T> {
 
 impl HashSetExt<Command<'static>> for HashSet<Command<'static>> {
     fn to_vec(&self) -> Vec<Command<'static>> {
-        self.iter().cloned().collect()
+        self.iter()
+            .cloned()
+            .collect::<Vec<Command<'static>>>()
+            .sorted()
     }
 
     fn first(&self) -> Command<'static> {
@@ -367,13 +369,13 @@ mod test {
     fn setup_state() -> Result<State> {
         let mut commands = HashMap::new();
         let command1 = CommandBuilder::default()
-            .command("test")
-            .namespace("test")
-            .alias("test")
+            .command("azul")
+            .namespace("azul")
+            .alias("azul")
             .build();
         let command2 = CommandBuilder::default()
-            .command("azul")
-            .namespace("amarelo")
+            .command("laranja")
+            .namespace("laranja")
             .alias("laranja")
             .build();
         commands.insert(command1.namespace.to_string(), vec![command1]);
@@ -386,13 +388,13 @@ mod test {
     }
 
     #[test]
-    fn should_filter_commands_by_namespace() -> Result<()> {
+    fn should_get_commands_by_namespace() -> Result<()> {
         let state = setup_state()?;
 
-        let result = state.filter_command_by_namespace("test");
+        let result = state.get_commands_by_namespace("azul");
 
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().alias, "test");
+        assert_eq!(result.first().alias, "azul");
 
         Ok(())
     }
@@ -401,19 +403,19 @@ mod test {
     fn should_filter_commands() -> Result<()> {
         let mut state = setup_state()?;
 
-        state.filter("e".to_string());
+        state.filter("a".to_string());
 
         assert_eq!(state.current_items.len(), 2);
 
-        state.filter("te".to_string());
+        state.filter("az".to_string());
 
         assert_eq!(state.current_items.len(), 1);
         assert_eq!(
             state.current_items.to_vec().first().alias.to_string(),
-            "test".to_string()
+            "azul".to_string()
         );
 
-        state.filter("az".to_string());
+        state.filter("ran".to_string());
         assert_eq!(state.current_items.len(), 1);
         assert_eq!(
             state.current_items.to_vec().first().alias.to_string(),
@@ -432,6 +434,138 @@ mod test {
         assert_eq!(result.len(), 3);
         assert_eq!(result.iter().filter(|&s| s == "a").count(), 1);
         assert!(result.contains(&"All".to_string()));
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_get_all_items() -> Result<()> {
+        let state = setup_state()?;
+
+        let items = state.get_all_items();
+
+        assert_eq!(items.len(), 2);
+        assert_eq!(items[0].alias, "azul");
+        assert_eq!(items[1].alias, "laranja");
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_get_selected_command() -> Result<()> {
+        let state = setup_state()?;
+
+        let command = state.get_selected_command();
+
+        assert!(command.is_some());
+        let command = command.unwrap();
+
+        assert_eq!(command.value.alias, "azul");
+        assert_eq!(command.current_idx, 0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_get_next_item() -> Result<()> {
+        let mut state = setup_state()?;
+
+        let command = state.next_item();
+
+        assert!(command.is_some());
+        let command = command.unwrap();
+
+        assert_eq!(command.value.alias, "laranja");
+        assert_eq!(command.current_idx, 1);
+
+        let command = state.next_item();
+
+        assert!(command.is_some());
+        let command = command.unwrap();
+
+        assert_eq!(command.value.alias, "azul");
+        assert_eq!(command.current_idx, 0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_get_previous_item() -> Result<()> {
+        let mut state = setup_state()?;
+
+        let command = state.previous_item();
+
+        assert!(command.is_some());
+        let command = command.unwrap();
+
+        assert_eq!(command.value.alias, "laranja");
+        assert_eq!(command.current_idx, 1);
+
+        let command = state.previous_item();
+
+        assert!(command.is_some());
+        let command = command.unwrap();
+
+        assert_eq!(command.value.alias, "azul");
+        assert_eq!(command.current_idx, 0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_get_next_namespace() -> Result<()> {
+        let mut state = setup_state()?;
+
+        let (selected_namespace, commands) = state.next_tab();
+
+        assert_eq!(selected_namespace.idx, 1);
+        assert_eq!(selected_namespace.name, "azul");
+        assert_eq!(commands.len(), 1);
+        assert_eq!(commands[0].alias, "azul");
+
+        let (selected_namespace, commands) = state.next_tab();
+
+        assert_eq!(selected_namespace.idx, 2);
+        assert_eq!(selected_namespace.name, "laranja");
+        assert_eq!(commands.len(), 1);
+        assert_eq!(commands[0].alias, "laranja");
+
+        let (selected_namespace, commands) = state.next_tab();
+
+        assert_eq!(selected_namespace.idx, 0);
+        assert_eq!(selected_namespace.name, "All");
+        assert_eq!(commands.len(), 2);
+        assert_eq!(commands[0].alias, "azul");
+        assert_eq!(commands[1].alias, "laranja");
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_get_previous_namespace() -> Result<()> {
+        let mut state = setup_state()?;
+
+        let (selected_namespace, commands) = state.previous_tab();
+
+        assert_eq!(selected_namespace.idx, 2);
+        assert_eq!(selected_namespace.name, "laranja");
+        assert_eq!(commands.len(), 1);
+        assert_eq!(commands[0].alias, "laranja");
+
+        let (selected_namespace, commands) = state.previous_tab();
+
+        assert_eq!(selected_namespace.idx, 1);
+        assert_eq!(selected_namespace.name, "azul");
+        assert_eq!(commands.len(), 1);
+        assert_eq!(commands[0].alias, "azul");
+
+        let (selected_namespace, commands) = state.previous_tab();
+
+        assert_eq!(selected_namespace.idx, 0);
+        assert_eq!(selected_namespace.name, "All");
+        assert_eq!(commands.len(), 2);
+        assert_eq!(commands[0].alias, "azul");
+        assert_eq!(commands[1].alias, "laranja");
 
         Ok(())
     }
