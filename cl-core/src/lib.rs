@@ -26,7 +26,7 @@ pub type CommandVec<'cmd> = Vec<Command<'cmd>>;
 pub type CommandMap<'cmd> = HashMap<Namespace, CommandVec<'cmd>>;
 
 pub trait CommandVecExt<'cmd> {
-    fn sort_and_return(&mut self) -> CommandVec<'cmd>;
+    fn sorted(&mut self) -> CommandVec<'cmd>;
 
     fn to_command_map(&self) -> CommandMap<'cmd>;
 
@@ -44,7 +44,7 @@ pub trait CommandVecExt<'cmd> {
 }
 
 impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
-    fn sort_and_return(&mut self) -> CommandVec<'cmd> {
+    fn sorted(&mut self) -> CommandVec<'cmd> {
         let mut sorted_commands = self.clone();
         sorted_commands.sort_by_key(|c| c.alias.to_lowercase());
 

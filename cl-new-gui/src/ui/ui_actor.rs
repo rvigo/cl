@@ -40,7 +40,6 @@ impl UiActor {
             .update_list_items(
                 result
                     .as_ref()
-                    .as_ref()
                     .map_or_else(Vec::new, |vec| vec.aliases()),
             )
             .await;
