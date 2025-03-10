@@ -10,6 +10,7 @@ use tui::Frame;
 pub struct TextBox {
     pub name: TextBoxName,
     pub content: Option<String>,
+    pub placeholder: Option<String>,
 }
 
 impl TextBox {
@@ -20,14 +21,21 @@ impl TextBox {
 
 impl Renderable for TextBox {
     fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
+        fn match_content(content: Option<String>, fallback: Option<String>) -> String {
+            if let Some(c) = content {
+                if !c.is_empty() {
+                    return c;
+                }
+            }
+            fallback.unwrap_or_default()
+        }
+        let content = match_content(self.content.clone(), self.placeholder.clone());
+
         let theme = theme.to_owned();
-        let content = match &self.content {
-            None => "",
-            Some(c) => &c,
-        };
         let style = Style::default()
             .fg(theme.text_color.into())
             .bg(theme.background_color.into());
+
         let paragraph = Paragraph::new(content).block(Block::bordered().style(style));
 
         frame.render_widget(paragraph, area)
