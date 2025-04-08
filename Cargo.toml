@@ -13,7 +13,7 @@ description = "Group your commands and aliases in an organized and human readabl
 anyhow = "1.0.75"
 itertools = "0.11.0"
 log = "0.4.20"
-tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread", "sync"] }
+tokio = { version = "1.44.2", features = ["macros", "rt-multi-thread", "sync"] }
 cl-core = { path = "cl-core" }
 
 # [dev-dependencies]
