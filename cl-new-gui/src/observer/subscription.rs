@@ -23,17 +23,20 @@ impl<V: 'static> Subscriber<V> {
         self.is_active = false;
     }
 }
-
-impl<K, V: 'static> SubscriptionSet<K, V>
+impl<K, V: 'static> Default for SubscriptionSet<K, V>
 where
     K: Ord,
 {
-    pub fn new() -> Self {
+    fn default() -> Self {
         Self {
             subscriptions: BTreeMap::new(),
         }
     }
-
+}
+impl<K, V: 'static> SubscriptionSet<K, V>
+where
+    K: Ord,
+{
     pub fn add(&mut self, key: K, listener: V) {
         let subscription = Subscriber {
             is_active: true,

@@ -3,15 +3,14 @@ mod main_screen_key_mapping;
 mod popup_key_mapping;
 mod search_key_mapping;
 
-use crate::component::{List, Search, Tabs, TextBox};
+use crate::component::{List, Tabs, TextBox};
 use crate::observer::event::Event;
+use crate::oneshot;
 use crate::screen::layer::Layer;
-use crate::state::selected_command::SelectedCommand;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::{
-    CurrentCommand, GetAllListItems, GetAllNamespaces, GetCurrentQuery,
+    CurrentCommand, GetAllListItems, GetAllNamespaces,
 };
-use crate::{event, oneshot, run_if_some};
 use async_trait::async_trait;
 use crossterm::event::KeyEvent;
 use std::any::TypeId;

@@ -22,12 +22,18 @@ pub struct UiActor {
 
 const RENDERING_TICK_RATE: Duration = Duration::from_millis(250);
 
+impl Default for UiActor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UiActor {
     pub fn new() -> Self {
         let (sig_handler, receiver) = SigHandler::create();
 
         Self {
-            ui: Ui::new(),
+            ui: Ui::default(),
             sig_handler,
             sig_receiver: receiver,
         }
@@ -37,11 +43,7 @@ impl UiActor {
     async fn initial_load(&mut self, state_tx: Sender<StateEvent>) {
         let result = oneshot!(state_tx, GetAllListItems);
         self.ui
-            .update_list_items(
-                result
-                    .as_ref()
-                    .map_or_else(Vec::new, |vec| vec.aliases()),
-            )
+            .update_list_items(result.as_ref().map_or_else(Vec::new, |vec| vec.aliases()))
             .await;
         self.ui
             .select_command(SelectedCommand::new(

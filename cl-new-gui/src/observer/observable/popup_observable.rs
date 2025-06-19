@@ -8,8 +8,8 @@ use log::debug;
 #[async_trait(?Send)]
 impl Observable for Popup {
     async fn on_listen(&mut self, event: Event) {
-        match event {
-            Event::Popup(popup) => match popup {
+        if let Event::Popup(popup) = event {
+            match popup {
                 PopupEvent::Create(type_) => match type_ {
                     PopupType::Dialog(message) => *self = Popup::dialog(message),
                     PopupType::Help(active_screen) => match active_screen {
@@ -31,8 +31,7 @@ impl Observable for Popup {
                         }
                     }
                 }
-            },
-            _ => {}
+            }
         }
     }
 }

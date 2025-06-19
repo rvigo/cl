@@ -43,7 +43,7 @@ mod new_core {
         let (state_tx, state_rx) = tokio::sync::mpsc::channel(8);
 
         let mut state_actor = StateActor::new(config, state_rx);
-        let mut ui_actor = UiActor::new();
+        let mut ui_actor = UiActor::default();
 
         try_join!(state_actor.run(), ui_actor.run(state_tx))?;
 

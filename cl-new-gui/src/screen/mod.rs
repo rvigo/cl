@@ -41,11 +41,17 @@ pub struct Screen {
 
 pub type Listeners = BTreeMap<TypeId, Vec<Component>>;
 
+impl Default for Screen {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Screen {
     pub fn new() -> Screen {
         let mut screens = Self {
             active_screen: ActiveScreen::Main,
-            subscriptions: SubscriptionSet::new(),
+            subscriptions: SubscriptionSet::default(),
             layers: Vec::new(),
             clipboard: Clipboard::new().ok(),
             theme: Theme::load(),
@@ -94,22 +100,22 @@ impl Screen {
                                 }
                                 ScreenCommand::CopyToClipboard => {
                                     if let Some(clipboard) = &mut self.clipboard {
-                                        if let Some(cmd) = oneshot!(state_tx, CurrentCommand) {
-                                            if let Some(cmd) = cmd {
-                                                clipboard.set_content(cmd.value.command).ok();
-                                                self.notify(
-                                                    TypeId::of::<Clipboard>(),
-                                                    Event::Clipboard(Copied),
-                                                )
-                                                .await
-                                            }
+                                        if let Some(Some(cmd)) = oneshot!(state_tx, CurrentCommand)
+                                        {
+                                            clipboard.set_content(cmd.value.command).ok();
+                                            self.notify(
+                                                TypeId::of::<Clipboard>(),
+                                                Event::Clipboard(Copied),
+                                            )
+                                            .await
                                         }
                                     }
                                 }
-                                ScreenCommand::Callback(cb) => match cb.handle(state_tx).await {
-                                    Some(events) => self.notify_all(events).await,
-                                    None => {}
-                                },
+                                ScreenCommand::Callback(cb) => {
+                                    if let Some(events) = cb.handle(state_tx).await {
+                                        self.notify_all(events).await
+                                    }
+                                }
                             }
                         }
                     }

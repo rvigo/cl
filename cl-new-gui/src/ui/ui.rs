@@ -8,6 +8,11 @@ pub struct Ui {
     pub selected_command: SelectedCommand,
     pub screens: Screen,
 }
+impl Default for Ui {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl Ui {
     pub fn new() -> Ui {
