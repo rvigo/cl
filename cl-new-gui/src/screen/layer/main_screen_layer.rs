@@ -2,7 +2,6 @@ use crate::clipboard::Clipboard;
 use crate::component::{
     ClipboardStatus, Component, List, Renderable, StaticInfo, Tabs, TextBox, TextBoxName,
 };
-
 use crate::component::Search;
 use crate::render;
 use crate::screen::layer::Layer;
@@ -11,6 +10,8 @@ use crate::screen::Listeners;
 use std::any::TypeId;
 use std::collections::BTreeMap;
 use tui::layout::{Constraint, Direction, Layout};
+use tui::prelude::Style;
+use tui::widgets::Block;
 use tui::Frame;
 
 pub struct MainScreenLayer {
@@ -47,6 +48,7 @@ impl Layer for MainScreenLayer {
         };
 
         let quick_search = TextBox {
+            placeholder: Some("Press '/' to search".to_owned()),
             ..Default::default()
         };
 
@@ -143,13 +145,19 @@ impl Layer for MainScreenLayer {
 
         let [namespace_area, tags_area] = *Layout::default()
             .direction(Direction::Horizontal)
-            .constraints(Constraint::from_percentages([30, 70]))
+            .constraints(Constraint::from_percentages([40, 60]))
             .split(details_rect)
         else {
             panic!() // TODO improve this
         };
 
         //
+
+        let footer = Block::default().style(
+            Style::default()
+                .bg(theme.to_owned().background_color.into())
+                .fg(theme.to_owned().text_color.into()),
+        );
         let [quick_search_rect, clipboard_rect, help_rect] = *Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
@@ -157,10 +165,12 @@ impl Layer for MainScreenLayer {
                 Constraint::Percentage(33),
                 Constraint::Percentage(33),
             ])
-            .split(drawable_chunks[1])
+            .split(footer.inner(drawable_chunks[1]))
         else {
             todo!()
         };
+
+        frame.render_widget(footer, drawable_chunks[1]);
 
         render! {
             frame,

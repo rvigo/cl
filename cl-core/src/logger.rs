@@ -69,7 +69,7 @@ impl Logger {
             LoggerType::Subcommand => self.init_subcommand_logger()?,
         }
 
-        panic_handler::setup_panic_hook();
+        // panic_handler::setup_panic_hook();
         Ok(())
     }
 

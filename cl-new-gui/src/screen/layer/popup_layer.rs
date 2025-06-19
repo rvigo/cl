@@ -28,7 +28,6 @@ impl Layer for PopupLayer {
         }
     }
 
-    // TODO adjust theme
     fn render(&mut self, frame: &mut Frame, theme: &Theme) {
         self.popup.render(frame, frame.area(), theme);
     }
