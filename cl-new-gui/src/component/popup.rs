@@ -52,6 +52,10 @@ impl Popup {
     }
 
     pub async fn click(&mut self, state_tx: Sender<StateEvent>) -> anyhow::Result<()> {
+        if self.buttons.is_empty() {
+            debug!("No buttons to click");
+            return Ok(());
+        }
         let selected = &self.buttons[self.state.selected];
         (selected.on_click)(state_tx).await
     }
@@ -99,11 +103,7 @@ impl Popup {
         let mut popup = Popup::default();
         popup.title = "Help".to_string();
         popup.content = main_options().to_string(); // TODO rewrite this
-        popup.buttons = vec![Button::new("Ok", true, |_| {
-            async_fn_body! {
-                Ok(())
-            }
-        })];
+        popup.buttons = vec![];
 
         popup
     }

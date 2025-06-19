@@ -12,6 +12,7 @@ itertools.workspace = true
 log.workspace = true
 tokio.workspace = true
 
+cl-new-gui = {path= "../cl-new-gui"}
 copypasta = "0.8.2"
 crossterm = "0.27.0"
 fuzzy-matcher = "0.3.7"

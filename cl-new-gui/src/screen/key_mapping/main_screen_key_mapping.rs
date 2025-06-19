@@ -115,6 +115,11 @@ impl KeyMapping for MainScreenLayer {
                 code: KeyCode::Char('f'),
                 modifiers: KeyModifiers::NONE,
                 ..
+            }
+            | KeyEvent {
+                code: KeyCode::Char('/'),
+                modifiers: KeyModifiers::NONE,
+                ..
             } => {
                 debug!("getting current query from state");
                 let current_query = oneshot!(state_tx, GetCurrentQuery).unwrap_or_default();
