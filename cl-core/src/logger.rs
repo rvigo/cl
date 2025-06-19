@@ -1,4 +1,4 @@
-use crate::{config::LogLevel, resource::errors::panic_handler};
+use crate::config::LogLevel;
 use anyhow::Result;
 use std::path::PathBuf;
 use tracing::{metadata::LevelFilter, Subscriber};
@@ -69,7 +69,6 @@ impl Logger {
             LoggerType::Subcommand => self.init_subcommand_logger()?,
         }
 
-        // panic_handler::setup_panic_hook();
         Ok(())
     }
 
