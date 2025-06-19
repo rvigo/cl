@@ -1,6 +1,7 @@
 use anyhow::{anyhow, bail, Result};
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
+use std::fmt::Display;
 
 const ARG_PREFIX: &str = "--";
 
@@ -122,17 +123,18 @@ impl CommandArg {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.arg.is_empty() && self.prefix.as_deref().map_or(true, |p| p.is_empty())
+        self.arg.is_empty() && self.prefix.as_deref().is_none_or(|p| p.is_empty())
     }
 }
 
-impl ToString for CommandArg {
-    fn to_string(&self) -> String {
+impl Display for CommandArg {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let prefix = self.prefix.to_owned().unwrap_or_default();
 
-        match &self.value {
+        let str = match &self.value {
             Some(value) => format!("{}{}={}", prefix, self.arg, value),
             None => format!("{}{}", prefix, self.arg),
-        }
+        };
+        write!(f, "{}", str)
     }
 }

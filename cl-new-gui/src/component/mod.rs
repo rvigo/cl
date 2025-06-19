@@ -45,7 +45,7 @@ impl Component {
 
 impl Clone for Component {
     fn clone(&self) -> Self {
-        Self(Rc::clone(&self))
+        Self(Rc::clone(self))
     }
 }
 

@@ -75,7 +75,7 @@ impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
     }
 
     fn first(&self) -> Command<'cmd> {
-        self.get(0)
+        <[Command]>::get(self, 0)
             .cloned()
             .expect("List is empty, cannot retrieve the first element")
     }

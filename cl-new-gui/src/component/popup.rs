@@ -63,49 +63,49 @@ impl Popup {
 
 impl Popup {
     pub fn dialog(message: String) -> Self {
-        let mut popup = Popup::default();
-        popup.title = "Warning".to_string();
-        popup.content = message;
-        popup.buttons = vec![
-            Button::new("Yes", true, |state| {
-                async_fn_body! {
-                    let result = oneshot!(state, DeleteCommand);
-                    match result{
-                        // TODO handle error
-                      Some((ok, reason)) => {
-                            if !ok {
-                                debug!("Something went wrong!");
-                                bail!(reason.unwrap())
+        Popup {
+            title: "Warning".to_string(),
+            content: message,
+            buttons: vec![
+                Button::new("Yes", true, |state| {
+                    async_fn_body! {
+                        let result = oneshot!(state, DeleteCommand);
+                        match result{
+                            // TODO handle error
+                          Some((ok, reason)) => {
+                                if !ok {
+                                    debug!("Something went wrong!");
+                                    bail!(reason.unwrap())
+                                }
+                                else {
+                                    debug!("Command deleted");
+                                    Ok(())
+                                }
                             }
-                            else {
-                                debug!("Command deleted");
-                                Ok(())
+                          None => {
+                                debug!("Something went wrong");
+                            Ok(())
                             }
-                        }
-                      None => {
-                            debug!("Something went wrong");
-                        Ok(())
                         }
                     }
-                }
-            }),
-            Button::new("No", false, |_| {
-                async_fn_body! {
-                    Ok(())
-                }
-            }),
-        ];
-
-        popup
+                }),
+                Button::new("No", false, |_| {
+                    async_fn_body! {
+                        Ok(())
+                    }
+                }),
+            ],
+            ..Default::default()
+        }
     }
 
     pub fn help_main() -> Self {
-        let mut popup = Popup::default();
-        popup.title = "Help".to_string();
-        popup.content = main_options().to_string(); // TODO rewrite this
-        popup.buttons = vec![];
-
-        popup
+        Popup {
+            title: "Help".to_string(),
+            content: main_options().to_string(),
+            buttons: vec![],
+            ..Default::default()
+        }
     }
 }
 
@@ -133,11 +133,7 @@ impl Renderable for Popup {
         // render buttons inside that area
         button_area.iter().enumerate().for_each(|(i, area)| {
             let current_button = &mut self.buttons[i];
-            if i == self.state.selected {
-                current_button.is_active = true
-            } else {
-                current_button.is_active = false
-            }
+            current_button.is_active = i == self.state.selected;
             current_button.render(frame, *area, theme);
         });
     }
@@ -403,7 +399,7 @@ impl Cell {
     }
 
     fn width(&self) -> u16 {
-        self.text.custom_width() as u16
+        self.text.custom_width()
     }
 }
 

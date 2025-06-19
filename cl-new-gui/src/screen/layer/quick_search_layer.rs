@@ -30,7 +30,7 @@ impl Layer for QuickSearchLayer {
         let [_, second_row] = *Layout::default()
             .direction(Vertical)
             .constraints([Constraint::Percentage(50); 2])
-            .split(frame.size())
+            .split(frame.area())
         else {
             todo!()
         };

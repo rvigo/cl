@@ -2,7 +2,7 @@ use crate::component::Renderable;
 use crate::screen::theme::Theme;
 use tui::layout::Rect;
 use tui::style::Style;
-use tui::widgets::{Block, Clear, Paragraph};
+use tui::widgets::{Block, Clear};
 use tui::Frame;
 use tui_textarea::TextArea;
 
@@ -23,7 +23,7 @@ impl Renderable for Search {
             )
             .title("Search");
         self.textarea.set_block(block);
-        
+
         frame.render_widget(Clear, area);
         frame.render_widget(&self.textarea, area)
     }

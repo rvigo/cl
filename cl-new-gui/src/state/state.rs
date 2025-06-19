@@ -179,7 +179,7 @@ impl State {
             let command = &selected_command.value;
             match self.commands.remove(command) {
                 Ok(map) => {
-                    fs::save_at(&map, self.config.command_file_path())?;
+                    fs::save_at(map, self.config.command_file_path())?;
                     self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
                     self.selected_command = if !self.current_items.is_empty() {
                         Some(SelectedCommand::new(self.current_items.first(), 0))
@@ -219,7 +219,7 @@ impl State {
     fn ff_vec(&self, query: &str, command_vec: &CommandVec<'static>) -> Vec<Command<'static>> {
         let mut matcher = Matcher::new(MatcherConfig::DEFAULT);
         let atom = Atom::new(
-            &query,
+            query,
             CaseMatching::Ignore,
             Normalization::Smart,
             AtomKind::Fuzzy,
@@ -235,7 +235,7 @@ impl State {
                     atom.score(Utf32Str::new(&item.lookup_string(), &mut buf), &mut matcher);
                 if let Some(score) = score {
                     debug!("item: {}, score: {score}", item.alias);
-                    return Some((item, score));
+                    Some((item, score))
                 } else {
                     None
                 }
@@ -276,7 +276,7 @@ impl State {
 fn append_default_namespace(namespaces: Vec<String>) -> Vec<String> {
     if !namespaces.is_empty() || namespaces.len() > 1 {
         let mut namespaces_set: HashSet<String> =
-            namespaces.iter().cloned().map(|ns| ns.into()).collect();
+            namespaces.iter().cloned().collect();
 
         namespaces_set.insert(DEFAULT_NAMESPACE.to_string());
 

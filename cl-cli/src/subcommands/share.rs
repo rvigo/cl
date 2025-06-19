@@ -119,7 +119,7 @@ impl Share {
         &'a self,
         stored_commands: &'a [Command],
         new_commands: &'a [Command],
-    ) -> Vec<Cow<'a, Command>> {
+    ) -> Vec<Cow<'a, Command<'a>>> {
         let existing_keys: HashSet<_> = stored_commands
             .iter()
             .map(|cmd| (Cow::Borrowed(&cmd.alias), Cow::Borrowed(&cmd.namespace)))
