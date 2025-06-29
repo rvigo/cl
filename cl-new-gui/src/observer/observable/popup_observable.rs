@@ -1,7 +1,8 @@
 use crate::component::Popup;
 use crate::observer::event::{Event, PopupEvent, PopupType};
 use crate::observer::observable::Observable;
-use crate::screen::{ActiveScreen, ScreenCommandCallback};
+use crate::screen::command::ScreenCommandCallback;
+use crate::screen::ActiveScreen;
 use async_trait::async_trait;
 use log::debug;
 

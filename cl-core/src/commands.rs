@@ -6,7 +6,7 @@ use crate::CommandVec;
 use crate::CommandVecExt;
 
 use anyhow::{bail, Context, Result};
-use log::warn;
+use log::{ warn};
 use std::{borrow::Borrow, env};
 
 #[derive(Default)]
@@ -34,7 +34,7 @@ impl<'cmd> Commands<'cmd> {
         new_command: &Command<'cmd>,
         old_command: &Command<'cmd>,
     ) -> Result<&CommandMap<'cmd>> {
-        self.compare_edited_command(new_command, old_command)?;
+        self.command_already_exists(new_command, new_command)?;
         let old_command_namespace: &str = old_command.namespace.borrow();
         let new_command_namespace = new_command.namespace.to_string();
 
@@ -131,19 +131,24 @@ impl<'cmd> Commands<'cmd> {
         Ok(())
     }
 
-    fn compare_edited_command(
-        &self,
-        new_command: &Command<'cmd>,
-        old_command: &Command<'cmd>,
-    ) -> Result<()> {
-        let same_alias = self.check_same_alias(new_command);
-        let has_changed = new_command.has_changes(old_command);
-        if same_alias || !has_changed {
-            bail!(CommandError::CommandAlreadyExists {
-                alias: new_command.alias.to_string(),
-                namespace: new_command.namespace.to_string()
-            });
+    fn command_already_exists(&self, actual: &Command<'cmd>, old: &Command<'cmd>) -> Result<()> {
+        let old_namespace = old.namespace.to_string();
+        let actual_namespace = actual.namespace.to_string();
+
+        if old_namespace == actual_namespace && old.alias == actual.alias {
+            return Ok(());
         }
+
+        let namespace = self.get_namespace_content(&actual_namespace);
+        if let Some(commands) = namespace {
+            if commands.iter().any(|command| command.alias == actual.alias) {
+                bail!(CommandError::CommandAlreadyExists {
+                    alias: actual.alias.to_string(),
+                    namespace: actual_namespace,
+                });
+            }
+        }
+
         Ok(())
     }
 }

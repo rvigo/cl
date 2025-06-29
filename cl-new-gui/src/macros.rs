@@ -48,3 +48,13 @@ macro_rules! run_if_some {
         }
     };
 }
+
+#[macro_export]
+macro_rules! try_get_renderable {
+    ($component:expr, $type_:ty) => {
+       $component
+       .borrow_mut()
+       .as_any()
+       .downcast_mut::<$type_>()
+    }; 
+}

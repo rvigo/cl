@@ -1,5 +1,6 @@
-use crate::screen::{ActiveScreen, ScreenCommandCallback};
-use crate::state::state_event::StateEvent;
+use crate::screen::command::ScreenCommandCallback;
+use crate::screen::ActiveScreen;
+use crate::state::state_event::{FieldType, StateEvent};
 use cl_core::Command;
 use crossterm::event::KeyEvent;
 use tokio::sync::mpsc::Sender;
@@ -11,11 +12,20 @@ pub enum Event {
     Previous(usize),
     UpdateAll(Vec<String>),
     UpdateCommand(Command<'static>),
+    UpdateListIdx(usize),
     UpdateContent(String),
     Popup(PopupEvent),
     Clipboard(ClipboardAction),
     Search(SearchAction, Sender<StateEvent>),
     UpdateQuery(String),
+    KeyEvent(KeyEvent),
+    GetFieldContent(Sender<StateEvent>),
+    Edit(EditEvent)
+}
+
+#[derive(Clone, Debug)]
+pub enum EditEvent {
+    SetField(FieldType)
 }
 
 #[derive(Clone, Debug)]

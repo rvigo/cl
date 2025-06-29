@@ -76,6 +76,18 @@ impl StateActor {
             StateEvent::GetCurrentQuery { respond_to } => {
                 let _ = respond_to.send(self.state.get_current_query());
             }
+            StateEvent::CommandDetails { respond_to } => {
+                let command = self.state.get_selected_command();
+                let _ = respond_to.send(command.map(|selected| selected.value));
+            }
+            StateEvent::EditField(type_, content) => {
+                debug!(target: "edit_state_actor", "Editing field: {:?} with content: {}", type_, content);
+                self.state.set_editable_command(type_, content);
+            }
+            StateEvent::EditCommand => {
+                debug!("do editing command");
+                self.state.edit_command()?;
+            }
         }
 
         Ok(())

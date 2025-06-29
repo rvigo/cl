@@ -51,7 +51,7 @@ impl<'cmd> Command<'cmd> {
     }
 
     pub fn has_named_parameter(&self) -> bool {
-        let re = Regex::new(r"#\{[^}]*\}").expect("Invalid regex pattern");
+        let re = Regex::new(r"#\{[^}]*}").expect("Invalid regex pattern");
 
         re.is_match(&self.command)
     }

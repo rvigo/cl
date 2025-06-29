@@ -13,6 +13,9 @@ impl Observable for List {
                 self.update_items(items.to_vec());
                 self.state.select(Some(0))
             }
+            Event::UpdateListIdx(idx) =>{
+                self.state.select(Some(*idx))
+            }
             _ => {}
         }
     }

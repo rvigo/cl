@@ -5,7 +5,6 @@ use crate::observer::event::SearchAction::Input;
 use crate::screen::key_mapping::ScreenCommand::Notify;
 use crate::screen::key_mapping::{KeyMapping, ScreenCommand};
 use crate::screen::layer::QuickSearchLayer;
-use crate::screen::ScreenCommandCallback::UpdateAll;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::GetCurrentQuery;
 use crate::{event, oneshot};
@@ -13,6 +12,7 @@ use async_trait::async_trait;
 use crossterm::event::{KeyCode, KeyEvent};
 use std::any::TypeId;
 use tokio::sync::mpsc::Sender;
+use crate::screen::key_mapping::command::ScreenCommandCallback::UpdateAll;
 
 #[async_trait(?Send)]
 impl KeyMapping for QuickSearchLayer {

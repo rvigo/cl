@@ -4,6 +4,8 @@ mod tabs_observable;
 mod textbox_observable;
 mod search_observable;
 mod clipboard_status;
+mod editable_textbox_observable;
+mod field_type_observable;
 
 use crate::observer::event::Event;
 use async_trait::async_trait;

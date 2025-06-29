@@ -2,8 +2,8 @@ use crate::component::{TextBox, TextBoxName};
 use crate::observer::event::Event;
 use crate::observer::observable::Observable;
 use async_trait::async_trait;
-use std::borrow::Cow;
 use log::debug;
+use std::borrow::Cow;
 
 #[async_trait(?Send)]
 impl Observable for TextBox {
@@ -34,7 +34,7 @@ impl Observable for TextBox {
     }
 }
 
-trait SomeOrNone {
+pub trait SomeOrNone {
     fn some_or_none(&self) -> Option<String>
     where
         Self: Sized;
