@@ -6,7 +6,7 @@ use tui::widgets::{Block, Clear};
 use tui::Frame;
 use tui_textarea::TextArea;
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 // TODO maybe change to quick search?
 pub struct Search {
     pub textarea: TextArea<'static>,

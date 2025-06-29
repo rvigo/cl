@@ -2,15 +2,13 @@ mod key_mapping;
 pub mod layer;
 pub mod theme;
 
-pub use crate::screen::key_mapping::ScreenCommandCallback;
-
 use crate::clipboard::Clipboard;
-use crate::component::Component;
+use crate::component::EditableTextbox;
 use crate::observer::event::ClipboardAction::Copied;
 use crate::observer::event::Event;
 use crate::observer::subscription::SubscriptionSet;
 use crate::oneshot;
-use crate::screen::key_mapping::ScreenCommand;
+use crate::screen::key_mapping::command::{ScreenCommand, ScreenCommandCallback};
 use crate::screen::layer::Layer;
 use crate::screen::theme::Theme;
 use crate::signal_handler::Signal::UserInt;
@@ -19,11 +17,16 @@ use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::CurrentCommand;
 use crossterm::event::Event as CrosstermEvent;
 use layer::MainScreenLayer;
-use log::error;
+use log::{debug, error, trace};
 use std::any::TypeId;
+use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::rc::Rc;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tui::Frame;
+
+use crate::observer::observable::Observable;
+pub use key_mapping::command;
 
 #[derive(Default, Clone, Debug)]
 pub enum ActiveScreen {
@@ -33,13 +36,13 @@ pub enum ActiveScreen {
 
 pub struct Screen {
     pub active_screen: ActiveScreen,
-    pub subscriptions: SubscriptionSet<TypeId, Component>,
+    pub subscriptions: SubscriptionSet<TypeId, Rc<RefCell<dyn Observable>>>,
     pub layers: Vec<Box<dyn Layer>>,
     pub clipboard: Option<Clipboard>,
     pub theme: Theme,
 }
 
-pub type Listeners = BTreeMap<TypeId, Vec<Component>>;
+pub type Listeners = BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>>;
 
 impl Default for Screen {
     fn default() -> Self {
@@ -116,6 +119,20 @@ impl Screen {
                                         self.notify_all(events).await
                                     }
                                 }
+                                ScreenCommand::ReplaceCurrentLayer(layer) => {
+                                    self.replace_current_layer(layer).await
+                                }
+                                ScreenCommand::GetFieldContent => {
+                                    debug!("Notifying observers to get field content");
+                                    self.notify(
+                                        TypeId::of::<EditableTextbox>(),
+                                        Event::GetFieldContent(state_tx.clone()),
+                                    )
+                                    .await;
+                                }
+                                ScreenCommand::Edit(cb) => {
+                                    cb.handle(state_tx.clone()).await;
+                                }
                             }
                         }
                     }
@@ -136,6 +153,7 @@ impl Screen {
     }
 
     pub async fn add_layer(&mut self, layer: Box<dyn Layer + 'static>) {
+        debug!("adding layer");
         self.layers.push(layer);
         self.update_listeners().await;
     }
@@ -147,10 +165,26 @@ impl Screen {
 
         if let Some(last) = self.layers.pop() {
             let listeners = last.get_listeners();
-            for (_, components) in listeners {
-                self.subscriptions.remove(&components);
+            for (key, _) in listeners {
+                self.subscriptions.remove(&key);
             }
         }
+    }
+
+    pub async fn replace_current_layer(&mut self, layer: Box<dyn Layer + 'static>) {
+        debug!("removing listeners from the last layer");
+        if let Some(last) = self.layers.pop() {
+            let listeners = last.get_listeners();
+            debug!("removing {:#?} listeners", listeners.len());
+            for (key, _) in listeners {
+                self.subscriptions.remove(&key);
+            }
+        }
+
+        debug!("adding new layer");
+        self.layers.push(layer);
+        debug!("updating listeners");
+        self.update_listeners().await;
     }
 
     pub async fn update_listeners(&mut self) {
@@ -161,12 +195,18 @@ impl Screen {
             listeners.extend(layer_listeners);
         }
 
+        debug!(
+            "Adding {} listeners to current {}",
+            listeners.len(),
+            self.subscriptions.subscriptions.len()
+        );
         self.subscriptions.extend(SubscriptionSet::from(listeners));
     }
 
     // TODO rethink this method name
     pub async fn notify(&mut self, id: TypeId, event: Event) {
         if let Some(subscriptions) = self.subscriptions.get(&id) {
+            trace!("notifying {} listeners", subscriptions.len());
             for sub in subscriptions {
                 sub.listener.borrow_mut().on_listen(event.clone()).await;
             }

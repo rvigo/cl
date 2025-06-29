@@ -1,6 +1,8 @@
 use crate::fuzzy::Fuzzy;
+use crate::state::edit::EditState;
 use crate::state::selected_command::SelectedCommand;
 use crate::state::selected_namespace::SelectedNamespace;
+use crate::state::state_event::FieldType;
 use anyhow::bail;
 use cl_core::{
     fs, Command, CommandExec, CommandMap, CommandMapExt, CommandVec, CommandVecExt, Commands,
@@ -24,6 +26,9 @@ pub struct State {
     current_query: Option<String>,
     cmd_map: CommandMap<'static>,
     current_items: HashSet<Command<'static>>,
+
+    // edit
+    edit_state: EditState, // TODO improve the name of this field
 }
 
 const DEFAULT_NAMESPACE: &str = "All";
@@ -54,6 +59,7 @@ impl State {
             current_query: None,
             current_items,
             cmd_map,
+            edit_state: EditState::default(),
         }
     }
 
@@ -271,12 +277,54 @@ impl State {
         }
         .sorted()
     }
+
+    pub fn set_editable_command(&mut self, field_type: FieldType, content: String) {
+        match field_type {
+            FieldType::Description => self.edit_state.update_description(Some(content)), // TODO check it need to be Some or not
+            FieldType::Alias => self.edit_state.update_alias(Some(content)),
+            FieldType::Tags => self.edit_state.update_tags(Some(vec![content])), // TODO adjust type to Vec<String> or split by comma after here
+            FieldType::Command => self.edit_state.update_command(Some(content)),
+            FieldType::Namespace => self.edit_state.update_namespace(Some(content)),
+        }
+    }
+
+    pub fn edit_command(&mut self) -> anyhow::Result<()> {
+        let edited = self.edit_state.get();
+
+        let actual = self
+            .selected_command
+            .as_ref()
+            .map(|selected| selected.value.clone())
+            .unwrap_or_default();
+
+        debug!("About to change command: {:#?} to {:#?}", actual, edited);
+        match self.commands.edit(&edited, &actual) {
+            Ok(map) => {
+                debug!("Command edited successfully");
+                fs::save_at(map, self.config.command_file_path())?;
+                self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
+                let selected_command = SelectedCommand::new(
+                    edited,
+                    self.selected_command
+                        .clone()
+                        .unwrap_or_default()
+                        .current_idx,
+                );
+                
+                self.selected_command = Some(selected_command);
+            }
+            Err(err) => {
+                error!("Error editing command: {}", err);
+            }
+        }
+
+        Ok(())
+    }
 }
 
 fn append_default_namespace(namespaces: Vec<String>) -> Vec<String> {
     if !namespaces.is_empty() || namespaces.len() > 1 {
-        let mut namespaces_set: HashSet<String> =
-            namespaces.iter().cloned().collect();
+        let mut namespaces_set: HashSet<String> = namespaces.iter().cloned().collect();
 
         namespaces_set.insert(DEFAULT_NAMESPACE.to_string());
 

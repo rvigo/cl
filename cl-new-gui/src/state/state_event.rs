@@ -36,9 +36,34 @@ pub enum StateEvent {
         respond_to: oneshot::Sender<(SelectedNamespace, SelectedCommand, Vec<Command<'static>>)>,
     },
     /// Delete the command
-    DeleteCommand { respond_to: oneshot::Sender<(bool, Option<String>)> },
+    DeleteCommand {
+        respond_to: oneshot::Sender<(bool, Option<String>)>,
+    },
     /// Filter
     Filter(String),
     /// Get current query
     GetCurrentQuery { respond_to: oneshot::Sender<String> },
+    /// Load command details in the current layer
+    CommandDetails {
+        respond_to: oneshot::Sender<Option<Command<'static>>>,
+    },
+    /// Edit
+    EditField(FieldType, String),
+    ///
+    EditCommand,
+}
+
+#[derive(Debug, PartialEq, Eq, Default, Clone)]
+pub enum FieldType {
+    /// Edit the command description
+    Description,
+    /// Edit the command alias
+    #[default]
+    Alias,
+    /// Edit the command tags
+    Tags,
+    /// Edit the command
+    Command,
+    /// Edit the command namespace
+    Namespace,
 }

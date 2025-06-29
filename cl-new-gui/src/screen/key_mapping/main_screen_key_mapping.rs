@@ -1,9 +1,11 @@
-use crate::component::{List, Popup, Search, Tabs, TextBox};
+use crate::component::{EditableTextbox, List, Popup, Search, Tabs, TextBox};
 use crate::observer::event::PopupType::{Dialog, Help};
 use crate::observer::event::{Event, PopupEvent};
-use crate::screen::key_mapping::ScreenCommand::{AddLayer, CopyToClipboard, Quit};
+use crate::screen::key_mapping::ScreenCommand::{
+    AddLayer, CopyToClipboard, Quit, ReplaceCurrentLayer,
+};
 use crate::screen::key_mapping::{KeyMapping, ScreenCommand};
-use crate::screen::layer::{Layer, MainScreenLayer, PopupLayer, QuickSearchLayer};
+use crate::screen::layer::{EditScreenLayer, Layer, MainScreenLayer, PopupLayer, QuickSearchLayer};
 use crate::screen::ActiveScreen::Main;
 use crate::state::selected_command::SelectedCommand;
 use crate::state::state_event::StateEvent;
@@ -15,7 +17,9 @@ use async_trait::async_trait;
 use cl_core::CommandVecExt;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use log::debug;
+use std::any::TypeId;
 use tokio::sync::mpsc::Sender;
+use crate::screen::key_mapping::command::ScreenCommandCallback;
 
 #[async_trait(?Send)]
 impl KeyMapping for MainScreenLayer {
@@ -156,6 +160,19 @@ impl KeyMapping for MainScreenLayer {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => Some(vec![Quit]),
+            KeyEvent {
+                code: KeyCode::Char('e'),
+                modifiers: KeyModifiers::NONE,
+                ..
+            } => {
+                let events = vec![
+                    ReplaceCurrentLayer(Box::new(EditScreenLayer::new())),
+                    ScreenCommand::Callback(ScreenCommandCallback::LoadCommandDetails(
+                        TypeId::of::<EditableTextbox>(),
+                    )),
+                ];
+                Some(events)
+            }
             _ => None,
         }
     }

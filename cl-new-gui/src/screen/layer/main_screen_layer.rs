@@ -2,27 +2,31 @@ use crate::clipboard::Clipboard;
 use crate::component::{
     ClipboardStatus, Component, List, Renderable, StaticInfo, Tabs, TextBox, TextBoxName,
 };
-use crate::component::Search;
+use crate::component::{RenderableComponent, Search};
+use crate::observer::observable::Observable;
 use crate::render;
 use crate::screen::layer::Layer;
 use crate::screen::theme::Theme;
 use crate::screen::Listeners;
 use std::any::TypeId;
+use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::rc::Rc;
 use tui::layout::{Constraint, Direction, Layout};
 use tui::prelude::Style;
 use tui::widgets::Block;
 use tui::Frame;
 
+// FIXME change all components to use RenderableComponent
 pub struct MainScreenLayer {
-    pub command: Component,
-    pub description: Component,
-    pub tags: Component,
-    pub namespace: Component,
-    pub list: Component,
-    pub tabs: Component,
-    pub clipboard: Component,
-    pub quick_search: Component,
+    pub command: RenderableComponent<TextBox>,
+    pub description: RenderableComponent<TextBox>,
+    pub tags: RenderableComponent<TextBox>,
+    pub namespace: RenderableComponent<TextBox>,
+    pub list: RenderableComponent<List>,
+    pub tabs: RenderableComponent<Tabs>,
+    pub clipboard: RenderableComponent<ClipboardStatus>, // TODO adjust ClipboardStatus (merge with Clipboard)
+    pub quick_search: RenderableComponent<TextBox>,
     pub listeners: Listeners,
     pub app_name: StaticInfo,
     pub help: StaticInfo,
@@ -58,29 +62,32 @@ impl Layer for MainScreenLayer {
         // components
         let mut listeners = Listeners::new();
 
-        let command_shared = Component::new(command);
-        let description_shared = Component::new(description);
-        let tags_shared = Component::new(tags);
-        let namespace_shared = Component::new(namespace);
-        let tabs_shared = Component::new(tabs);
-        let list_shared = Component::new(list);
+        let command_shared = RenderableComponent(Component::new(command));
+        let description_shared = RenderableComponent(Component::new(description));
+        let tags_shared = RenderableComponent(Component::new(tags));
+        let namespace_shared = RenderableComponent(Component::new(namespace));
+        let tabs_shared = RenderableComponent(Component::new(tabs));
+        let list_shared = RenderableComponent(Component::new(list));
 
-        let quick_search_share = Component::new(quick_search);
-        listeners.insert(TypeId::of::<Search>(), vec![quick_search_share.clone()]);
+        let quick_search_share = RenderableComponent(Component::new(quick_search));
+        listeners.insert(
+            TypeId::of::<Search>(),
+            vec![quick_search_share.get_observable()],
+        );
 
         listeners.insert(
             TypeId::of::<TextBox>(),
             vec![
-                command_shared.clone(),
-                description_shared.clone(),
-                tags_shared.clone(),
-                namespace_shared.clone(),
+                command_shared.get_observable(),
+                description_shared.get_observable(),
+                tags_shared.get_observable(),
+                namespace_shared.get_observable(),
             ],
         );
-        listeners.insert(TypeId::of::<Tabs>(), vec![tabs_shared.clone()]);
-        listeners.insert(TypeId::of::<List>(), vec![list_shared.clone()]);
+        listeners.insert(TypeId::of::<Tabs>(), vec![tabs_shared.get_observable()]);
+        listeners.insert(TypeId::of::<List>(), vec![list_shared.get_observable()]);
 
-        let clipboard = Component::new(ClipboardStatus::new());
+        let clipboard = RenderableComponent(Component::new(ClipboardStatus::new()));
 
         listeners.insert(TypeId::of::<Clipboard>(), vec![clipboard.clone()]);
 
@@ -89,13 +96,13 @@ impl Layer for MainScreenLayer {
         let help = StaticInfo::new("F1/? for Help");
 
         Self {
-            command: command_shared.clone(),
-            description: description_shared.clone(),
-            tags: tags_shared.clone(),
-            namespace: namespace_shared.clone(),
-            list: list_shared.clone(),
-            tabs: tabs_shared.clone(),
-            quick_search: quick_search_share.clone(),
+            command: command_shared,
+            description: description_shared,
+            tags: tags_shared,
+            namespace: namespace_shared,
+            list: list_shared,
+            tabs: tabs_shared,
+            quick_search: quick_search_share,
             listeners,
             app_name,
             clipboard,
@@ -188,7 +195,7 @@ impl Layer for MainScreenLayer {
         }
     }
 
-    fn get_listeners(&self) -> BTreeMap<TypeId, Vec<Component>> {
+    fn get_listeners(&self) -> BTreeMap<TypeId, Vec<Rc<RefCell<(dyn Observable + 'static)>>>> {
         self.listeners.clone()
     }
 }

@@ -1,15 +1,18 @@
-use crate::component::{Component, Renderable, Search};
+use crate::component::{Component, RenderableComponent, Search};
 use crate::screen::layer::Layer;
 use crate::screen::theme::Theme;
 use std::any::TypeId;
+use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::rc::Rc;
 use tui::layout::Direction::{Horizontal, Vertical};
 use tui::layout::{Constraint, Layout};
 use tui::Frame;
+use crate::observer::observable::Observable;
 
 pub struct QuickSearchLayer {
-    pub search: Component,
-    pub listeners: BTreeMap<TypeId, Vec<Component>>,
+    pub search: RenderableComponent<Search>,
+    pub listeners: BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>>,
 }
 
 impl Layer for QuickSearchLayer {
@@ -18,10 +21,10 @@ impl Layer for QuickSearchLayer {
         Self: Sized,
     {
         let search = Search::default();
-        let search = Component::new(search);
+        let search = RenderableComponent(Component::new(search));
 
         let mut listeners = BTreeMap::new();
-        listeners.insert(TypeId::of::<Search>(), vec![search.clone()]);
+        listeners.insert(TypeId::of::<Search>(), vec![search.get_observable()]);
 
         Self { search, listeners }
     }
@@ -44,10 +47,11 @@ impl Layer for QuickSearchLayer {
         };
 
         // TODO adjust theme
+
         self.search.render(frame, first_col, theme)
     }
 
-    fn get_listeners(&self) -> BTreeMap<TypeId, Vec<Component>> {
-        self.listeners.clone()
+    fn get_listeners(&self) -> BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>> {
+      self.listeners.clone()
     }
 }
