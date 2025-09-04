@@ -47,9 +47,9 @@ pub enum StateEvent {
     CommandDetails {
         respond_to: oneshot::Sender<Option<Command<'static>>>,
     },
-    /// Edit
+    /// Edit Field
     EditField(FieldType, String),
-    ///
+    /// Edit Command
     EditCommand,
 }
 

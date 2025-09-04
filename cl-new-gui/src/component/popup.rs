@@ -350,7 +350,8 @@ impl fmt::Display for Row {
             .map(|cell| cell.to_string())
             .collect::<Vec<_>>()
             .join(" ");
-        write!(f, "{}", row)
+
+        write!(f, "{row}")
     }
 }
 

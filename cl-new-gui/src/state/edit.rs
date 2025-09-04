@@ -1,23 +1,12 @@
 use cl_core::{Command, CommandBuilder};
 
+#[derive(Default)]
 pub struct EditState {
     pub alias: Option<String>,
     pub command: Option<String>,
     pub description: Option<String>,
     pub tags: Option<Vec<String>>,
     pub namespace: Option<String>,
-}
-
-impl Default for EditState {
-    fn default() -> Self {
-        Self {
-            alias: None,
-            command: None,
-            description: None,
-            tags: None,
-            namespace: None,
-        }
-    }
 }
 
 impl EditState {
@@ -43,7 +32,7 @@ impl EditState {
 
     pub fn get(&mut self) -> Command<'static> {
         CommandBuilder::default()
-            .alias(&self.alias.take().unwrap_or_default())
+            .alias(self.alias.take().unwrap_or_default())
             .command(self.command.take().unwrap_or_default())
             .namespace(self.namespace.take().unwrap_or_default())
             .description(self.description.clone())
