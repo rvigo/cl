@@ -95,7 +95,6 @@ impl<K: Ord, T> From<BTreeMap<K, Vec<T>>> for SubscriptionSet<K, T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::screen::layer::{Layer, MainScreenLayer};
 
     #[test]
     fn test_add_and_get() {

@@ -7,14 +7,13 @@ use log::debug;
 #[async_trait(?Send)]
 impl Observable for FieldType {
     async fn on_listen(&mut self, event: Event) {
-        match event {
-            Event::Edit(edit) => match edit {
+        if let Event::Edit(edit) = event {
+            match edit {
                 EditEvent::SetField(field) => {
                     debug!("changing field {:?} to {:?}", self, field);
                     *self = field;
                 }
-            },
-            _ => {}
+            }
         }
     }
 }

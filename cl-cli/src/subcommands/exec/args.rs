@@ -135,6 +135,6 @@ impl Display for CommandArg {
             Some(value) => format!("{}{}={}", prefix, self.arg, value),
             None => format!("{}{}", prefix, self.arg),
         };
-        write!(f, "{}", str)
+        write!(f, "{str}")
     }
 }

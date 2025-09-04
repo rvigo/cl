@@ -6,7 +6,7 @@ use crate::CommandVec;
 use crate::CommandVecExt;
 
 use anyhow::{bail, Context, Result};
-use log::{ warn};
+use log::warn;
 use std::{borrow::Borrow, env};
 
 #[derive(Default)]
@@ -34,7 +34,7 @@ impl<'cmd> Commands<'cmd> {
         new_command: &Command<'cmd>,
         old_command: &Command<'cmd>,
     ) -> Result<&CommandMap<'cmd>> {
-        self.command_already_exists(new_command, new_command)?;
+        self.command_already_exists(new_command, old_command)?;
         let old_command_namespace: &str = old_command.namespace.borrow();
         let new_command_namespace = new_command.namespace.to_string();
 
@@ -136,11 +136,13 @@ impl<'cmd> Commands<'cmd> {
         let actual_namespace = actual.namespace.to_string();
 
         if old_namespace == actual_namespace && old.alias == actual.alias {
-            return Ok(());
+            bail!(CommandError::CommandAlreadyExists {
+                alias: actual.alias.to_string(),
+                namespace: actual_namespace,
+            });
         }
 
-        let namespace = self.get_namespace_content(&actual_namespace);
-        if let Some(commands) = namespace {
+        if let Some(commands) = self.get_namespace_content(&actual_namespace) {
             if commands.iter().any(|command| command.alias == actual.alias) {
                 bail!(CommandError::CommandAlreadyExists {
                     alias: actual.alias.to_string(),
@@ -338,8 +340,7 @@ mod test {
         let new_command = create_command!("old", "command", "namespace", None, None);
         let mut commands = commands!(new_command.to_owned());
 
-        let mut edited_command = new_command.clone();
-        edited_command.alias = Cow::Borrowed("new");
+        let edited_command = create_command!("new", "command", "namespace", None, None);
 
         let old_command = new_command;
         let commands_with_edited_command = commands.edit(&edited_command, &old_command);
@@ -386,8 +387,7 @@ mod test {
         let command2 = create_command!("alias2", "command", "namespace1", None, None);
         let mut commands = commands!(command1, command2.to_owned());
 
-        let mut edited_command = command2.clone();
-        edited_command.alias = Cow::Borrowed("alias1");
+        let edited_command = create_command!("alias1", "command", "namespace1", None, None);
 
         let command_list_with_edited_command = commands.edit(&edited_command, &command2);
 
@@ -452,6 +452,17 @@ mod test {
             .to_string(),
             result.unwrap_err().to_string()
         )
+    }
+
+    #[test]
+    fn should_validate_if_a_command_already_exists() {
+        let command1 = create_command!("alias", "command", "namespace1", None, None);
+        let command2 = create_command!("alias", "command", "namespace1", None, None);
+
+        let commands = commands!(command1.to_owned(), command2.to_owned());
+        let res = commands.command_already_exists(&command1, &command2);
+
+        assert!(res.is_err())
     }
 
     #[test]
