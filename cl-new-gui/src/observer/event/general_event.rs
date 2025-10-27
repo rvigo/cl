@@ -2,7 +2,6 @@ use crate::screen::command::ScreenCommandCallback;
 use crate::screen::ActiveScreen;
 use crate::state::state_event::{FieldName, StateEvent};
 use cl_core::Command;
-use crossterm::event::KeyEvent;
 use tokio::sync::mpsc::Sender;
 
 // TODO rethink the name of these events
@@ -18,7 +17,7 @@ pub enum Event {
     Clipboard(ClipboardAction),
     Search(SearchAction, Sender<StateEvent>),
     UpdateQuery(String),
-    KeyEvent(KeyEvent),
+    KeyEvent(crossterm::event::KeyEvent),
     GetFieldContent(Sender<StateEvent>),
     Edit(EditEvent)
 }
@@ -49,5 +48,5 @@ pub enum ClipboardAction {
 
 #[derive(Clone, Debug)]
 pub enum SearchAction {
-    Input(KeyEvent),
+    Input(crossterm::event::KeyEvent),
 }

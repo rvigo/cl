@@ -34,6 +34,12 @@ impl ClipboardStatus {
     }
 }
 
+impl Default for ClipboardStatus {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Renderable for ClipboardStatus {
     fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
         let theme = theme.to_owned();

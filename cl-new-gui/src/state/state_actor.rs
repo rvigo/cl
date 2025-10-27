@@ -1,10 +1,10 @@
 use crate::state::selected_command::SelectedCommand;
-use crate::state::state::State;
 use crate::state::state_event::StateEvent;
 use anyhow::Result;
 use cl_core::Config;
 use log::debug;
 use tokio::sync::mpsc::Receiver;
+use crate::state::State;
 
 pub struct StateActor {
     state: State,

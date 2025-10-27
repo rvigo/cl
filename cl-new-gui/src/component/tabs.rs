@@ -36,6 +36,12 @@ impl Tabs {
     }
 }
 
+impl Default for Tabs {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Renderable for Tabs {
     fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
         let theme = theme.to_owned();
