@@ -1,6 +1,6 @@
 use crate::component::{
-    Component, EditableTextbox, EditableTextboxName, RenderableComponent,
-    StateComponent,
+    Component, EditableTextbox, EditableTextboxName, Renderable, RenderableComponent, ScreenState,
+    StateComponent, StaticInfo,
 };
 use crate::observer::observable::Observable;
 use crate::observer::ObservableComponent;
@@ -14,8 +14,9 @@ use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::rc::Rc;
 use tui::layout::{Constraint, Direction, Layout};
-use tui::widgets::Clear;
+use tui::widgets::{Block, Clear, Paragraph};
 use tui::Frame;
+use tui::prelude::Style;
 
 pub struct EditScreenLayer {
     pub alias: RenderableComponent<EditableTextbox>,
@@ -23,8 +24,9 @@ pub struct EditScreenLayer {
     pub command: RenderableComponent<EditableTextbox>,
     pub tags: RenderableComponent<EditableTextbox>,
     pub description: RenderableComponent<EditableTextbox>,
-    pub current_field: StateComponent<FieldType>,
+    pub screen_state: StateComponent<ScreenState>,
     pub listeners: BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>>,
+    pub app_name: StaticInfo,
 }
 
 impl Layer for EditScreenLayer {
@@ -33,6 +35,7 @@ impl Layer for EditScreenLayer {
         Self: Sized,
     {
         let current_field = FieldType::Alias;
+        let screen_state = ScreenState::new(current_field);
 
         let alias = EditableTextbox {
             name: EditableTextboxName::Alias,
@@ -56,13 +59,13 @@ impl Layer for EditScreenLayer {
             ..Default::default()
         };
 
-        let alias_component =RenderableComponent( Component::new(alias));
-        let namespace_component =RenderableComponent(Component::new(namespace));
+        let alias_component = RenderableComponent(Component::new(alias));
+        let namespace_component = RenderableComponent(Component::new(namespace));
         let command_component = RenderableComponent(Component::new(command));
         let tags_component = RenderableComponent(Component::new(tags));
         let description_component = RenderableComponent(Component::new(description));
 
-        let current_field_component = StateComponent(Component::new(current_field));
+        let screen_state_component = StateComponent(Component::new(screen_state));
 
         let mut listeners = BTreeMap::new();
         listeners.insert(
@@ -77,9 +80,11 @@ impl Layer for EditScreenLayer {
         );
 
         listeners.insert(
-            TypeId::of::<FieldType>(),
-            vec![current_field_component.get_observable()],
+            TypeId::of::<ScreenState>(),
+            vec![screen_state_component.get_observable()],
         );
+
+        let app_name = StaticInfo::new("cl - edit");
 
         Self {
             alias: alias_component,
@@ -87,8 +92,9 @@ impl Layer for EditScreenLayer {
             command: command_component,
             tags: tags_component,
             description: description_component,
+            screen_state: screen_state_component,
             listeners,
-            current_field: current_field_component,
+            app_name,
         }
     }
 
@@ -149,16 +155,49 @@ impl Layer for EditScreenLayer {
             todo!()
         };
 
+        let [app_name_rect, _] = *Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Max(3), Constraint::Length(5)])
+            .split(form_chunks[0])
+        else {
+            todo!()
+        };
+
+        let footer = Block::default().style(
+            Style::default()
+                .bg(theme.to_owned().background_color.into())
+                .fg(theme.to_owned().text_color.into()),
+        );
+
+        let [_, modified_status_rect, _] = *Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Percentage(33),
+                Constraint::Percentage(33),
+                Constraint::Percentage(33),
+            ])
+            .split(footer.inner(drawable_chunks[1]))
+        else {
+            todo!()
+        };
+
         frame.render_widget(Clear, frame.area());
+
+        // TODO change this to a proper screen component
+        if self.get_modified_status() {
+            let modified_status = Paragraph::new("MODIFIED");
+            frame.render_widget(modified_status, modified_status_rect);
+        }
 
         render! {
             frame,
             theme,
+            { self.app_name, app_name_rect },
             { self.alias, first_row1 },
             { self.namespace, first_row2 },
             { self.command, second_row1 },
             { self.description, third_row1},
-            { self.tags, third_row2 }
+            { self.tags, third_row2 },
         }
     }
 
@@ -178,15 +217,6 @@ const FIELD_ORDER: &[FieldType] = &[
 ];
 
 impl EditScreenLayer {
-    pub fn change_current_field(&mut self, field: FieldType) {
-        if FIELD_ORDER.contains(&field) {
-            debug!(target: "EditScreenLayer", "Changed current field to {:?}", field);
-            self.current_field = StateComponent(Component::new(field));
-        } else {
-            debug!(target: "EditScreenLayer", "Invalid field type: {:?}", field);
-        }
-    }
-
     pub fn get_next_field(&self) -> FieldType {
         let current_field = self.get_current_field();
 
@@ -196,6 +226,7 @@ impl EditScreenLayer {
             .expect("Current field not found in FIELD_ORDER");
         let next_idx = (pos + 1) % FIELD_ORDER.len();
 
+        debug!("current: {} - next: {}", pos, next_idx);
         FIELD_ORDER[next_idx].clone()
     }
 
@@ -213,13 +244,26 @@ impl EditScreenLayer {
     }
 
     fn get_current_field(&self) -> FieldType {
-        let inner_ref: &dyn ObservableComponent = &*self.current_field.borrow();
-        let current_field = if let Some(field) = inner_ref.as_any().downcast_ref::<FieldType>() {
-            field.clone()
+        let inner_ref: &dyn ObservableComponent = &*self.screen_state.borrow();
+        let screen_state = if let Some(field) = inner_ref.as_any().downcast_ref::<ScreenState>() {
+            field
         } else {
-            panic!("Current field is not of type FieldType");
+            panic!("Cannot get the current screen state");
         };
 
-        current_field.clone()
+        let current = screen_state.current_field.clone();
+        debug!("getting current field: {:?}", current);
+        current
+    }
+
+    fn get_modified_status(&self) -> bool {
+        let inner_ref: &dyn ObservableComponent = &*self.screen_state.borrow();
+        let screen_state = if let Some(field) = inner_ref.as_any().downcast_ref::<ScreenState>() {
+            field
+        } else {
+            panic!("Cannot get the current screen state");
+        };
+
+        screen_state.has_changes
     }
 }

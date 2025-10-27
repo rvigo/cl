@@ -17,7 +17,6 @@ use tui::prelude::Style;
 use tui::widgets::Block;
 use tui::Frame;
 
-// FIXME change all components to use RenderableComponent
 pub struct MainScreenLayer {
     pub command: RenderableComponent<TextBox>,
     pub description: RenderableComponent<TextBox>,
@@ -25,7 +24,7 @@ pub struct MainScreenLayer {
     pub namespace: RenderableComponent<TextBox>,
     pub list: RenderableComponent<List>,
     pub tabs: RenderableComponent<Tabs>,
-    pub clipboard: RenderableComponent<ClipboardStatus>, // TODO adjust ClipboardStatus (merge with Clipboard)
+    pub clipboard: RenderableComponent<ClipboardStatus>,
     pub quick_search: RenderableComponent<TextBox>,
     pub listeners: Listeners,
     pub app_name: StaticInfo,

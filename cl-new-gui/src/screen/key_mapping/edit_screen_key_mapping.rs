@@ -1,11 +1,12 @@
 use crate::component::EditableTextbox;
+use crate::component::ScreenState;
 use crate::event;
 use crate::observer::event::{EditEvent, Event};
 use crate::screen::key_mapping::command::EditCallback;
 use crate::screen::key_mapping::{KeyMapping, ScreenCommand};
 use crate::screen::layer::{EditScreenLayer, Layer, MainScreenLayer};
 use crate::screen::ScreenCommandCallback::UpdateAll;
-use crate::state::state_event::{FieldType, StateEvent};
+use crate::state::state_event::StateEvent;
 use async_trait::async_trait;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use log::debug;
@@ -61,7 +62,7 @@ impl KeyMapping for EditScreenLayer {
                         EditableTextbox,
                         Event::Edit(EditEvent::SetField(current_field.clone()))
                     ),
-                    event!(FieldType, Event::Edit(EditEvent::SetField(current_field))),
+                    event!(ScreenState, Event::Edit(EditEvent::SetField(current_field))),
                 ];
                 Some(events)
             }
@@ -77,13 +78,16 @@ impl KeyMapping for EditScreenLayer {
                         EditableTextbox,
                         Event::Edit(EditEvent::SetField(current_field.clone()))
                     ),
-                    event!(FieldType, Event::Edit(EditEvent::SetField(current_field))),
+                    event!(ScreenState, Event::Edit(EditEvent::SetField(current_field))),
                 ];
                 Some(events)
             }
             input => {
                 debug!(target: "clr_edit_screen_key_mapping", "Received key event: {:?}", input);
-                Some(vec![event!(EditableTextbox, Event::KeyEvent(input))])
+                Some(vec![
+                    event!(EditableTextbox, Event::KeyEvent(input)),
+                    event!(ScreenState, Event::KeyEvent(input)),
+                ])
             }
         }
     }
