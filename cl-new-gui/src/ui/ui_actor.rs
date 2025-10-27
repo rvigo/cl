@@ -4,7 +4,7 @@ use crate::signal_handler::{SigHandler, Signal};
 use crate::state::selected_command::SelectedCommand;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::{GetAllListItems, GetAllNamespaces};
-use crate::ui::ui::Ui;
+use crate::ui::Ui;
 use anyhow::Result;
 use cl_core::CommandVecExt;
 use crossterm::event::EventStream;

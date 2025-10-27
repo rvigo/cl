@@ -56,7 +56,7 @@ impl Layer for MainScreenLayer {
         };
 
         let list = List::new();
-        let tabs = Tabs::new();
+        let tabs = Tabs::default();
 
         // components
         let mut listeners = Listeners::new();
@@ -86,7 +86,7 @@ impl Layer for MainScreenLayer {
         listeners.insert(TypeId::of::<Tabs>(), vec![tabs_shared.get_observable()]);
         listeners.insert(TypeId::of::<List>(), vec![list_shared.get_observable()]);
 
-        let clipboard = RenderableComponent(Component::new(ClipboardStatus::new()));
+        let clipboard = RenderableComponent(Component::new(ClipboardStatus::default()));
 
         listeners.insert(TypeId::of::<Clipboard>(), vec![clipboard.clone()]);
 
