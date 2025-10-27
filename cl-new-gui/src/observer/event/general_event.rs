@@ -1,6 +1,6 @@
 use crate::screen::command::ScreenCommandCallback;
 use crate::screen::ActiveScreen;
-use crate::state::state_event::{FieldType, StateEvent};
+use crate::state::state_event::{FieldName, StateEvent};
 use cl_core::Command;
 use crossterm::event::KeyEvent;
 use tokio::sync::mpsc::Sender;
@@ -25,7 +25,7 @@ pub enum Event {
 
 #[derive(Clone, Debug)]
 pub enum EditEvent {
-    SetField(FieldType)
+    SetField(FieldName)
 }
 
 #[derive(Clone, Debug)]

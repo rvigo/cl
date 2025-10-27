@@ -7,16 +7,16 @@ use crate::observer::ObservableComponent;
 use crate::render;
 use crate::screen::layer::Layer;
 use crate::screen::theme::Theme;
-use crate::state::state_event::FieldType;
+use crate::state::state_event::FieldName;
 use log::debug;
-use std::any::TypeId;
+use std::any::{Any, TypeId};
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::rc::Rc;
 use tui::layout::{Constraint, Direction, Layout};
+use tui::prelude::Style;
 use tui::widgets::{Block, Clear, Paragraph};
 use tui::Frame;
-use tui::prelude::Style;
 
 pub struct EditScreenLayer {
     pub alias: RenderableComponent<EditableTextbox>,
@@ -34,7 +34,7 @@ impl Layer for EditScreenLayer {
     where
         Self: Sized,
     {
-        let current_field = FieldType::Alias;
+        let current_field = FieldName::Alias;
         let screen_state = ScreenState::new(current_field);
 
         let alias = EditableTextbox {
@@ -208,16 +208,16 @@ impl Layer for EditScreenLayer {
     }
 }
 
-const FIELD_ORDER: &[FieldType] = &[
-    FieldType::Alias,
-    FieldType::Namespace,
-    FieldType::Command,
-    FieldType::Description,
-    FieldType::Tags,
+const FIELD_ORDER: &[FieldName] = &[
+    FieldName::Alias,
+    FieldName::Namespace,
+    FieldName::Command,
+    FieldName::Description,
+    FieldName::Tags,
 ];
 
 impl EditScreenLayer {
-    pub fn get_next_field(&self) -> FieldType {
+    pub fn get_next_field(&self) -> FieldName {
         let current_field = self.get_current_field();
 
         let pos = FIELD_ORDER
@@ -230,7 +230,7 @@ impl EditScreenLayer {
         FIELD_ORDER[next_idx].clone()
     }
 
-    pub fn get_previous_field(&self) -> FieldType {
+    pub fn get_previous_field(&self) -> FieldName {
         let current_field = self.get_current_field();
 
         let pos = FIELD_ORDER
@@ -243,9 +243,9 @@ impl EditScreenLayer {
         FIELD_ORDER[previous_idx].clone()
     }
 
-    fn get_current_field(&self) -> FieldType {
+    fn get_current_field(&self) -> FieldName {
         let inner_ref: &dyn ObservableComponent = &*self.screen_state.borrow();
-        let screen_state = if let Some(field) = inner_ref.as_any().downcast_ref::<ScreenState>() {
+        let screen_state = if let Some(field) = inner_ref.downcast_to::<ScreenState>() {
             field
         } else {
             panic!("Cannot get the current screen state");
@@ -258,12 +258,57 @@ impl EditScreenLayer {
 
     fn get_modified_status(&self) -> bool {
         let inner_ref: &dyn ObservableComponent = &*self.screen_state.borrow();
-        let screen_state = if let Some(field) = inner_ref.as_any().downcast_ref::<ScreenState>() {
+        let screen_state = if let Some(field) = inner_ref.downcast_to::<ScreenState>() {
             field
         } else {
             panic!("Cannot get the current screen state");
         };
 
         screen_state.has_changes
+    }
+}
+
+// not sure if Downcastable is an actual word but works for now
+pub trait Downcastable {
+    fn downcast_to<T: Any>(&self) -> Option<&T>;
+}
+
+impl Downcastable for dyn ObservableComponent {
+    fn downcast_to<T: Any>(&self) -> Option<&T> {
+        self.as_any().downcast_ref::<T>()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_get_the_current_field() {
+        let layer = EditScreenLayer::new();
+
+        let current = layer.get_current_field();
+
+        assert_eq!(current, FieldName::Alias)
+    }
+
+    #[test]
+    fn should_get_the_next_field() {
+        let layer = EditScreenLayer::new();
+
+        // assuming the default field is ALIAS
+        let next_field = layer.get_next_field();
+
+        assert_eq!(next_field, FieldName::Namespace);
+    }
+
+    #[test]
+    fn should_get_the_previous_field() {
+        let layer = EditScreenLayer::new();
+
+        // assuming the default field is ALIAS
+        let previous_field = layer.get_previous_field();
+
+        assert_eq!(previous_field, FieldName::Tags);
     }
 }

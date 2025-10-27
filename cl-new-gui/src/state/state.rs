@@ -2,7 +2,7 @@ use crate::fuzzy::Fuzzy;
 use crate::state::edit::EditState;
 use crate::state::selected_command::SelectedCommand;
 use crate::state::selected_namespace::SelectedNamespace;
-use crate::state::state_event::FieldType;
+use crate::state::state_event::FieldName;
 use anyhow::bail;
 use cl_core::{
     fs, Command, CommandExec, CommandMap, CommandMapExt, CommandVec, CommandVecExt, Commands,
@@ -278,13 +278,13 @@ impl State {
         .sorted()
     }
 
-    pub fn set_editable_command(&mut self, field_type: FieldType, content: String) {
-        match field_type {
-            FieldType::Description => self.edit_state.update_description(Some(content)), // TODO check it need to be Some or not
-            FieldType::Alias => self.edit_state.update_alias(Some(content)),
-            FieldType::Tags => self.edit_state.update_tags(Some(vec![content])), // TODO adjust type to Vec<String> or split by comma after here
-            FieldType::Command => self.edit_state.update_command(Some(content)),
-            FieldType::Namespace => self.edit_state.update_namespace(Some(content)),
+    pub fn set_editable_command(&mut self, field_name: FieldName, content: String) {
+        match field_name {
+            FieldName::Description => self.edit_state.update_description(Some(content)), // TODO check it need to be Some or not
+            FieldName::Alias => self.edit_state.update_alias(Some(content)),
+            FieldName::Tags => self.edit_state.update_tags(Some(vec![content])), // TODO adjust type to Vec<String> or split by comma after here
+            FieldName::Command => self.edit_state.update_command(Some(content)),
+            FieldName::Namespace => self.edit_state.update_namespace(Some(content)),
         }
     }
 

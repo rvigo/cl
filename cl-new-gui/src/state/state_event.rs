@@ -48,13 +48,13 @@ pub enum StateEvent {
         respond_to: oneshot::Sender<Option<Command<'static>>>,
     },
     /// Edit Field
-    EditField(FieldType, String),
+    EditField(FieldName, String),
     /// Edit Command
     EditCommand,
 }
 
 #[derive(Debug, PartialEq, Eq, Default, Clone)]
-pub enum FieldType {
+pub enum FieldName {
     /// Edit the command description
     Description,
     /// Edit the command alias
