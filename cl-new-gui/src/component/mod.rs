@@ -8,6 +8,7 @@ mod search;
 mod static_info;
 mod tabs;
 mod textbox;
+mod screen_state;
 
 pub use clipboard_status::ClipboardStatus;
 pub use editable_textbox::EditableTextbox;
@@ -15,6 +16,7 @@ pub use editable_textbox::EditableTextboxName;
 pub use list::List;
 pub use popup::Popup;
 pub use renderable::Renderable;
+pub use screen_state::ScreenState;
 pub use search::Search;
 pub use static_info::StaticInfo;
 use std::any::Any;
