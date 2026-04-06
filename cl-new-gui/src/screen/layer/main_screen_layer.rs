@@ -1,7 +1,5 @@
 use crate::clipboard::Clipboard;
-use crate::component::{
-    ClipboardStatus, Component, List, Renderable, StaticInfo, Tabs, TextBox, TextBoxName,
-};
+use crate::component::{ClipboardStatus, List, Renderable, StaticInfo, Tabs, TextBox, TextBoxName};
 use crate::component::{RenderableComponent, Search};
 use crate::observer::observable::Observable;
 use crate::render;
@@ -61,32 +59,32 @@ impl Layer for MainScreenLayer {
         // components
         let mut listeners = Listeners::new();
 
-        let command_shared = RenderableComponent(Component::new(command));
-        let description_shared = RenderableComponent(Component::new(description));
-        let tags_shared = RenderableComponent(Component::new(tags));
-        let namespace_shared = RenderableComponent(Component::new(namespace));
-        let tabs_shared = RenderableComponent(Component::new(tabs));
-        let list_shared = RenderableComponent(Component::new(list));
+        let command_component = RenderableComponent::new(command);
+        let description_component = RenderableComponent::new(description);
+        let tags_component = RenderableComponent::new(tags);
+        let namespace_component = RenderableComponent::new(namespace);
+        let tabs_component = RenderableComponent::new(tabs);
+        let list_component = RenderableComponent::new(list);
+        let quick_search_component = RenderableComponent::new(quick_search);
 
-        let quick_search_share = RenderableComponent(Component::new(quick_search));
         listeners.insert(
             TypeId::of::<Search>(),
-            vec![quick_search_share.get_observable()],
+            vec![quick_search_component.get_observable()],
         );
 
         listeners.insert(
             TypeId::of::<TextBox>(),
             vec![
-                command_shared.get_observable(),
-                description_shared.get_observable(),
-                tags_shared.get_observable(),
-                namespace_shared.get_observable(),
+                command_component.get_observable(),
+                description_component.get_observable(),
+                tags_component.get_observable(),
+                namespace_component.get_observable(),
             ],
         );
-        listeners.insert(TypeId::of::<Tabs>(), vec![tabs_shared.get_observable()]);
-        listeners.insert(TypeId::of::<List>(), vec![list_shared.get_observable()]);
+        listeners.insert(TypeId::of::<Tabs>(), vec![tabs_component.get_observable()]);
+        listeners.insert(TypeId::of::<List>(), vec![list_component.get_observable()]);
 
-        let clipboard = RenderableComponent(Component::new(ClipboardStatus::default()));
+        let clipboard = RenderableComponent::new(ClipboardStatus::default());
 
         listeners.insert(TypeId::of::<Clipboard>(), vec![clipboard.clone()]);
 
@@ -95,13 +93,13 @@ impl Layer for MainScreenLayer {
         let help = StaticInfo::new("F1/? for Help");
 
         Self {
-            command: command_shared,
-            description: description_shared,
-            tags: tags_shared,
-            namespace: namespace_shared,
-            list: list_shared,
-            tabs: tabs_shared,
-            quick_search: quick_search_share,
+            command: command_component,
+            description: description_component,
+            tags: tags_component,
+            namespace: namespace_component,
+            list: list_component,
+            tabs: tabs_component,
+            quick_search: quick_search_component,
             listeners,
             app_name,
             clipboard,

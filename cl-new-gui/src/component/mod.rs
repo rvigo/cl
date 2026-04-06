@@ -4,12 +4,15 @@ mod editable_textbox;
 mod list;
 mod popup;
 mod renderable;
+mod screen_state;
 mod search;
 mod static_info;
 mod tabs;
 mod textbox;
-mod screen_state;
 
+pub use button::EventFutureFn;
+pub use button::StateEventFutureFn;
+pub use button::FutureEventType;
 pub use clipboard_status::ClipboardStatus;
 pub use editable_textbox::EditableTextbox;
 pub use editable_textbox::EditableTextboxName;
@@ -98,13 +101,16 @@ where
     }
 }
 
-//TODO create new constructor for RenderableComponent that takes T directly
 pub struct RenderableComponent<T: Renderable + ObservableComponent>(pub Component<T>);
 
 impl<T> RenderableComponent<T>
 where
     T: Renderable + ObservableComponent,
 {
+    pub fn new(component: T) -> Self {
+        Self(Component::new(component))
+    }
+
     pub fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
         self.borrow_mut()
             .as_any_mut()
@@ -127,6 +133,15 @@ where
 
 pub struct StateComponent<T: ObservableComponent>(pub Component<T>);
 
+impl<T> StateComponent<T>
+where
+    T: ObservableComponent,
+{
+    pub fn new(component: T) -> Self {
+        Self(Component::new(component))
+    }
+}
+
 impl<T> Deref for StateComponent<T>
 where
     T: ObservableComponent,
@@ -135,5 +150,16 @@ where
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+// not sure if Downcastable is an actual word but works for now
+pub trait Downcastable {
+    fn downcast_to<T: Any>(&self) -> Option<&T>;
+}
+
+impl Downcastable for dyn ObservableComponent {
+    fn downcast_to<T: Any>(&self) -> Option<&T> {
+        self.as_any().downcast_ref::<T>()
     }
 }

@@ -1,6 +1,7 @@
-use crate::component::{EditableTextbox, List, Popup, Search, Tabs, TextBox};
+use crate::component::{EditableTextbox, FutureEventType, List, Popup, Search, Tabs, TextBox};
 use crate::observer::event::PopupType::{Dialog, Help};
 use crate::observer::event::{Event, PopupEvent};
+use crate::screen::key_mapping::command::ScreenCommandCallback;
 use crate::screen::key_mapping::ScreenCommand::{
     AddLayer, CopyToClipboard, Quit, ReplaceCurrentLayer,
 };
@@ -10,16 +11,17 @@ use crate::screen::ActiveScreen::Main;
 use crate::state::selected_command::SelectedCommand;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::{
-    ExecuteCommand, GetCurrentQuery, NextTab, PreviousTab, SelectNextCommand, SelectPreviousCommand,
+    DeleteCommand, ExecuteCommand, GetCurrentQuery, NextTab, PreviousTab, SelectNextCommand,
+    SelectPreviousCommand,
 };
-use crate::{event, oneshot, run_if_some};
+use crate::{async_fn_body, event, oneshot, run_if_some};
+use anyhow::bail;
 use async_trait::async_trait;
 use cl_core::CommandVecExt;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use log::debug;
 use std::any::TypeId;
 use tokio::sync::mpsc::Sender;
-use crate::screen::key_mapping::command::ScreenCommandCallback;
 
 #[async_trait(?Send)]
 impl KeyMapping for MainScreenLayer {
@@ -37,7 +39,30 @@ impl KeyMapping for MainScreenLayer {
                 event!(
                     Popup,
                     Event::Popup(PopupEvent::Create(Dialog(
-                        "Are you sure u want to delete this command?".to_string()
+                        "Are you sure u want to delete this command?".to_string(),
+                        FutureEventType::State(|state| {
+                            async_fn_body! {
+                                let result = oneshot!(state, DeleteCommand);
+                                match result{
+                                    // TODO handle error
+                                  Some((ok, reason)) => {
+                                        if !ok {
+                                            debug!("Something went wrong!");
+                                            bail!(reason.unwrap())
+                                        }
+                                        else {
+                                            debug!("Command deleted");
+                                            Ok(())
+                                        }
+                                    }
+                                  None => {
+                                        debug!("Something went wrong");
+                                    Ok(())
+                                    }
+                                }
+                            }
+                        }),
+                        ScreenCommandCallback::UpdateAll,
                     )))
                 ),
             ]),

@@ -1,6 +1,6 @@
 use crate::crossterm::{restore_terminal, setup_terminal};
 use crate::oneshot;
-use crate::signal_handler::{SigHandler, Signal};
+use crate::signal_handler::{SignalHandler, Signal};
 use crate::state::selected_command::SelectedCommand;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::{GetAllListItems, GetAllNamespaces};
@@ -16,8 +16,8 @@ use tokio_stream::StreamExt;
 
 pub struct UiActor {
     ui: Ui,
-    sig_handler: SigHandler, // TODO rethink this name
-    sig_receiver: broadcast::Receiver<Signal>,
+    signal_handler: SignalHandler, // TODO rethink this name
+    signal_receiver: broadcast::Receiver<Signal>,
 }
 
 const RENDERING_TICK_RATE: Duration = Duration::from_millis(250);
@@ -30,12 +30,12 @@ impl Default for UiActor {
 
 impl UiActor {
     pub fn new() -> Self {
-        let (sig_handler, receiver) = SigHandler::create();
+        let (sig_handler, receiver) = SignalHandler::create();
 
         Self {
             ui: Ui::default(),
-            sig_handler,
-            sig_receiver: receiver,
+            signal_handler: sig_handler,
+            signal_receiver: receiver,
         }
     }
 
@@ -71,10 +71,10 @@ impl UiActor {
                 _ = ticker.tick() => (),
                 // key event
                 event = crossterm_events.next() => {
-                        self.ui.screens.handle_key_event(event, &state_tx, &mut self.sig_handler).await;
+                        self.ui.screens.handle_key_event(event, &state_tx, &mut self.signal_handler).await;
                 },
                 // Quit signal
-                Ok(message) = self.sig_receiver.recv() => {
+                Ok(message) = self.signal_receiver.recv() => {
                     debug!("Received signal: {:?}", message);
                     break Ok(())
                 }

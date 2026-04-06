@@ -1,14 +1,17 @@
-use std::any::TypeId;
-use log::debug;
-use tokio::sync::mpsc::Sender;
-use cl_core::{Command, CommandVecExt};
-use crate::component::{List, Tabs, TextBox};
+use crate::component::{EventFutureFn, FutureEventType, List, Tabs, TextBox};
 use crate::observer::event::Event;
 use crate::oneshot;
 use crate::state::state_event::StateEvent;
-use crate::state::state_event::StateEvent::{CommandDetails, CurrentCommand, GetAllListItems, GetAllNamespaces};
+use crate::state::state_event::StateEvent::{
+    CommandDetails, CurrentCommand, GetAllListItems, GetAllNamespaces,
+};
+use cl_core::{Command, CommandVecExt};
+use log::debug;
+use std::any::TypeId;
+use tokio::sync::mpsc::Sender;
 
 /// Enables the communication between the upper layer and the lower layer via callback commands
+#[derive(Clone, Debug)]
 pub enum ScreenCommandCallback {
     /// Refreshes all info
     UpdateAll,
@@ -18,6 +21,8 @@ pub enum ScreenCommandCallback {
     SaveChanges(Option<Command<'static>>),
     /// Do nothing
     DoNothing,
+    /// Exit the edit screen and return to the main screen
+    ExitEditScreen,
 }
 
 impl ScreenCommandCallback {
@@ -48,7 +53,7 @@ impl ScreenCommandCallback {
                 }
             }
             ScreenCommandCallback::LoadCommandDetails(type_id) => {
-                let cmd = oneshot!(state_tx,CommandDetails);
+                let cmd = oneshot!(state_tx, CommandDetails);
                 if let Some(Some(cmd)) = cmd {
                     debug!("got cmd: {:?}", cmd);
                     Some(vec![(type_id, Event::UpdateCommand(cmd))])

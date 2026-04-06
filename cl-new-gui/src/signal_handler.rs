@@ -6,11 +6,11 @@ pub enum Signal {
     UserInt,
 }
 
-pub struct SigHandler {
+pub struct SignalHandler {
     signal_tx: broadcast::Sender<Signal>,
 }
 
-impl SigHandler {
+impl SignalHandler {
     pub fn new(signal_tx: broadcast::Sender<Signal>) -> Self {
         Self { signal_tx }
     }
@@ -20,9 +20,9 @@ impl SigHandler {
         Ok(())
     }
 
-    pub fn create() -> (SigHandler, broadcast::Receiver<Signal>) {
+    pub fn create() -> (SignalHandler, broadcast::Receiver<Signal>) {
         let (tx, rx) = broadcast::channel(1);
-        let sig_handler = SigHandler::new(tx);
+        let sig_handler = SignalHandler::new(tx);
 
         (sig_handler, rx)
     }

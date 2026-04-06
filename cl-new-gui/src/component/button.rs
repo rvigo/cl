@@ -1,4 +1,5 @@
 use crate::component::Renderable;
+use crate::screen::command::{ScreenCommand, ScreenCommandCallback};
 use crate::screen::theme::Theme;
 use crate::state::state_event::StateEvent;
 use std::fmt;
@@ -11,21 +12,70 @@ use tui::style::Style;
 use tui::widgets::Paragraph;
 use tui::Frame;
 
-type FutureFn = fn(Sender<StateEvent>) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>>;
+pub type StateEventFutureFn =
+    fn(Sender<StateEvent>) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>>;
+
+pub type EventFutureFn =
+    fn(Sender<Vec<ScreenCommand>>) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>>;
+
+#[derive(Clone, Debug)]
+pub enum FutureEventType {
+    State(StateEventFutureFn),
+    Event(Sender<Vec<ScreenCommand>>, EventFutureFn),
+}
+
+impl FutureEventType {
+    fn send_state_event(
+        &self,
+        state_sender: Sender<StateEvent>,
+    ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
+        match self {
+            FutureEventType::State(event_fn) => event_fn(state_sender),
+            _ => panic!("not a state event type"),
+        }
+    }
+
+    fn send_screen_event(
+        &self,
+        screen_event_sender: Sender<Vec<ScreenCommand>>,
+    ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
+        match self {
+            FutureEventType::Event(sx, event_fn) => event_fn(screen_event_sender),
+            _ => panic!("not a screen event type"),
+        }
+    }
+
+    pub fn call(
+        &self,
+        state_sender: Option<Sender<StateEvent>>,
+        screen_command_sender: Option<Sender<Vec<ScreenCommand>>>,
+    ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
+        match self {
+            FutureEventType::Event(sx,_) => {
+                self.send_screen_event(screen_command_sender.expect("no screen command sender"))
+            }
+            FutureEventType::State(_) => {
+                self.send_state_event(state_sender.expect("no state command sender"))
+            }
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct Button {
     content: String,
-    pub on_click: FutureFn,
+    pub on_click: FutureEventType,
     pub is_active: bool,
+    pub callback: ScreenCommandCallback,
 }
 
 impl Button {
-    pub fn new(content: impl Into<String>, active: bool, on_click: FutureFn) -> Self {
+    pub fn new(content: impl Into<String>, active: bool, on_click: FutureEventType, callback: ScreenCommandCallback) -> Self {
         Self {
             content: content.into(),
             is_active: active,
             on_click,
+            callback,
         }
     }
 }
