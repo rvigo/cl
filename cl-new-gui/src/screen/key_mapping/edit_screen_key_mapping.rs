@@ -2,7 +2,7 @@ use crate::component::{Downcastable, EditableTextbox, Popup};
 use crate::component::{FutureEventType, ScreenState};
 use crate::event;
 use crate::observer::event::PopupType::Dialog;
-use crate::observer::event::{EditEvent, Event, PopupEvent};
+use crate::observer::event::{EditableTextboxEvent, Event, PopupEvent, ScreenStateEvent};
 use crate::screen::command::ScreenCommand::AddLayer;
 use crate::screen::command::ScreenCommandCallback;
 use crate::screen::key_mapping::command::EditCallback;
@@ -41,11 +41,11 @@ impl KeyMapping for EditScreenLayer {
                             AddLayer(Box::new(PopupLayer::new())),
                             event!(
                                 Popup,
-                                Event::Popup(PopupEvent::Create(Dialog(
+                                PopupEvent::Create(Dialog(
                                     "You have unsaved changes. Exit anyway?".to_string(),
                                     FutureEventType::State(|_| async_fn_body! { Ok(()) }),
                                     ScreenCommandCallback::ExitEditScreen,
-                                )))
+                                ))
                             ),
                         ])
                     } else {
@@ -81,9 +81,9 @@ impl KeyMapping for EditScreenLayer {
                 let events = vec![
                     event!(
                         EditableTextbox,
-                        Event::Edit(EditEvent::SetField(current_field.clone()))
+                        EditableTextboxEvent::SetField(current_field.clone())
                     ),
-                    event!(ScreenState, Event::Edit(EditEvent::SetField(current_field))),
+                    event!(ScreenState, ScreenStateEvent::SetField(current_field)),
                 ];
                 Some(events)
             }
@@ -96,17 +96,17 @@ impl KeyMapping for EditScreenLayer {
                 let events = vec![
                     event!(
                         EditableTextbox,
-                        Event::Edit(EditEvent::SetField(current_field.clone()))
+                        EditableTextboxEvent::SetField(current_field.clone())
                     ),
-                    event!(ScreenState, Event::Edit(EditEvent::SetField(current_field))),
+                    event!(ScreenState, ScreenStateEvent::SetField(current_field)),
                 ];
                 Some(events)
             }
             input => {
                 debug!(target: "clr_edit_screen_key_mapping", "Received key event: {:?}", input);
                 Some(vec![
-                    event!(EditableTextbox, Event::KeyEvent(input)),
-                    event!(ScreenState, Event::KeyEvent(input)),
+                    event!(EditableTextbox, EditableTextboxEvent::KeyInput(input)),
+                    event!(ScreenState, ScreenStateEvent::KeyInput(input)),
                 ])
             }
         }

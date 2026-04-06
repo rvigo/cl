@@ -1,5 +1,5 @@
 use crate::component::{List, Tabs, TextBox};
-use crate::observer::event::Event;
+use crate::observer::event::{Event, ListEvent, TabsEvent, TextBoxEvent};
 use crate::screen::Screen;
 use crate::state::selected_command::SelectedCommand;
 use std::any::TypeId;
@@ -25,19 +25,24 @@ impl Ui {
     }
 
     pub async fn update_list_items(&mut self, items: Vec<String>) {
-        self.notify(TypeId::of::<List>(), Event::UpdateAll(items))
+        self.notify(TypeId::of::<List>(), Event::List(ListEvent::UpdateAll(items)))
             .await;
     }
 
     pub async fn update_tabs(&mut self, namespaces: Vec<String>) {
-        self.notify(TypeId::of::<Tabs>(), Event::UpdateAll(namespaces))
-            .await;
+        self.notify(
+            TypeId::of::<Tabs>(),
+            Event::Tabs(TabsEvent::UpdateAll(namespaces)),
+        )
+        .await;
     }
 
     pub async fn select_command(&mut self, selected_command: SelectedCommand) {
         self.notify(
             TypeId::of::<TextBox>(),
-            Event::UpdateCommand(selected_command.value.clone()),
+            Event::TextBox(TextBoxEvent::UpdateCommand(
+                selected_command.value.clone(),
+            )),
         )
         .await;
 

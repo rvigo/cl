@@ -22,7 +22,7 @@ impl KeyMapping for PopupLayer {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                let event = event!(Popup, Event::Popup(PopupEvent::PreviousChoice));
+                let event = event!(Popup, PopupEvent::PreviousChoice);
                 Some(vec![event])
             }
             KeyEvent {
@@ -30,7 +30,7 @@ impl KeyMapping for PopupLayer {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                let event = event!(Popup, Event::Popup(PopupEvent::NextChoice));
+                let event = event!(Popup, PopupEvent::NextChoice);
                 Some(vec![event])
             }
             KeyEvent {
@@ -40,7 +40,7 @@ impl KeyMapping for PopupLayer {
             } => {
                 // cannot use an actual oneshot here, but is the same idea
                 let (tx, rx) = tokio::sync::mpsc::channel(1);
-                let event = event!(Popup, Event::Popup(PopupEvent::Run(state_tx.clone(), tx)));
+                let event = event!(Popup, PopupEvent::Run(state_tx.clone(), tx));
 
                 Some(vec![event, PopLastLayer(Some(rx))])
             }
