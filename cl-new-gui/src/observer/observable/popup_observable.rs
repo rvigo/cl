@@ -14,7 +14,7 @@ impl Observable for Popup {
             match popup {
                 PopupEvent::Create(type_) => match type_ {
                     PopupType::Dialog(message, yes_action, yes_callback) => {
-                        *self = Popup::dialog(message, yes_action, yes_callback)
+                        *self = Popup::dialog(message, yes_action, yes_callback);
                     }
                     PopupType::Help(active_screen) => match active_screen {
                         ActiveScreen::Main => *self = Popup::help_main(),
@@ -23,15 +23,18 @@ impl Observable for Popup {
                 PopupEvent::NextChoice => self.next(),
                 PopupEvent::PreviousChoice => self.previous(),
                 PopupEvent::Run(state_tx, tx) => {
-                    debug!("running code inside the button");
+                    debug!("Popup: running button click");
                     match self.click(state_tx).await {
                         Ok(callback) => {
-                            debug!("sending a callback response to the previous layer");
+                            debug!("Popup: sending callback to previous layer");
                             tx.send(callback).await.ok();
                         }
                         Err(err) => {
-                            // TODO find a way to hold the PopLastLayer event
-                            *self = Popup::dialog(err.to_string(), FutureEventType::State(|_| async_fn_body!(Ok(()))), ScreenCommandCallback::DoNothing);
+                            *self = Popup::dialog(
+                                err.to_string(),
+                                FutureEventType::State(|_| async_fn_body!(Ok(()))),
+                                ScreenCommandCallback::DoNothing,
+                            );
                         }
                     }
                 }
