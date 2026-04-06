@@ -1,11 +1,9 @@
-use crate::component::button::{Button, FutureEventType, StateEventFutureFn};
+use crate::component::button::{Button, FutureEventType};
 use crate::component::Renderable;
 use crate::screen::command::ScreenCommandCallback;
 use crate::screen::theme::Theme;
 use crate::state::state_event::StateEvent;
-use crate::state::state_event::StateEvent::DeleteCommand;
-use crate::{async_fn_body, oneshot, Pipe};
-use anyhow::bail;
+use crate::{async_fn_body, Pipe};
 use log::debug;
 use std::fmt;
 use std::fmt::Debug;
@@ -238,25 +236,6 @@ fn main_options() -> Table {
     }
 }
 
-fn edit_options() -> Table {
-    table! {
-            row! { cell!("Return"), cell!("<Esc/Ctrl-C>")},
-            row! { cell!("Next Field"), cell!("<Tab>")},
-            row! { cell!("Previous Field"), cell!("<Shift-Tab>")},
-            row! { cell!("Update command"), cell!("<Enter/Ctrl-S>")},
-            row! { cell!("Help"), cell!("<F1>")},
-    }
-}
-
-fn insert_options() -> Table {
-    table! {
-            row! { cell!("Return"), cell!("<Esc/Ctrl-C>")},
-            row! { cell!("Next Field"), cell!("<Tab>")},
-            row! { cell!("Previous Field"), cell!("<Shift-Tab>")},
-            row! { cell!("Create command"), cell!("<Enter/Ctrl-S>")},
-            row! { cell!("Help"), cell!("<F1>")},
-    }
-}
 
 #[derive(Clone)]
 pub struct Table {

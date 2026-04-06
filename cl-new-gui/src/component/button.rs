@@ -40,7 +40,7 @@ impl FutureEventType {
         screen_event_sender: Sender<Vec<ScreenCommand>>,
     ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
         match self {
-            FutureEventType::Event(sx, event_fn) => event_fn(screen_event_sender),
+            FutureEventType::Event(_sx, event_fn) => event_fn(screen_event_sender),
             _ => panic!("not a screen event type"),
         }
     }
@@ -51,7 +51,7 @@ impl FutureEventType {
         screen_command_sender: Option<Sender<Vec<ScreenCommand>>>,
     ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
         match self {
-            FutureEventType::Event(sx,_) => {
+            FutureEventType::Event(_sx, _) => {
                 self.send_screen_event(screen_command_sender.expect("no screen command sender"))
             }
             FutureEventType::State(_) => {

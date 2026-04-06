@@ -6,13 +6,13 @@ use crate::screen::layer::Layer;
 use crate::screen::theme::Theme;
 use crate::state::state_event::FieldName;
 use log::debug;
-use std::any::{Any, TypeId};
+use std::any::TypeId;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::rc::Rc;
 use tui::layout::{Constraint, Direction, Layout};
 use tui::prelude::Style;
-use tui::widgets::{Block, Clear, Paragraph};
+use tui::widgets::{Block, Clear};
 use tui::Frame;
 
 pub struct EditScreenLayer {

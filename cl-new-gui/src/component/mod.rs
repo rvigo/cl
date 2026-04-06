@@ -10,8 +10,6 @@ mod static_info;
 mod tabs;
 mod textbox;
 
-pub use button::EventFutureFn;
-pub use button::StateEventFutureFn;
 pub use button::FutureEventType;
 pub use clipboard_status::ClipboardStatus;
 pub use editable_textbox::EditableTextbox;
@@ -82,24 +80,45 @@ impl<T> Component<T>
 where
     T: Observable + Debug + Any,
 {
+    /// Borrow the inner value as a type-erased `ObservableComponent`.
     pub fn borrow(&self) -> Ref<dyn ObservableComponent> {
         self.0.borrow()
     }
 
+    /// Mutably borrow the inner value as a type-erased `ObservableComponent`.
     pub fn borrow_mut(&self) -> RefMut<dyn ObservableComponent> {
         self.0.borrow_mut()
     }
 
-    /// Returns a Ref to the inner value as a dyn Observable
+    /// Borrow the inner `T` directly, with no downcast required.
+    ///
+    /// Prefer this over [`borrow`](Self::borrow) + downcast whenever the
+    /// concrete type is known (e.g. reading `ScreenState` fields from
+    /// `EditScreenLayer`).
+    pub fn borrow_inner(&self) -> Ref<T> {
+        self.0.borrow()
+    }
+
+    /// Mutably borrow the inner `T` directly, with no downcast required.
+    pub fn borrow_inner_mut(&self) -> RefMut<T> {
+        self.0.borrow_mut()
+    }
+
+    /// Returns a shared `Rc<RefCell<dyn Observable>>` for use in subscription
+    /// registries.
     pub fn get_observable(&self) -> Rc<RefCell<dyn Observable>> {
         self.0.clone()
     }
 
-    /// Returns a RefMut to the inner value as a dyn Observable
+    /// Returns a `RefMut<dyn Observable>` for the inner value.
     pub fn get_observable_mut(&self) -> RefMut<dyn Observable> {
         RefMut::map(self.0.borrow_mut(), |inner| inner as &mut dyn Observable)
     }
 }
+
+// ---------------------------------------------------------------------------
+// Wrapper types
+// ---------------------------------------------------------------------------
 
 pub struct RenderableComponent<T: Renderable + ObservableComponent>(pub Component<T>);
 
@@ -112,11 +131,7 @@ where
     }
 
     pub fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
-        self.borrow_mut()
-            .as_any_mut()
-            .downcast_mut::<T>()
-            .unwrap()
-            .render(frame, area, theme);
+        self.borrow_inner_mut().render(frame, area, theme);
     }
 }
 
@@ -153,7 +168,10 @@ where
     }
 }
 
-// not sure if Downcastable is an actual word but works for now
+// ---------------------------------------------------------------------------
+// Downcastable (kept for rare cases where the concrete type is not known)
+// ---------------------------------------------------------------------------
+
 pub trait Downcastable {
     fn downcast_to<T: Any>(&self) -> Option<&T>;
 }
@@ -161,5 +179,43 @@ pub trait Downcastable {
 impl Downcastable for dyn ObservableComponent {
     fn downcast_to<T: Any>(&self) -> Option<&T> {
         self.as_any().downcast_ref::<T>()
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::component::ScreenState;
+    use crate::state::state_event::FieldName;
+
+    #[test]
+    fn borrow_inner_returns_correct_value() {
+        let state = ScreenState::new(FieldName::Command);
+        let comp = StateComponent::new(state);
+
+        assert_eq!(comp.borrow_inner().current_field, FieldName::Command);
+    }
+
+    #[test]
+    fn borrow_inner_mut_can_mutate() {
+        let state = ScreenState::new(FieldName::Alias);
+        let comp = StateComponent::new(state);
+
+        comp.borrow_inner_mut().current_field = FieldName::Tags;
+        assert_eq!(comp.borrow_inner().current_field, FieldName::Tags);
+    }
+
+    #[test]
+    fn borrow_inner_does_not_panic_unlike_old_downcast() {
+        // Previously get_current_field() would unwrap() a downcast; now
+        // borrow_inner() is always safe when T is the correct type.
+        let state = ScreenState::new(FieldName::Namespace);
+        let comp = StateComponent::new(state);
+        let field = comp.borrow_inner().current_field.clone();
+        assert_eq!(field, FieldName::Namespace);
     }
 }
