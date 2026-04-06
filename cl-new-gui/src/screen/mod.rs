@@ -12,7 +12,7 @@ use crate::screen::key_mapping::command::{ScreenCommand, ScreenCommandCallback};
 use crate::screen::layer::Layer;
 use crate::screen::theme::Theme;
 use crate::signal_handler::Signal::UserInt;
-use crate::signal_handler::{SigHandler, Signal};
+use crate::signal_handler::{SignalHandler, Signal};
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::CurrentCommand;
 use crossterm::event::Event as CrosstermEvent;
@@ -75,7 +75,7 @@ impl Screen {
         &mut self,
         event: Option<std::io::Result<CrosstermEvent>>,
         state_tx: &Sender<StateEvent>,
-        sig_handler: &mut SigHandler,
+        sig_handler: &mut SignalHandler,
     ) {
         if let Some(Ok(CrosstermEvent::Key(event))) = event {
             if let Some(layer) = self.layers.last_mut() {
@@ -147,8 +147,18 @@ impl Screen {
         state_tx: &Sender<StateEvent>,
     ) {
         if let Some(message) = callback_receiver.recv().await {
-            let events = message.handle(state_tx).await;
-            self.notify_all(events.unwrap_or_default()).await;
+            match message {
+                ScreenCommandCallback::ExitEditScreen => {
+                    self.replace_current_layer(Box::new(MainScreenLayer::new())).await;
+                    if let Some(events) = ScreenCommandCallback::UpdateAll.handle(state_tx).await {
+                        self.notify_all(events).await;
+                    }
+                }
+                _ => {
+                    let events = message.handle(state_tx).await;
+                    self.notify_all(events.unwrap_or_default()).await;
+                }
+            }
         }
     }
 

@@ -1,16 +1,20 @@
-use crate::component::EditableTextbox;
-use crate::component::ScreenState;
+use crate::component::{Downcastable, EditableTextbox, Popup};
+use crate::component::{FutureEventType, ScreenState};
 use crate::event;
-use crate::observer::event::{EditEvent, Event};
+use crate::observer::event::PopupType::Dialog;
+use crate::observer::event::{EditEvent, Event, PopupEvent};
+use crate::screen::command::ScreenCommand::AddLayer;
+use crate::screen::command::ScreenCommandCallback;
 use crate::screen::key_mapping::command::EditCallback;
 use crate::screen::key_mapping::{KeyMapping, ScreenCommand};
-use crate::screen::layer::{EditScreenLayer, Layer, MainScreenLayer};
+use crate::screen::layer::{EditScreenLayer, Layer, MainScreenLayer, PopupLayer};
 use crate::screen::ScreenCommandCallback::UpdateAll;
 use crate::state::state_event::StateEvent;
 use async_trait::async_trait;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use log::debug;
 use tokio::sync::mpsc::Sender;
+use crate::async_fn_body;
 
 #[async_trait(?Send)]
 impl KeyMapping for EditScreenLayer {
@@ -30,12 +34,30 @@ impl KeyMapping for EditScreenLayer {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
-                let events = vec![
-                    ScreenCommand::ReplaceCurrentLayer(Box::new(MainScreenLayer::new())),
-                    ScreenCommand::Callback(UpdateAll),
-                ];
-                debug!(target: "clr_edit_screen_key_mapping", "{:?}", "Exiting edit screen");
-                Some(events)
+                if let Some(inner) = self.screen_state.borrow().downcast_to::<ScreenState>() {
+                    if inner.has_changes {
+                        debug!(target: "clr_edit_screen_key_mapping", "Has unsaved changes, asking for confirmation");
+                        Some(vec![
+                            AddLayer(Box::new(PopupLayer::new())),
+                            event!(
+                                Popup,
+                                Event::Popup(PopupEvent::Create(Dialog(
+                                    "You have unsaved changes. Exit anyway?".to_string(),
+                                    FutureEventType::State(|_| async_fn_body! { Ok(()) }),
+                                    ScreenCommandCallback::ExitEditScreen,
+                                )))
+                            ),
+                        ])
+                    } else {
+                        debug!(target: "clr_edit_screen_key_mapping", "Exiting edit screen");
+                        Some(vec![
+                            ScreenCommand::ReplaceCurrentLayer(Box::new(MainScreenLayer::new())),
+                            ScreenCommand::Callback(UpdateAll),
+                        ])
+                    }
+                } else {
+                    None
+                }
             }
             KeyEvent {
                 code: KeyCode::Char('s'),
@@ -55,7 +77,6 @@ impl KeyMapping for EditScreenLayer {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                // get the field name
                 let current_field = self.get_next_field();
                 let events = vec![
                     event!(
@@ -71,7 +92,6 @@ impl KeyMapping for EditScreenLayer {
                 modifiers: KeyModifiers::SHIFT,
                 ..
             } => {
-                // get the field name
                 let current_field = self.get_previous_field();
                 let events = vec![
                     event!(

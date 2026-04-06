@@ -3,6 +3,7 @@ use crate::screen::ActiveScreen;
 use crate::state::state_event::{FieldName, StateEvent};
 use cl_core::Command;
 use tokio::sync::mpsc::Sender;
+use crate::component::{FutureEventType, StateEventFutureFn};
 
 // TODO rethink the name of these events
 #[derive(Clone, Debug)]
@@ -37,7 +38,7 @@ pub enum PopupEvent {
 
 #[derive(Clone, Debug)]
 pub enum PopupType {
-    Dialog(String),
+    Dialog(String, FutureEventType, ScreenCommandCallback),
     Help(ActiveScreen),
 }
 

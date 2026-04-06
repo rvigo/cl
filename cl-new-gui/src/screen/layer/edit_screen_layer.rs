@@ -1,7 +1,4 @@
-use crate::component::{
-    Component, EditableTextbox, EditableTextboxName, Renderable, RenderableComponent, ScreenState,
-    StateComponent, StaticInfo,
-};
+use crate::component::{Downcastable, EditableTextbox, EditableTextboxName, Renderable, RenderableComponent, ScreenState, StateComponent, StaticInfo};
 use crate::observer::observable::Observable;
 use crate::observer::ObservableComponent;
 use crate::render;
@@ -59,13 +56,13 @@ impl Layer for EditScreenLayer {
             ..Default::default()
         };
 
-        let alias_component = RenderableComponent(Component::new(alias));
-        let namespace_component = RenderableComponent(Component::new(namespace));
-        let command_component = RenderableComponent(Component::new(command));
-        let tags_component = RenderableComponent(Component::new(tags));
-        let description_component = RenderableComponent(Component::new(description));
+        let alias_component = RenderableComponent::new(alias);
+        let namespace_component = RenderableComponent::new(namespace);
+        let command_component = RenderableComponent::new(command);
+        let tags_component = RenderableComponent::new(tags);
+        let description_component = RenderableComponent::new(description);
 
-        let screen_state_component = StateComponent(Component::new(screen_state));
+        let screen_state_component = StateComponent::new(screen_state);
 
         let mut listeners = BTreeMap::new();
         listeners.insert(
@@ -157,7 +154,7 @@ impl Layer for EditScreenLayer {
 
         let [app_name_rect, _] = *Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Max(3), Constraint::Length(5)])
+            .constraints([Constraint::Max(3), Constraint::Max(3)])
             .split(form_chunks[0])
         else {
             todo!()
@@ -168,7 +165,6 @@ impl Layer for EditScreenLayer {
                 .bg(theme.to_owned().background_color.into())
                 .fg(theme.to_owned().text_color.into()),
         );
-
         let [_, modified_status_rect, _] = *Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
@@ -181,12 +177,16 @@ impl Layer for EditScreenLayer {
             todo!()
         };
 
-        frame.render_widget(Clear, frame.area());
+        frame.render_widget(Clear, frame.area()); // TODO make sure the clear event occurs before the screen
+        frame.render_widget(footer, drawable_chunks[1]);
 
-        // TODO change this to a proper screen component
         if self.get_modified_status() {
-            let modified_status = Paragraph::new("MODIFIED");
-            frame.render_widget(modified_status, modified_status_rect);
+            let mut modified_status = StaticInfo::new("MODIFIED");
+            render! {
+                frame,
+                theme,
+                { modified_status, modified_status_rect },
+            }
         }
 
         render! {
@@ -268,16 +268,7 @@ impl EditScreenLayer {
     }
 }
 
-// not sure if Downcastable is an actual word but works for now
-pub trait Downcastable {
-    fn downcast_to<T: Any>(&self) -> Option<&T>;
-}
 
-impl Downcastable for dyn ObservableComponent {
-    fn downcast_to<T: Any>(&self) -> Option<&T> {
-        self.as_any().downcast_ref::<T>()
-    }
-}
 
 #[cfg(test)]
 mod tests {

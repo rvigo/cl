@@ -1,5 +1,6 @@
-use crate::component::button::Button;
+use crate::component::button::{Button, FutureEventType, StateEventFutureFn};
 use crate::component::Renderable;
+use crate::screen::command::ScreenCommandCallback;
 use crate::screen::theme::Theme;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::DeleteCommand;
@@ -51,49 +52,36 @@ impl Popup {
         self.state.select(previous);
     }
 
-    pub async fn click(&mut self, state_tx: Sender<StateEvent>) -> anyhow::Result<()> {
+    pub async fn click(&mut self, state_tx: Sender<StateEvent>) -> anyhow::Result<ScreenCommandCallback> {
         if self.buttons.is_empty() {
             debug!("No buttons to click");
-            return Ok(());
+            return Ok(ScreenCommandCallback::DoNothing);
         }
-        let selected = &self.buttons[self.state.selected];
-        (selected.on_click)(state_tx).await
+        let selected_idx = self.state.selected;
+        let callback = self.buttons[selected_idx].callback.clone();
+        let on_click = self.buttons[selected_idx].on_click.clone();
+        on_click.call(Some(state_tx), None).await?;
+        Ok(callback)
     }
 }
 
 impl Popup {
-    pub fn dialog(message: String) -> Self {
+    pub fn dialog(message: String, yes_action: FutureEventType, yes_callback: ScreenCommandCallback) -> Self {
         Popup {
             title: "Warning".to_string(),
             content: message,
             buttons: vec![
-                Button::new("Yes", true, |state| {
-                    async_fn_body! {
-                        let result = oneshot!(state, DeleteCommand);
-                        match result{
-                            // TODO handle error
-                          Some((ok, reason)) => {
-                                if !ok {
-                                    debug!("Something went wrong!");
-                                    bail!(reason.unwrap())
-                                }
-                                else {
-                                    debug!("Command deleted");
-                                    Ok(())
-                                }
-                            }
-                          None => {
-                                debug!("Something went wrong");
+                Button::new("Yes", true, yes_action, yes_callback),
+                Button::new(
+                    "No",
+                    false,
+                    FutureEventType::State(|_| {
+                        async_fn_body! {
                             Ok(())
-                            }
                         }
-                    }
-                }),
-                Button::new("No", false, |_| {
-                    async_fn_body! {
-                        Ok(())
-                    }
-                }),
+                    }),
+                    ScreenCommandCallback::DoNothing,
+                ),
             ],
             ..Default::default()
         }
