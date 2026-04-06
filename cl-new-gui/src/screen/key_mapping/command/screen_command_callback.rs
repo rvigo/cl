@@ -1,5 +1,5 @@
-use crate::component::{EventFutureFn, FutureEventType, List, Tabs, TextBox};
-use crate::observer::event::Event;
+use crate::component::{List, Tabs, TextBox};
+use crate::observer::event::{EditableTextboxEvent, Event, ListEvent, TabsEvent, TextBoxEvent};
 use crate::oneshot;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::{
@@ -35,13 +35,25 @@ impl ScreenCommandCallback {
 
                 if let (Some(items), Some(tabs), Some(cmd)) = (items, tabs, cmd) {
                     let mut events = vec![
-                        (TypeId::of::<Tabs>(), Event::UpdateAll(tabs)),
-                        (TypeId::of::<List>(), Event::UpdateAll(items.aliases())),
+                        (
+                            TypeId::of::<Tabs>(),
+                            Event::Tabs(TabsEvent::UpdateAll(tabs)),
+                        ),
+                        (
+                            TypeId::of::<List>(),
+                            Event::List(ListEvent::UpdateAll(items.aliases())),
+                        ),
                     ];
 
                     if let Some(cmd) = cmd {
-                        let event = (TypeId::of::<TextBox>(), Event::UpdateCommand(cmd.value));
-                        let idx = (TypeId::of::<List>(), Event::UpdateListIdx(cmd.current_idx));
+                        let event = (
+                            TypeId::of::<TextBox>(),
+                            Event::TextBox(TextBoxEvent::UpdateCommand(cmd.value)),
+                        );
+                        let idx = (
+                            TypeId::of::<List>(),
+                            Event::List(ListEvent::UpdateListIdx(cmd.current_idx)),
+                        );
 
                         events.push(event);
                         events.push(idx);
@@ -56,7 +68,10 @@ impl ScreenCommandCallback {
                 let cmd = oneshot!(state_tx, CommandDetails);
                 if let Some(Some(cmd)) = cmd {
                     debug!("got cmd: {:?}", cmd);
-                    Some(vec![(type_id, Event::UpdateCommand(cmd))])
+                    Some(vec![(
+                        type_id,
+                        Event::EditableTextbox(EditableTextboxEvent::UpdateCommand(cmd)),
+                    )])
                 } else {
                     debug!("no command details found");
                     None
