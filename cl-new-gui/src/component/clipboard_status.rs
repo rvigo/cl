@@ -9,28 +9,22 @@ use tui::Frame;
 
 #[derive(Debug)]
 pub struct ClipboardStatus {
-    copied: bool,
     state: ClipboardState,
 }
 
 impl ClipboardStatus {
     pub fn new() -> Self {
         Self {
-            copied: false,
             state: ClipboardState::default(),
         }
     }
 
     pub fn start_counter(&mut self) {
-        self.copied = true;
         self.state.start();
     }
 
     pub fn check_if_need_to_stop(&mut self) {
         self.state.check();
-        if !self.state.running {
-            self.copied = false;
-        }
     }
 }
 
@@ -42,8 +36,7 @@ impl Default for ClipboardStatus {
 
 impl Renderable for ClipboardStatus {
     fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
-        let theme = theme.to_owned();
-        if self.copied {
+        if self.state.running {
             let paragraph = Paragraph::new("Command copied to the clipboard")
                 .alignment(Center)
                 .style(
@@ -54,8 +47,6 @@ impl Renderable for ClipboardStatus {
                 .block(Block::bordered());
 
             frame.render_widget(paragraph, area);
-
-            self.check_if_need_to_stop()
         } else {
             let paragraph = Paragraph::new("Press Y to copy the command")
                 .alignment(Center)
@@ -67,9 +58,9 @@ impl Renderable for ClipboardStatus {
                 .block(Block::bordered());
 
             frame.render_widget(paragraph, area);
-
-            self.check_if_need_to_stop()
         }
+
+        self.check_if_need_to_stop();
     }
 }
 
@@ -88,7 +79,7 @@ impl ClipboardState {
 
     fn check(&mut self) {
         if let Some(instant) = self.start_instant {
-            if instant.elapsed().as_secs() == Duration::new(self.duration, 0).as_secs() {
+            if instant.elapsed().as_secs() >= Duration::new(self.duration, 0).as_secs() {
                 self.start_instant = None;
                 self.running = false;
             }

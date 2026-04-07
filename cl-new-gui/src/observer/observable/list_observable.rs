@@ -6,8 +6,8 @@ impl SyncObservable for List {
     fn on_event(&mut self, event: Event) {
         if let Event::List(e) = event {
             match e {
-                ListEvent::Next(idx) => self.next(idx),
-                ListEvent::Previous(idx) => self.previous(idx),
+                ListEvent::Next(idx) => self.select(idx),
+                ListEvent::Previous(idx) => self.select(idx),
                 ListEvent::UpdateAll(items) => {
                     self.update_items(items);
                     self.state.select(Some(0));

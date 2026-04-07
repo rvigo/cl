@@ -19,12 +19,8 @@ impl List {
         }
     }
 
-    pub fn next(&mut self, next: usize) {
-        self.state.select(Some(next));
-    }
-
-    pub fn previous(&mut self, previous: usize) {
-        self.state.select(Some(previous));
+    pub fn select(&mut self, index: usize) {
+        self.state.select(Some(index));
     }
 
     pub fn update_items(&mut self, items: Vec<String>) {
@@ -34,7 +30,6 @@ impl List {
 
 impl Renderable for List {
     fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
-        let theme = theme.to_owned();
         let block_style = Style::default()
             .fg(theme.text_color.into())
             .bg(theme.background_color.into());
@@ -45,7 +40,7 @@ impl Renderable for List {
                 .map(ListItem::new)
                 .collect::<Vec<ListItem>>(),
         )
-        .highlight_style(Style::default().add_modifier(Modifier::BOLD))
+        .highlight_style(Style::default().fg(theme.highlight_color.into()).add_modifier(Modifier::BOLD))
         .highlight_symbol("> ")
         .block(Block::bordered().style(block_style));
 

@@ -6,8 +6,8 @@ impl SyncObservable for Tabs {
     fn on_event(&mut self, event: Event) {
         if let Event::Tabs(e) = event {
             match e {
-                TabsEvent::Next(idx) => self.next(idx),
-                TabsEvent::Previous(idx) => self.previous(idx),
+                TabsEvent::Next(idx) => self.select(idx),
+                TabsEvent::Previous(idx) => self.select(idx),
                 TabsEvent::UpdateAll(items) => {
                     self.update_items(items);
                     self.reset_selected();

@@ -25,37 +25,17 @@ pub enum FutureEventType {
 }
 
 impl FutureEventType {
-    fn send_state_event(
-        &self,
-        state_sender: Sender<StateEvent>,
-    ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
-        match self {
-            FutureEventType::State(event_fn) => event_fn(state_sender),
-            _ => panic!("not a state event type"),
-        }
-    }
-
-    fn send_screen_event(
-        &self,
-        screen_event_sender: Sender<Vec<ScreenCommand>>,
-    ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
-        match self {
-            FutureEventType::Event(_sx, event_fn) => event_fn(screen_event_sender),
-            _ => panic!("not a screen event type"),
-        }
-    }
-
     pub fn call(
         &self,
         state_sender: Option<Sender<StateEvent>>,
         screen_command_sender: Option<Sender<Vec<ScreenCommand>>>,
     ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
         match self {
-            FutureEventType::Event(_sx, _) => {
-                self.send_screen_event(screen_command_sender.expect("no screen command sender"))
+            FutureEventType::Event(_sx, event_fn) => {
+                event_fn(screen_command_sender.expect("no screen command sender"))
             }
-            FutureEventType::State(_) => {
-                self.send_state_event(state_sender.expect("no state command sender"))
+            FutureEventType::State(event_fn) => {
+                event_fn(state_sender.expect("no state command sender"))
             }
         }
     }
@@ -91,7 +71,6 @@ impl fmt::Debug for Button {
 
 impl Renderable for Button {
     fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
-        let theme = theme.to_owned();
         let style = if self.is_active {
             Style::default().fg(theme.selected_color.into())
         } else {

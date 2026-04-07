@@ -6,6 +6,7 @@ use tui::style::Style;
 use tui::widgets::{Block, Paragraph};
 use tui::Frame;
 
+#[derive(Clone, Default)]
 pub struct StaticInfo {
     pub content: String,
 }
@@ -20,7 +21,6 @@ impl StaticInfo {
 
 impl Renderable for StaticInfo {
     fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
-        let theme = theme.to_owned();
         let paragraph = Paragraph::new(self.content.clone())
             .block(
                 Block::bordered().style(
