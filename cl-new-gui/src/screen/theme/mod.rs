@@ -9,11 +9,11 @@ const DEFAULT_INFO_COLOR: TuiColor = TuiColor::Rgb(148, 226, 213);
 const DEFAULT_CURSOR_COLOR: TuiColor = TuiColor::Rgb(245, 224, 220);
 const DEFAULT_INACTIVE_TEXTBOX_COLOR: TuiColor = TuiColor::Rgb(108, 112, 134);
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub enum Color {
     Rgb(u8, u8, u8),
     AnsiValue(u8),
-    Named(String),
+    Named,
 }
 
 impl From<TuiColor> for Color {
@@ -34,7 +34,7 @@ impl From<Color> for TuiColor {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct Theme {
     pub text_color: Color,
     pub widget_name_color: Color,
