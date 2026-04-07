@@ -3,7 +3,7 @@ use anyhow::{bail, Context, Result};
 use cl_core::{config, Config as CoreConfig, LogLevel as ConfigLogLevel};
 use clap::{Parser, Subcommand as ClapSubcommand, ValueEnum};
 use dirs::home_dir;
-use log::info;
+use tracing::{debug, info};
 use std::{
     env,
     fs::{write, OpenOptions},
@@ -82,15 +82,15 @@ impl Subcommand for Config {
         if let Some(quiet) = self.quiet_mode {
             config
                 .change_and_save(|c| c.preferences_mut().set_quiet_mode(quiet))
-                .if_ok(|| info!("quiet mode set to {quiet}"))
+                .if_ok(|| info!(target: "cl::config", quiet_mode = quiet, "quiet mode updated"))
         } else if let Some(log_level) = self.log_level {
             config
                 .change_and_save(|c| c.preferences_mut().set_log_level(log_level.into()))
-                .if_ok(|| info!("log level set to {log_level:?}"))
+                .if_ok(|| info!(target: "cl::config", log_level = ?log_level, "log level updated"))
         } else if let Some(highlight) = self.highlight_matches {
             config
                 .change_and_save(|c| c.preferences_mut().set_highlight(highlight))
-                .if_ok(|| info!("highlight matches set to {highlight}"))
+                .if_ok(|| info!(target: "cl::config", highlight_matches = highlight, "highlight matches updated"))
         } else {
             println!("{}", config.printable());
             Ok(())
@@ -115,6 +115,7 @@ fn install_zsh_widget(app_home_dir: PathBuf) -> Result<()> {
 
     // creates new file
     write(&dest_location, widget)?;
+    debug!(target: "cl::config", path = %dest_location.display(), "widget file written");
 
     let home = home_dir().context("Cannot find users $HOME directory")?;
     let zshrc_file = home.join(".zshrc");
@@ -128,8 +129,9 @@ fn install_zsh_widget(app_home_dir: PathBuf) -> Result<()> {
         "Cannot write to the .zshrc file. Please add `source {}` at the end of your .zshrc file",
         dest_location.display()
     ))?;
+    debug!(target: "cl::config", file = %zshrc_file.display(), "source line appended to zshrc");
 
-    info!("Done!!! Please restart your terminal and press <Ctrl+O> to access the widget");
+    info!(target: "cl::config", "zsh widget installed; restart your terminal and press <Ctrl+O> to access it");
 
     Ok(())
 }
