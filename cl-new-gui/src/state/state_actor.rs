@@ -88,6 +88,10 @@ impl StateActor {
                 debug!("do editing command");
                 self.state.edit_command()?;
             }
+            StateEvent::InsertCommand => {
+                debug!("inserting new command");
+                self.state.insert_command()?;
+            }
         }
 
         Ok(())

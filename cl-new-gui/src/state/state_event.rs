@@ -52,6 +52,8 @@ pub enum StateEvent {
     EditField(FieldName, String),
     /// Edit Command
     EditCommand,
+    /// Insert a new command
+    InsertCommand,
 }
 
 #[derive(Debug, PartialEq, Eq, Default, Clone)]
