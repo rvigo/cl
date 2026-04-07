@@ -13,7 +13,6 @@ pub struct Search {
 
 impl Renderable for Search {
     fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
-        let theme = theme.to_owned();
         let block = Block::bordered()
             .style(
                 Style::default()

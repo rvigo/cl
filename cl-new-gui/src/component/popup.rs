@@ -4,7 +4,7 @@ use crate::component::Renderable;
 use crate::screen::command::ScreenCommandCallback;
 use crate::screen::theme::Theme;
 use crate::state::state_event::StateEvent;
-use crate::{async_fn_body, Pipe};
+use crate::async_fn_body;
 use log::debug;
 use std::fmt::Debug;
 use std::rc::Rc;
@@ -166,24 +166,23 @@ fn compute_popup_area(content: &str, area: Rect) -> Rect {
 
     let width = if width > 50 { 50 } else { width };
 
-    Layout::default()
+    let new_area = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Percentage((100 - height) / 2),
             Constraint::Percentage(height),
             Constraint::Percentage((100 - height) / 2),
         ])
-        .split(area)[1]
-        .pipe(|new_area| {
-            Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints([
-                    Constraint::Percentage((100 - width) / 2),
-                    Constraint::Percentage(width),
-                    Constraint::Percentage((100 - width) / 2),
-                ])
-                .split(new_area)[1]
-        })
+        .split(area)[1];
+
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage((100 - width) / 2),
+            Constraint::Percentage(width),
+            Constraint::Percentage((100 - width) / 2),
+        ])
+        .split(new_area)[1]
 }
 
 macro_rules! cell {

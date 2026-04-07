@@ -6,7 +6,6 @@ pub struct SubscriptionSet<Publisher, V> {
 
 #[derive(Debug)]
 pub struct Subscriber<V> {
-    // TODO should it be a Rc<V>?
     pub listener: V,
 }
 
