@@ -13,11 +13,8 @@ pub struct PopupLayer {
     pub listeners: BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>>,
 }
 
-impl Layer for PopupLayer {
-    fn new() -> Self
-    where
-        Self: Sized,
-    {
+impl Default for PopupLayer {
+    fn default() -> Self {
         let popup = Popup::default();
         let shared = RenderableComponent(Component::new(popup));
 
@@ -30,12 +27,14 @@ impl Layer for PopupLayer {
             listeners,
         }
     }
+}
 
+impl Layer for PopupLayer {
     fn render(&mut self, frame: &mut Frame, theme: &Theme) {
         self.popup.render(frame, frame.area(), theme);
     }
 
-    fn get_listeners(&self) -> BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>> {
-        self.listeners.clone()
+    fn get_listeners(&self) -> &BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>> {
+        &self.listeners
     }
 }

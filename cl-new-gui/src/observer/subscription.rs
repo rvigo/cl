@@ -60,6 +60,24 @@ impl<K: Ord, T> From<BTreeMap<K, Vec<T>>> for SubscriptionSet<K, T> {
     }
 }
 
+impl<K: Ord + Clone, T: Clone> From<&BTreeMap<K, Vec<T>>> for SubscriptionSet<K, T> {
+    fn from(value: &BTreeMap<K, Vec<T>>) -> Self {
+        Self {
+            subscriptions: value
+                .iter()
+                .map(|(key, value)| {
+                    let subscriptions = value
+                        .iter()
+                        .cloned()
+                        .map(|listener| Subscriber { listener })
+                        .collect();
+                    (key.clone(), subscriptions)
+                })
+                .collect(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

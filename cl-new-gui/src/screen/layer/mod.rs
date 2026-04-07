@@ -36,13 +36,9 @@ use tui::Frame;
 ///   any state the layer holds.
 #[async_trait(?Send)]
 pub trait Layer: KeyMapping {
-    fn new() -> Self
-    where
-        Self: Sized;
-
     fn render(&mut self, frame: &mut Frame, theme: &Theme);
 
-    fn get_listeners(&self) -> BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>>;
+    fn get_listeners(&self) -> &BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>>;
 
     /// Called after this layer is pushed onto the screen and its listeners
     /// are registered.  The default implementation does nothing.
@@ -50,5 +46,8 @@ pub trait Layer: KeyMapping {
 
     /// Called before this layer is removed from the screen.
     /// The default implementation does nothing.
+    ///
+    /// Note: intentionally sync (no async) since detach is a fire-and-forget
+    /// cleanup step that does not need to await I/O.
     fn on_detach(&mut self) {}
 }
