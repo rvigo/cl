@@ -7,13 +7,13 @@ mod renderable;
 mod screen_state;
 mod search;
 mod static_info;
+pub mod table;
 mod tabs;
 mod textbox;
 
 pub use button::FutureEventType;
 pub use clipboard_status::ClipboardStatus;
 pub use editable_textbox::EditableTextbox;
-pub use editable_textbox::EditableTextboxName;
 pub use list::List;
 pub use popup::Popup;
 pub use renderable::Renderable;
@@ -23,7 +23,6 @@ pub use static_info::StaticInfo;
 use std::any::Any;
 pub use tabs::Tabs;
 pub use textbox::TextBox;
-pub use textbox::TextBoxName;
 
 use crate::observer::observable::Observable;
 use crate::observer::ObservableComponent;
@@ -49,7 +48,7 @@ where
 
 impl<T> Clone for Component<T>
 where
-    T: Observable + Clone,
+    T: Observable,
 {
     fn clone(&self) -> Self {
         Self(Rc::clone(self))
@@ -81,12 +80,12 @@ where
     T: Observable + Debug + Any,
 {
     /// Borrow the inner value as a type-erased `ObservableComponent`.
-    pub fn borrow(&self) -> Ref<dyn ObservableComponent> {
+    pub fn as_observable(&self) -> Ref<dyn ObservableComponent> {
         self.0.borrow()
     }
 
     /// Mutably borrow the inner value as a type-erased `ObservableComponent`.
-    pub fn borrow_mut(&self) -> RefMut<dyn ObservableComponent> {
+    pub fn as_observable_mut(&self) -> RefMut<dyn ObservableComponent> {
         self.0.borrow_mut()
     }
 
