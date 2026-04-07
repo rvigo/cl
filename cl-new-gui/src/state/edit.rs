@@ -35,8 +35,8 @@ impl EditState {
             .alias(self.alias.take().unwrap_or_default())
             .command(self.command.take().unwrap_or_default())
             .namespace(self.namespace.take().unwrap_or_default())
-            .description(self.description.clone())
-            .tags(self.tags.clone())
+            .description(self.description.take())
+            .tags(self.tags.take())
             .build()
     }
 }
@@ -48,45 +48,48 @@ mod tests {
     #[test]
     fn test_update_alias() {
         let mut state = EditState::default();
-        
+
         state.update_alias(Some("myalias".to_string()));
-        
+
         assert_eq!(state.alias, Some("myalias".to_string()));
     }
 
     #[test]
     fn test_update_command() {
         let mut state = EditState::default();
-        
+
         state.update_command(Some("ls -la".to_string()));
-        
+
         assert_eq!(state.command, Some("ls -la".to_string()));
     }
 
     #[test]
     fn test_update_description() {
         let mut state = EditState::default();
-        
+
         state.update_description(Some("desc".to_string()));
-        
+
         assert_eq!(state.description, Some("desc".to_string()));
     }
 
     #[test]
     fn test_update_tags() {
         let mut state = EditState::default();
-        
+
         state.update_tags(Some(vec!["tag1".to_string(), "tag2".to_string()]));
-        
-        assert_eq!(state.tags, Some(vec!["tag1".to_string(), "tag2".to_string()]));
+
+        assert_eq!(
+            state.tags,
+            Some(vec!["tag1".to_string(), "tag2".to_string()])
+        );
     }
 
     #[test]
     fn test_update_namespace() {
         let mut state = EditState::default();
-        
+
         state.update_namespace(Some("ns".to_string()));
-        
+
         assert_eq!(state.namespace, Some("ns".to_string()));
     }
 
@@ -98,13 +101,31 @@ mod tests {
         state.update_namespace(Some("n".to_string()));
         state.update_description(Some("d".to_string()));
         state.update_tags(Some(vec!["t1".to_string()]));
-        
+
         let cmd = state.get();
-        
+
         assert_eq!(cmd.alias, "a");
         assert_eq!(cmd.command, "c");
         assert_eq!(cmd.namespace, "n");
         assert_eq!(cmd.description(), "d".to_string());
         assert_eq!(cmd.tags_as_string(), "t1".to_string());
+    }
+
+    #[test]
+    fn test_get_consumes_all_fields() {
+        let mut state = EditState::default();
+        state.update_alias(Some("a".to_string()));
+        state.update_command(Some("c".to_string()));
+        state.update_namespace(Some("n".to_string()));
+        state.update_description(Some("d".to_string()));
+        state.update_tags(Some(vec!["t1".to_string()]));
+
+        let _ = state.get();
+
+        assert!(state.alias.is_none());
+        assert!(state.command.is_none());
+        assert!(state.namespace.is_none());
+        assert!(state.description.is_none());
+        assert!(state.tags.is_none());
     }
 }

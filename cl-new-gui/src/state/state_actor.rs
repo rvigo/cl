@@ -1,10 +1,10 @@
 use crate::state::selected_command::SelectedCommand;
 use crate::state::state_event::StateEvent;
+use crate::state::State;
 use anyhow::Result;
 use cl_core::Config;
-use log::debug;
+use log::{debug, error};
 use tokio::sync::mpsc::Receiver;
-use crate::state::State;
 
 pub struct StateActor {
     state: State,
@@ -12,11 +12,11 @@ pub struct StateActor {
 }
 
 impl StateActor {
-    pub fn new(config: impl Config + 'static, receiver: Receiver<StateEvent>) -> Self {
-        Self {
-            state: State::new(config),
+    pub fn new(config: impl Config + 'static, receiver: Receiver<StateEvent>) -> Result<Self> {
+        Ok(Self {
+            state: State::new(config)?,
             receiver,
-        }
+        })
     }
 
     pub async fn run(&mut self) -> Result<()> {
@@ -48,13 +48,30 @@ impl StateActor {
             }
             StateEvent::PreviousTab { respond_to } => {
                 let (selected_namespace, commands) = self.state.previous_tab();
-                let selected_command = SelectedCommand::new(commands[0].clone(), 0);
+                let selected_command = match commands.first() {
+                    Some(cmd) => SelectedCommand::new(cmd.clone(), 0),
+                    None => {
+                        error!(
+                            "PreviousTab returned empty commands for namespace '{}'",
+                            selected_namespace.name
+                        );
+                        SelectedCommand::default()
+                    }
+                };
                 let _ = respond_to.send((selected_namespace, selected_command, commands));
             }
             StateEvent::NextTab { respond_to } => {
                 let (selected_namespace, commands) = self.state.next_tab();
-                // TODO make SelectedCommand and SelectedNamespace optionals
-                let selected_command = SelectedCommand::new(commands[0].clone(), 0);
+                let selected_command = match commands.first() {
+                    Some(cmd) => SelectedCommand::new(cmd.clone(), 0),
+                    None => {
+                        error!(
+                            "NextTab returned empty commands for namespace '{}'",
+                            selected_namespace.name
+                        );
+                        SelectedCommand::default()
+                    }
+                };
                 let _ = respond_to.send((selected_namespace, selected_command, commands));
             }
             StateEvent::GetAllNamespaces { respond_to } => {

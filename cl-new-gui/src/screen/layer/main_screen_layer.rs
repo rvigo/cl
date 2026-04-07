@@ -1,12 +1,12 @@
 use crate::clipboard::Clipboard;
 use crate::component::{ClipboardStatus, List, Renderable, StaticInfo, Tabs, TextBox};
-use crate::state::state_event::FieldName;
 use crate::component::{RenderableComponent, Search};
 use crate::observer::observable::Observable;
 use crate::render;
 use crate::screen::layer::Layer;
 use crate::screen::theme::Theme;
 use crate::screen::Listeners;
+use crate::state::state_event::FieldName;
 use std::any::TypeId;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
@@ -144,8 +144,12 @@ impl Layer for MainScreenLayer {
             .direction(Direction::Vertical)
             .constraints(details)
             .split(main_chunks[1]);
-        let (tabs_rect, description_rect, details_rect, command_rect) =
-            (right_chunks[0], right_chunks[1], right_chunks[2], right_chunks[3]);
+        let (tabs_rect, description_rect, details_rect, command_rect) = (
+            right_chunks[0],
+            right_chunks[1],
+            right_chunks[2],
+            right_chunks[3],
+        );
 
         let detail_chunks = Layout::default()
             .direction(Direction::Horizontal)
@@ -155,8 +159,8 @@ impl Layer for MainScreenLayer {
 
         let footer = Block::default().style(
             Style::default()
-                .bg(theme.background_color.clone().into())
-                .fg(theme.text_color.clone().into()),
+                .bg(theme.background_color.into())
+                .fg(theme.text_color.into()),
         );
         let footer_chunks = Layout::default()
             .direction(Direction::Horizontal)

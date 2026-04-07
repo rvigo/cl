@@ -1,4 +1,7 @@
-use crate::component::{Downcastable, EditableTextbox, Renderable, RenderableComponent, ScreenState, StateComponent, StaticInfo};
+use crate::component::{
+    Downcastable, EditableTextbox, Renderable, RenderableComponent, ScreenState, StateComponent,
+    StaticInfo,
+};
 use crate::observer::observable::Observable;
 use crate::observer::ObservableComponent;
 use crate::render;
@@ -150,8 +153,8 @@ impl Layer for InsertScreenLayer {
 
         let footer = Block::default().style(
             Style::default()
-                .bg(theme.background_color.clone().into())
-                .fg(theme.text_color.clone().into()),
+                .bg(theme.background_color.into())
+                .fg(theme.text_color.into()),
         );
         let modified_status_rect = Layout::default()
             .direction(Direction::Horizontal)
@@ -207,10 +210,16 @@ impl InsertScreenLayer {
     pub fn get_next_field(&self) -> FieldName {
         let current_field = self.get_current_field();
 
-        let pos = FIELD_ORDER
-            .iter()
-            .position(|f| f == &current_field)
-            .expect("Current field not found in FIELD_ORDER");
+        let pos = match FIELD_ORDER.iter().position(|f| f == &current_field) {
+            Some(pos) => pos,
+            None => {
+                log::error!(
+                    "current field {:?} not found in FIELD_ORDER, defaulting to first",
+                    current_field
+                );
+                0
+            }
+        };
         let next_idx = (pos + 1) % FIELD_ORDER.len();
 
         debug!("current: {} - next: {}", pos, next_idx);
@@ -220,10 +229,16 @@ impl InsertScreenLayer {
     pub fn get_previous_field(&self) -> FieldName {
         let current_field = self.get_current_field();
 
-        let pos = FIELD_ORDER
-            .iter()
-            .position(|f| f == &current_field)
-            .expect("Current field not found in FIELD_ORDER");
+        let pos = match FIELD_ORDER.iter().position(|f| f == &current_field) {
+            Some(pos) => pos,
+            None => {
+                log::error!(
+                    "current field {:?} not found in FIELD_ORDER, defaulting to first",
+                    current_field
+                );
+                0
+            }
+        };
         let previous_idx = (pos + FIELD_ORDER.len() - 1) % FIELD_ORDER.len();
 
         debug!("current: {} - previous: {}", pos, previous_idx);
@@ -235,18 +250,22 @@ impl InsertScreenLayer {
             debug!("getting current field: {:?}", s.current_field);
             s.current_field.clone()
         })
+        .unwrap_or_default()
     }
 
     fn get_modified_status(&self) -> bool {
-        self.with_screen_state(|s| s.has_changes)
+        self.with_screen_state(|s| s.has_changes).unwrap_or(false)
     }
 
-    fn with_screen_state<T>(&self, f: impl FnOnce(&ScreenState) -> T) -> T {
+    fn with_screen_state<T>(&self, f: impl FnOnce(&ScreenState) -> T) -> Option<T> {
         let inner_ref: &dyn ObservableComponent = &*self.screen_state.as_observable();
-        let screen_state = inner_ref
-            .downcast_to::<ScreenState>()
-            .expect("Cannot get the current screen state");
-        f(screen_state)
+        match inner_ref.downcast_to::<ScreenState>() {
+            Some(screen_state) => Some(f(screen_state)),
+            None => {
+                log::error!("failed to downcast screen state");
+                None
+            }
+        }
     }
 }
 
