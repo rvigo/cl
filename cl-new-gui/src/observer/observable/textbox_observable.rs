@@ -1,6 +1,7 @@
-use crate::component::{TextBox, TextBoxName};
+use crate::component::TextBox;
 use crate::observer::event::{Event, TextBoxEvent};
 use crate::observer::observable::SyncObservable;
+use crate::state::state_event::FieldName;
 use log::debug;
 use std::borrow::Cow;
 
@@ -10,17 +11,18 @@ impl SyncObservable for TextBox {
             Event::TextBox(e) => match e {
                 TextBoxEvent::UpdateCommand(command) => {
                     let content = match self.name {
-                        TextBoxName::Command => command.command.some_or_none(),
-                        TextBoxName::Description => {
+                        FieldName::Command => command.command.some_or_none(),
+                        FieldName::Description => {
                             command.description.map(|desc| desc.to_string())
                         }
-                        TextBoxName::Tags => command.tags.map(|vec| {
+                        FieldName::Tags => command.tags.map(|vec| {
                             vec.iter()
                                 .map(|cow| cow.as_ref())
                                 .collect::<Vec<_>>()
                                 .join(", ")
                         }),
-                        TextBoxName::Namespace => command.namespace.some_or_none(),
+                        FieldName::Namespace => command.namespace.some_or_none(),
+                        FieldName::Alias => command.alias.some_or_none(),
                     };
                     self.update_content(content);
                 }
@@ -63,8 +65,6 @@ mod tests {
     use super::*;
     use crate::observer::event::{SearchEvent, TextBoxEvent};
     use std::borrow::Cow;
-    use tokio::sync::mpsc;
-
     #[test]
     fn update_content_sets_text() {
         let mut tb = TextBox::default();

@@ -1,6 +1,7 @@
 use crate::state::selected_command::SelectedCommand;
 use crate::state::selected_namespace::SelectedNamespace;
 use cl_core::Command;
+use std::fmt;
 use tokio::sync::oneshot;
 
 #[derive(Debug)]
@@ -66,4 +67,16 @@ pub enum FieldName {
     Command,
     /// Edit the command namespace
     Namespace,
+}
+
+impl fmt::Display for FieldName {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            FieldName::Description => write!(f, "Description"),
+            FieldName::Alias => write!(f, "Alias"),
+            FieldName::Tags => write!(f, "Tags"),
+            FieldName::Command => write!(f, "Command"),
+            FieldName::Namespace => write!(f, "Namespace"),
+        }
+    }
 }

@@ -101,7 +101,7 @@ macro_rules! run_if_some {
 #[macro_export]
 macro_rules! try_get_renderable {
     ($component:expr, $type_:ty) => {
-        $component.borrow_mut().as_any().downcast_mut::<$type_>()
+        $component.as_observable_mut().as_any().downcast_mut::<$type_>()
     };
 }
 
@@ -111,7 +111,7 @@ macro_rules! try_get_renderable {
 
 #[cfg(test)]
 mod tests {
-    use crate::observer::event::{Event, ListEvent, TabsEvent};
+    use crate::observer::event::Event;
     use crate::screen::Listeners;
     use crate::component::{List, Tabs};
     use std::any::TypeId;
@@ -128,13 +128,14 @@ mod tests {
 
     #[test]
     fn listeners_macro_registers_multiple_components_under_same_type() {
-        use crate::component::{TextBox, TextBoxName};
+        use crate::component::TextBox;
+        use crate::state::state_event::FieldName;
         let cmd = crate::component::RenderableComponent::new(TextBox {
-            name: TextBoxName::Command,
+            name: FieldName::Command,
             ..Default::default()
         });
         let desc = crate::component::RenderableComponent::new(TextBox {
-            name: TextBoxName::Description,
+            name: FieldName::Description,
             ..Default::default()
         });
         let listeners: Listeners = listeners! {

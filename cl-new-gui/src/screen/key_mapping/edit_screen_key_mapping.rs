@@ -7,7 +7,7 @@ use crate::screen::command::ScreenCommand::AddLayer;
 use crate::screen::command::ScreenCommandCallback;
 use crate::screen::key_mapping::command::EditCallback;
 use crate::screen::key_mapping::{KeyMapping, ScreenCommand};
-use crate::screen::layer::{EditScreenLayer, Layer, MainScreenLayer, PopupLayer};
+use crate::screen::layer::{EditScreenLayer, MainScreenLayer, PopupLayer};
 use crate::screen::ScreenCommandCallback::UpdateAll;
 use crate::state::state_event::StateEvent;
 use async_trait::async_trait;
@@ -34,11 +34,11 @@ impl KeyMapping for EditScreenLayer {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
-                if let Some(inner) = self.screen_state.borrow().downcast_to::<ScreenState>() {
+                if let Some(inner) = self.screen_state.as_observable().downcast_to::<ScreenState>() {
                     if inner.has_changes {
                         debug!(target: "clr_edit_screen_key_mapping", "Has unsaved changes, asking for confirmation");
                         Some(vec![
-                            AddLayer(Box::new(PopupLayer::new())),
+                            AddLayer(Box::new(PopupLayer::default())),
                             event!(
                                 Popup,
                                 PopupEvent::Create(Dialog(
@@ -51,7 +51,7 @@ impl KeyMapping for EditScreenLayer {
                     } else {
                         debug!(target: "clr_edit_screen_key_mapping", "Exiting edit screen");
                         Some(vec![
-                            ScreenCommand::ReplaceCurrentLayer(Box::new(MainScreenLayer::new())),
+                            ScreenCommand::ReplaceCurrentLayer(Box::new(MainScreenLayer::default())),
                             ScreenCommand::Callback(UpdateAll),
                         ])
                     }
@@ -67,7 +67,7 @@ impl KeyMapping for EditScreenLayer {
                 let events = vec![
                     ScreenCommand::GetFieldContent,
                     ScreenCommand::Edit(EditCallback::Save),
-                    ScreenCommand::ReplaceCurrentLayer(Box::new(MainScreenLayer::new())),
+                    ScreenCommand::ReplaceCurrentLayer(Box::new(MainScreenLayer::default())),
                     ScreenCommand::Callback(UpdateAll),
                 ];
                 Some(events)

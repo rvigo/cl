@@ -1,4 +1,4 @@
-use crate::component::{Downcastable, EditableTextbox, EditableTextboxName, Renderable, RenderableComponent, ScreenState, StateComponent, StaticInfo};
+use crate::component::{Downcastable, EditableTextbox, Renderable, RenderableComponent, ScreenState, StateComponent, StaticInfo};
 use crate::observer::observable::Observable;
 use crate::observer::ObservableComponent;
 use crate::render;
@@ -24,35 +24,33 @@ pub struct EditScreenLayer {
     pub screen_state: StateComponent<ScreenState>,
     pub listeners: BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>>,
     pub app_name: StaticInfo,
+    pub modified_status: StaticInfo,
 }
 
-impl Layer for EditScreenLayer {
-    fn new() -> Self
-    where
-        Self: Sized,
-    {
+impl Default for EditScreenLayer {
+    fn default() -> Self {
         let current_field = FieldName::Alias;
         let screen_state = ScreenState::new(current_field);
 
         let alias = EditableTextbox {
-            name: EditableTextboxName::Alias,
+            name: FieldName::Alias,
             active: true,
             ..Default::default()
         };
         let namespace = EditableTextbox {
-            name: EditableTextboxName::Namespace,
+            name: FieldName::Namespace,
             ..Default::default()
         };
         let command = EditableTextbox {
-            name: EditableTextboxName::Command,
+            name: FieldName::Command,
             ..Default::default()
         };
         let tags = EditableTextbox {
-            name: EditableTextboxName::Tags,
+            name: FieldName::Tags,
             ..Default::default()
         };
         let description = EditableTextbox {
-            name: EditableTextboxName::Description,
+            name: FieldName::Description,
             ..Default::default()
         };
 
@@ -82,6 +80,7 @@ impl Layer for EditScreenLayer {
         );
 
         let app_name = StaticInfo::new("cl - edit");
+        let modified_status = StaticInfo::new("MODIFIED");
 
         Self {
             alias: alias_component,
@@ -92,10 +91,12 @@ impl Layer for EditScreenLayer {
             screen_state: screen_state_component,
             listeners,
             app_name,
+            modified_status,
         }
     }
+}
 
-    // TODO split the fields into the screen
+impl Layer for EditScreenLayer {
     fn render(&mut self, frame: &mut Frame, theme: &Theme) {
         let drawable_area = [
             Constraint::Fill(5), // drawable area
@@ -128,64 +129,47 @@ impl Layer for EditScreenLayer {
             .constraints(constraints)
             .split(form_chunks[1]);
 
-        let [first_row1, first_row2] = *Layout::default()
+        let first_row = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-            .split(right_side[0])
-        else {
-            todo!()
-        };
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(right_side[0]);
+        let (first_row1, first_row2) = (first_row[0], first_row[1]);
 
-        let [second_row1] = *Layout::default()
+        let second_row1 = right_side[1];
+
+        let third_row = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(100)].as_ref())
-            .split(right_side[1])
-        else {
-            todo!()
-        };
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(right_side[2]);
+        let (third_row1, third_row2) = (third_row[0], third_row[1]);
 
-        let [third_row1, third_row2] = *Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-            .split(right_side[2])
-        else {
-            todo!()
-        };
-
-        let [app_name_rect, _] = *Layout::default()
+        let app_name_rect = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Max(3), Constraint::Max(3)])
-            .split(form_chunks[0])
-        else {
-            todo!()
-        };
+            .constraints([Constraint::Max(3), Constraint::Fill(1)])
+            .split(form_chunks[0])[0];
 
         let footer = Block::default().style(
             Style::default()
-                .bg(theme.to_owned().background_color.into())
-                .fg(theme.to_owned().text_color.into()),
+                .bg(theme.background_color.clone().into())
+                .fg(theme.text_color.clone().into()),
         );
-        let [_, modified_status_rect, _] = *Layout::default()
+        let modified_status_rect = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
                 Constraint::Percentage(33),
                 Constraint::Percentage(33),
                 Constraint::Percentage(33),
             ])
-            .split(footer.inner(drawable_chunks[1]))
-        else {
-            todo!()
-        };
+            .split(footer.inner(drawable_chunks[1]))[1];
 
         frame.render_widget(Clear, frame.area()); // TODO make sure the clear event occurs before the screen
         frame.render_widget(footer, drawable_chunks[1]);
 
         if self.get_modified_status() {
-            let mut modified_status = StaticInfo::new("MODIFIED");
             render! {
                 frame,
                 theme,
-                { modified_status, modified_status_rect },
+                { self.modified_status, modified_status_rect },
             }
         }
 
@@ -201,10 +185,8 @@ impl Layer for EditScreenLayer {
         }
     }
 
-    fn get_listeners(&self) -> BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>> {
-        debug!(target: "EditScreenLayer", "Getting listeners for EditScreenLayer");
-
-        self.listeners.clone()
+    fn get_listeners(&self) -> &BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>> {
+        &self.listeners
     }
 }
 
@@ -244,31 +226,24 @@ impl EditScreenLayer {
     }
 
     fn get_current_field(&self) -> FieldName {
-        let inner_ref: &dyn ObservableComponent = &*self.screen_state.borrow();
-        let screen_state = if let Some(field) = inner_ref.downcast_to::<ScreenState>() {
-            field
-        } else {
-            panic!("Cannot get the current screen state");
-        };
-
-        let current = screen_state.current_field.clone();
-        debug!("getting current field: {:?}", current);
-        current
+        self.with_screen_state(|s| {
+            debug!("getting current field: {:?}", s.current_field);
+            s.current_field.clone()
+        })
     }
 
     fn get_modified_status(&self) -> bool {
-        let inner_ref: &dyn ObservableComponent = &*self.screen_state.borrow();
-        let screen_state = if let Some(field) = inner_ref.downcast_to::<ScreenState>() {
-            field
-        } else {
-            panic!("Cannot get the current screen state");
-        };
+        self.with_screen_state(|s| s.has_changes)
+    }
 
-        screen_state.has_changes
+    fn with_screen_state<T>(&self, f: impl FnOnce(&ScreenState) -> T) -> T {
+        let inner_ref: &dyn ObservableComponent = &*self.screen_state.as_observable();
+        let screen_state = inner_ref
+            .downcast_to::<ScreenState>()
+            .expect("Cannot get the current screen state");
+        f(screen_state)
     }
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -276,7 +251,7 @@ mod tests {
 
     #[test]
     fn should_get_the_current_field() {
-        let layer = EditScreenLayer::new();
+        let layer = EditScreenLayer::default();
 
         let current = layer.get_current_field();
 
@@ -285,7 +260,7 @@ mod tests {
 
     #[test]
     fn should_get_the_next_field() {
-        let layer = EditScreenLayer::new();
+        let layer = EditScreenLayer::default();
 
         // assuming the default field is ALIAS
         let next_field = layer.get_next_field();
@@ -295,7 +270,7 @@ mod tests {
 
     #[test]
     fn should_get_the_previous_field() {
-        let layer = EditScreenLayer::new();
+        let layer = EditScreenLayer::default();
 
         // assuming the default field is ALIAS
         let previous_field = layer.get_previous_field();

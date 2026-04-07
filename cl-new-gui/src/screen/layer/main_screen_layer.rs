@@ -1,5 +1,6 @@
 use crate::clipboard::Clipboard;
-use crate::component::{ClipboardStatus, List, Renderable, StaticInfo, Tabs, TextBox, TextBoxName};
+use crate::component::{ClipboardStatus, List, Renderable, StaticInfo, Tabs, TextBox};
+use crate::state::state_event::FieldName;
 use crate::component::{RenderableComponent, Search};
 use crate::observer::observable::Observable;
 use crate::render;
@@ -29,22 +30,22 @@ pub struct MainScreenLayer {
     pub help: StaticInfo,
 }
 
-impl Layer for MainScreenLayer {
-    fn new() -> Self {
+impl Default for MainScreenLayer {
+    fn default() -> Self {
         let command = TextBox {
-            name: TextBoxName::Command,
+            name: FieldName::Command,
             ..Default::default()
         };
         let description = TextBox {
-            name: TextBoxName::Description,
+            name: FieldName::Description,
             ..Default::default()
         };
         let tags = TextBox {
-            name: TextBoxName::Tags,
+            name: FieldName::Tags,
             ..Default::default()
         };
         let namespace = TextBox {
-            name: TextBoxName::Namespace,
+            name: FieldName::Namespace,
             ..Default::default()
         };
 
@@ -86,7 +87,7 @@ impl Layer for MainScreenLayer {
 
         let clipboard = RenderableComponent::new(ClipboardStatus::default());
 
-        listeners.insert(TypeId::of::<Clipboard>(), vec![clipboard.clone()]);
+        listeners.insert(TypeId::of::<Clipboard>(), vec![clipboard.get_observable()]);
 
         // statics
         let app_name = StaticInfo::new(format!("cl - {}", env!("CARGO_PKG_VERSION")));
@@ -106,7 +107,9 @@ impl Layer for MainScreenLayer {
             help,
         }
     }
+}
 
+impl Layer for MainScreenLayer {
     fn render(&mut self, frame: &mut Frame, theme: &Theme) {
         let drawable_area = [Constraint::Fill(2), Constraint::Max(3)];
         let areas = [
@@ -131,48 +134,40 @@ impl Layer for MainScreenLayer {
             .constraints(areas)
             .split(drawable_chunks[0]);
 
-        let [app_name_rect, list_rect] = *Layout::default()
+        let left_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Max(3), Constraint::Fill(1)])
-            .split(main_chunks[0])
-        else {
-            todo!()
-        };
+            .split(main_chunks[0]);
+        let (app_name_rect, list_rect) = (left_chunks[0], left_chunks[1]);
 
-        let [tabs_rect, description_rect, details_rect, command_rect] = *Layout::default()
+        let right_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints(details)
-            .split(main_chunks[1])
-        else {
-            todo!()
-        };
+            .split(main_chunks[1]);
+        let (tabs_rect, description_rect, details_rect, command_rect) =
+            (right_chunks[0], right_chunks[1], right_chunks[2], right_chunks[3]);
 
-        let [namespace_area, tags_area] = *Layout::default()
+        let detail_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(Constraint::from_percentages([40, 60]))
-            .split(details_rect)
-        else {
-            panic!() // TODO improve this
-        };
-
-        //
+            .split(details_rect);
+        let (namespace_area, tags_area) = (detail_chunks[0], detail_chunks[1]);
 
         let footer = Block::default().style(
             Style::default()
-                .bg(theme.to_owned().background_color.into())
-                .fg(theme.to_owned().text_color.into()),
+                .bg(theme.background_color.clone().into())
+                .fg(theme.text_color.clone().into()),
         );
-        let [quick_search_rect, clipboard_rect, help_rect] = *Layout::default()
+        let footer_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
-                Constraint::Percentage(33),
+                Constraint::Percentage(34),
                 Constraint::Percentage(33),
                 Constraint::Percentage(33),
             ])
-            .split(footer.inner(drawable_chunks[1]))
-        else {
-            todo!()
-        };
+            .split(footer.inner(drawable_chunks[1]));
+        let (quick_search_rect, clipboard_rect, help_rect) =
+            (footer_chunks[0], footer_chunks[1], footer_chunks[2]);
 
         frame.render_widget(footer, drawable_chunks[1]);
 
@@ -192,7 +187,7 @@ impl Layer for MainScreenLayer {
         }
     }
 
-    fn get_listeners(&self) -> BTreeMap<TypeId, Vec<Rc<RefCell<(dyn Observable + 'static)>>>> {
-        self.listeners.clone()
+    fn get_listeners(&self) -> &BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>> {
+        &self.listeners
     }
 }
