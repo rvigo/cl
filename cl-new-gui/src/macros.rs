@@ -111,7 +111,6 @@ macro_rules! try_get_renderable {
 
 #[cfg(test)]
 mod tests {
-    use crate::observer::event::Event;
     use crate::screen::Listeners;
     use crate::component::{List, Tabs};
     use std::any::TypeId;

@@ -1,6 +1,6 @@
 use cl_core::Command;
 
-/// A trait to give a type an optmized string representation to fuzzy searches
+/// A trait to give a type an optimized string representation to fuzzy searches
 ///
 /// *Does not* override any `to_string` or similar implementation
 pub trait Fuzzy {

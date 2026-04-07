@@ -33,7 +33,7 @@ pub struct State {
     current_items: HashSet<Command<'static>>,
 
     // edit
-    edit_state: EditState, // TODO improve the name of this field
+    edit_state: EditState,
 }
 
 const DEFAULT_NAMESPACE: &str = "All";
@@ -292,9 +292,9 @@ impl State {
 
     pub fn set_editable_command(&mut self, field_name: FieldName, content: String) {
         match field_name {
-            FieldName::Description => self.edit_state.update_description(Some(content)), // TODO check it need to be Some or not
+            FieldName::Description => self.edit_state.update_description(Some(content)),
             FieldName::Alias => self.edit_state.update_alias(Some(content)),
-            FieldName::Tags => self.edit_state.update_tags(Some(vec![content])), // TODO adjust type to Vec<String> or split by comma after here
+            FieldName::Tags => self.edit_state.update_tags(Some(vec![content])),
             FieldName::Command => self.edit_state.update_command(Some(content)),
             FieldName::Namespace => self.edit_state.update_namespace(Some(content)),
         }

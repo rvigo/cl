@@ -78,7 +78,6 @@ impl StateActor {
                 let namespaces = self.state.get_all_namespaces();
                 let _ = respond_to.send(namespaces);
             }
-            // TODO handle errors from state to popup (or any layer)
             StateEvent::DeleteCommand { respond_to } => {
                 let res = match self.state.delete_command() {
                     Ok(_) => (true, None),

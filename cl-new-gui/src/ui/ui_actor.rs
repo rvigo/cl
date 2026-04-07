@@ -16,7 +16,7 @@ use tokio_stream::StreamExt;
 
 pub struct UiActor {
     ui: Ui,
-    signal_handler: SignalHandler, // TODO rethink this name
+    signal_handler: SignalHandler,
     signal_receiver: broadcast::Receiver<Signal>,
 }
 
