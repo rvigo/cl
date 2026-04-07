@@ -131,6 +131,9 @@ impl Screen {
                                 ScreenCommand::Edit(cb) => {
                                     cb.handle(state_tx.clone()).await;
                                 }
+                                ScreenCommand::Insert(cb) => {
+                                    cb.handle(state_tx.clone()).await;
+                                }
                             }
                         }
                     }
