@@ -29,8 +29,9 @@ impl CommandArgs {
         };
 
         args.into_iter().for_each(|arg| {
-            let parts: Vec<&str> = arg.split('=').collect();
-            let (key, value) = (parts[0], parts.get(1).map(|&v| v.to_string()));
+            let mut parts = arg.splitn(2, '=');
+            let key = parts.next().unwrap_or("");
+            let value = parts.next().map(|v| v.to_string());
 
             let (arg, prefix) = if key.starts_with(ARG_PREFIX) {
                 (
@@ -53,10 +54,23 @@ impl CommandArgs {
         let named_parameters_len = command_args.named_parameters.len();
 
         if command_args_len != named_parameters_len {
+            let provided: HashSet<String> = command_args
+                .args
+                .get(&CommandArgType::Named)
+                .map(|args| args.iter().map(|a| a.arg.clone()).collect())
+                .unwrap_or_default();
+            let mut missing: Vec<&String> = command_args
+                .named_parameters
+                .difference(&provided)
+                .collect();
+            missing.sort();
             bail!(
-                "Some named parameters are missing: expected {}, found {}",
-                named_parameters_len,
-                command_args_len
+                "Missing named parameters: {}",
+                missing
+                    .iter()
+                    .map(|s| format!("#{{{s}}}"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
             )
         };
         Ok(command_args)
@@ -124,6 +138,46 @@ impl CommandArg {
 
     pub fn is_empty(&self) -> bool {
         self.arg.is_empty() && self.prefix.as_deref().is_none_or(|p| p.is_empty())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn should_preserve_value_containing_equals_sign() {
+        let command = "curl #{url}";
+        let args = vec!["--url=https://example.com?foo=bar&baz=qux".to_string()];
+        let result = CommandArgs::init(command, args);
+        assert!(result.is_ok());
+        let map = result.unwrap().named_parameters_map().unwrap();
+        assert_eq!(
+            map.get("url").unwrap(),
+            "https://example.com?foo=bar&baz=qux"
+        );
+    }
+
+    #[test]
+    fn should_report_missing_named_parameters_by_name() {
+        let command = "echo #{greeting} #{name}";
+        // only --greeting provided, --name is missing
+        let args = vec!["--greeting=hello".to_string()];
+        let result = CommandArgs::init(command, args);
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(
+            err.contains("#{name}"),
+            "Error should name the missing parameter, got: {err}"
+        );
+    }
+
+    #[test]
+    fn should_succeed_when_all_named_parameters_are_provided() {
+        let command = "echo #{greeting} #{name}";
+        let args = vec!["--greeting=hello".to_string(), "--name=world".to_string()];
+        let result = CommandArgs::init(command, args);
+        assert!(result.is_ok());
     }
 }
 
