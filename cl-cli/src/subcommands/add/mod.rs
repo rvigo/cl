@@ -4,7 +4,7 @@ use super::Subcommand;
 use anyhow::Result;
 use cl_core::{fs, initialize_commands, CommandBuilder, Config};
 use clap::Parser;
-use log::{info, warn};
+use tracing::{info, warn};
 use maybe_stdin::MaybeStdin;
 
 #[derive(Parser, Debug)]
@@ -21,7 +21,7 @@ impl Subcommand for Add {
         let command_string = self.command.value.to_owned();
 
         if command_string.is_empty() {
-            warn!("No command provided. Use `cl add --help` for more information.");
+            warn!(target: "cl::add", "no command provided; run `cl add --help` for usage");
             return Ok(());
         }
 
@@ -40,10 +40,7 @@ impl Subcommand for Add {
 
         let result = commands.add(&command)?;
         fs::save_at(result, config.command_file_path())?;
-
-        if !config.preferences().quiet_mode() {
-            info!("Command added: {}", command_string);
-        }
+        info!(target: "cl::add", alias = %alias, command = %command_string, "command added");
 
         Ok(())
     }
