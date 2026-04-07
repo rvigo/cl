@@ -6,8 +6,8 @@ use crate::CommandVec;
 use crate::CommandVecExt;
 
 use anyhow::{bail, Context, Result};
-use log::warn;
 use std::{borrow::Borrow, env};
+use tracing::{debug, trace, warn};
 
 #[derive(Default)]
 pub struct Commands<'cmd> {
@@ -22,11 +22,13 @@ impl<'cmd> Commands<'cmd> {
     pub fn add(&mut self, command: &Command<'cmd>) -> Result<&CommandMap<'cmd>> {
         command.validate()?;
         self.check_duplicated(command)?;
+        trace!(target: "cl_core::commands", alias = %command.alias, namespace = %command.namespace, "adding command");
         self.commands
             .entry(command.namespace.to_string())
             .and_modify(|commands| commands.push(command.to_owned()))
             .or_insert_with(|| vec![command.to_owned()]);
 
+        debug!(target: "cl_core::commands", alias = %command.alias, namespace = %command.namespace, "command added");
         Ok(&self.commands)
     }
 
@@ -35,6 +37,12 @@ impl<'cmd> Commands<'cmd> {
         new_command: &Command<'cmd>,
         old_command: &Command<'cmd>,
     ) -> Result<&CommandMap<'cmd>> {
+        debug!(
+            target: "cl_core::commands",
+            old_alias = %old_command.alias, old_namespace = %old_command.namespace,
+            new_alias = %new_command.alias, new_namespace = %new_command.namespace,
+            "editing command"
+        );
         new_command.validate()?;
         self.command_already_exists(new_command, old_command)?;
         let old_command_namespace: &str = old_command.namespace.borrow();
@@ -45,34 +53,42 @@ impl<'cmd> Commands<'cmd> {
         }
 
         self.commands
-            .entry(new_command_namespace)
+            .entry(new_command_namespace.clone())
             .and_modify(|commands| commands.push(new_command.to_owned()))
             .or_insert_with(|| vec![new_command.to_owned()]);
 
         if let Some(commands) = self.commands.get(old_command_namespace) {
             if commands.is_empty() {
+                trace!(target: "cl_core::commands", namespace = %old_command_namespace, "removing empty namespace after edit");
                 self.commands.remove(old_command_namespace);
             }
         }
 
+        debug!(target: "cl_core::commands", alias = %new_command.alias, namespace = %new_command_namespace, "command edited");
         Ok(&self.commands)
     }
 
     pub fn remove(&mut self, command: &Command) -> Result<&CommandMap<'cmd>> {
         let namespace: &str = command.namespace.borrow();
+        debug!(target: "cl_core::commands", alias = %command.alias, namespace = %namespace, "removing command");
 
         if let Some(commands) = self.commands.get_mut(namespace) {
             if commands.len() <= 1 {
+                trace!(target: "cl_core::commands", namespace = %namespace, "removing empty namespace after remove");
                 self.commands.remove(namespace);
             } else {
                 commands.retain(|c| !c.eq(command));
             }
-        };
+            debug!(target: "cl_core::commands", alias = %command.alias, namespace = %namespace, "command removed");
+        } else {
+            warn!(target: "cl_core::commands", alias = %command.alias, namespace = %namespace, "namespace not found during remove");
+        }
 
         Ok(&self.commands)
     }
 
     pub fn find(&self, alias: &str, namespace: Option<&str>) -> Result<Command<'cmd>> {
+        debug!(target: "cl_core::commands", alias = %alias, namespace = ?namespace, "finding command");
         let binding = self.commands.to_vec();
         let commands = match namespace {
             Some(ns) => self
@@ -82,6 +98,7 @@ impl<'cmd> Commands<'cmd> {
 
             None => {
                 let filter = binding.filter(|cmd| cmd.alias == alias);
+                trace!(target: "cl_core::commands", alias = %alias, candidates = %filter.len(), "scanned all namespaces");
 
                 if filter.len() > 1 {
                     bail!(CommandError::CommandPresentInManyNamespaces {
@@ -94,21 +111,14 @@ impl<'cmd> Commands<'cmd> {
         };
 
         match commands.map(|c| c.to_owned()) {
-            Some(c) => Ok(c),
+            Some(c) => {
+                debug!(target: "cl_core::commands", alias = %alias, namespace = %c.namespace, "command found");
+                Ok(c)
+            }
             None => bail!(CommandError::AliasNotFound {
                 alias: alias.to_owned()
             }),
         }
-
-        // match commands.len() {
-        //     0 => bail!(CommandError::AliasNotFound {
-        //         alias: alias.to_owned()
-        //     }),
-        //     1 => Ok(commands.into_iter().next().unwrap()), // Safe to unwrap since len() is 1
-        //     _ => bail!(CommandError::CommandPresentInManyNamespaces {
-        //         alias: alias.to_owned()
-        //     }),
-        // }
     }
 
     fn check_same_alias(&self, new_command: &Command<'cmd>) -> bool {
