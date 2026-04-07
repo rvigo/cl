@@ -57,33 +57,42 @@ impl Share {
             namespace_filter.is_empty() || namespace_filter.contains(&cmd.namespace.to_string())
         });
 
-        let duplicates = self.find_duplicates(&stored_commands, &commands_from_file);
-        if !duplicates.is_empty() {
-            warn!(
-                "Duplicated aliases found! Please adjust them:\n{}",
-                duplicates
-                    .iter()
-                    .map(|cmd| format!(" - alias: {}, namespace: {}", cmd.alias, cmd.namespace))
-                    .collect::<Vec<_>>()
-                    .join(",\n")
-            );
-        }
-
-        // Remove duplicates from commands to be imported
-        commands_from_file.retain(|cmd| {
-            !stored_commands
+        // Build duplicate key set and warn — block ensures the borrow on commands_from_file
+        // is released before the mutable retain below.
+        let duplicate_keys: HashSet<(String, String)> = {
+            let duplicates = self.find_duplicates(&stored_commands, &commands_from_file);
+            if !duplicates.is_empty() {
+                warn!(
+                    "Duplicated aliases found! Please adjust them:\n{}",
+                    duplicates
+                        .iter()
+                        .map(|cmd| {
+                            format!(" - alias: {}, namespace: {}", cmd.alias, cmd.namespace)
+                        })
+                        .collect::<Vec<_>>()
+                        .join(",\n")
+                );
+            }
+            duplicates
                 .iter()
-                .any(|stored| cmd.alias == stored.alias && cmd.namespace == stored.namespace)
+                .map(|cmd| (cmd.alias.to_string(), cmd.namespace.to_string()))
+                .collect()
+        };
+
+        // Remove duplicates from commands to be imported using O(1) HashSet lookup
+        commands_from_file.retain(|cmd| {
+            !duplicate_keys.contains(&(cmd.alias.to_string(), cmd.namespace.to_string()))
         });
 
         if !commands_from_file.is_empty() {
-            stored_commands.extend(commands_from_file.clone());
+            let count = commands_from_file.len();
+            stored_commands.extend(commands_from_file);
             fs::save_at(
                 &stored_commands.to_command_map(),
                 config.command_file_path(),
             )
             .context("Could not import the aliases")?;
-            info!("Successfully imported {} aliases", commands_from_file.len());
+            info!("Successfully imported {} aliases", count);
         } else {
             info!("There are no aliases to be imported");
         }
@@ -92,15 +101,15 @@ impl Share {
     }
 
     fn handle_export(&self, commands: &Commands) -> Result<()> {
-        let filtered_commands = if let Some(namespaces) = &self.namespace {
-            commands
-                .as_list()
-                .into_iter()
-                .filter(|cmd| namespaces.contains(&cmd.namespace.to_string()))
-                .collect()
-        } else {
-            commands.as_list()
-        };
+        let filtered_commands: Vec<_> = commands
+            .as_list()
+            .into_iter()
+            .filter(|cmd| {
+                self.namespace
+                    .as_ref()
+                    .map_or(true, |ns| ns.contains(&cmd.namespace.to_string()))
+            })
+            .collect();
 
         fs::save_at(&filtered_commands.to_command_map(), &self.file_location)
             .context("Could not export the aliases")?;
@@ -132,5 +141,56 @@ impl Share {
             })
             .map(Cow::Borrowed)
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    fn cmd<'a>(alias: &'a str, namespace: &'a str) -> Command<'a> {
+        Command {
+            alias: Cow::Borrowed(alias),
+            namespace: Cow::Borrowed(namespace),
+            command: Cow::Borrowed("echo test"),
+            description: None,
+            tags: None,
+        }
+    }
+
+    fn share() -> Share {
+        Share {
+            mode: Mode::Import,
+            file_location: PathBuf::from("dummy.toml"),
+            namespace: None,
+        }
+    }
+
+    #[test]
+    fn should_detect_duplicate_by_alias_and_namespace() {
+        let s = share();
+        let stored = vec![cmd("foo", "bar")];
+        let incoming = vec![cmd("foo", "bar"), cmd("baz", "bar")];
+        let duplicates = s.find_duplicates(&stored, &incoming);
+        assert_eq!(duplicates.len(), 1);
+        assert_eq!(duplicates[0].alias.as_ref(), "foo");
+    }
+
+    #[test]
+    fn should_not_flag_same_alias_in_different_namespace() {
+        let s = share();
+        let stored = vec![cmd("foo", "bar")];
+        let incoming = vec![cmd("foo", "other")];
+        let duplicates = s.find_duplicates(&stored, &incoming);
+        assert!(duplicates.is_empty());
+    }
+
+    #[test]
+    fn should_return_empty_when_no_duplicates() {
+        let s = share();
+        let stored = vec![cmd("foo", "bar")];
+        let incoming = vec![cmd("baz", "bar")];
+        let duplicates = s.find_duplicates(&stored, &incoming);
+        assert!(duplicates.is_empty());
     }
 }
