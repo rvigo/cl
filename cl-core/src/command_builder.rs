@@ -53,7 +53,7 @@ impl CommandBuilder {
         self
     }
 
-    pub fn build<'a>(self) -> Command<'a> {
+    pub fn build(self) -> Command<'static> {
         Command {
             namespace: Cow::Owned(self.namespace),
             command: Cow::Owned(self.command),

@@ -1,11 +1,15 @@
 use crate::CommandError;
 use anyhow::{ensure, Result};
 use itertools::Itertools;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialOrd, Ord, Hash)]
+static PARAM_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"#\{[^}]*}").expect("Invalid regex pattern"));
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Command<'cmd> {
     /// The command's alias. Is a `required` field and should not have empty spaces in it
     pub alias: Cow<'cmd, str>,
@@ -51,9 +55,7 @@ impl<'cmd> Command<'cmd> {
     }
 
     pub fn has_named_parameter(&self) -> bool {
-        let re = Regex::new(r"#\{[^}]*}").expect("Invalid regex pattern");
-
-        re.is_match(&self.command)
+        PARAM_REGEX.is_match(&self.command)
     }
 
     pub fn has_changes(&self, new: &Command) -> bool {
@@ -94,6 +96,29 @@ impl Default for Command<'_> {
 impl PartialEq for Command<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.alias.eq(&other.alias) && self.namespace.eq(&other.namespace)
+    }
+}
+
+impl Eq for Command<'_> {}
+
+impl std::hash::Hash for Command<'_> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.alias.hash(state);
+        self.namespace.hash(state);
+    }
+}
+
+impl PartialOrd for Command<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Command<'_> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.namespace
+            .cmp(&other.namespace)
+            .then_with(|| self.alias.cmp(&other.alias))
     }
 }
 
@@ -186,5 +211,63 @@ mod test {
         command.command = Cow::Borrowed("echo \"hello, #{name}\"");
 
         assert!(command.has_named_parameter())
+    }
+
+    #[test]
+    fn equal_commands_have_same_hash() {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        fn hash_of(cmd: &Command) -> u64 {
+            let mut h = DefaultHasher::new();
+            cmd.hash(&mut h);
+            h.finish()
+        }
+
+        let a = CommandBuilder::default()
+            .alias("alias")
+            .namespace("ns")
+            .command("echo foo")
+            .build();
+        let b = CommandBuilder::default()
+            .alias("alias")
+            .namespace("ns")
+            .command("echo bar") // different command string, same identity
+            .build();
+
+        assert_eq!(a, b);
+        assert_eq!(hash_of(&a), hash_of(&b));
+    }
+
+    #[test]
+    fn ord_is_consistent_with_eq() {
+        use std::cmp::Ordering;
+
+        let a = CommandBuilder::default()
+            .alias("alias")
+            .namespace("ns")
+            .command("echo foo")
+            .build();
+        let b = CommandBuilder::default()
+            .alias("alias")
+            .namespace("ns")
+            .command("echo bar")
+            .build();
+
+        assert_eq!(a, b);
+        assert_eq!(a.cmp(&b), Ordering::Equal);
+    }
+
+    #[test]
+    fn ord_orders_by_namespace_then_alias() {
+        use std::cmp::Ordering;
+
+        let a = CommandBuilder::default().alias("a").namespace("a").command("x").build();
+        let b = CommandBuilder::default().alias("b").namespace("a").command("x").build();
+        let c = CommandBuilder::default().alias("a").namespace("b").command("x").build();
+
+        assert_eq!(a.cmp(&b), Ordering::Less);  // same ns, alias a < b
+        assert_eq!(a.cmp(&c), Ordering::Less);  // ns a < b
+        assert_eq!(c.cmp(&b), Ordering::Greater); // ns b > a
     }
 }
