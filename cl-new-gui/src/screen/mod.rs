@@ -128,10 +128,7 @@ impl Screen {
                                     )
                                     .await;
                                 }
-                                ScreenCommand::Edit(cb) => {
-                                    cb.handle(state_tx.clone()).await;
-                                }
-                                ScreenCommand::Insert(cb) => {
+                                ScreenCommand::Form(cb) => {
                                     cb.handle(state_tx.clone()).await;
                                 }
                             }
