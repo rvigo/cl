@@ -12,7 +12,7 @@ use std::collections::BTreeMap;
 use std::rc::Rc;
 use tui::layout::{Constraint, Direction, Layout};
 use tui::prelude::Style;
-use tui::widgets::{Block, Clear};
+use tui::widgets::Block;
 use tui::Frame;
 
 pub struct EditScreenLayer {
@@ -109,9 +109,9 @@ impl Layer for EditScreenLayer {
         ];
 
         let constraints = [
-            Constraint::Length(5),  //Alias & Namespace
-            Constraint::Length(10), //Command
-            Constraint::Length(5),  //Desc & Tags
+            Constraint::Length(5), //Alias & Namespace
+            Constraint::Fill(1),   //Command
+            Constraint::Length(5), //Desc & Tags
         ];
 
         let drawable_chunks = Layout::default()
@@ -162,7 +162,12 @@ impl Layer for EditScreenLayer {
             ])
             .split(footer.inner(drawable_chunks[1]))[1];
 
-        frame.render_widget(Clear, frame.area()); // TODO make sure the clear event occurs before the screen
+        let background = Block::default().style(
+            Style::default()
+                .bg(theme.background_color.into())
+                .fg(theme.text_color.into()),
+        );
+        frame.render_widget(background, frame.area());
         frame.render_widget(footer, drawable_chunks[1]);
 
         if self.get_modified_status() {
