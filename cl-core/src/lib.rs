@@ -74,6 +74,7 @@ impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
             .to_owned()
     }
 
+    #[allow(clippy::get_first)]
     fn first(&self) -> Option<Command<'cmd>> {
         self.get(0).cloned()
     }
