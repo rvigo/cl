@@ -107,11 +107,12 @@ impl Logger {
     where
         S: Subscriber + for<'span> LookupSpan<'span>,
     {
+        let show_target = level_filter <= LevelFilter::DEBUG;
         fmt::layer()
             .without_time()
             .event_format(Format::default().with_source_location(false).without_time())
             .fmt_fields(PrettyFields::new())
-            .with_target(false)
+            .with_target(show_target)
             .with_filter(
                 // ensures at least INFO messages when logging to console
                 if level_filter == LevelFilter::ERROR {

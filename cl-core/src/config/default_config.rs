@@ -5,6 +5,7 @@ use crate::{
 
 use super::{get_config_path, Config, CONFIG_ROOT_DIR};
 use anyhow::{bail, Context, Result};
+use tracing::debug;
 use dirs::home_dir;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -39,22 +40,26 @@ impl DefaultConfig {
 impl Config for DefaultConfig {
     fn load() -> Result<Self> {
         let config_file_path = get_config_path()?;
+        debug!(target: "cl_core::config", path = %config_file_path.display(), "loading config");
 
         match read_to_string!(config_file_path) {
             Ok(config_data) => {
                 if !config_data.is_empty() {
                     let config: Self = toml::from_str(&config_data)?;
+                    debug!(target: "cl_core::config", "config loaded from file");
                     return Ok(config);
                 }
             }
             Err(err) => bail!(err),
         }
 
+        debug!(target: "cl_core::config", "config file empty; creating default");
         Self::new()
     }
 
     fn save(&self) -> Result<()> {
         let config_file_path = get_config_path()?;
+        debug!(target: "cl_core::config", path = %config_file_path.display(), "saving config");
         let mut config_data = toml::to_string(self)?;
 
         config_data.insert_str(0, DEFAULT_FILE_MESSAGE);
