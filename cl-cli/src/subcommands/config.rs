@@ -99,7 +99,10 @@ impl Subcommand for Config {
 }
 
 fn install_zsh_widget(app_home_dir: PathBuf) -> Result<()> {
-    let shell = env::var("SHELL").unwrap_or_default();
+    let shell = match env::var("SHELL") {
+        Ok(s) => s,
+        Err(_) => bail!("$SHELL environment variable is not set; cannot determine your shell"),
+    };
     if !shell.contains("zsh") {
         bail!("Cannot install zsh widget on non-zsh shell! Actual $SHELL value is {shell}");
     }
@@ -139,7 +142,7 @@ fn validate_fzf() -> Result<()> {
         .context("Cannot validate if fzf is installed")?;
 
     if !output.status.success() {
-        bail!("This widget needs fzf to work. Please first install it and then reinstall de widget")
+        bail!("This widget needs fzf to work. Please first install it and then reinstall the widget")
     }
 
     Ok(())
