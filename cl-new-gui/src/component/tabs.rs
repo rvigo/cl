@@ -152,6 +152,31 @@ impl Default for Tabs {
     }
 }
 
+impl Renderable for Tabs {
+    fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
+        let highlight_style = Style::default().fg(theme.highlight_color.into());
+
+        let block_style = Style::default()
+            .fg(theme.text_color.into())
+            .bg(theme.background_color.into());
+
+        let (visible_items, visible_selected) = self.compute_visible_window(area.width);
+
+        let tabs = tui::widgets::Tabs::new(visible_items.clone())
+            .divider("|")
+            .highlight_style(highlight_style)
+            .block(Block::bordered().style(block_style));
+
+        let tabs = if !visible_items.is_empty() {
+            tabs.select(visible_selected)
+        } else {
+            tabs
+        };
+
+        frame.render_widget(tabs, area);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -189,30 +214,5 @@ mod tests {
         let (items, _) = tabs.compute_visible_window(100);
         assert!(items[0].ends_with("..."));
         assert!(items[0].len() <= 15);
-    }
-}
-
-impl Renderable for Tabs {
-    fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
-        let highlight_style = Style::default().fg(theme.highlight_color.into());
-
-        let block_style = Style::default()
-            .fg(theme.text_color.into())
-            .bg(theme.background_color.into());
-
-        let (visible_items, visible_selected) = self.compute_visible_window(area.width);
-
-        let tabs = tui::widgets::Tabs::new(visible_items.clone())
-            .divider("|")
-            .highlight_style(highlight_style)
-            .block(Block::bordered().style(block_style));
-
-        let tabs = if !visible_items.is_empty() {
-            tabs.select(visible_selected)
-        } else {
-            tabs
-        };
-
-        frame.render_widget(tabs, area);
     }
 }

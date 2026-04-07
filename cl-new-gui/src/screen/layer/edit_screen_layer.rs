@@ -30,6 +30,77 @@ pub struct EditScreenLayer {
     pub modified_status: StaticInfo,
 }
 
+const FIELD_ORDER: &[FieldName] = &[
+    FieldName::Alias,
+    FieldName::Namespace,
+    FieldName::Command,
+    FieldName::Description,
+    FieldName::Tags,
+];
+
+impl EditScreenLayer {
+    pub fn get_next_field(&self) -> FieldName {
+        let current_field = self.get_current_field();
+
+        let pos = match FIELD_ORDER.iter().position(|f| f == &current_field) {
+            Some(pos) => pos,
+            None => {
+                log::error!(
+                    "current field {:?} not found in FIELD_ORDER, defaulting to first",
+                    current_field
+                );
+                0
+            }
+        };
+        let next_idx = (pos + 1) % FIELD_ORDER.len();
+
+        debug!("current: {} - next: {}", pos, next_idx);
+        FIELD_ORDER[next_idx].clone()
+    }
+
+    pub fn get_previous_field(&self) -> FieldName {
+        let current_field = self.get_current_field();
+
+        let pos = match FIELD_ORDER.iter().position(|f| f == &current_field) {
+            Some(pos) => pos,
+            None => {
+                log::error!(
+                    "current field {:?} not found in FIELD_ORDER, defaulting to first",
+                    current_field
+                );
+                0
+            }
+        };
+        let previous_idx = (pos + FIELD_ORDER.len() - 1) % FIELD_ORDER.len();
+
+        debug!("current: {} - previous: {}", pos, previous_idx);
+        FIELD_ORDER[previous_idx].clone()
+    }
+
+    fn get_current_field(&self) -> FieldName {
+        self.with_screen_state(|s| {
+            debug!("getting current field: {:?}", s.current_field);
+            s.current_field.clone()
+        })
+        .unwrap_or_default()
+    }
+
+    fn get_modified_status(&self) -> bool {
+        self.with_screen_state(|s| s.has_changes).unwrap_or(false)
+    }
+
+    fn with_screen_state<T>(&self, f: impl FnOnce(&ScreenState) -> T) -> Option<T> {
+        let inner_ref: &dyn ObservableComponent = &*self.screen_state.as_observable();
+        match inner_ref.downcast_to::<ScreenState>() {
+            Some(screen_state) => Some(f(screen_state)),
+            None => {
+                log::error!("failed to downcast screen state");
+                None
+            }
+        }
+    }
+}
+
 impl Default for EditScreenLayer {
     fn default() -> Self {
         let current_field = FieldName::Alias;
@@ -195,77 +266,6 @@ impl Layer for EditScreenLayer {
 
     fn get_listeners(&self) -> &BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>> {
         &self.listeners
-    }
-}
-
-const FIELD_ORDER: &[FieldName] = &[
-    FieldName::Alias,
-    FieldName::Namespace,
-    FieldName::Command,
-    FieldName::Description,
-    FieldName::Tags,
-];
-
-impl EditScreenLayer {
-    pub fn get_next_field(&self) -> FieldName {
-        let current_field = self.get_current_field();
-
-        let pos = match FIELD_ORDER.iter().position(|f| f == &current_field) {
-            Some(pos) => pos,
-            None => {
-                log::error!(
-                    "current field {:?} not found in FIELD_ORDER, defaulting to first",
-                    current_field
-                );
-                0
-            }
-        };
-        let next_idx = (pos + 1) % FIELD_ORDER.len();
-
-        debug!("current: {} - next: {}", pos, next_idx);
-        FIELD_ORDER[next_idx].clone()
-    }
-
-    pub fn get_previous_field(&self) -> FieldName {
-        let current_field = self.get_current_field();
-
-        let pos = match FIELD_ORDER.iter().position(|f| f == &current_field) {
-            Some(pos) => pos,
-            None => {
-                log::error!(
-                    "current field {:?} not found in FIELD_ORDER, defaulting to first",
-                    current_field
-                );
-                0
-            }
-        };
-        let previous_idx = (pos + FIELD_ORDER.len() - 1) % FIELD_ORDER.len();
-
-        debug!("current: {} - previous: {}", pos, previous_idx);
-        FIELD_ORDER[previous_idx].clone()
-    }
-
-    fn get_current_field(&self) -> FieldName {
-        self.with_screen_state(|s| {
-            debug!("getting current field: {:?}", s.current_field);
-            s.current_field.clone()
-        })
-        .unwrap_or_default()
-    }
-
-    fn get_modified_status(&self) -> bool {
-        self.with_screen_state(|s| s.has_changes).unwrap_or(false)
-    }
-
-    fn with_screen_state<T>(&self, f: impl FnOnce(&ScreenState) -> T) -> Option<T> {
-        let inner_ref: &dyn ObservableComponent = &*self.screen_state.as_observable();
-        match inner_ref.downcast_to::<ScreenState>() {
-            Some(screen_state) => Some(f(screen_state)),
-            None => {
-                log::error!("failed to downcast screen state");
-                None
-            }
-        }
     }
 }
 
