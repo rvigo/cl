@@ -40,10 +40,10 @@ pub trait Config {
 
     fn command_file_path(&self) -> PathBuf;
 
-    fn log_dir_path(&self) -> PathBuf;
+    fn log_dir_path(&self) -> Result<PathBuf>;
 }
 
-pub fn get_config_path() -> PathBuf {
-    let home = home_dir().expect("Cannot find home directory");
-    home.join(CONFIG_ROOT_DIR).join(DEFAULT_CONFIG_FILE)
+pub fn get_config_path() -> Result<PathBuf> {
+    let home = home_dir().ok_or_else(|| anyhow::anyhow!("Cannot find home directory"))?;
+    Ok(home.join(CONFIG_ROOT_DIR).join(DEFAULT_CONFIG_FILE))
 }
