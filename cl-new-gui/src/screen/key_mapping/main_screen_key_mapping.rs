@@ -6,7 +6,7 @@ use crate::screen::key_mapping::ScreenCommand::{
     AddLayer, CopyToClipboard, Quit, ReplaceCurrentLayer,
 };
 use crate::screen::key_mapping::{KeyMapping, ScreenCommand};
-use crate::screen::layer::{EditScreenLayer, Layer, MainScreenLayer, PopupLayer, QuickSearchLayer};
+use crate::screen::layer::{EditScreenLayer, MainScreenLayer, PopupLayer, QuickSearchLayer};
 use crate::screen::ActiveScreen::Main;
 use crate::state::selected_command::SelectedCommand;
 use crate::state::state_event::StateEvent;
@@ -35,7 +35,7 @@ impl KeyMapping for MainScreenLayer {
                 code: KeyCode::Char('d'),
                 ..
             } => Some(vec![
-                AddLayer(Box::new(PopupLayer::new())),
+                AddLayer(Box::new(PopupLayer::default())),
                 event!(
                     Popup,
                     PopupEvent::Create(Dialog(
@@ -154,7 +154,7 @@ impl KeyMapping for MainScreenLayer {
                 let current_query = oneshot!(state_tx, GetCurrentQuery).unwrap_or_default();
 
                 let events = vec![
-                    AddLayer(Box::new(QuickSearchLayer::new())),
+                    AddLayer(Box::new(QuickSearchLayer::default())),
                     event!(Search, SearchEvent::UpdateQuery(current_query)),
                 ];
                 Some(events)
@@ -164,7 +164,7 @@ impl KeyMapping for MainScreenLayer {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => Some(vec![
-                AddLayer(Box::new(PopupLayer::new())),
+                AddLayer(Box::new(PopupLayer::default())),
                 event!(Popup, PopupEvent::Create(Help(Main))),
             ]),
             KeyEvent {
@@ -191,7 +191,7 @@ impl KeyMapping for MainScreenLayer {
                 ..
             } => {
                 let events = vec![
-                    ReplaceCurrentLayer(Box::new(EditScreenLayer::new())),
+                    ReplaceCurrentLayer(Box::new(EditScreenLayer::default())),
                     ScreenCommand::Callback(ScreenCommandCallback::LoadCommandDetails(
                         TypeId::of::<EditableTextbox>(),
                     )),

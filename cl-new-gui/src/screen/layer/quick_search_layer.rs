@@ -1,25 +1,21 @@
 use crate::component::{Component, RenderableComponent, Search};
+use crate::observer::observable::Observable;
 use crate::screen::layer::Layer;
 use crate::screen::theme::Theme;
 use std::any::TypeId;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::rc::Rc;
-use tui::layout::Direction::{Horizontal, Vertical};
-use tui::layout::{Constraint, Layout};
+use tui::layout::{Constraint, Layout, Rect};
 use tui::Frame;
-use crate::observer::observable::Observable;
 
 pub struct QuickSearchLayer {
     pub search: RenderableComponent<Search>,
     pub listeners: BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>>,
 }
 
-impl Layer for QuickSearchLayer {
-    fn new() -> Self
-    where
-        Self: Sized,
-    {
+impl Default for QuickSearchLayer {
+    fn default() -> Self {
         let search = Search::default();
         let search = RenderableComponent(Component::new(search));
 
@@ -28,30 +24,35 @@ impl Layer for QuickSearchLayer {
 
         Self { search, listeners }
     }
+}
 
+impl Layer for QuickSearchLayer {
     fn render(&mut self, frame: &mut Frame, theme: &Theme) {
-        let [_, second_row] = *Layout::default()
-            .direction(Vertical)
-            .constraints([Constraint::Percentage(50); 2])
-            .split(frame.area())
-        else {
-            todo!()
-        };
-
-        let [first_col, _] = *Layout::default()
-            .direction(Horizontal)
-            .constraints([Constraint::Percentage(50); 2])
-            .split(second_row)
-        else {
-            todo!()
-        };
-
-        // TODO adjust theme
-
-        self.search.render(frame, first_col, theme)
+        let area = centered_rect(50, 30, frame.area());
+        self.search.render(frame, area, theme)
     }
 
-    fn get_listeners(&self) -> BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>> {
-      self.listeners.clone()
+    fn get_listeners(&self) -> &BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>> {
+        &self.listeners
     }
+}
+
+/// Return a [`Rect`] centered within `r`, sized by percentages of width/height.
+fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+    let margin_v = (100 - percent_y) / 2;
+    let margin_h = (100 - percent_x) / 2;
+
+    let vertical = Layout::vertical([
+        Constraint::Percentage(margin_v),
+        Constraint::Percentage(percent_y),
+        Constraint::Percentage(margin_v),
+    ])
+    .split(r);
+
+    Layout::horizontal([
+        Constraint::Percentage(margin_h),
+        Constraint::Percentage(percent_x),
+        Constraint::Percentage(margin_h),
+    ])
+    .split(vertical[1])[1]
 }

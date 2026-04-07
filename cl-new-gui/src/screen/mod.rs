@@ -51,7 +51,7 @@ impl Default for Screen {
 
 impl Screen {
     pub fn new() -> Screen {
-        let initial = MainScreenLayer::new();
+        let initial = MainScreenLayer::default();
         let subscriptions = SubscriptionSet::from(initial.get_listeners());
         Self {
             subscriptions,
@@ -76,17 +76,7 @@ impl Screen {
                 match layer.handle_key_event(event, state_tx.clone()).await {
                     None => {}
                     Some(commands) => {
-                        let (structural, notifications): (Vec<_>, Vec<_>) = commands
-                            .into_iter()
-                            .partition(|cmd| !matches!(cmd, ScreenCommand::Notify(_)));
-
-                        for cmd in notifications {
-                            if let ScreenCommand::Notify((tid, event)) = cmd {
-                                self.notify(tid, event).await;
-                            }
-                        }
-
-                        for cmd in structural {
+                        for cmd in commands {
                             match cmd {
                                 ScreenCommand::AddLayer(layer) => {
                                     self.add_layer(layer, state_tx).await;
@@ -99,7 +89,9 @@ impl Screen {
                                             .await;
                                     }
                                 }
-                                ScreenCommand::Notify(_) => unreachable!(),
+                                ScreenCommand::Notify((tid, event)) => {
+                                    self.notify(tid, event).await;
+                                }
                                 ScreenCommand::Quit => {
                                     sig_handler.send_signal(UserInt).ok();
                                 }
@@ -156,7 +148,7 @@ impl Screen {
         match timeout(Duration::from_millis(100), callback_receiver.recv()).await {
             Ok(Some(message)) => match message {
                 ScreenCommandCallback::ExitEditScreen => {
-                    self.replace_current_layer(Box::new(MainScreenLayer::new()), state_tx)
+                    self.replace_current_layer(Box::new(MainScreenLayer::default()), state_tx)
                         .await;
                     if let Some(events) = ScreenCommandCallback::UpdateAll.handle(state_tx).await {
                         self.notify_all(events).await;
@@ -178,9 +170,12 @@ impl Screen {
     /// [`Layer::on_attach`] so the layer can pre-populate its state.
     pub async fn add_layer(&mut self, layer: Box<dyn Layer + 'static>, state_tx: &Sender<StateEvent>) {
         debug!("adding layer");
-        let listeners = layer.get_listeners();
         self.layers.push(layer);
-        self.subscriptions.extend(SubscriptionSet::from(listeners));
+        let subscriptions = {
+            let top = self.layers.last().unwrap();
+            SubscriptionSet::from(top.get_listeners())
+        };
+        self.subscriptions.extend(subscriptions);
         // on_attach runs after listeners are registered so the layer can
         // update its components directly via borrow_inner_mut().
         if let Some(top) = self.layers.last_mut() {
@@ -198,8 +193,8 @@ impl Screen {
 
         if let Some(mut last) = self.layers.pop() {
             last.on_detach();
-            for (key, _) in last.get_listeners() {
-                self.subscriptions.remove(&key);
+            for key in last.get_listeners().keys() {
+                self.subscriptions.remove(key);
             }
         }
     }
@@ -216,14 +211,17 @@ impl Screen {
         debug!("replacing current layer");
         if let Some(mut old) = self.layers.pop() {
             old.on_detach();
-            for (key, _) in old.get_listeners() {
-                self.subscriptions.remove(&key);
+            for key in old.get_listeners().keys() {
+                self.subscriptions.remove(key);
             }
         }
 
-        let listeners = layer.get_listeners();
         self.layers.push(layer);
-        self.subscriptions.extend(SubscriptionSet::from(listeners));
+        let subscriptions = {
+            let top = self.layers.last().unwrap();
+            SubscriptionSet::from(top.get_listeners())
+        };
+        self.subscriptions.extend(subscriptions);
         if let Some(top) = self.layers.last_mut() {
             top.on_attach(state_tx).await;
         }
