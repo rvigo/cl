@@ -22,12 +22,8 @@ impl Tabs {
         }
     }
 
-    pub fn next(&mut self, next: usize) {
-        self.selected = next
-    }
-
-    pub fn previous(&mut self, previous: usize) {
-        self.selected = previous
+    pub fn select(&mut self, index: usize) {
+        self.selected = index;
     }
 
     pub fn update_items(&mut self, items: Vec<String>) {
@@ -151,7 +147,6 @@ impl Default for Tabs {
 
 impl Renderable for Tabs {
     fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
-        let theme = theme.to_owned();
         let highlight_style = Style::default().fg(theme.highlight_color.into());
 
         let block_style = Style::default()
