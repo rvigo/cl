@@ -38,7 +38,7 @@ impl DefaultConfig {
 
 impl Config for DefaultConfig {
     fn load() -> Result<Self> {
-        let config_file_path = get_config_path();
+        let config_file_path = get_config_path()?;
 
         match read_to_string!(config_file_path) {
             Ok(config_data) => {
@@ -54,7 +54,7 @@ impl Config for DefaultConfig {
     }
 
     fn save(&self) -> Result<()> {
-        let config_file_path = get_config_path();
+        let config_file_path = get_config_path()?;
         let mut config_data = toml::to_string(self)?;
 
         config_data.insert_str(0, DEFAULT_FILE_MESSAGE);
@@ -76,8 +76,8 @@ impl Config for DefaultConfig {
         self.commands_file_path.to_path_buf()
     }
 
-    fn log_dir_path(&self) -> PathBuf {
-        let home = home_dir().expect("Cannot find home directory");
-        home.join(CONFIG_ROOT_DIR)
+    fn log_dir_path(&self) -> Result<PathBuf> {
+        let home = home_dir().ok_or_else(|| anyhow::anyhow!("Cannot find home directory"))?;
+        Ok(home.join(CONFIG_ROOT_DIR))
     }
 }

@@ -75,7 +75,7 @@ pub struct Widget {
 impl Subcommand for Config {
     fn run(&self, mut config: impl CoreConfig) -> Result<()> {
         if let Some(ConfigSubcommand::ZshWidget(_)) = &self.subcommand {
-            return install_zsh_widget(config::get_config_path())
+            return install_zsh_widget(config::get_config_path()?)
                 .context("Failed to install zsh widget");
         }
 
