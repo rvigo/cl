@@ -311,12 +311,12 @@ dependencies = [
  "clap",
  "dirs",
  "itertools 0.11.0",
- "log",
  "owo-colors",
  "regex",
  "serde",
  "strfmt",
  "thiserror",
+ "tracing",
 ]
 
 [[package]]

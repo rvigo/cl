@@ -12,7 +12,7 @@ anyhow.workspace = true
 clap = { version = "4.4.2", features = ["derive"] }
 dirs = "5.0.1"
 itertools.workspace = true
-log.workspace = true
+tracing = "0.1"
 owo-colors = "3.5.0"
 regex = "1.9.5"
 serde = { version = "1.0.188", features = ["derive"] }
