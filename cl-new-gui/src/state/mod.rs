@@ -1,21 +1,24 @@
-use std::cmp::Reverse;
-use std::collections::{HashMap, HashSet};
-use anyhow::bail;
-use log::{debug, error};
-use nucleo_matcher::{ Config as MatcherConfig, Matcher, Utf32Str};
-use nucleo_matcher::pattern::{Atom, AtomKind, CaseMatching, Normalization};
-use cl_core::{fs, Command, CommandExec, CommandMap, CommandMapExt, CommandVec, CommandVecExt, Commands, Config};
 use crate::fuzzy::Fuzzy;
 use crate::state::edit::EditState;
 use crate::state::selected_command::SelectedCommand;
 use crate::state::selected_namespace::SelectedNamespace;
 use crate::state::state_event::FieldName;
+use anyhow::bail;
+use cl_core::{
+    fs, Command, CommandExec, CommandMap, CommandMapExt, CommandVec, CommandVecExt, Commands,
+    Config,
+};
+use log::{debug, error};
+use nucleo_matcher::pattern::{Atom, AtomKind, CaseMatching, Normalization};
+use nucleo_matcher::{Config as MatcherConfig, Matcher, Utf32Str};
+use std::cmp::Reverse;
+use std::collections::{HashMap, HashSet};
 
-pub mod state_actor;
-pub mod state_event;
+mod edit;
 pub mod selected_command;
 pub mod selected_namespace;
-mod edit;
+pub mod state_actor;
+pub mod state_event;
 
 pub struct State {
     commands: Commands<'static>,
@@ -36,9 +39,9 @@ pub struct State {
 const DEFAULT_NAMESPACE: &str = "All";
 
 impl State {
-    pub fn new(cfg: impl Config + 'static) -> State {
+    pub fn new(cfg: impl Config + 'static) -> anyhow::Result<State> {
         // cmd load
-        let command_map = fs::load_from(cfg.command_file_path()).unwrap();
+        let command_map = fs::load_from(cfg.command_file_path())?;
         let commands = Commands::init(command_map);
         let commands_as_list = commands.as_list().sorted();
         let cmd_map = commands.as_map().clone();
@@ -52,7 +55,7 @@ impl State {
         let mut namespaces = append_default_namespace(namespaces);
         namespaces.sort_by_key(|a| a.to_lowercase());
 
-        Self {
+        Ok(Self {
             commands,
             selected_namespace: SelectedNamespace::new(0, DEFAULT_NAMESPACE.to_string()),
             selected_command: selected,
@@ -62,7 +65,7 @@ impl State {
             current_items,
             cmd_map,
             edit_state: EditState::default(),
-        }
+        })
     }
 
     pub fn select(&mut self, idx: usize) {
@@ -101,13 +104,17 @@ impl State {
 
     pub fn next_item(&mut self) -> Option<SelectedCommand> {
         let items = self.current_items.to_owned();
+        if items.is_empty() {
+            error!("cannot navigate: current items list is empty");
+            return self.selected_command.clone();
+        }
         if let Some(selected_command) = &self.selected_command {
             let current = selected_command.current_idx;
             let next = (current + 1) % items.len();
 
             self.select(next);
         } else {
-            panic!("selected command is None");
+            error!("cannot navigate: no command is currently selected");
         }
 
         self.selected_command.clone()
@@ -115,13 +122,17 @@ impl State {
 
     pub fn previous_item(&mut self) -> Option<SelectedCommand> {
         let items = self.current_items.to_owned();
+        if items.is_empty() {
+            error!("cannot navigate: current items list is empty");
+            return self.selected_command.clone();
+        }
         if let Some(selected_command) = &self.selected_command {
             let current = selected_command.current_idx;
             let previous = (current + items.len() - 1) % items.len();
 
             self.select(previous);
         } else {
-            panic!("selected command is None");
+            error!("cannot navigate: no command is currently selected");
         }
 
         self.selected_command.clone()
@@ -176,9 +187,9 @@ impl State {
         if let Some(selected_command) = &self.selected_command {
             let command = selected_command.value.to_owned();
             debug!("executing command: {:?}", command);
-            command
-                .exec(false, self.config.preferences().quiet_mode())
-                .unwrap();
+            if let Err(e) = command.exec(false, self.config.preferences().quiet_mode()) {
+                error!("failed to execute command '{}': {}", command.alias, e);
+            }
         }
     }
 
@@ -189,7 +200,10 @@ impl State {
                 Ok(map) => {
                     fs::save_at(map, self.config.command_file_path())?;
                     self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
-                    self.selected_command = self.current_items.first().map(|c| SelectedCommand::new(c, 0));
+                    self.selected_command = self
+                        .current_items
+                        .first()
+                        .map(|c| SelectedCommand::new(c, 0));
                 }
                 Err(e) => {
                     bail!("Error deleting command: {:?}", e);
@@ -273,7 +287,7 @@ impl State {
                 result
             }
         }
-            .sorted()
+        .sorted()
     }
 
     pub fn set_editable_command(&mut self, field_name: FieldName, content: String) {
@@ -342,8 +356,8 @@ impl State {
 }
 
 fn append_default_namespace(namespaces: Vec<String>) -> Vec<String> {
-    if !namespaces.is_empty() || namespaces.len() > 1 {
-        let mut namespaces_set: HashSet<String> = namespaces.iter().cloned().collect();
+    if !namespaces.is_empty() {
+        let mut namespaces_set: HashSet<String> = namespaces.into_iter().collect();
 
         namespaces_set.insert(DEFAULT_NAMESPACE.to_string());
 
@@ -451,7 +465,7 @@ mod test {
         let cfg = TestConfig::new()?;
         fs::save_at(&commands, cfg.command_file_path())?;
 
-        Ok(State::new(cfg))
+        State::new(cfg)
     }
 
     #[test]
@@ -478,14 +492,26 @@ mod test {
 
         assert_eq!(state.current_items.len(), 1);
         assert_eq!(
-            state.current_items.to_vec().first().expect("should have a command").alias.to_string(),
+            state
+                .current_items
+                .to_vec()
+                .first()
+                .expect("should have a command")
+                .alias
+                .to_string(),
             "azul".to_string()
         );
 
         state.filter("ran".to_string());
         assert_eq!(state.current_items.len(), 1);
         assert_eq!(
-            state.current_items.to_vec().first().expect("should have a command").alias.to_string(),
+            state
+                .current_items
+                .to_vec()
+                .first()
+                .expect("should have a command")
+                .alias
+                .to_string(),
             "laranja".to_string()
         );
 
@@ -634,6 +660,72 @@ mod test {
         assert_eq!(commands[0].alias, "azul");
         assert_eq!(commands[1].alias, "laranja");
 
+        Ok(())
+    }
+
+    #[test]
+    fn should_not_append_default_namespace_to_empty_list() {
+        let namespaces: Vec<String> = vec![];
+
+        let result = append_default_namespace(namespaces);
+
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn should_append_default_namespace_to_single_item() {
+        let namespaces = vec!["only".to_string()];
+
+        let result = append_default_namespace(namespaces);
+
+        assert_eq!(result.len(), 2);
+        assert!(result.contains(&"All".to_string()));
+        assert!(result.contains(&"only".to_string()));
+    }
+
+    #[test]
+    fn next_item_with_no_selected_command_returns_none() -> Result<()> {
+        let mut state = setup_state()?;
+        state.selected_command = None;
+
+        let result = state.next_item();
+
+        assert!(result.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn previous_item_with_no_selected_command_returns_none() -> Result<()> {
+        let mut state = setup_state()?;
+        state.selected_command = None;
+
+        let result = state.previous_item();
+
+        assert!(result.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn next_item_with_empty_items_preserves_selection() -> Result<()> {
+        let mut state = setup_state()?;
+        let original = state.selected_command.clone();
+        state.current_items = HashSet::new();
+
+        let result = state.next_item();
+
+        assert_eq!(result, original);
+        Ok(())
+    }
+
+    #[test]
+    fn previous_item_with_empty_items_preserves_selection() -> Result<()> {
+        let mut state = setup_state()?;
+        let original = state.selected_command.clone();
+        state.current_items = HashSet::new();
+
+        let result = state.previous_item();
+
+        assert_eq!(result, original);
         Ok(())
     }
 }

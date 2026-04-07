@@ -1,6 +1,6 @@
 use cl_core::Command;
 
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone, Debug, PartialEq)]
 pub struct SelectedCommand {
     pub value: Command<'static>,
     pub current_idx: usize,

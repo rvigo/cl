@@ -6,7 +6,9 @@ use crate::screen::key_mapping::ScreenCommand::{
     AddLayer, CopyToClipboard, Quit, ReplaceCurrentLayer,
 };
 use crate::screen::key_mapping::{KeyMapping, ScreenCommand};
-use crate::screen::layer::{EditScreenLayer, InsertScreenLayer, MainScreenLayer, PopupLayer, QuickSearchLayer};
+use crate::screen::layer::{
+    EditScreenLayer, InsertScreenLayer, MainScreenLayer, PopupLayer, QuickSearchLayer,
+};
 use crate::screen::ActiveScreen::Main;
 use crate::state::selected_command::SelectedCommand;
 use crate::state::state_event::StateEvent;
@@ -43,21 +45,20 @@ impl KeyMapping for MainScreenLayer {
                         FutureEventType::State(|state| {
                             async_fn_body! {
                                 let result = oneshot!(state, DeleteCommand);
-                                match result{
-                                    // TODO handle error
-                                  Some((ok, reason)) => {
+                                match result {
+                                    Some((ok, reason)) => {
                                         if !ok {
-                                            debug!("Something went wrong!");
-                                            bail!(reason.unwrap())
-                                        }
-                                        else {
+                                            let msg = reason.unwrap_or_else(|| "unknown error".to_string());
+                                            debug!("delete command failed: {}", msg);
+                                            bail!(msg)
+                                        } else {
                                             debug!("Command deleted");
                                             Ok(())
                                         }
                                     }
-                                  None => {
-                                        debug!("Something went wrong");
-                                    Ok(())
+                                    None => {
+                                        debug!("delete command: no response from state actor");
+                                        Ok(())
                                     }
                                 }
                             }

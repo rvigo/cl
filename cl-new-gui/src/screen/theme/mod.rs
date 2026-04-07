@@ -12,25 +12,27 @@ const DEFAULT_INACTIVE_TEXTBOX_COLOR: TuiColor = TuiColor::Rgb(108, 112, 134);
 #[derive(Clone, Copy)]
 pub enum Color {
     Rgb(u8, u8, u8),
-    AnsiValue(u8),
-    Named,
 }
 
 impl From<TuiColor> for Color {
     fn from(value: TuiColor) -> Self {
         match value {
             TuiColor::Rgb(r, g, b) => Self::Rgb(r, g, b),
-            _ => panic!("Unsupported color type"),
+            other => {
+                log::error!(
+                    "unsupported TuiColor variant: {:?}, falling back to white",
+                    other
+                );
+                Self::Rgb(255, 255, 255)
+            }
         }
     }
 }
 
 impl From<Color> for TuiColor {
     fn from(value: Color) -> Self {
-        match value {
-            Color::Rgb(r, g, b) => TuiColor::Rgb(r, g, b),
-            _ => panic!("Unsupported color type"),
-        }
+        let Color::Rgb(r, g, b) = value;
+        TuiColor::Rgb(r, g, b)
     }
 }
 
@@ -64,5 +66,39 @@ impl Default for Theme {
             cursor_color: DEFAULT_CURSOR_COLOR.into(),
             inactive_textbox_color: DEFAULT_INACTIVE_TEXTBOX_COLOR.into(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rgb_tui_color_converts_to_color() {
+        let tui_color = TuiColor::Rgb(10, 20, 30);
+        let color: Color = tui_color.into();
+        let Color::Rgb(r, g, b) = color;
+        assert_eq!((r, g, b), (10, 20, 30));
+    }
+
+    #[test]
+    fn color_converts_to_tui_color() {
+        let color = Color::Rgb(10, 20, 30);
+        let tui_color: TuiColor = color.into();
+        assert_eq!(tui_color, TuiColor::Rgb(10, 20, 30));
+    }
+
+    #[test]
+    fn unsupported_tui_color_falls_back_to_white() {
+        let color: Color = TuiColor::Yellow.into();
+        let Color::Rgb(r, g, b) = color;
+        assert_eq!((r, g, b), (255, 255, 255));
+    }
+
+    #[test]
+    fn default_theme_loads_without_panic() {
+        let theme = Theme::default();
+        let Color::Rgb(r, g, b) = theme.text_color;
+        assert_eq!((r, g, b), (205, 214, 244));
     }
 }

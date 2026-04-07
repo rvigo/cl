@@ -52,23 +52,27 @@ impl Tabs {
 
         const MAX_NAME_LEN: usize = 15;
 
-        let names: Vec<String> = self.items.iter().map(|n| {
-            if n.width() > MAX_NAME_LEN {
-                let cut = n
-                    .char_indices()
-                    .nth(MAX_NAME_LEN - 3)
-                    .map(|(i, _)| i)
-                    .unwrap_or(n.len());
-                format!("{}...", &n[..cut])
-            } else {
-                n.clone()
-            }
-        }).collect();
+        let names: Vec<String> = self
+            .items
+            .iter()
+            .map(|n| {
+                if n.width() > MAX_NAME_LEN {
+                    let cut = n
+                        .char_indices()
+                        .nth(MAX_NAME_LEN - 3)
+                        .map(|(i, _)| i)
+                        .unwrap_or(n.len());
+                    format!("{}...", &n[..cut])
+                } else {
+                    n.clone()
+                }
+            })
+            .collect();
 
         // Each tab: 1 space padding left + name + 1 space padding right + 1 divider.
         let tab_widths: Vec<usize> = names.iter().map(|n| n.width() + 3).collect();
         let len = names.len();
-        let sel = self.selected.min(len - 1);
+        let sel = self.selected.min(len.saturating_sub(1));
 
         // If everything fits, no windowing needed.
         let total: usize = tab_widths.iter().sum();
@@ -135,13 +139,56 @@ impl Tabs {
             visible_end += 1;
         }
 
-        (names[self.view_offset..visible_end].to_vec(), sel - self.view_offset)
+        (
+            names[self.view_offset..visible_end].to_vec(),
+            sel - self.view_offset,
+        )
     }
 }
 
 impl Default for Tabs {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn empty_tabs_returns_empty_window() {
+        let mut tabs = Tabs::new();
+        let (items, selected) = tabs.compute_visible_window(100);
+        assert!(items.is_empty());
+        assert_eq!(selected, 0);
+    }
+
+    #[test]
+    fn single_tab_fits_in_window() {
+        let mut tabs = Tabs::new();
+        tabs.update_items(vec!["Home".to_string()]);
+        let (items, selected) = tabs.compute_visible_window(100);
+        assert_eq!(items, vec!["Home"]);
+        assert_eq!(selected, 0);
+    }
+
+    #[test]
+    fn selected_index_clamped_to_bounds() {
+        let mut tabs = Tabs::new();
+        tabs.update_items(vec!["A".to_string(), "B".to_string()]);
+        tabs.select(10);
+        let (_, selected) = tabs.compute_visible_window(100);
+        assert_eq!(selected, 1);
+    }
+
+    #[test]
+    fn long_names_are_truncated() {
+        let mut tabs = Tabs::new();
+        tabs.update_items(vec!["a_very_long_namespace_name".to_string()]);
+        let (items, _) = tabs.compute_visible_window(100);
+        assert!(items[0].ends_with("..."));
+        assert!(items[0].len() <= 15);
     }
 }
 
