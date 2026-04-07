@@ -1,11 +1,10 @@
-mod edit_screen_layer;
-mod insert_screen_layer;
+mod form_screen_layer;
 mod main_screen_layer;
 mod popup_layer;
 mod quick_search_layer;
 
-pub use edit_screen_layer::EditScreenLayer;
-pub use insert_screen_layer::InsertScreenLayer;
+pub use form_screen_layer::FormMode;
+pub use form_screen_layer::FormScreenLayer;
 pub use main_screen_layer::MainScreenLayer;
 pub use popup_layer::PopupLayer;
 pub use quick_search_layer::QuickSearchLayer;

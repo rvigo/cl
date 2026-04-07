@@ -6,9 +6,7 @@ use crate::screen::key_mapping::ScreenCommand::{
     AddLayer, CopyToClipboard, Quit, ReplaceCurrentLayer,
 };
 use crate::screen::key_mapping::{KeyMapping, ScreenCommand};
-use crate::screen::layer::{
-    EditScreenLayer, InsertScreenLayer, MainScreenLayer, PopupLayer, QuickSearchLayer,
-};
+use crate::screen::layer::{FormScreenLayer, MainScreenLayer, PopupLayer, QuickSearchLayer};
 use crate::screen::ActiveScreen::Main;
 use crate::state::selected_command::SelectedCommand;
 use crate::state::state_event::StateEvent;
@@ -192,7 +190,7 @@ impl KeyMapping for MainScreenLayer {
                 ..
             } => {
                 let events = vec![
-                    ReplaceCurrentLayer(Box::new(EditScreenLayer::default())),
+                    ReplaceCurrentLayer(Box::new(FormScreenLayer::edit())),
                     ScreenCommand::Callback(ScreenCommandCallback::LoadCommandDetails(
                         TypeId::of::<EditableTextbox>(),
                     )),
@@ -204,7 +202,7 @@ impl KeyMapping for MainScreenLayer {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                let events = vec![ReplaceCurrentLayer(Box::new(InsertScreenLayer::default()))];
+                let events = vec![ReplaceCurrentLayer(Box::new(FormScreenLayer::insert()))];
                 Some(events)
             }
             _ => None,

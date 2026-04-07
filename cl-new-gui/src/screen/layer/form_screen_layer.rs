@@ -18,7 +18,14 @@ use tui::prelude::Style;
 use tui::widgets::Block;
 use tui::Frame;
 
-pub struct EditScreenLayer {
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FormMode {
+    Edit,
+    Insert,
+}
+
+pub struct FormScreenLayer {
+    pub mode: FormMode,
     pub alias: RenderableComponent<EditableTextbox>,
     pub namespace: RenderableComponent<EditableTextbox>,
     pub command: RenderableComponent<EditableTextbox>,
@@ -38,7 +45,86 @@ const FIELD_ORDER: &[FieldName] = &[
     FieldName::Tags,
 ];
 
-impl EditScreenLayer {
+impl FormScreenLayer {
+    pub fn edit() -> Self {
+        Self::new(FormMode::Edit)
+    }
+
+    pub fn insert() -> Self {
+        Self::new(FormMode::Insert)
+    }
+
+    fn new(mode: FormMode) -> Self {
+        let current_field = FieldName::Alias;
+        let screen_state = ScreenState::new(current_field);
+
+        let alias = EditableTextbox {
+            name: FieldName::Alias,
+            active: true,
+            ..Default::default()
+        };
+        let namespace = EditableTextbox {
+            name: FieldName::Namespace,
+            ..Default::default()
+        };
+        let command = EditableTextbox {
+            name: FieldName::Command,
+            ..Default::default()
+        };
+        let tags = EditableTextbox {
+            name: FieldName::Tags,
+            ..Default::default()
+        };
+        let description = EditableTextbox {
+            name: FieldName::Description,
+            ..Default::default()
+        };
+
+        let alias_component = RenderableComponent::new(alias);
+        let namespace_component = RenderableComponent::new(namespace);
+        let command_component = RenderableComponent::new(command);
+        let tags_component = RenderableComponent::new(tags);
+        let description_component = RenderableComponent::new(description);
+
+        let screen_state_component = StateComponent::new(screen_state);
+
+        let mut listeners = BTreeMap::new();
+        listeners.insert(
+            TypeId::of::<EditableTextbox>(),
+            vec![
+                alias_component.get_observable(),
+                namespace_component.get_observable(),
+                command_component.get_observable(),
+                tags_component.get_observable(),
+                description_component.get_observable(),
+            ],
+        );
+
+        listeners.insert(
+            TypeId::of::<ScreenState>(),
+            vec![screen_state_component.get_observable()],
+        );
+
+        let app_name = match mode {
+            FormMode::Edit => StaticInfo::new("cl - edit"),
+            FormMode::Insert => StaticInfo::new("cl - insert"),
+        };
+        let modified_status = StaticInfo::new("MODIFIED");
+
+        Self {
+            mode,
+            alias: alias_component,
+            namespace: namespace_component,
+            command: command_component,
+            tags: tags_component,
+            description: description_component,
+            screen_state: screen_state_component,
+            listeners,
+            app_name,
+            modified_status,
+        }
+    }
+
     pub fn get_next_field(&self) -> FieldName {
         let current_field = self.get_current_field();
 
@@ -101,76 +187,7 @@ impl EditScreenLayer {
     }
 }
 
-impl Default for EditScreenLayer {
-    fn default() -> Self {
-        let current_field = FieldName::Alias;
-        let screen_state = ScreenState::new(current_field);
-
-        let alias = EditableTextbox {
-            name: FieldName::Alias,
-            active: true,
-            ..Default::default()
-        };
-        let namespace = EditableTextbox {
-            name: FieldName::Namespace,
-            ..Default::default()
-        };
-        let command = EditableTextbox {
-            name: FieldName::Command,
-            ..Default::default()
-        };
-        let tags = EditableTextbox {
-            name: FieldName::Tags,
-            ..Default::default()
-        };
-        let description = EditableTextbox {
-            name: FieldName::Description,
-            ..Default::default()
-        };
-
-        let alias_component = RenderableComponent::new(alias);
-        let namespace_component = RenderableComponent::new(namespace);
-        let command_component = RenderableComponent::new(command);
-        let tags_component = RenderableComponent::new(tags);
-        let description_component = RenderableComponent::new(description);
-
-        let screen_state_component = StateComponent::new(screen_state);
-
-        let mut listeners = BTreeMap::new();
-        listeners.insert(
-            TypeId::of::<EditableTextbox>(),
-            vec![
-                alias_component.get_observable(),
-                namespace_component.get_observable(),
-                command_component.get_observable(),
-                tags_component.get_observable(),
-                description_component.get_observable(),
-            ],
-        );
-
-        listeners.insert(
-            TypeId::of::<ScreenState>(),
-            vec![screen_state_component.get_observable()],
-        );
-
-        let app_name = StaticInfo::new("cl - edit");
-        let modified_status = StaticInfo::new("MODIFIED");
-
-        Self {
-            alias: alias_component,
-            namespace: namespace_component,
-            command: command_component,
-            tags: tags_component,
-            description: description_component,
-            screen_state: screen_state_component,
-            listeners,
-            app_name,
-            modified_status,
-        }
-    }
-}
-
-impl Layer for EditScreenLayer {
+impl Layer for FormScreenLayer {
     fn render(&mut self, frame: &mut Frame, theme: &Theme) {
         let drawable_area = [
             Constraint::Fill(5), // drawable area
@@ -274,8 +291,20 @@ mod tests {
     use super::*;
 
     #[test]
+    fn edit_mode_sets_correct_app_name() {
+        let layer = FormScreenLayer::edit();
+        assert_eq!(layer.mode, FormMode::Edit);
+    }
+
+    #[test]
+    fn insert_mode_sets_correct_app_name() {
+        let layer = FormScreenLayer::insert();
+        assert_eq!(layer.mode, FormMode::Insert);
+    }
+
+    #[test]
     fn should_get_the_current_field() {
-        let layer = EditScreenLayer::default();
+        let layer = FormScreenLayer::edit();
 
         let current = layer.get_current_field();
 
@@ -284,9 +313,8 @@ mod tests {
 
     #[test]
     fn should_get_the_next_field() {
-        let layer = EditScreenLayer::default();
+        let layer = FormScreenLayer::edit();
 
-        // assuming the default field is ALIAS
         let next_field = layer.get_next_field();
 
         assert_eq!(next_field, FieldName::Namespace);
@@ -294,11 +322,21 @@ mod tests {
 
     #[test]
     fn should_get_the_previous_field() {
-        let layer = EditScreenLayer::default();
+        let layer = FormScreenLayer::edit();
 
-        // assuming the default field is ALIAS
         let previous_field = layer.get_previous_field();
 
         assert_eq!(previous_field, FieldName::Tags);
+    }
+
+    #[test]
+    fn field_navigation_works_for_insert_mode() {
+        let layer = FormScreenLayer::insert();
+
+        let next = layer.get_next_field();
+        assert_eq!(next, FieldName::Namespace);
+
+        let prev = layer.get_previous_field();
+        assert_eq!(prev, FieldName::Tags);
     }
 }

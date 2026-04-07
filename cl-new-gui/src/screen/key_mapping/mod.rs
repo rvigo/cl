@@ -1,5 +1,4 @@
-mod edit_screen_key_mapping;
-mod insert_screen_key_mapping;
+mod form_screen_key_mapping;
 mod main_screen_key_mapping;
 mod popup_key_mapping;
 mod search_key_mapping;

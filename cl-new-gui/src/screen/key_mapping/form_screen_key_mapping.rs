@@ -1,3 +1,4 @@
+use crate::async_fn_body;
 use crate::component::{Downcastable, EditableTextbox, Popup};
 use crate::component::{FutureEventType, ScreenState};
 use crate::event;
@@ -5,19 +6,18 @@ use crate::observer::event::PopupType::Dialog;
 use crate::observer::event::{EditableTextboxEvent, Event, PopupEvent, ScreenStateEvent};
 use crate::screen::command::ScreenCommand::AddLayer;
 use crate::screen::command::ScreenCommandCallback;
-use crate::screen::key_mapping::command::InsertCallback;
+use crate::screen::key_mapping::command::FormCallback;
 use crate::screen::key_mapping::{KeyMapping, ScreenCommand};
-use crate::screen::layer::{InsertScreenLayer, MainScreenLayer, PopupLayer};
+use crate::screen::layer::{FormScreenLayer, MainScreenLayer, PopupLayer};
 use crate::screen::ScreenCommandCallback::UpdateAll;
 use crate::state::state_event::StateEvent;
 use async_trait::async_trait;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use log::debug;
 use tokio::sync::mpsc::Sender;
-use crate::async_fn_body;
 
 #[async_trait(?Send)]
-impl KeyMapping for InsertScreenLayer {
+impl KeyMapping for FormScreenLayer {
     async fn handle_key_event(
         &self,
         key: KeyEvent,
@@ -34,9 +34,11 @@ impl KeyMapping for InsertScreenLayer {
                 modifiers: KeyModifiers::CONTROL,
                 ..
             } => {
-                if let Some(inner) = self.screen_state.as_observable().downcast_to::<ScreenState>() {
+                if let Some(inner) =
+                    self.screen_state.as_observable().downcast_to::<ScreenState>()
+                {
                     if inner.has_changes {
-                        debug!(target: "clr_insert_screen_key_mapping", "Has unsaved changes, asking for confirmation");
+                        debug!(target: "clr_form_screen_key_mapping", "Has unsaved changes, asking for confirmation");
                         Some(vec![
                             AddLayer(Box::new(PopupLayer::default())),
                             event!(
@@ -49,9 +51,11 @@ impl KeyMapping for InsertScreenLayer {
                             ),
                         ])
                     } else {
-                        debug!(target: "clr_insert_screen_key_mapping", "Exiting insert screen");
+                        debug!(target: "clr_form_screen_key_mapping", "Exiting form screen");
                         Some(vec![
-                            ScreenCommand::ReplaceCurrentLayer(Box::new(MainScreenLayer::default())),
+                            ScreenCommand::ReplaceCurrentLayer(Box::new(
+                                MainScreenLayer::default(),
+                            )),
                             ScreenCommand::Callback(UpdateAll),
                         ])
                     }
@@ -66,7 +70,7 @@ impl KeyMapping for InsertScreenLayer {
             } => {
                 let events = vec![
                     ScreenCommand::GetFieldContent,
-                    ScreenCommand::Insert(InsertCallback::Save),
+                    ScreenCommand::Form(FormCallback::Save(self.mode)),
                     ScreenCommand::ReplaceCurrentLayer(Box::new(MainScreenLayer::default())),
                     ScreenCommand::Callback(UpdateAll),
                 ];
@@ -103,7 +107,7 @@ impl KeyMapping for InsertScreenLayer {
                 Some(events)
             }
             input => {
-                debug!(target: "clr_insert_screen_key_mapping", "Received key event: {:?}", input);
+                debug!(target: "clr_form_screen_key_mapping", "Received key event: {:?}", input);
                 Some(vec![
                     event!(EditableTextbox, EditableTextboxEvent::KeyInput(input)),
                     event!(ScreenState, ScreenStateEvent::KeyInput(input)),

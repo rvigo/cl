@@ -93,7 +93,7 @@ where
     ///
     /// Prefer this over [`borrow`](Self::borrow) + downcast whenever the
     /// concrete type is known (e.g. reading `ScreenState` fields from
-    /// `EditScreenLayer`).
+    /// `FormScreenLayer`).
     pub fn borrow_inner(&self) -> Ref<T> {
         self.0.borrow()
     }
