@@ -20,6 +20,7 @@ impl<'cmd> Commands<'cmd> {
     }
 
     pub fn add(&mut self, command: &Command<'cmd>) -> Result<&CommandMap<'cmd>> {
+        command.validate()?;
         self.check_duplicated(command)?;
         self.commands
             .entry(command.namespace.to_string())
@@ -34,6 +35,7 @@ impl<'cmd> Commands<'cmd> {
         new_command: &Command<'cmd>,
         old_command: &Command<'cmd>,
     ) -> Result<&CommandMap<'cmd>> {
+        new_command.validate()?;
         self.command_already_exists(new_command, old_command)?;
         let old_command_namespace: &str = old_command.namespace.borrow();
         let new_command_namespace = new_command.namespace.to_string();
@@ -515,5 +517,45 @@ mod test {
         let quiet_mode = false;
         let result = command.exec(dry_run, quiet_mode);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn should_reject_add_with_invalid_alias() {
+        let invalid = create_command!("invalid alias", "command", "namespace", None, None);
+        let mut commands = Commands::default();
+
+        let result = commands.add(&invalid);
+        assert!(result.is_err());
+        assert_eq!(
+            CommandError::AliasWithWhitespaces.to_string(),
+            result.unwrap_err().to_string()
+        );
+    }
+
+    #[test]
+    fn should_reject_add_with_empty_namespace() {
+        let invalid = create_command!("alias", "command", "", None, None);
+        let mut commands = Commands::default();
+
+        let result = commands.add(&invalid);
+        assert!(result.is_err());
+        assert_eq!(
+            CommandError::EmptyCommand.to_string(),
+            result.unwrap_err().to_string()
+        );
+    }
+
+    #[test]
+    fn should_reject_edit_with_invalid_alias() {
+        let original = create_command!("alias", "command", "namespace", None, None);
+        let mut commands = commands!(original.to_owned());
+
+        let invalid_new = create_command!("new alias", "command", "namespace", None, None);
+        let result = commands.edit(&invalid_new, &original);
+        assert!(result.is_err());
+        assert_eq!(
+            CommandError::AliasWithWhitespaces.to_string(),
+            result.unwrap_err().to_string()
+        );
     }
 }
