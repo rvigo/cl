@@ -34,7 +34,7 @@ pub trait CommandVecExt<'cmd> {
 
     fn get_selected(&self, idx: usize) -> Command<'cmd>;
 
-    fn first(&self) -> Command<'cmd>;
+    fn first(&self) -> Option<Command<'cmd>>;
 
     fn aliases(&self) -> Vec<String>;
 
@@ -74,10 +74,8 @@ impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
             .to_owned()
     }
 
-    fn first(&self) -> Command<'cmd> {
-        <[Command]>::get(self, 0)
-            .cloned()
-            .expect("List is empty, cannot retrieve the first element")
+    fn first(&self) -> Option<Command<'cmd>> {
+        self.get(0).cloned()
     }
 
     fn aliases(&self) -> Vec<String> {
@@ -125,6 +123,33 @@ macro_rules! hashmap {
             map
         }};
     }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::CommandBuilder;
+
+    fn make_cmd(alias: &'static str, namespace: &'static str) -> Command<'static> {
+        CommandBuilder::default()
+            .alias(alias)
+            .namespace(namespace)
+            .command("echo test")
+            .build()
+    }
+
+    #[test]
+    fn first_returns_none_on_empty_vec() {
+        let empty: CommandVec<'static> = vec![];
+        assert!(empty.first().is_none());
+    }
+
+    #[test]
+    fn first_returns_some_on_non_empty_vec() {
+        let cmd = make_cmd("alias", "ns");
+        let vec: CommandVec<'static> = vec![cmd.clone()];
+        assert_eq!(vec.first(), Some(cmd));
+    }
+}
 
 #[macro_export]
 macro_rules! initialize_commands {

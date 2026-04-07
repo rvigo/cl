@@ -6,7 +6,7 @@ use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::{GetAllListItems, GetAllNamespaces};
 use crate::ui::Ui;
 use anyhow::Result;
-use cl_core::CommandVecExt;
+use cl_core::{CommandBuilder, CommandVecExt};
 use crossterm::event::EventStream;
 use log::{debug, error};
 use std::time::Duration;
@@ -47,7 +47,8 @@ impl UiActor {
             .await;
         self.ui
             .select_command(SelectedCommand::new(
-                result.as_ref().unwrap_or(&vec![]).first(),
+                result.as_ref().unwrap_or(&vec![]).first()
+                    .unwrap_or_else(|| CommandBuilder::default().build()),
                 0,
             ))
             .await;

@@ -189,11 +189,7 @@ impl State {
                 Ok(map) => {
                     fs::save_at(map, self.config.command_file_path())?;
                     self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
-                    self.selected_command = if !self.current_items.is_empty() {
-                        Some(SelectedCommand::new(self.current_items.first(), 0))
-                    } else {
-                        None
-                    };
+                    self.selected_command = self.current_items.first().map(|c| SelectedCommand::new(c, 0));
                 }
                 Err(e) => {
                     bail!("Error deleting command: {:?}", e);
@@ -290,6 +286,27 @@ impl State {
         }
     }
 
+    pub fn insert_command(&mut self) -> anyhow::Result<()> {
+        let new_command = self.edit_state.get();
+
+        debug!("About to insert command: {:#?}", new_command);
+        match self.commands.add(&new_command) {
+            Ok(map) => {
+                debug!("Command inserted successfully");
+                fs::save_at(map, self.config.command_file_path())?;
+                self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
+                self.cmd_map = self.commands.as_map().clone();
+                let selected_command = SelectedCommand::new(new_command, 0);
+                self.selected_command = Some(selected_command);
+            }
+            Err(err) => {
+                error!("Error inserting command: {}", err);
+            }
+        }
+
+        Ok(())
+    }
+
     pub fn edit_command(&mut self) -> anyhow::Result<()> {
         let edited = self.edit_state.get();
 
@@ -342,7 +359,7 @@ fn append_default_namespace(namespaces: Vec<String>) -> Vec<String> {
 trait HashSetExt<T> {
     fn to_vec(&self) -> Vec<T>;
 
-    fn first(&self) -> T;
+    fn first(&self) -> Option<T>;
 
     fn from_vec(vec: Vec<T>) -> HashSet<T>;
 }
@@ -355,7 +372,7 @@ impl HashSetExt<Command<'static>> for HashSet<Command<'static>> {
             .sorted()
     }
 
-    fn first(&self) -> Command<'static> {
+    fn first(&self) -> Option<Command<'static>> {
         self.to_vec().first()
     }
 
@@ -411,7 +428,7 @@ mod test {
             self.cfp.clone()
         }
 
-        fn log_dir_path(&self) -> PathBuf {
+        fn log_dir_path(&self) -> anyhow::Result<PathBuf> {
             todo!()
         }
     }
@@ -444,7 +461,7 @@ mod test {
         let result = state.get_commands_by_namespace("azul");
 
         assert_eq!(result.len(), 1);
-        assert_eq!(result.first().alias, "azul");
+        assert_eq!(result.first().expect("should have a command").alias, "azul");
 
         Ok(())
     }
@@ -461,14 +478,14 @@ mod test {
 
         assert_eq!(state.current_items.len(), 1);
         assert_eq!(
-            state.current_items.to_vec().first().alias.to_string(),
+            state.current_items.to_vec().first().expect("should have a command").alias.to_string(),
             "azul".to_string()
         );
 
         state.filter("ran".to_string());
         assert_eq!(state.current_items.len(), 1);
         assert_eq!(
-            state.current_items.to_vec().first().alias.to_string(),
+            state.current_items.to_vec().first().expect("should have a command").alias.to_string(),
             "laranja".to_string()
         );
 
