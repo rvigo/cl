@@ -13,7 +13,7 @@ use crate::screen::ScreenCommandCallback::UpdateAll;
 use crate::state::state_event::StateEvent;
 use async_trait::async_trait;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use log::debug;
+use tracing::debug;
 use tokio::sync::mpsc::Sender;
 
 #[async_trait(?Send)]

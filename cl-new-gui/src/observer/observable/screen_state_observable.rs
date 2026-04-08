@@ -1,7 +1,7 @@
 use crate::component::ScreenState;
 use crate::observer::event::{Event, ScreenStateEvent};
 use crate::observer::observable::SyncObservable;
-use log::debug;
+use tracing::debug;
 
 impl SyncObservable for ScreenState {
     fn on_event(&mut self, event: Event) {

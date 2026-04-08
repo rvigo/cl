@@ -8,7 +8,7 @@ use crate::render;
 use crate::screen::layer::Layer;
 use crate::screen::theme::Theme;
 use crate::state::state_event::FieldName;
-use log::debug;
+use tracing::debug;
 use std::any::TypeId;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
@@ -131,7 +131,7 @@ impl FormScreenLayer {
         let pos = match FIELD_ORDER.iter().position(|f| f == &current_field) {
             Some(pos) => pos,
             None => {
-                log::error!(
+                tracing::error!(
                     "current field {:?} not found in FIELD_ORDER, defaulting to first",
                     current_field
                 );
@@ -150,7 +150,7 @@ impl FormScreenLayer {
         let pos = match FIELD_ORDER.iter().position(|f| f == &current_field) {
             Some(pos) => pos,
             None => {
-                log::error!(
+                tracing::error!(
                     "current field {:?} not found in FIELD_ORDER, defaulting to first",
                     current_field
                 );
@@ -180,7 +180,7 @@ impl FormScreenLayer {
         match inner_ref.downcast_to::<ScreenState>() {
             Some(screen_state) => Some(f(screen_state)),
             None => {
-                log::error!("failed to downcast screen state");
+                tracing::error!("failed to downcast screen state");
                 None
             }
         }

@@ -6,7 +6,7 @@ use crate::state::state_event::StateEvent::{
     CommandDetails, CurrentCommand, GetAllListItems, GetAllNamespaces,
 };
 use cl_core::{Command, CommandVecExt};
-use log::debug;
+use tracing::debug;
 use std::any::TypeId;
 use tokio::sync::mpsc::Sender;
 

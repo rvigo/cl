@@ -5,7 +5,7 @@ use crate::observer::observable::Observable;
 use crate::state::state_event::FieldName;
 use crate::state::state_event::StateEvent::EditField;
 use async_trait::async_trait;
-use log::debug;
+use tracing::debug;
 
 #[async_trait(?Send)]
 impl Observable for EditableTextbox {
