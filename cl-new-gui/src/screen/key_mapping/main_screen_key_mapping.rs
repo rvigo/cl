@@ -42,22 +42,15 @@ impl KeyMapping for MainScreenLayer {
                         "Are you sure u want to delete this command?".to_string(),
                         FutureEventType::State(|state| {
                             async_fn_body! {
-                                let result = oneshot!(state, DeleteCommand);
-                                match result {
-                                    Some((ok, reason)) => {
-                                        if !ok {
-                                            let msg = reason.unwrap_or_else(|| "unknown error".to_string());
-                                            debug!("delete command failed: {}", msg);
-                                            bail!(msg)
-                                        } else {
-                                            debug!("Command deleted");
-                                            Ok(())
-                                        }
-                                    }
-                                    None => {
-                                        debug!("delete command: no response from state actor");
-                                        Ok(())
-                                    }
+                                let result = oneshot!(state, DeleteCommand)?;
+                                let (ok, reason) = result;
+                                if !ok {
+                                    let msg = reason.unwrap_or_else(|| "unknown error".to_string());
+                                    debug!("delete command failed: {}", msg);
+                                    bail!(msg)
+                                } else {
+                                    debug!("Command deleted");
+                                    Ok(())
                                 }
                             }
                         }),
@@ -70,7 +63,7 @@ impl KeyMapping for MainScreenLayer {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                if let Some(selected_command) = oneshot!(state_tx, SelectNextCommand) {
+                if let Ok(selected_command) = oneshot!(state_tx, SelectNextCommand) {
                     selected_command.map(|cmd: SelectedCommand| {
                         vec![
                             event!(List, ListEvent::Next(cmd.current_idx)),
@@ -86,7 +79,7 @@ impl KeyMapping for MainScreenLayer {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                if let Some(selected_command) = oneshot!(state_tx, SelectPreviousCommand) {
+                if let Ok(selected_command) = oneshot!(state_tx, SelectPreviousCommand) {
                     selected_command.map(|cmd: SelectedCommand| {
                         vec![
                             event!(List, ListEvent::Previous(cmd.current_idx)),
@@ -102,7 +95,7 @@ impl KeyMapping for MainScreenLayer {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => match oneshot!(state_tx, NextTab) {
-                Some((selected_namespace, selected_command, new_items)) => {
+                Ok((selected_namespace, selected_command, new_items)) => {
                     let events = vec![
                         event!(List, ListEvent::UpdateAll(new_items.aliases())),
                         event!(Tabs, TabsEvent::Next(selected_namespace.idx)),
@@ -121,7 +114,7 @@ impl KeyMapping for MainScreenLayer {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => match oneshot!(state_tx, PreviousTab) {
-                Some((selected_namespace, selected_command, new_items)) => {
+                Ok((selected_namespace, selected_command, new_items)) => {
                     let events = vec![
                         event!(List, ListEvent::UpdateAll(new_items.aliases())),
                         event!(Tabs, TabsEvent::Previous(selected_namespace.idx)),

@@ -41,7 +41,7 @@ impl UiActor {
 
     /// Initial load of the UI
     async fn initial_load(&mut self, state_tx: Sender<StateEvent>) {
-        let result = oneshot!(state_tx, GetAllListItems);
+        let result = oneshot!(state_tx, GetAllListItems).ok();
         self.ui
             .update_list_items(result.as_ref().map_or_else(Vec::new, |vec| vec.aliases()))
             .await;
@@ -53,7 +53,7 @@ impl UiActor {
             ))
             .await;
 
-        let result = oneshot!(state_tx, GetAllNamespaces);
+        let result = oneshot!(state_tx, GetAllNamespaces).ok();
         self.ui
             .update_tabs(result.clone().unwrap_or_default())
             .await;
