@@ -89,7 +89,7 @@ impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
 
     fn as_map(&self) -> CommandMap<'cmd> {
         self.iter()
-            .group_by(|c| &c.namespace)
+            .chunk_by(|c| &c.namespace)
             .into_iter()
             .map(|(n, c)| (n.to_string(), c.cloned().collect()))
             .collect::<CommandMap<'cmd>>()

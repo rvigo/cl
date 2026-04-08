@@ -8,13 +8,12 @@ repository.workspace = true
 [dependencies]
 cl-core.workspace = true
 anyhow.workspace = true
-
-clap = { version = "4.4.2", features = ["derive"] }
-dirs = "5.0.1"
+tracing.workspace = true
+thiserror.workspace = true
+regex.workspace = true
+dirs.workspace = true
 itertools.workspace = true
-tracing = "0.1"
+
+clap = { version = "4.5.17", features = ["derive"] }
 owo-colors = "3.5.0"
-regex = "1.9.5"
-serde = { version = "1.0.188", features = ["derive"] }
 strfmt = "0.2.4"
-thiserror = "1.0.48"
