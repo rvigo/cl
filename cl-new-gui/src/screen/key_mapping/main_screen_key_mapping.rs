@@ -14,7 +14,7 @@ use crate::state::state_event::StateEvent::{
     DeleteCommand, ExecuteCommand, GetCurrentQuery, NextTab, PreviousTab, SelectNextCommand,
     SelectPreviousCommand,
 };
-use crate::{async_fn_body, event, oneshot, run_if_some};
+use crate::{async_fn_body, event, oneshot};
 use anyhow::bail;
 use async_trait::async_trait;
 use cl_core::CommandVecExt;
@@ -71,13 +71,11 @@ impl KeyMapping for MainScreenLayer {
                 ..
             } => {
                 if let Some(selected_command) = oneshot!(state_tx, SelectNextCommand) {
-                    run_if_some!(selected_command, |cmd: SelectedCommand| {
-                        let events = vec![
+                    selected_command.map(|cmd: SelectedCommand| {
+                        vec![
                             event!(List, ListEvent::Next(cmd.current_idx)),
                             event!(TextBox, TextBoxEvent::UpdateCommand(cmd.value.clone())),
-                        ];
-
-                        Some(events)
+                        ]
                     })
                 } else {
                     None
@@ -89,13 +87,11 @@ impl KeyMapping for MainScreenLayer {
                 ..
             } => {
                 if let Some(selected_command) = oneshot!(state_tx, SelectPreviousCommand) {
-                    run_if_some!(selected_command, |cmd: SelectedCommand| {
-                        let events = vec![
+                    selected_command.map(|cmd: SelectedCommand| {
+                        vec![
                             event!(List, ListEvent::Previous(cmd.current_idx)),
                             event!(TextBox, TextBoxEvent::UpdateCommand(cmd.value.clone())),
-                        ];
-
-                        Some(events)
+                        ]
                     })
                 } else {
                     None
