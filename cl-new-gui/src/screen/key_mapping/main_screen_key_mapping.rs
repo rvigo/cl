@@ -14,7 +14,6 @@ use crate::state::state_event::StateEvent::{
     DeleteCommand, ExecuteCommand, GetCurrentQuery, NextTab, PreviousTab, SelectNextCommand,
     SelectPreviousCommand,
 };
-use crate::{async_fn_body, event, oneshot};
 use anyhow::bail;
 use async_trait::async_trait;
 use cl_core::CommandVecExt;

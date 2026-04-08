@@ -5,7 +5,6 @@ use crate::screen::key_mapping::{KeyMapping, ScreenCommand};
 use crate::screen::layer::QuickSearchLayer;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::GetCurrentQuery;
-use crate::{event, oneshot};
 use async_trait::async_trait;
 use crossterm::event::{KeyCode, KeyEvent};
 use std::any::TypeId;

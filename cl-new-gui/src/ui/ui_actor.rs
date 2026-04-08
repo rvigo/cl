@@ -1,5 +1,4 @@
 use crate::crossterm::{restore_terminal, setup_terminal};
-use crate::oneshot;
 use crate::signal_handler::{SignalHandler, Signal};
 use crate::state::selected_command::SelectedCommand;
 use crate::state::state_event::StateEvent;

@@ -4,7 +4,6 @@ use crate::component::Renderable;
 use crate::screen::command::ScreenCommandCallback;
 use crate::screen::theme::Theme;
 use crate::state::state_event::StateEvent;
-use crate::async_fn_body;
 use tracing::debug;
 use std::fmt::Debug;
 use std::rc::Rc;

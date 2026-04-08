@@ -1,4 +1,3 @@
-use crate::async_fn_body;
 use crate::component::{FutureEventType, Popup};
 use crate::observer::event::{Event, PopupEvent, PopupType};
 use crate::observer::observable::Observable;

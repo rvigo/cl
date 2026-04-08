@@ -1,7 +1,5 @@
-use crate::async_fn_body;
 use crate::component::{Downcastable, EditableTextbox, Popup};
 use crate::component::{FutureEventType, ScreenState};
-use crate::event;
 use crate::observer::event::PopupType::Dialog;
 use crate::observer::event::{EditableTextboxEvent, Event, PopupEvent, ScreenStateEvent};
 use crate::screen::command::ScreenCommand::AddLayer;

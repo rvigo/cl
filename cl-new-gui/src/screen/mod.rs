@@ -7,7 +7,6 @@ use crate::component::{ClipboardStatus, EditableTextbox};
 use crate::observer::event::ClipboardAction::Copied;
 use crate::observer::event::Event;
 use crate::observer::subscription::SubscriptionSet;
-use crate::oneshot;
 use crate::screen::key_mapping::command::{ScreenCommand, ScreenCommandCallback};
 use crate::screen::layer::Layer;
 use crate::screen::theme::Theme;

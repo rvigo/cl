@@ -1,5 +1,6 @@
-mod component;
+#[macro_use]
 mod macros;
+mod component;
 mod observer;
 
 pub mod crossterm;
