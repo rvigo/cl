@@ -4,7 +4,6 @@ use crate::component::{
 };
 use crate::observer::observable::Observable;
 use crate::observer::ObservableComponent;
-use crate::render;
 use crate::screen::layer::Layer;
 use crate::screen::theme::Theme;
 use crate::state::state_event::FieldName;

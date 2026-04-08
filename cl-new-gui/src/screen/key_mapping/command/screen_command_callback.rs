@@ -1,6 +1,5 @@
 use crate::component::{List, Tabs, TextBox};
 use crate::observer::event::{EditableTextboxEvent, Event, ListEvent, TabsEvent, TextBoxEvent};
-use crate::oneshot;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::{
     CommandDetails, CurrentCommand, GetAllListItems, GetAllNamespaces,

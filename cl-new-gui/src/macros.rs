@@ -3,7 +3,6 @@
 /// ```ignore
 /// render! { frame, theme, { self.list, list_rect }, { self.tabs, tabs_rect } }
 /// ```
-#[macro_export]
 macro_rules! render {
     ($frame:ident, $theme:expr, $({ $what:expr , $_where:expr}),* $(,)?) => {
         $(
@@ -20,7 +19,6 @@ macro_rules! render {
 /// ```ignore
 /// let cmd = oneshot!(state_tx, CurrentCommand)?;
 /// ```
-#[macro_export]
 macro_rules! oneshot {
     ($state_tx:expr, $event:ident) => {{
         let (tx, rx) = tokio::sync::oneshot::channel();
@@ -39,7 +37,6 @@ macro_rules! oneshot {
 
 /// Box a set of statements into a pinned async future — used for
 /// `FutureEventType::State` callbacks.
-#[macro_export]
 macro_rules! async_fn_body {
     ($($body:stmt);*) => {
         Box::pin(async move {
@@ -59,7 +56,6 @@ macro_rules! async_fn_body {
 /// event!(Popup, PopupEvent::Create(Dialog(...)))
 /// event!(ClipboardStatus, ClipboardAction::Copied)
 /// ```
-#[macro_export]
 macro_rules! event {
     ($component:ident, $e:expr) => {
         ScreenCommand::Notify((

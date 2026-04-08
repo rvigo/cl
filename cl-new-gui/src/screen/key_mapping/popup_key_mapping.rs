@@ -7,7 +7,6 @@ use crate::state::state_event::StateEvent;
 use async_trait::async_trait;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use tokio::sync::mpsc::Sender;
-use crate::event;
 
 #[async_trait(?Send)]
 impl KeyMapping for PopupLayer {

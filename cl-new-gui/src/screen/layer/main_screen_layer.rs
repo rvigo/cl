@@ -2,7 +2,6 @@ use crate::clipboard::Clipboard;
 use crate::component::{ClipboardStatus, List, Renderable, StaticInfo, Tabs, TextBox};
 use crate::component::{RenderableComponent, Search};
 use crate::observer::observable::Observable;
-use crate::render;
 use crate::screen::layer::Layer;
 use crate::screen::theme::Theme;
 use crate::screen::Listeners;
