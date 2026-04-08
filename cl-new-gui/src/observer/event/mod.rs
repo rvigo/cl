@@ -1,6 +1,8 @@
 mod general_event;
+mod notify_target;
 
 pub use general_event::ClipboardAction;
+pub use notify_target::NotifyTarget;
 pub use general_event::EditableTextboxEvent;
 pub use general_event::Event;
 pub use general_event::ListEvent;

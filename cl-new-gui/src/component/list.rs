@@ -47,3 +47,10 @@ impl Renderable for List {
         frame.render_stateful_widget(tui_list, area, &mut self.state);
     }
 }
+
+impl crate::observer::event::NotifyTarget for List {
+    type Payload = crate::observer::event::ListEvent;
+    fn wrap(payload: Self::Payload) -> crate::observer::event::Event {
+        crate::observer::event::Event::List(payload)
+    }
+}

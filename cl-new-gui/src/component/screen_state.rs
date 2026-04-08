@@ -14,3 +14,10 @@ impl ScreenState {
         }
     }
 }
+
+impl crate::observer::event::NotifyTarget for ScreenState {
+    type Payload = crate::observer::event::ScreenStateEvent;
+    fn wrap(payload: Self::Payload) -> crate::observer::event::Event {
+        crate::observer::event::Event::ScreenState(payload)
+    }
+}

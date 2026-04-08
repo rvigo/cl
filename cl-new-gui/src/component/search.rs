@@ -26,3 +26,10 @@ impl Renderable for Search {
         frame.render_widget(&self.textarea, area)
     }
 }
+
+impl crate::observer::event::NotifyTarget for Search {
+    type Payload = crate::observer::event::SearchEvent;
+    fn wrap(payload: Self::Payload) -> crate::observer::event::Event {
+        crate::observer::event::Event::Search(payload)
+    }
+}

@@ -96,3 +96,10 @@ impl Default for ClipboardState {
         }
     }
 }
+
+impl crate::observer::event::NotifyTarget for ClipboardStatus {
+    type Payload = crate::observer::event::ClipboardAction;
+    fn wrap(payload: Self::Payload) -> crate::observer::event::Event {
+        crate::observer::event::Event::ClipboardStatus(payload)
+    }
+}
