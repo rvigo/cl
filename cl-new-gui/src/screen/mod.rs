@@ -57,7 +57,7 @@ impl Screen {
             subscriptions,
             layers: vec![Box::new(initial)],
             clipboard: Clipboard::new().ok(),
-            theme: Theme::load(),
+            theme: Theme::default(),
         }
     }
 

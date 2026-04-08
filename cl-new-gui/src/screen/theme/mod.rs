@@ -48,12 +48,6 @@ pub struct Theme {
     pub inactive_textbox_color: Color,
 }
 
-impl Theme {
-    pub fn load() -> Self {
-        Self::default()
-    }
-}
-
 impl Default for Theme {
     fn default() -> Self {
         Self {
