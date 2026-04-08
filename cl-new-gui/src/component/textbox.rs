@@ -40,3 +40,10 @@ impl Renderable for TextBox {
         frame.render_widget(paragraph, area)
     }
 }
+
+impl crate::observer::event::NotifyTarget for TextBox {
+    type Payload = crate::observer::event::TextBoxEvent;
+    fn wrap(payload: Self::Payload) -> crate::observer::event::Event {
+        crate::observer::event::Event::TextBox(payload)
+    }
+}

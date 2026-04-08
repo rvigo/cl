@@ -59,3 +59,10 @@ impl Renderable for EditableTextbox {
         frame.render_widget(&self.textarea, area)
     }
 }
+
+impl crate::observer::event::NotifyTarget for EditableTextbox {
+    type Payload = crate::observer::event::EditableTextboxEvent;
+    fn wrap(payload: Self::Payload) -> crate::observer::event::Event {
+        crate::observer::event::Event::EditableTextbox(payload)
+    }
+}

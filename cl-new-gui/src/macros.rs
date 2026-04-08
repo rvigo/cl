@@ -45,23 +45,3 @@ macro_rules! async_fn_body {
     };
 }
 
-/// Build a `ScreenCommand::Notify` for a specific component type.
-///
-/// The component name (first argument) must match both:
-/// - a type imported in the calling module (for `TypeId::of::<$component>()`), and
-/// - a variant of `Event` with the same name (e.g. `Event::List`, `Event::Tabs`).
-///
-/// ```ignore
-/// event!(List, ListEvent::Next(idx))
-/// event!(Popup, PopupEvent::Create(Dialog(...)))
-/// event!(ClipboardStatus, ClipboardAction::Copied)
-/// ```
-macro_rules! event {
-    ($component:ident, $e:expr) => {
-        ScreenCommand::Notify((
-            std::any::TypeId::of::<$component>(),
-            Event::$component($e),
-        ))
-    };
-}
-

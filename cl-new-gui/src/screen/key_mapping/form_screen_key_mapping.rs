@@ -1,11 +1,11 @@
 use crate::component::{Downcastable, EditableTextbox, Popup};
 use crate::component::{FutureEventType, ScreenState};
 use crate::observer::event::PopupType::Dialog;
-use crate::observer::event::{EditableTextboxEvent, Event, PopupEvent, ScreenStateEvent};
+use crate::observer::event::{EditableTextboxEvent, PopupEvent, ScreenStateEvent};
 use crate::screen::command::ScreenCommand::AddLayer;
 use crate::screen::command::ScreenCommandCallback;
 use crate::screen::key_mapping::command::FormCallback;
-use crate::screen::key_mapping::{KeyMapping, ScreenCommand};
+use crate::screen::key_mapping::{notify, KeyMapping, ScreenCommand};
 use crate::screen::layer::{FormScreenLayer, MainScreenLayer, PopupLayer};
 use crate::screen::ScreenCommandCallback::UpdateAll;
 use crate::state::state_event::StateEvent;
@@ -39,14 +39,11 @@ impl KeyMapping for FormScreenLayer {
                         debug!(target: "clr_form_screen_key_mapping", "Has unsaved changes, asking for confirmation");
                         Some(vec![
                             AddLayer(Box::new(PopupLayer::default())),
-                            event!(
-                                Popup,
-                                PopupEvent::Create(Dialog(
-                                    "You have unsaved changes. Exit anyway?".to_string(),
-                                    FutureEventType::State(|_| async_fn_body! { Ok(()) }),
-                                    ScreenCommandCallback::ExitEditScreen,
-                                ))
-                            ),
+                            notify::<Popup>(PopupEvent::Create(Dialog(
+                                "You have unsaved changes. Exit anyway?".to_string(),
+                                FutureEventType::State(|_| async_fn_body! { Ok(()) }),
+                                ScreenCommandCallback::ExitEditScreen,
+                            ))),
                         ])
                     } else {
                         debug!(target: "clr_form_screen_key_mapping", "Exiting form screen");
@@ -81,11 +78,8 @@ impl KeyMapping for FormScreenLayer {
             } => {
                 let current_field = self.get_next_field();
                 let events = vec![
-                    event!(
-                        EditableTextbox,
-                        EditableTextboxEvent::SetField(current_field.clone())
-                    ),
-                    event!(ScreenState, ScreenStateEvent::SetField(current_field)),
+                    notify::<EditableTextbox>(EditableTextboxEvent::SetField(current_field.clone())),
+                    notify::<ScreenState>(ScreenStateEvent::SetField(current_field)),
                 ];
                 Some(events)
             }
@@ -96,19 +90,16 @@ impl KeyMapping for FormScreenLayer {
             } => {
                 let current_field = self.get_previous_field();
                 let events = vec![
-                    event!(
-                        EditableTextbox,
-                        EditableTextboxEvent::SetField(current_field.clone())
-                    ),
-                    event!(ScreenState, ScreenStateEvent::SetField(current_field)),
+                    notify::<EditableTextbox>(EditableTextboxEvent::SetField(current_field.clone())),
+                    notify::<ScreenState>(ScreenStateEvent::SetField(current_field)),
                 ];
                 Some(events)
             }
             input => {
                 debug!(target: "clr_form_screen_key_mapping", "Received key event: {:?}", input);
                 Some(vec![
-                    event!(EditableTextbox, EditableTextboxEvent::KeyInput(input)),
-                    event!(ScreenState, ScreenStateEvent::KeyInput(input)),
+                    notify::<EditableTextbox>(EditableTextboxEvent::KeyInput(input)),
+                    notify::<ScreenState>(ScreenStateEvent::KeyInput(input)),
                 ])
             }
         }

@@ -1,7 +1,7 @@
 use crate::component::Popup;
-use crate::observer::event::{Event, PopupEvent};
+use crate::observer::event::PopupEvent;
 use crate::screen::key_mapping::ScreenCommand::PopLastLayer;
-use crate::screen::key_mapping::{KeyMapping, ScreenCommand};
+use crate::screen::key_mapping::{notify, KeyMapping, ScreenCommand};
 use crate::screen::layer::PopupLayer;
 use crate::state::state_event::StateEvent;
 use async_trait::async_trait;
@@ -21,7 +21,7 @@ impl KeyMapping for PopupLayer {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                let event = event!(Popup, PopupEvent::PreviousChoice);
+                let event = notify::<Popup>(PopupEvent::PreviousChoice);
                 Some(vec![event])
             }
             KeyEvent {
@@ -29,7 +29,7 @@ impl KeyMapping for PopupLayer {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                let event = event!(Popup, PopupEvent::NextChoice);
+                let event = notify::<Popup>(PopupEvent::NextChoice);
                 Some(vec![event])
             }
             KeyEvent {
@@ -39,7 +39,7 @@ impl KeyMapping for PopupLayer {
             } => {
                 // cannot use an actual oneshot here, but is the same idea
                 let (tx, rx) = tokio::sync::mpsc::channel(1);
-                let event = event!(Popup, PopupEvent::Run(state_tx.clone(), tx));
+                let event = notify::<Popup>(PopupEvent::Run(state_tx.clone(), tx));
 
                 Some(vec![event, PopLastLayer(Some(rx))])
             }

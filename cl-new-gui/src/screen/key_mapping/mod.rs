@@ -5,11 +5,23 @@ mod search_key_mapping;
 
 pub mod command;
 
+use crate::observer::event::NotifyTarget;
 use crate::screen::key_mapping::command::ScreenCommand;
 use crate::state::state_event::StateEvent;
 use async_trait::async_trait;
 use crossterm::event::KeyEvent;
+use std::any::TypeId;
 use tokio::sync::mpsc::Sender;
+
+/// Build a `ScreenCommand::Notify` for a component that implements [`NotifyTarget`].
+///
+/// ```ignore
+/// notify::<List>(ListEvent::Next(idx))
+/// notify::<Popup>(PopupEvent::Create(dialog))
+/// ```
+pub fn notify<C: NotifyTarget>(payload: C::Payload) -> ScreenCommand {
+    ScreenCommand::Notify((TypeId::of::<C>(), C::wrap(payload)))
+}
 
 #[async_trait(?Send)]
 pub trait KeyMapping {

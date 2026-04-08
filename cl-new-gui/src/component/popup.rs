@@ -201,3 +201,10 @@ fn main_options() -> Table {
     .into()
 }
 
+impl crate::observer::event::NotifyTarget for Popup {
+    type Payload = crate::observer::event::PopupEvent;
+    fn wrap(payload: Self::Payload) -> crate::observer::event::Event {
+        crate::observer::event::Event::Popup(payload)
+    }
+}
+

@@ -216,3 +216,10 @@ mod tests {
         assert!(items[0].len() <= 15);
     }
 }
+
+impl crate::observer::event::NotifyTarget for Tabs {
+    type Payload = crate::observer::event::TabsEvent;
+    fn wrap(payload: Self::Payload) -> crate::observer::event::Event {
+        crate::observer::event::Event::Tabs(payload)
+    }
+}
