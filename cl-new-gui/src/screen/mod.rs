@@ -56,7 +56,10 @@ impl Screen {
         Self {
             subscriptions,
             layers: vec![Box::new(initial)],
-            clipboard: Clipboard::new().ok(),
+            clipboard: Clipboard::new().map_err(|e| {
+                tracing::warn!("clipboard unavailable: {e}");
+                e
+            }).ok(),
             theme: Theme::default(),
         }
     }
@@ -93,13 +96,17 @@ impl Screen {
                                     self.notify(tid, event).await;
                                 }
                                 ScreenCommand::Quit => {
-                                    sig_handler.send_signal(UserInt).ok();
+                                    if let Err(e) = sig_handler.send_signal(UserInt) {
+                                        tracing::error!("failed to send quit signal: {e}");
+                                    }
                                 }
                                 ScreenCommand::CopyToClipboard => {
                                     if let Some(clipboard) = &mut self.clipboard {
                                         if let Some(Some(cmd)) = oneshot!(state_tx, CurrentCommand)
                                         {
-                                            clipboard.set_content(cmd.value.command).ok();
+                                            if let Err(e) = clipboard.set_content(cmd.value.command) {
+                                                tracing::error!("failed to copy to clipboard: {e}");
+                                            }
                                             self.notify(
                                                 TypeId::of::<ClipboardStatus>(),
                                                 Event::ClipboardStatus(Copied),
@@ -155,8 +162,11 @@ impl Screen {
                     }
                 }
                 _ => {
-                    let events = message.handle(state_tx).await;
-                    self.notify_all(events.unwrap_or_default()).await;
+                    let events = message.handle(state_tx).await.unwrap_or_else(|| {
+                        tracing::warn!("callback handler returned no events");
+                        vec![]
+                    });
+                    self.notify_all(events).await;
                 }
             },
             Ok(None) => debug!("callback channel closed with no message"),

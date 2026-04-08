@@ -36,7 +36,9 @@ impl Observable for EditableTextbox {
                 EditableTextboxEvent::GetFieldContent(state_tx) => {
                     let content = self.textarea.lines().join("\n");
                     debug!("EditableTextbox({}): sending content '{}'", self.name, content);
-                    state_tx.send(EditField(self.name.clone(), content)).await.ok();
+                    if let Err(e) = state_tx.send(EditField(self.name.clone(), content)).await {
+                        tracing::error!("EditableTextbox({}): failed to send field content: {e}", self.name);
+                    }
                 }
                 EditableTextboxEvent::SetField(field) => {
                     let matches = self.name == field;

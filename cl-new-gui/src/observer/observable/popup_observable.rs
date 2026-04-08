@@ -27,7 +27,9 @@ impl Observable for Popup {
                     match self.click(state_tx).await {
                         Ok(callback) => {
                             debug!("Popup: sending callback to previous layer");
-                            tx.send(callback).await.ok();
+                            if let Err(e) = tx.send(callback).await {
+                                tracing::error!("Popup: failed to send callback: {e}");
+                            }
                         }
                         Err(err) => {
                             *self = Popup::dialog(

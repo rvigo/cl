@@ -31,20 +31,28 @@ impl StateActor {
         match message {
             StateEvent::SelectNextCommand { respond_to } => {
                 let selected_command = self.state.next_item();
-                let _ = respond_to.send(selected_command);
+                if respond_to.send(selected_command).is_err() {
+                    debug!("SelectNextCommand: response receiver dropped");
+                }
             }
             StateEvent::SelectPreviousCommand { respond_to } => {
                 let selected_command = self.state.previous_item();
-                let _ = respond_to.send(selected_command);
+                if respond_to.send(selected_command).is_err() {
+                    debug!("SelectPreviousCommand: response receiver dropped");
+                }
             }
             StateEvent::ExecuteCommand => self.state.execute(),
             StateEvent::GetAllListItems { respond_to } => {
                 let all_items = self.state.get_all_items();
-                let _ = respond_to.send(all_items);
+                if respond_to.send(all_items).is_err() {
+                    debug!("GetAllListItems: response receiver dropped");
+                }
             }
             StateEvent::CurrentCommand { respond_to } => {
                 let selected_command = self.state.get_selected_command();
-                let _ = respond_to.send(selected_command);
+                if respond_to.send(selected_command).is_err() {
+                    debug!("CurrentCommand: response receiver dropped");
+                }
             }
             StateEvent::PreviousTab { respond_to } => {
                 let (selected_namespace, commands) = self.state.previous_tab();
@@ -58,7 +66,9 @@ impl StateActor {
                         SelectedCommand::default()
                     }
                 };
-                let _ = respond_to.send((selected_namespace, selected_command, commands));
+                if respond_to.send((selected_namespace, selected_command, commands)).is_err() {
+                    debug!("PreviousTab: response receiver dropped");
+                }
             }
             StateEvent::NextTab { respond_to } => {
                 let (selected_namespace, commands) = self.state.next_tab();
@@ -72,29 +82,39 @@ impl StateActor {
                         SelectedCommand::default()
                     }
                 };
-                let _ = respond_to.send((selected_namespace, selected_command, commands));
+                if respond_to.send((selected_namespace, selected_command, commands)).is_err() {
+                    debug!("NextTab: response receiver dropped");
+                }
             }
             StateEvent::GetAllNamespaces { respond_to } => {
                 let namespaces = self.state.get_all_namespaces();
-                let _ = respond_to.send(namespaces);
+                if respond_to.send(namespaces).is_err() {
+                    debug!("GetAllNamespaces: response receiver dropped");
+                }
             }
             StateEvent::DeleteCommand { respond_to } => {
                 let res = match self.state.delete_command() {
                     Ok(_) => (true, None),
                     Err(e) => (false, Some(e.to_string())),
                 };
-                let _ = respond_to.send(res);
+                if respond_to.send(res).is_err() {
+                    debug!("DeleteCommand: response receiver dropped");
+                }
             }
             StateEvent::Filter(query) => {
                 debug!("filtering with query: {}", query);
                 self.state.filter(query)
             }
             StateEvent::GetCurrentQuery { respond_to } => {
-                let _ = respond_to.send(self.state.get_current_query());
+                if respond_to.send(self.state.get_current_query()).is_err() {
+                    debug!("GetCurrentQuery: response receiver dropped");
+                }
             }
             StateEvent::CommandDetails { respond_to } => {
                 let command = self.state.get_selected_command();
-                let _ = respond_to.send(command.map(|selected| selected.value));
+                if respond_to.send(command.map(|selected| selected.value)).is_err() {
+                    debug!("CommandDetails: response receiver dropped");
+                }
             }
             StateEvent::EditField(type_, content) => {
                 debug!(target: "edit_state_actor", "Editing field: {:?} with content: {}", type_, content);
