@@ -185,48 +185,20 @@ fn compute_popup_area(content: &str, area: Rect) -> Rect {
         .split(new_area)[1]
 }
 
-macro_rules! cell {
-    ($text:expr) => {
-        Cell::from($text)
-    };
-}
-
-macro_rules! row {
-    ($( $cell:expr),+ $(,)?) => {{
-        let mut row = Row::default();
-        $(
-            row.add_cell($cell);
-        )*
-
-        row
-        }};
-
-}
-macro_rules! table {
-    ($( $row:expr),+ $(,)?) => {{
-        let mut table= vec![];
-        $(
-           table.push($row);
-        )*
-
-       table.into()
-        }};
-
-}
-
 fn main_options() -> Table {
-    table! {
-            row! {cell!("Quit"), cell!("<Q/Esc/Ctrl-C>")},
-            row! {cell!("Create new command"), cell!("<I/Insert>")},
-            row! {cell!("Delete selected command"), cell!("<D/Delete>")},
-            row! {cell!("Edit selected command"), cell!("<E>")},
-            row! {cell!("Move to next namespace"), cell!("<L/→/Tab>")},
-            row! {cell!("Move to previous namespace"), cell!("<H/←/Shift-Tab>")},
-            row! {cell!("Move up"), cell!("<K/↑>")},
-            row! {cell!("Move down"), cell!("<J/↓>")},
-            row! {cell!("Copy selected command"), cell!("<Y>")},
-            row! {cell!("Search commands"), cell!("<F//>")},
-            row! {cell!("Show help"), cell!("<F1/?>")},
-    }
+    vec![
+        Row::from_iter([Cell::from("Quit"), Cell::from("<Q/Esc/Ctrl-C>")]),
+        Row::from_iter([Cell::from("Create new command"), Cell::from("<I/Insert>")]),
+        Row::from_iter([Cell::from("Delete selected command"), Cell::from("<D/Delete>")]),
+        Row::from_iter([Cell::from("Edit selected command"), Cell::from("<E>")]),
+        Row::from_iter([Cell::from("Move to next namespace"), Cell::from("<L/→/Tab>")]),
+        Row::from_iter([Cell::from("Move to previous namespace"), Cell::from("<H/←/Shift-Tab>")]),
+        Row::from_iter([Cell::from("Move up"), Cell::from("<K/↑>")]),
+        Row::from_iter([Cell::from("Move down"), Cell::from("<J/↓>")]),
+        Row::from_iter([Cell::from("Copy selected command"), Cell::from("<Y>")]),
+        Row::from_iter([Cell::from("Search commands"), Cell::from("<F//>")]),
+        Row::from_iter([Cell::from("Show help"), Cell::from("<F1/?>")]),
+    ]
+    .into()
 }
 

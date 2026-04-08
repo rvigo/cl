@@ -70,7 +70,7 @@ impl State {
 
     pub fn select(&mut self, idx: usize) {
         self.selected_command = Some(SelectedCommand::new(
-            self.current_items.to_vec()[idx].clone(),
+            to_sorted_vec(&self.current_items)[idx].clone(),
             idx,
         ))
     }
@@ -81,7 +81,7 @@ impl State {
 
     pub fn get_all_items(&self) -> CommandVec<'static> {
         debug!("got all items");
-        self.current_items.to_vec().sorted()
+        to_sorted_vec(&self.current_items)
     }
 
     pub fn get_all_namespaces(&self) -> Vec<String> {
@@ -152,7 +152,7 @@ impl State {
 
         let filtered_commands = &self.get_commands_by_namespace(next_namespace);
 
-        self.current_items = HashSet::from_vec(filtered_commands.clone());
+        self.current_items = filtered_commands.iter().cloned().collect();
         self.selected_command = SelectedCommand::from_vec(filtered_commands);
 
         (
@@ -174,7 +174,7 @@ impl State {
         self.selected_namespace = SelectedNamespace::new(previous, previous_namespace.to_string());
 
         let filtered_commands = &self.get_commands_by_namespace(previous_namespace);
-        self.current_items = HashSet::from_vec(filtered_commands.clone());
+        self.current_items = filtered_commands.iter().cloned().collect();
         self.selected_command = SelectedCommand::from_vec(filtered_commands);
 
         (
@@ -200,10 +200,8 @@ impl State {
                 Ok(map) => {
                     fs::save_at(map, self.config.command_file_path())?;
                     self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
-                    self.selected_command = self
-                        .current_items
-                        .first()
-                        .map(|c| SelectedCommand::new(c, 0));
+                    self.selected_command =
+                        to_sorted_vec(&self.current_items).first().map(|c| SelectedCommand::new(c, 0));
                 }
                 Err(e) => {
                     bail!("Error deleting command: {:?}", e);
@@ -370,29 +368,8 @@ fn append_default_namespace(namespaces: Vec<String>) -> Vec<String> {
     }
 }
 
-trait HashSetExt<T> {
-    fn to_vec(&self) -> Vec<T>;
-
-    fn first(&self) -> Option<T>;
-
-    fn from_vec(vec: Vec<T>) -> HashSet<T>;
-}
-
-impl HashSetExt<Command<'static>> for HashSet<Command<'static>> {
-    fn to_vec(&self) -> Vec<Command<'static>> {
-        self.iter()
-            .cloned()
-            .collect::<Vec<Command<'static>>>()
-            .sorted()
-    }
-
-    fn first(&self) -> Option<Command<'static>> {
-        self.to_vec().first()
-    }
-
-    fn from_vec(vec: Vec<Command<'static>>) -> HashSet<Command<'static>> {
-        vec.into_iter().collect()
-    }
+fn to_sorted_vec(set: &HashSet<Command<'static>>) -> CommandVec<'static> {
+    set.iter().cloned().collect::<CommandVec>().sorted()
 }
 
 #[cfg(test)]
@@ -492,9 +469,7 @@ mod test {
 
         assert_eq!(state.current_items.len(), 1);
         assert_eq!(
-            state
-                .current_items
-                .to_vec()
+            to_sorted_vec(&state.current_items)
                 .first()
                 .expect("should have a command")
                 .alias
@@ -505,9 +480,7 @@ mod test {
         state.filter("ran".to_string());
         assert_eq!(state.current_items.len(), 1);
         assert_eq!(
-            state
-                .current_items
-                .to_vec()
+            to_sorted_vec(&state.current_items)
                 .first()
                 .expect("should have a command")
                 .alias
