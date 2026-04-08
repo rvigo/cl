@@ -8,7 +8,7 @@ use crate::ui::Ui;
 use anyhow::Result;
 use cl_core::{CommandBuilder, CommandVecExt};
 use crossterm::event::EventStream;
-use log::{debug, error};
+use tracing::{debug, error};
 use std::time::Duration;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc::Sender;

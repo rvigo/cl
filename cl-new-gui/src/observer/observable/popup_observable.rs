@@ -5,7 +5,7 @@ use crate::observer::observable::Observable;
 use crate::screen::command::ScreenCommandCallback;
 use crate::screen::ActiveScreen;
 use async_trait::async_trait;
-use log::debug;
+use tracing::debug;
 
 #[async_trait(?Send)]
 impl Observable for Popup {

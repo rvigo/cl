@@ -3,7 +3,7 @@ use crate::state::state_event::StateEvent;
 use crate::state::State;
 use anyhow::Result;
 use cl_core::Config;
-use log::{debug, error};
+use tracing::{debug, error};
 use tokio::sync::mpsc::Receiver;
 
 pub struct StateActor {

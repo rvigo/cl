@@ -8,7 +8,7 @@ repository.workspace = true
 [dependencies]
 cl-core.workspace = true
 anyhow.workspace = true
-log.workspace = true
+tracing = "0.1"
 tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread", "sync", "signal", "time"] }
 
 crossterm = { version = "0.28.1", features = ["event-stream"] }

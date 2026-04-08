@@ -19,7 +19,7 @@ use anyhow::bail;
 use async_trait::async_trait;
 use cl_core::CommandVecExt;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use log::debug;
+use tracing::debug;
 use std::any::TypeId;
 use tokio::sync::mpsc::Sender;
 

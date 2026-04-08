@@ -17,7 +17,7 @@ use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::CurrentCommand;
 use crossterm::event::Event as CrosstermEvent;
 use layer::MainScreenLayer;
-use log::{debug, trace};
+use tracing::{debug, trace};
 use std::any::TypeId;
 use std::cell::RefCell;
 use std::collections::BTreeMap;

@@ -19,7 +19,7 @@ impl From<TuiColor> for Color {
         match value {
             TuiColor::Rgb(r, g, b) => Self::Rgb(r, g, b),
             other => {
-                log::error!(
+                tracing::error!(
                     "unsupported TuiColor variant: {:?}, falling back to white",
                     other
                 );

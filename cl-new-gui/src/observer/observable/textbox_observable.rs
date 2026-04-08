@@ -2,7 +2,7 @@ use crate::component::TextBox;
 use crate::observer::event::{Event, TextBoxEvent};
 use crate::observer::observable::SyncObservable;
 use crate::state::state_event::FieldName;
-use log::debug;
+use tracing::debug;
 use std::borrow::Cow;
 
 impl SyncObservable for TextBox {

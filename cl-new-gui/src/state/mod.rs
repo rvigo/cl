@@ -8,7 +8,7 @@ use cl_core::{
     fs, Command, CommandExec, CommandMap, CommandMapExt, CommandVec, CommandVecExt, Commands,
     Config,
 };
-use log::{debug, error};
+use tracing::{debug, error};
 use nucleo_matcher::pattern::{Atom, AtomKind, CaseMatching, Normalization};
 use nucleo_matcher::{Config as MatcherConfig, Matcher, Utf32Str};
 use std::cmp::Reverse;
