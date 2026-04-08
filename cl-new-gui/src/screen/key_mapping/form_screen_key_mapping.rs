@@ -5,7 +5,7 @@ use crate::observer::event::{EditableTextboxEvent, PopupEvent, ScreenStateEvent}
 use crate::screen::command::ScreenCommand::AddLayer;
 use crate::screen::command::ScreenCommandCallback;
 use crate::screen::key_mapping::command::FormCallback;
-use crate::screen::key_mapping::{notify, KeyMapping, ScreenCommand};
+use crate::screen::key_mapping::{create_notify_command, KeyMapping, ScreenCommand};
 use crate::screen::layer::{FormScreenLayer, MainScreenLayer, PopupLayer};
 use crate::screen::ScreenCommandCallback::UpdateAll;
 use crate::state::state_event::StateEvent;
@@ -39,7 +39,7 @@ impl KeyMapping for FormScreenLayer {
                         debug!(target: "clr_form_screen_key_mapping", "Has unsaved changes, asking for confirmation");
                         Some(vec![
                             AddLayer(Box::new(PopupLayer::default())),
-                            notify::<Popup>(PopupEvent::Create(Dialog(
+                            create_notify_command::<Popup>(PopupEvent::Create(Dialog(
                                 "You have unsaved changes. Exit anyway?".to_string(),
                                 FutureEventType::State(|_| async_fn_body! { Ok(()) }),
                                 ScreenCommandCallback::ExitEditScreen,
@@ -78,8 +78,8 @@ impl KeyMapping for FormScreenLayer {
             } => {
                 let current_field = self.get_next_field();
                 let events = vec![
-                    notify::<EditableTextbox>(EditableTextboxEvent::SetField(current_field.clone())),
-                    notify::<ScreenState>(ScreenStateEvent::SetField(current_field)),
+                    create_notify_command::<EditableTextbox>(EditableTextboxEvent::SetField(current_field.clone())),
+                    create_notify_command::<ScreenState>(ScreenStateEvent::SetField(current_field)),
                 ];
                 Some(events)
             }
@@ -90,16 +90,16 @@ impl KeyMapping for FormScreenLayer {
             } => {
                 let current_field = self.get_previous_field();
                 let events = vec![
-                    notify::<EditableTextbox>(EditableTextboxEvent::SetField(current_field.clone())),
-                    notify::<ScreenState>(ScreenStateEvent::SetField(current_field)),
+                    create_notify_command::<EditableTextbox>(EditableTextboxEvent::SetField(current_field.clone())),
+                    create_notify_command::<ScreenState>(ScreenStateEvent::SetField(current_field)),
                 ];
                 Some(events)
             }
             input => {
                 debug!(target: "clr_form_screen_key_mapping", "Received key event: {:?}", input);
                 Some(vec![
-                    notify::<EditableTextbox>(EditableTextboxEvent::KeyInput(input)),
-                    notify::<ScreenState>(ScreenStateEvent::KeyInput(input)),
+                    create_notify_command::<EditableTextbox>(EditableTextboxEvent::KeyInput(input)),
+                    create_notify_command::<ScreenState>(ScreenStateEvent::KeyInput(input)),
                 ])
             }
         }

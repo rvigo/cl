@@ -1,6 +1,6 @@
 use crate::component::Search;
 use crate::observer::event::SearchEvent;
-use crate::screen::key_mapping::{notify, KeyMapping, ScreenCommand};
+use crate::screen::key_mapping::{create_notify_command, KeyMapping, ScreenCommand};
 use crate::screen::layer::QuickSearchLayer;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::GetCurrentQuery;
@@ -24,13 +24,13 @@ impl KeyMapping for QuickSearchLayer {
                 let mut events = vec![ScreenCommand::PopLastLayer(None)];
                 let result = oneshot!(state_tx, GetCurrentQuery);
                 if let Ok(query) = result {
-                    events.push(notify::<Search>(SearchEvent::UpdateQuery(query)));
+                    events.push(create_notify_command::<Search>(SearchEvent::UpdateQuery(query)));
                 }
 
                 Some(events)
             }
             _ => Some(vec![
-                notify::<Search>(SearchEvent::Input(key, state_tx)),
+                create_notify_command::<Search>(SearchEvent::Input(key, state_tx)),
                 ScreenCommand::Callback(UpdateAll),
             ]),
         }
