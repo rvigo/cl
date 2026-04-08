@@ -16,10 +16,10 @@ use tokio::sync::mpsc::Sender;
 /// Build a `ScreenCommand::Notify` for a component that implements [`NotifyTarget`].
 ///
 /// ```ignore
-/// notify::<List>(ListEvent::Next(idx))
-/// notify::<Popup>(PopupEvent::Create(dialog))
+/// create_notify_command::<List>(ListEvent::Next(idx))
+/// create_notify_command::<Popup>(PopupEvent::Create(dialog))
 /// ```
-pub fn notify<C: NotifyTarget>(payload: C::Payload) -> ScreenCommand {
+pub fn create_notify_command<C: NotifyTarget>(payload: C::Payload) -> ScreenCommand {
     ScreenCommand::Notify((TypeId::of::<C>(), C::wrap(payload)))
 }
 

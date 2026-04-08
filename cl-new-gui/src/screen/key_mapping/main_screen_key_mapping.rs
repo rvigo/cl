@@ -5,7 +5,7 @@ use crate::screen::key_mapping::command::ScreenCommandCallback;
 use crate::screen::key_mapping::ScreenCommand::{
     AddLayer, CopyToClipboard, Quit, ReplaceCurrentLayer,
 };
-use crate::screen::key_mapping::{notify, KeyMapping, ScreenCommand};
+use crate::screen::key_mapping::{create_notify_command, KeyMapping, ScreenCommand};
 use crate::screen::layer::{FormScreenLayer, MainScreenLayer, PopupLayer, QuickSearchLayer};
 use crate::screen::ActiveScreen::Main;
 use crate::state::selected_command::SelectedCommand;
@@ -35,7 +35,7 @@ impl KeyMapping for MainScreenLayer {
                 ..
             } => Some(vec![
                 AddLayer(Box::new(PopupLayer::default())),
-                notify::<Popup>(PopupEvent::Create(Dialog(
+                create_notify_command::<Popup>(PopupEvent::Create(Dialog(
                     "Are you sure u want to delete this command?".to_string(),
                     FutureEventType::State(|state| {
                         async_fn_body! {
@@ -62,8 +62,8 @@ impl KeyMapping for MainScreenLayer {
                 if let Ok(selected_command) = oneshot!(state_tx, SelectNextCommand) {
                     selected_command.map(|cmd: SelectedCommand| {
                         vec![
-                            notify::<List>(ListEvent::Next(cmd.current_idx)),
-                            notify::<TextBox>(TextBoxEvent::UpdateCommand(cmd.value.clone())),
+                            create_notify_command::<List>(ListEvent::Next(cmd.current_idx)),
+                            create_notify_command::<TextBox>(TextBoxEvent::UpdateCommand(cmd.value.clone())),
                         ]
                     })
                 } else {
@@ -78,8 +78,8 @@ impl KeyMapping for MainScreenLayer {
                 if let Ok(selected_command) = oneshot!(state_tx, SelectPreviousCommand) {
                     selected_command.map(|cmd: SelectedCommand| {
                         vec![
-                            notify::<List>(ListEvent::Previous(cmd.current_idx)),
-                            notify::<TextBox>(TextBoxEvent::UpdateCommand(cmd.value.clone())),
+                            create_notify_command::<List>(ListEvent::Previous(cmd.current_idx)),
+                            create_notify_command::<TextBox>(TextBoxEvent::UpdateCommand(cmd.value.clone())),
                         ]
                     })
                 } else {
@@ -93,9 +93,9 @@ impl KeyMapping for MainScreenLayer {
             } => match oneshot!(state_tx, NextTab) {
                 Ok((selected_namespace, selected_command, new_items)) => {
                     let events = vec![
-                        notify::<List>(ListEvent::UpdateAll(new_items.aliases())),
-                        notify::<Tabs>(TabsEvent::Next(selected_namespace.idx)),
-                        notify::<TextBox>(TextBoxEvent::UpdateCommand(selected_command.value.clone())),
+                        create_notify_command::<List>(ListEvent::UpdateAll(new_items.aliases())),
+                        create_notify_command::<Tabs>(TabsEvent::Next(selected_namespace.idx)),
+                        create_notify_command::<TextBox>(TextBoxEvent::UpdateCommand(selected_command.value.clone())),
                     ];
 
                     Some(events)
@@ -109,9 +109,9 @@ impl KeyMapping for MainScreenLayer {
             } => match oneshot!(state_tx, PreviousTab) {
                 Ok((selected_namespace, selected_command, new_items)) => {
                     let events = vec![
-                        notify::<List>(ListEvent::UpdateAll(new_items.aliases())),
-                        notify::<Tabs>(TabsEvent::Previous(selected_namespace.idx)),
-                        notify::<TextBox>(TextBoxEvent::UpdateCommand(selected_command.value.clone())),
+                        create_notify_command::<List>(ListEvent::UpdateAll(new_items.aliases())),
+                        create_notify_command::<Tabs>(TabsEvent::Previous(selected_namespace.idx)),
+                        create_notify_command::<TextBox>(TextBoxEvent::UpdateCommand(selected_command.value.clone())),
                     ];
 
                     Some(events)
@@ -133,7 +133,7 @@ impl KeyMapping for MainScreenLayer {
 
                 let events = vec![
                     AddLayer(Box::new(QuickSearchLayer::default())),
-                    notify::<Search>(SearchEvent::UpdateQuery(current_query)),
+                    create_notify_command::<Search>(SearchEvent::UpdateQuery(current_query)),
                 ];
                 Some(events)
             }
@@ -143,7 +143,7 @@ impl KeyMapping for MainScreenLayer {
                 ..
             } => Some(vec![
                 AddLayer(Box::new(PopupLayer::default())),
-                notify::<Popup>(PopupEvent::Create(Help(Main))),
+                create_notify_command::<Popup>(PopupEvent::Create(Help(Main))),
             ]),
             KeyEvent {
                 code: KeyCode::Char('y'),
