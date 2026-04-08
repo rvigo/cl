@@ -14,8 +14,11 @@ macro_rules! render {
 
 /// Send a one-shot request to the `StateActor` and await the reply.
 ///
+/// Returns `Result<T, anyhow::Error>` so callers can distinguish channel
+/// failures from legitimate empty responses.
+///
 /// ```ignore
-/// let cmd = oneshot!(state_tx, CurrentCommand);
+/// let cmd = oneshot!(state_tx, CurrentCommand)?;
 /// ```
 #[macro_export]
 macro_rules! oneshot {
@@ -24,11 +27,13 @@ macro_rules! oneshot {
         let _event = $event { respond_to: tx };
         if let Err(e) = $state_tx.send(_event).await {
             tracing::error!("oneshot send failed for {}: {}", stringify!($event), e);
+            Err(anyhow::anyhow!("oneshot send failed for {}: {}", stringify!($event), e))
+        } else {
+            rx.await.map_err(|e| {
+                tracing::error!("oneshot receive failed for {}: {}", stringify!($event), e);
+                anyhow::anyhow!("oneshot receive failed for {}: {}", stringify!($event), e)
+            })
         }
-        rx.await.map_err(|e| {
-            tracing::error!("oneshot receive failed for {}: {}", stringify!($event), e);
-            e
-        }).ok()
     }};
 }
 

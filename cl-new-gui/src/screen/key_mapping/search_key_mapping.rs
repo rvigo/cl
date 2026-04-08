@@ -26,7 +26,7 @@ impl KeyMapping for QuickSearchLayer {
             } => {
                 let mut events = vec![ScreenCommand::PopLastLayer(None)];
                 let result = oneshot!(state_tx, GetCurrentQuery);
-                if let Some(query) = result {
+                if let Ok(query) = result {
                     events.push(Notify((
                         TypeId::of::<Search>(),
                         Event::Search(SearchEvent::UpdateQuery(query)),

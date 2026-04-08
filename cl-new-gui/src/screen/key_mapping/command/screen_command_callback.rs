@@ -29,9 +29,9 @@ impl ScreenCommandCallback {
     pub async fn handle(self, state_tx: &Sender<StateEvent>) -> Option<Vec<(TypeId, Event)>> {
         match self {
             ScreenCommandCallback::UpdateAll => {
-                let items = oneshot!(state_tx, GetAllListItems);
-                let tabs = oneshot!(state_tx, GetAllNamespaces);
-                let cmd = oneshot!(state_tx, CurrentCommand);
+                let items = oneshot!(state_tx, GetAllListItems).ok();
+                let tabs = oneshot!(state_tx, GetAllNamespaces).ok();
+                let cmd = oneshot!(state_tx, CurrentCommand).ok();
 
                 if let (Some(items), Some(tabs), Some(cmd)) = (items, tabs, cmd) {
                     let mut events = vec![
@@ -66,7 +66,7 @@ impl ScreenCommandCallback {
             }
             ScreenCommandCallback::LoadCommandDetails(type_id) => {
                 let cmd = oneshot!(state_tx, CommandDetails);
-                if let Some(Some(cmd)) = cmd {
+                if let Ok(Some(cmd)) = cmd {
                     debug!("got cmd: {:?}", cmd);
                     Some(vec![(
                         type_id,

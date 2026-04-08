@@ -102,7 +102,7 @@ impl Screen {
                                 }
                                 ScreenCommand::CopyToClipboard => {
                                     if let Some(clipboard) = &mut self.clipboard {
-                                        if let Some(Some(cmd)) = oneshot!(state_tx, CurrentCommand)
+                                        if let Ok(Some(cmd)) = oneshot!(state_tx, CurrentCommand)
                                         {
                                             if let Err(e) = clipboard.set_content(cmd.value.command) {
                                                 tracing::error!("failed to copy to clipboard: {e}");
