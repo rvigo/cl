@@ -8,13 +8,12 @@ pub enum FormCallback {
 
 impl FormCallback {
     pub async fn handle(self, state_tx: Sender<StateEvent>) {
-        match self {
-            FormCallback::Save(FormMode::Edit) => {
-                state_tx.send(StateEvent::EditCommand).await.ok();
-            }
-            FormCallback::Save(FormMode::Insert) => {
-                state_tx.send(StateEvent::InsertCommand).await.ok();
-            }
+        let event = match self {
+            FormCallback::Save(FormMode::Edit) => StateEvent::EditCommand,
+            FormCallback::Save(FormMode::Insert) => StateEvent::InsertCommand,
+        };
+        if let Err(e) = state_tx.send(event).await {
+            tracing::error!("FormCallback: failed to send state event: {e}");
         }
     }
 }

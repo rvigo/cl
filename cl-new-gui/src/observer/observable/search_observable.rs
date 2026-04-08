@@ -13,7 +13,9 @@ impl Observable for Search {
                 SearchEvent::Input(key, state_tx) => {
                     self.textarea.input(key);
                     let cur_input = self.textarea.lines().join("\n");
-                    state_tx.send(Filter(cur_input)).await.ok();
+                    if let Err(e) = state_tx.send(Filter(cur_input)).await {
+                        tracing::error!("Search: failed to send filter event: {e}");
+                    }
                 }
                 SearchEvent::UpdateQuery(query) => {
                     debug!("Search: pre-populating from query '{}'", query);

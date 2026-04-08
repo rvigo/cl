@@ -176,7 +176,9 @@ impl KeyMapping for MainScreenLayer {
                 modifiers: KeyModifiers::NONE,
                 ..
             } => {
-                state_tx.send(ExecuteCommand).await.ok();
+                if let Err(e) = state_tx.send(ExecuteCommand).await {
+                    tracing::error!("failed to send ExecuteCommand: {e}");
+                }
                 Some(vec![Quit])
             }
             KeyEvent {
