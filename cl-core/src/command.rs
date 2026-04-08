@@ -1,13 +1,13 @@
 use crate::CommandError;
 use anyhow::{ensure, Result};
 use itertools::Itertools;
-use once_cell::sync::Lazy;
 use regex::Regex;
+use std::sync::LazyLock;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
-static PARAM_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"#\{[^}]*}").expect("Invalid regex pattern"));
+static PARAM_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"#\{[^}]*}").expect("Invalid regex pattern"));
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Command<'cmd> {

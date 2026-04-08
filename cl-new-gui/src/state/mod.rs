@@ -379,7 +379,7 @@ mod test {
     use cl_core::{CommandBuilder, Preferences};
     use std::fs::File;
     use std::path::PathBuf;
-    use tempdir::TempDir;
+    use tempfile::TempDir;
 
     struct TestConfig {
         cfp: PathBuf,
@@ -387,7 +387,7 @@ mod test {
 
     impl TestConfig {
         pub fn new() -> Result<Self> {
-            let cfp = TempDir::new("test")?.into_path().join("commands.toml");
+            let cfp = TempDir::new()?.keep().join("commands.toml");
 
             let _cf = File::create(cfp.clone())?;
 
