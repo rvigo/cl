@@ -33,18 +33,22 @@ impl Default for MainScreenLayer {
     fn default() -> Self {
         let command = TextBox {
             name: FieldName::Command,
+            show_title: true,
             ..Default::default()
         };
         let description = TextBox {
             name: FieldName::Description,
+            show_title: true,
             ..Default::default()
         };
         let tags = TextBox {
             name: FieldName::Tags,
+            show_title: true,
             ..Default::default()
         };
         let namespace = TextBox {
             name: FieldName::Namespace,
+            show_title: true,
             ..Default::default()
         };
 

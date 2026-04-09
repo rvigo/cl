@@ -90,11 +90,11 @@ impl Tabs {
         let visible_count = {
             let mut used = 0usize;
             let mut count = 0usize;
-            for i in self.view_offset..len {
-                if used + tab_widths[i] > available {
+            for &width in tab_widths[self.view_offset..len].iter() {
+                if used + width > available {
                     break;
                 }
-                used += tab_widths[i];
+                used += width;
                 count += 1;
             }
             count

@@ -204,7 +204,7 @@ impl State {
                         to_sorted_vec(&self.current_items).first().map(|c| SelectedCommand::new(c, 0));
                 }
                 Err(e) => {
-                    bail!("Error deleting command: {:?}", e);
+                    bail!("Error deleting command: {e:?}");
                 }
             }
         }

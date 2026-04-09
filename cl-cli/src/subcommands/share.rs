@@ -115,7 +115,7 @@ impl Share {
             .filter(|cmd| {
                 self.namespace
                     .as_ref()
-                    .map_or(true, |ns| ns.contains(&cmd.namespace.to_string()))
+                    .is_none_or(|ns| ns.contains(&cmd.namespace.to_string()))
             })
             .collect();
 
