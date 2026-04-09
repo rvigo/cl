@@ -2,11 +2,11 @@ use cl_core::{Command, CommandBuilder};
 
 #[derive(Default)]
 pub struct EditState {
-    pub alias: Option<String>,
-    pub command: Option<String>,
-    pub description: Option<String>,
-    pub tags: Option<Vec<String>>,
-    pub namespace: Option<String>,
+    alias: Option<String>,
+    command: Option<String>,
+    description: Option<String>,
+    tags: Option<Vec<String>>,
+    namespace: Option<String>,
 }
 
 impl EditState {
@@ -30,14 +30,25 @@ impl EditState {
         self.namespace = namespace;
     }
 
-    pub fn get(&mut self) -> Command<'static> {
+    /// Returns a snapshot of the current edit state without consuming fields.
+    pub fn get(&self) -> Command<'static> {
         CommandBuilder::default()
-            .alias(self.alias.take().unwrap_or_default())
-            .command(self.command.take().unwrap_or_default())
-            .namespace(self.namespace.take().unwrap_or_default())
-            .description(self.description.take())
-            .tags(self.tags.take())
+            .alias(self.alias.clone().unwrap_or_default())
+            .command(self.command.clone().unwrap_or_default())
+            .namespace(self.namespace.clone().unwrap_or_default())
+            .description(self.description.clone())
+            .tags(self.tags.clone())
             .build()
+    }
+
+    /// Consumes the edit state fields after a successful operation.
+    /// Call this only after confirming the edit/insert operation completed.
+    pub fn clear(&mut self) {
+        self.alias = None;
+        self.command = None;
+        self.namespace = None;
+        self.description = None;
+        self.tags = None;
     }
 }
 
@@ -112,7 +123,7 @@ mod tests {
     }
 
     #[test]
-    fn test_get_consumes_all_fields() {
+    fn test_get_does_not_consume_fields() {
         let mut state = EditState::default();
         state.update_alias(Some("a".to_string()));
         state.update_command(Some("c".to_string()));
@@ -121,6 +132,24 @@ mod tests {
         state.update_tags(Some(vec!["t1".to_string()]));
 
         let _ = state.get();
+
+        assert_eq!(state.alias, Some("a".to_string()));
+        assert_eq!(state.command, Some("c".to_string()));
+        assert_eq!(state.namespace, Some("n".to_string()));
+        assert_eq!(state.description, Some("d".to_string()));
+        assert_eq!(state.tags, Some(vec!["t1".to_string()]));
+    }
+
+    #[test]
+    fn test_clear_consumes_all_fields() {
+        let mut state = EditState::default();
+        state.update_alias(Some("a".to_string()));
+        state.update_command(Some("c".to_string()));
+        state.update_namespace(Some("n".to_string()));
+        state.update_description(Some("d".to_string()));
+        state.update_tags(Some(vec!["t1".to_string()]));
+
+        state.clear();
 
         assert!(state.alias.is_none());
         assert!(state.command.is_none());

@@ -3,9 +3,9 @@ pub mod layer;
 pub mod theme;
 
 use crate::clipboard::Clipboard;
-use crate::component::{ClipboardStatus, EditableTextbox};
+use crate::component::{ClipboardStatus, EditableTextbox, FutureEventType, Popup};
 use crate::observer::event::ClipboardAction::Copied;
-use crate::observer::event::Event;
+use crate::observer::event::{Event, PopupEvent, PopupType};
 use crate::observer::subscription::SubscriptionSet;
 use crate::screen::key_mapping::command::{ScreenCommand, ScreenCommandCallback};
 use crate::screen::layer::Layer;
@@ -31,6 +31,7 @@ pub use key_mapping::command;
 pub enum ActiveScreen {
     #[default]
     Main,
+    Form,
 }
 
 pub struct Screen {
@@ -135,7 +136,22 @@ impl Screen {
                                     .await;
                                 }
                                 ScreenCommand::Form(cb) => {
-                                    cb.handle(state_tx.clone()).await;
+                                    if let Err(error_msg) = cb.handle(state_tx.clone()).await {
+                                        // Add error popup layer
+                                        self.add_layer(Box::new(layer::PopupLayer::default()), state_tx).await;
+                                        // Notify to display the error
+                                        let popup_event = PopupEvent::Create(
+                                            PopupType::Dialog(
+                                                format!("Error: {error_msg}"),
+                                                FutureEventType::State(|_| Box::pin(async { Ok(()) })),
+                                                ScreenCommandCallback::DoNothing
+                                            )
+                                        );
+                                        self.notify(
+                                            TypeId::of::<Popup>(),
+                                            Event::Popup(popup_event)
+                                        ).await;
+                                    }
                                 }
                             }
                         }
