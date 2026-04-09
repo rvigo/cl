@@ -8,14 +8,16 @@ mod tabs_observable;
 mod textbox_observable;
 
 use crate::observer::event::Event;
-use async_trait::async_trait;
+use std::future::Future;
+use std::pin::Pin;
 
-/// Async observable trait — implement this for components whose event handlers
-/// need to `.await` (e.g. sending on a channel). Popup, Search, and
-/// EditableTextbox use this directly.
-#[async_trait(?Send)]
+pub type ObservableFuture = Pin<Box<dyn Future<Output = ()>>>;
+
+/// Observable trait — implement this for components whose event handlers may be async.
+/// Sync work (state mutations) happens in `on_listen` while the RefMut guard is held.
+/// Any async work is returned as an owned future that the caller awaits after dropping the guard.
 pub trait Observable {
-    async fn on_listen(&mut self, event: Event);
+    fn on_listen(&mut self, event: Event) -> Option<ObservableFuture>;
 }
 
 /// Sync observable trait — implement this for components whose event handlers
@@ -29,12 +31,12 @@ pub trait SyncObservable: std::fmt::Debug + std::any::Any {
 }
 
 /// Every `SyncObservable` automatically becomes an `Observable`.
-#[async_trait(?Send)]
 impl<T> Observable for T
 where
     T: SyncObservable,
 {
-    async fn on_listen(&mut self, event: Event) {
+    fn on_listen(&mut self, event: Event) -> Option<ObservableFuture> {
         self.on_event(event);
+        None
     }
 }

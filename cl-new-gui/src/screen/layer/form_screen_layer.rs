@@ -14,7 +14,8 @@ use std::collections::BTreeMap;
 use std::rc::Rc;
 use tui::layout::{Constraint, Direction, Layout};
 use tui::prelude::Style;
-use tui::widgets::Block;
+use tui::text::Line;
+use tui::widgets::{Block, Paragraph};
 use tui::Frame;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -184,6 +185,66 @@ impl FormScreenLayer {
             }
         }
     }
+
+    fn field_is_filled(&self, component: &RenderableComponent<EditableTextbox>) -> bool {
+        !component
+            .borrow_inner()
+            .textarea
+            .lines()
+            .iter()
+            .all(|l| l.is_empty())
+    }
+
+    fn left_panel_widget<'a>(&'a self, theme: &Theme) -> Paragraph<'a> {
+        let lines = match self.mode {
+            FormMode::Insert => self.build_progress_lines(),
+            FormMode::Edit => self.build_preview_lines(),
+        };
+
+        Paragraph::new(lines)
+            .block(
+                Block::bordered().style(
+                    Style::default()
+                        .fg(theme.text_color.into())
+                        .bg(theme.background_color.into()),
+                ),
+            )
+            .style(
+                Style::default()
+                    .fg(theme.text_color.into())
+                    .bg(theme.background_color.into()),
+            )
+    }
+
+    fn build_progress_lines(&self) -> Vec<Line> {
+        let fields = [
+            (&self.alias, "alias", true),
+            (&self.namespace, "namespace", true),
+            (&self.command, "command", true),
+            (&self.description, "description", false),
+            (&self.tags, "tags", false),
+        ];
+
+        fields
+            .iter()
+            .map(|(component, name, required)| {
+                let filled = self.field_is_filled(component);
+                let status = if filled { "✓" } else { " " };
+                let marker = if !filled && *required { "*" } else { " " };
+                Line::from(format!("[{status}] {name} {marker}"))
+            })
+            .collect()
+    }
+
+    fn build_preview_lines(&self) -> Vec<Line> {
+        self.command
+            .borrow_inner()
+            .textarea
+            .lines()
+            .iter()
+            .map(|line| Line::from(line.clone()))
+            .collect()
+    }
 }
 
 impl Layer for FormScreenLayer {
@@ -233,10 +294,12 @@ impl Layer for FormScreenLayer {
             .split(right_side[2]);
         let (third_row1, third_row2) = (third_row[0], third_row[1]);
 
-        let app_name_rect = Layout::default()
+        let left_panel_splits = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Max(3), Constraint::Fill(1)])
-            .split(form_chunks[0])[0];
+            .split(form_chunks[0]);
+        let app_name_rect = left_panel_splits[0];
+        let left_panel_rect = left_panel_splits[1];
 
         let footer = Block::default().style(
             Style::default()
@@ -267,6 +330,9 @@ impl Layer for FormScreenLayer {
                 { self.modified_status, modified_status_rect },
             }
         }
+
+        let left_panel = self.left_panel_widget(theme);
+        frame.render_widget(left_panel, left_panel_rect);
 
         render! {
             frame,
@@ -337,5 +403,31 @@ mod tests {
 
         let prev = layer.get_previous_field();
         assert_eq!(prev, FieldName::Tags);
+    }
+
+    #[test]
+    fn empty_fields_are_not_filled() {
+        let layer = FormScreenLayer::insert();
+        assert!(!layer.field_is_filled(&layer.alias));
+        assert!(!layer.field_is_filled(&layer.namespace));
+    }
+
+    #[test]
+    fn progress_lines_all_fields_empty() {
+        let layer = FormScreenLayer::insert();
+        let lines = layer.build_progress_lines();
+
+        assert_eq!(lines.len(), 5);
+        assert!(lines[0].to_string().contains(" "));
+        assert!(lines[0].to_string().contains("alias"));
+    }
+
+    #[test]
+    fn preview_lines_empty_when_no_command() {
+        let layer = FormScreenLayer::edit();
+        let lines = layer.build_preview_lines();
+
+        // Empty textarea returns [""]
+        assert_eq!(lines.len(), 1);
     }
 }
