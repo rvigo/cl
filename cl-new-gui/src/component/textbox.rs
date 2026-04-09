@@ -11,6 +11,7 @@ pub struct TextBox {
     pub name: FieldName,
     pub content: Option<String>,
     pub placeholder: Option<String>,
+    pub show_title: bool,
 }
 
 impl TextBox {
@@ -35,9 +36,56 @@ impl Renderable for TextBox {
             .fg(theme.text_color.into())
             .bg(theme.background_color.into());
 
-        let paragraph = Paragraph::new(content).block(Block::bordered().style(style));
+        let block = if self.show_title {
+            Block::bordered().style(style).title(self.name.to_string())
+        } else {
+            Block::bordered().style(style)
+        };
+        let paragraph = Paragraph::new(content).block(block);
 
         frame.render_widget(paragraph, area)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn defaults_have_no_title_shown() {
+        let tb = TextBox::default();
+        assert_eq!(tb.name, FieldName::Alias);
+        assert_eq!(tb.content, None);
+        assert_eq!(tb.placeholder, None);
+        assert!(!tb.show_title);
+    }
+
+    #[test]
+    fn show_title_can_be_enabled() {
+        let tb = TextBox {
+            name: FieldName::Command,
+            show_title: true,
+            ..Default::default()
+        };
+        assert!(tb.show_title);
+        assert_eq!(tb.name, FieldName::Command);
+    }
+
+    #[test]
+    fn update_content_sets_value() {
+        let mut tb = TextBox::default();
+        tb.update_content(Some("hello"));
+        assert_eq!(tb.content, Some("hello".to_owned()));
+    }
+
+    #[test]
+    fn update_content_clears_with_none() {
+        let mut tb = TextBox {
+            content: Some("existing".to_owned()),
+            ..Default::default()
+        };
+        tb.update_content(None::<String>);
+        assert_eq!(tb.content, None);
     }
 }
 
