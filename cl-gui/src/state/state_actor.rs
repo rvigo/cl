@@ -56,32 +56,26 @@ impl StateActor {
             }
             StateEvent::PreviousTab { respond_to } => {
                 let (selected_namespace, commands) = self.state.previous_tab();
-                let selected_command = match commands.first() {
-                    Some(cmd) => SelectedCommand::new(cmd.clone(), 0),
-                    None => {
-                        error!(
-                            "PreviousTab returned empty commands for namespace '{}'",
-                            selected_namespace.name
-                        );
-                        SelectedCommand::default()
-                    }
-                };
+                let selected_command = self.state.get_selected_command().unwrap_or_else(|| {
+                    error!(
+                        "PreviousTab: no selected command for namespace '{}'",
+                        selected_namespace.name
+                    );
+                    SelectedCommand::default()
+                });
                 if respond_to.send((selected_namespace, selected_command, commands)).is_err() {
                     debug!("PreviousTab: response receiver dropped");
                 }
             }
             StateEvent::NextTab { respond_to } => {
                 let (selected_namespace, commands) = self.state.next_tab();
-                let selected_command = match commands.first() {
-                    Some(cmd) => SelectedCommand::new(cmd.clone(), 0),
-                    None => {
-                        error!(
-                            "NextTab returned empty commands for namespace '{}'",
-                            selected_namespace.name
-                        );
-                        SelectedCommand::default()
-                    }
-                };
+                let selected_command = self.state.get_selected_command().unwrap_or_else(|| {
+                    error!(
+                        "NextTab: no selected command for namespace '{}'",
+                        selected_namespace.name
+                    );
+                    SelectedCommand::default()
+                });
                 if respond_to.send((selected_namespace, selected_command, commands)).is_err() {
                     debug!("NextTab: response receiver dropped");
                 }
@@ -93,17 +87,14 @@ impl StateActor {
                 }
             }
             StateEvent::DeleteCommand { respond_to } => {
-                let res = match self.state.delete_command() {
-                    Ok(_) => (true, None),
-                    Err(e) => (false, Some(e.to_string())),
-                };
+                let res = self.state.delete_command().map_err(|e| e.to_string());
                 if respond_to.send(res).is_err() {
                     debug!("DeleteCommand: response receiver dropped");
                 }
             }
             StateEvent::Filter(query) => {
                 debug!("filtering with query: {}", query);
-                self.state.filter(query)
+                self.state.filter(&query)
             }
             StateEvent::GetCurrentQuery { respond_to } => {
                 if respond_to.send(self.state.get_current_query()).is_err() {
@@ -120,13 +111,25 @@ impl StateActor {
                 debug!(target: "edit_state_actor", "Editing field: {:?} with content: {}", type_, content);
                 self.state.set_editable_command(type_, content);
             }
-            StateEvent::EditCommand => {
-                debug!("do editing command");
-                self.state.edit_command()?;
+            StateEvent::EditCommand { respond_to } => {
+                debug!("editing command");
+                let result = self.state.edit_command().map_err(|e| e.to_string());
+                if respond_to.send(result.clone()).is_err() {
+                    debug!("EditCommand: response receiver dropped");
+                }
+                if let Err(ref e) = result {
+                    error!("Failed to edit command: {}", e);
+                }
             }
-            StateEvent::InsertCommand => {
+            StateEvent::InsertCommand { respond_to } => {
                 debug!("inserting new command");
-                self.state.insert_command()?;
+                let result = self.state.insert_command().map_err(|e| e.to_string());
+                if respond_to.send(result.clone()).is_err() {
+                    debug!("InsertCommand: response receiver dropped");
+                }
+                if let Err(ref e) = result {
+                    error!("Failed to insert command: {}", e);
+                }
             }
         }
 

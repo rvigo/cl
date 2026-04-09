@@ -103,14 +103,13 @@ impl State {
     }
 
     pub fn next_item(&mut self) -> Option<SelectedCommand> {
-        let items = self.current_items.to_owned();
-        if items.is_empty() {
+        if self.current_items.is_empty() {
             error!("cannot navigate: current items list is empty");
             return self.selected_command.clone();
         }
         if let Some(selected_command) = &self.selected_command {
             let current = selected_command.current_idx;
-            let next = (current + 1) % items.len();
+            let next = (current + 1) % self.current_items.len();
 
             self.select(next);
         } else {
@@ -121,14 +120,13 @@ impl State {
     }
 
     pub fn previous_item(&mut self) -> Option<SelectedCommand> {
-        let items = self.current_items.to_owned();
-        if items.is_empty() {
+        if self.current_items.is_empty() {
             error!("cannot navigate: current items list is empty");
             return self.selected_command.clone();
         }
         if let Some(selected_command) = &self.selected_command {
             let current = selected_command.current_idx;
-            let previous = (current + items.len() - 1) % items.len();
+            let previous = (current + self.current_items.len() - 1) % self.current_items.len();
 
             self.select(previous);
         } else {
@@ -157,7 +155,7 @@ impl State {
 
         (
             self.selected_namespace.to_owned(),
-            filtered_commands.to_vec().sorted(),
+            filtered_commands.to_vec(),
         )
     }
 
@@ -179,7 +177,7 @@ impl State {
 
         (
             self.selected_namespace.to_owned(),
-            filtered_commands.to_vec().sorted(),
+            filtered_commands.to_vec(),
         )
     }
 
@@ -198,8 +196,10 @@ impl State {
             let command = &selected_command.value;
             match self.commands.remove(command) {
                 Ok(map) => {
-                    fs::save_at(map, self.config.command_file_path())?;
+                    let path = self.config.command_file_path();
+                    tokio::task::block_in_place(|| fs::save_at(map, path))?;
                     self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
+                    self.cmd_map = self.commands.as_map().clone();
                     self.selected_command =
                         to_sorted_vec(&self.current_items).first().map(|c| SelectedCommand::new(c, 0));
                 }
@@ -215,18 +215,20 @@ impl State {
     /// Filters the commands based on a query and a namespace
     ///
     /// ## Arguments
-    /// * `query` - A String representing the user's query
+    /// * `query` - A String slice representing the user's query
     ///
-    #[inline(always)]
-    pub fn filter(&mut self, query: String) {
+    pub fn filter(&mut self, query: &str) {
         if query.is_empty() {
             self.current_query = None;
+            self.current_items = HashSet::from_iter(self.cmd_map.to_vec());
+            self.selected_command = SelectedCommand::from_vec(&self.cmd_map.to_vec());
+            let all_commands = self.cmd_map.to_vec();
+            self.set_namespaces(all_commands);
             return;
         }
 
-        //
-        self.current_query = Some(query.clone());
-        let current_items = self.fuzzy_find(query).to_vec();
+        self.current_query = Some(query.to_string());
+        let current_items = self.fuzzy_find(query.to_string()).to_vec();
         self.current_items = HashSet::from_iter(current_items.clone());
         self.selected_command = SelectedCommand::from_vec(&current_items);
         self.set_namespaces(current_items);
@@ -269,14 +271,13 @@ impl State {
             .collect::<HashMap<_, _>>()
     }
 
-    #[inline(always)]
     fn get_commands_by_namespace(&self, namespace: &str) -> CommandVec<'static> {
         debug!("filtering commands by namespace: {}", namespace);
-        if namespace == DEFAULT_NAMESPACE {
-            return self.cmd_map.to_vec().sorted();
-        }
-
-        let result = self.cmd_map.get(namespace).unwrap_or(&vec![]).to_vec();
+        let result = if namespace == DEFAULT_NAMESPACE {
+            self.cmd_map.to_vec()
+        } else {
+            self.cmd_map.get(namespace).unwrap_or(&vec![]).to_vec()
+        };
 
         {
             if let Some(query) = &self.current_query {
@@ -292,7 +293,14 @@ impl State {
         match field_name {
             FieldName::Description => self.edit_state.update_description(Some(content)),
             FieldName::Alias => self.edit_state.update_alias(Some(content)),
-            FieldName::Tags => self.edit_state.update_tags(Some(vec![content])),
+            FieldName::Tags => {
+                let tags = content
+                    .split(',')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect::<Vec<_>>();
+                self.edit_state.update_tags(if tags.is_empty() { None } else { Some(tags) });
+            }
             FieldName::Command => self.edit_state.update_command(Some(content)),
             FieldName::Namespace => self.edit_state.update_namespace(Some(content)),
         }
@@ -305,11 +313,13 @@ impl State {
         match self.commands.add(&new_command) {
             Ok(map) => {
                 debug!("Command inserted successfully");
-                fs::save_at(map, self.config.command_file_path())?;
+                let path = self.config.command_file_path();
+                tokio::task::block_in_place(|| fs::save_at(map, path))?;
                 self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
                 self.cmd_map = self.commands.as_map().clone();
                 let selected_command = SelectedCommand::new(new_command, 0);
                 self.selected_command = Some(selected_command);
+                self.edit_state.clear();
             }
             Err(err) => {
                 error!("Error inserting command: {}", err);
@@ -332,8 +342,10 @@ impl State {
         match self.commands.edit(&edited, &actual) {
             Ok(map) => {
                 debug!("Command edited successfully");
-                fs::save_at(map, self.config.command_file_path())?;
+                let path = self.config.command_file_path();
+                tokio::task::block_in_place(|| fs::save_at(map, path))?;
                 self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
+                self.cmd_map = self.commands.as_map().clone();
                 let selected_command = SelectedCommand::new(
                     edited,
                     self.selected_command
@@ -343,6 +355,7 @@ impl State {
                 );
 
                 self.selected_command = Some(selected_command);
+                self.edit_state.clear();
             }
             Err(err) => {
                 error!("Error editing command: {}", err);
@@ -383,15 +396,20 @@ mod test {
 
     struct TestConfig {
         cfp: PathBuf,
+        _tempdir: TempDir,
     }
 
     impl TestConfig {
         pub fn new() -> Result<Self> {
-            let cfp = TempDir::new()?.keep().join("commands.toml");
+            let tempdir = TempDir::new()?;
+            let cfp = tempdir.path().join("commands.toml");
 
             let _cf = File::create(cfp.clone())?;
 
-            Ok(Self { cfp })
+            Ok(Self {
+                cfp,
+                _tempdir: tempdir,
+            })
         }
     }
 
@@ -461,11 +479,11 @@ mod test {
     fn should_filter_commands() -> Result<()> {
         let mut state = setup_state()?;
 
-        state.filter("a".to_string());
+        state.filter("a");
 
         assert_eq!(state.current_items.len(), 2);
 
-        state.filter("az".to_string());
+        state.filter("az");
 
         assert_eq!(state.current_items.len(), 1);
         assert_eq!(
@@ -477,7 +495,7 @@ mod test {
             "azul".to_string()
         );
 
-        state.filter("ran".to_string());
+        state.filter("ran");
         assert_eq!(state.current_items.len(), 1);
         assert_eq!(
             to_sorted_vec(&state.current_items)
@@ -486,6 +504,56 @@ mod test {
                 .alias
                 .to_string(),
             "laranja".to_string()
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_restore_items_on_clear_filter() -> Result<()> {
+        let mut state = setup_state()?;
+
+        state.filter("az");
+        assert_eq!(state.current_items.len(), 1);
+
+        state.filter("");
+
+        assert_eq!(state.current_items.len(), 2);
+        assert_eq!(state.current_query, None);
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_update_cmd_map_on_delete() -> Result<()> {
+        let mut state = setup_state()?;
+        let original_len = state.cmd_map.to_vec().len();
+
+        state.delete_command()?;
+
+        assert_eq!(state.cmd_map.to_vec().len(), original_len - 1);
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_update_cmd_map_on_edit() -> Result<()> {
+        let mut state = setup_state()?;
+
+        // Get the selected command before editing
+        let original = state.get_selected_command().expect("should have selected command");
+
+        // Update edit state with new values
+        state.edit_state.update_alias(Some("new_alias".to_string()));
+        state.edit_state.update_command(Some("new_command".to_string()));
+        state.edit_state.update_namespace(Some(original.value.namespace.to_string()));
+
+        state.edit_command()?;
+
+        let cmd_vec = state.cmd_map.to_vec();
+        assert!(
+            cmd_vec.iter().any(|c| c.alias == "new_alias" && c.command == "new_command"),
+            "cmd_map should contain the edited command"
         );
 
         Ok(())

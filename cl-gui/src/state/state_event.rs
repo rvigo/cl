@@ -38,7 +38,7 @@ pub enum StateEvent {
     },
     /// Delete the command
     DeleteCommand {
-        respond_to: oneshot::Sender<(bool, Option<String>)>,
+        respond_to: oneshot::Sender<Result<(), String>>,
     },
     /// Filter
     Filter(String),
@@ -51,9 +51,13 @@ pub enum StateEvent {
     /// Edit Field
     EditField(FieldName, String),
     /// Edit Command
-    EditCommand,
+    EditCommand {
+        respond_to: oneshot::Sender<Result<(), String>>,
+    },
     /// Insert a new command
-    InsertCommand,
+    InsertCommand {
+        respond_to: oneshot::Sender<Result<(), String>>,
+    },
 }
 
 #[derive(Debug, PartialEq, Eq, Default, Clone)]

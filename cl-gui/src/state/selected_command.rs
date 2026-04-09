@@ -12,13 +12,9 @@ impl SelectedCommand {
     }
 
     pub fn from_vec(vec: &[Command<'static>]) -> Option<Self> {
-        if !vec.is_empty() {
-            Some(Self {
-                value: vec.first().unwrap().to_owned(),
-                current_idx: 0,
-            })
-        } else {
-            None
-        }
+        vec.first().map(|cmd| Self {
+            value: cmd.to_owned(),
+            current_idx: 0,
+        })
     }
 }
