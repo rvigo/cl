@@ -1,13 +1,13 @@
 use crate::component::{Downcastable, EditableTextbox, Popup};
 use crate::component::{FutureEventType, ScreenState};
-use crate::observer::event::PopupType::Dialog;
+use crate::observer::event::PopupType::{Dialog, Help};
 use crate::observer::event::{EditableTextboxEvent, PopupEvent, ScreenStateEvent};
 use crate::screen::command::ScreenCommand::AddLayer;
 use crate::screen::command::ScreenCommandCallback;
 use crate::screen::key_mapping::command::FormCallback;
 use crate::screen::key_mapping::{create_notify_command, KeyMapping, ScreenCommand};
 use crate::screen::layer::{FormScreenLayer, MainScreenLayer, PopupLayer};
-use crate::screen::ScreenCommandCallback::UpdateAll;
+use crate::screen::{ActiveScreen, ScreenCommandCallback::UpdateAll};
 use crate::state::state_event::StateEvent;
 use async_trait::async_trait;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -95,6 +95,13 @@ impl KeyMapping for FormScreenLayer {
                 ];
                 Some(events)
             }
+            KeyEvent {
+                code: KeyCode::F(1),
+                ..
+            } => Some(vec![
+                AddLayer(Box::new(PopupLayer::default())),
+                create_notify_command::<Popup>(PopupEvent::Create(Help(ActiveScreen::Form))),
+            ]),
             input => {
                 debug!(target: "clr_form_screen_key_mapping", "Received key event: {:?}", input);
                 Some(vec![

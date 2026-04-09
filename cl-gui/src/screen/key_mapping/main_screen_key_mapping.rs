@@ -14,7 +14,6 @@ use crate::state::state_event::StateEvent::{
     DeleteCommand, ExecuteCommand, GetCurrentQuery, NextTab, PreviousTab, SelectNextCommand,
     SelectPreviousCommand,
 };
-use anyhow::bail;
 use async_trait::async_trait;
 use cl_core::CommandVecExt;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -40,15 +39,9 @@ impl KeyMapping for MainScreenLayer {
                     FutureEventType::State(|state| {
                         async_fn_body! {
                             let result = oneshot!(state, DeleteCommand)?;
-                            let (ok, reason) = result;
-                            if !ok {
-                                let msg = reason.unwrap_or_else(|| "unknown error".to_string());
-                                debug!("delete command failed: {}", msg);
-                                bail!(msg)
-                            } else {
-                                debug!("Command deleted");
-                                Ok(())
-                            }
+                            result.map_err(|e| anyhow::anyhow!(e))?;
+                            debug!("Command deleted");
+                            Ok(())
                         }
                     }),
                     ScreenCommandCallback::UpdateAll,
@@ -138,6 +131,10 @@ impl KeyMapping for MainScreenLayer {
                 Some(events)
             }
             KeyEvent {
+                code: KeyCode::F(1),
+                ..
+            }
+            | KeyEvent {
                 code: KeyCode::Char('?'),
                 modifiers: KeyModifiers::NONE,
                 ..

@@ -26,12 +26,19 @@ impl PopupState {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PopupType {
+    Help,
+    Dialog,
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct Popup {
     pub title: String,
     pub content: String,
     pub buttons: Vec<Button>,
     pub state: PopupState,
+    pub popup_type: Option<PopupType>,
 }
 
 impl Popup {
@@ -76,6 +83,17 @@ impl Popup {
             title: "Help".to_string(),
             content: main_options().to_string(),
             buttons: vec![],
+            popup_type: Some(PopupType::Help),
+            ..Default::default()
+        }
+    }
+
+    pub fn help_form() -> Self {
+        Popup {
+            title: "Help".to_string(),
+            content: form_options().to_string(),
+            buttons: vec![],
+            popup_type: Some(PopupType::Help),
             ..Default::default()
         }
     }
@@ -83,30 +101,59 @@ impl Popup {
 
 impl Renderable for Popup {
     fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
-        let paragraph = Paragraph::new(self.content.to_owned())
-            .alignment(Center)
-            .style(
-                Style::default()
-                    .fg(theme.text_color.into())
-                    .bg(theme.background_color.into()),
-            )
-            .wrap(Wrap { trim: true })
-            .block(Block::bordered());
+        let popup_area = compute_popup_area(&self.content, area, self.popup_type);
+        let popup_style = Style::default()
+            .fg(theme.text_color.into())
+            .bg(theme.background_color.into());
 
-        let popup_area = compute_popup_area(&self.content, area);
-        let buttons_area = split_content_and_buttons(popup_area)[1];
         frame.render_widget(Clear, popup_area);
-        frame.render_widget(paragraph, popup_area);
 
-        // area for the buttons
-        let button_area = button_area(self.buttons.len(), buttons_area);
-        // render buttons inside that area
-        button_area.iter().enumerate().for_each(|(i, area)| {
-            let current_button = &mut self.buttons[i];
-            current_button.is_active = i == self.state.selected;
-            current_button.render(frame, *area, theme);
-        });
+        if self.buttons.is_empty() {
+            let content =
+                center_content(&self.content, popup_area.width.saturating_sub(4) as usize);
+            let paragraph = Paragraph::new(content)
+                .alignment(Center)
+                .style(popup_style)
+                .wrap(Wrap { trim: true })
+                .block(Block::bordered().style(popup_style));
+            frame.render_widget(paragraph, popup_area);
+        } else {
+            let outer_block = Block::bordered().style(popup_style);
+            let inner_area = outer_block.inner(popup_area);
+            frame.render_widget(outer_block, popup_area);
+
+            let [content_area, buttons_area] = split_content_and_buttons(inner_area);
+
+            let paragraph = Paragraph::new(self.content.as_str())
+                .alignment(Center)
+                .style(popup_style)
+                .wrap(Wrap { trim: true });
+            frame.render_widget(paragraph, content_area);
+
+            let button_rects = button_area(self.buttons.len(), buttons_area);
+            button_rects.iter().enumerate().for_each(|(i, area)| {
+                let current_button = &mut self.buttons[i];
+                current_button.is_active = i == self.state.selected;
+                current_button.render(frame, *area, theme);
+            });
+        }
     }
+}
+
+fn center_content(content: &str, available_width: usize) -> String {
+    content
+        .lines()
+        .map(|line| {
+            let line_width = line.len();
+            if line_width >= available_width {
+                line.to_string()
+            } else {
+                let padding = (available_width - line_width) / 2;
+                format!("{}{}", " ".repeat(padding), line)
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 fn button_area(number_of_buttons: usize, area: Rect) -> Rc<[Rect]> {
@@ -127,51 +174,45 @@ fn create_button_layout(area: Rect, constraints: &[Constraint]) -> Rc<[Rect]> {
         .split(area)
 }
 
-fn split_content_and_buttons(rect: Rect) -> Rc<[Rect]> {
-    Layout::default()
+fn split_content_and_buttons(rect: Rect) -> [Rect; 2] {
+    let parts = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(80), Constraint::Percentage(20)])
-        .split(rect)
+        .split(rect);
+    [parts[0], parts[1]]
 }
 
-fn compute_popup_area(content: &str, area: Rect) -> Rect {
-    use tui::layout::{Constraint, Direction, Layout};
+fn compute_popup_area(content: &str, area: Rect, popup_type: Option<PopupType>) -> Rect {
+    // Content dimensions
+    let line_count = content.lines().count() as u16;
+    let content_width = content.custom_width();
 
-    let width = content.custom_width();
-    let height = 5;
+    // 2 for border, 2 for horizontal padding
+    let popup_width = (content_width + 4).min(area.width);
+    // 2 for border; help has no buttons, dialogs reserve 3 rows for buttons
+    let button_rows: u16 = if popup_type == Some(PopupType::Help) { 0 } else { 3 };
+    let popup_height = (line_count + 2 + button_rows).min(area.height);
 
-    const SCALE_FACTOR: u16 = 100;
-    const MAX_SCALE_RATIO: f32 = 2.0;
+    let h_pad = area.width.saturating_sub(popup_width) / 2;
+    let v_pad = area.height.saturating_sub(popup_height) / 2;
 
-    let scaled_height = (SCALE_FACTOR * (height * 2)) / area.height;
-    let max_height = (area.height as f32 * MAX_SCALE_RATIO) as u16;
-    let final_height = std::cmp::min(scaled_height, max_height);
-
-    let height = if final_height > 100 {
-        100
-    } else {
-        final_height
-    };
-
-    let width = if width > 50 { 50 } else { width };
-
-    let new_area = Layout::default()
+    let centered_v = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Percentage((100 - height) / 2),
-            Constraint::Percentage(height),
-            Constraint::Percentage((100 - height) / 2),
+            Constraint::Length(v_pad),
+            Constraint::Length(popup_height),
+            Constraint::Min(0),
         ])
         .split(area)[1];
 
     Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
-            Constraint::Percentage((100 - width) / 2),
-            Constraint::Percentage(width),
-            Constraint::Percentage((100 - width) / 2),
+            Constraint::Length(h_pad),
+            Constraint::Length(popup_width),
+            Constraint::Min(0),
         ])
-        .split(new_area)[1]
+        .split(centered_v)[1]
 }
 
 fn main_options() -> Table {
@@ -186,7 +227,19 @@ fn main_options() -> Table {
         Row::from_iter([Cell::from("Move down"), Cell::from("<J/↓>")]),
         Row::from_iter([Cell::from("Copy selected command"), Cell::from("<Y>")]),
         Row::from_iter([Cell::from("Search commands"), Cell::from("<F//>")]),
+        Row::from_iter([Cell::from("Close search"), Cell::from("<Esc/Enter/↑/↓>")]),
         Row::from_iter([Cell::from("Show help"), Cell::from("<F1/?>")]),
+    ]
+    .into()
+}
+
+fn form_options() -> Table {
+    vec![
+        Row::from_iter([Cell::from("Save"), Cell::from("<Ctrl-S>")]),
+        Row::from_iter([Cell::from("Cancel / exit"), Cell::from("<Esc/Ctrl-C>")]),
+        Row::from_iter([Cell::from("Next field"), Cell::from("<Tab>")]),
+        Row::from_iter([Cell::from("Previous field"), Cell::from("<Shift-Tab>")]),
+        Row::from_iter([Cell::from("Show help"), Cell::from("<F1>")]),
     ]
     .into()
 }
@@ -195,6 +248,61 @@ impl crate::observer::event::NotifyTarget for Popup {
     type Payload = crate::observer::event::PopupEvent;
     fn wrap(payload: Self::Payload) -> crate::observer::event::Event {
         crate::observer::event::Event::Popup(payload)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_center_content_single_line() {
+        let content = "Hello";
+        let result = center_content(content, 15);
+        assert!(result.starts_with("     ")); // 5 spaces for centering
+        assert!(result.contains("Hello"));
+    }
+
+    #[test]
+    fn test_center_content_multiple_lines() {
+        let content = "Hello\nWorld";
+        let result = center_content(content, 15);
+        let lines: Vec<&str> = result.lines().collect();
+        assert_eq!(lines.len(), 2);
+        // Both lines should be padded
+        assert!(lines[0].starts_with(" "));
+        assert!(lines[1].starts_with(" "));
+    }
+
+    #[test]
+    fn test_center_content_line_too_long() {
+        let content = "This is a very long line that exceeds the available width";
+        let result = center_content(content, 10);
+        // Line should not be padded if it's too long
+        assert_eq!(result, content);
+    }
+
+    #[test]
+    fn test_popup_help_type() {
+        let popup = Popup::help_main();
+        assert_eq!(popup.popup_type, Some(PopupType::Help));
+
+        let popup = Popup::help_form();
+        assert_eq!(popup.popup_type, Some(PopupType::Help));
+    }
+
+    #[test]
+    fn test_popup_dialog_type() {
+        let popup = Popup::dialog(
+            "Test".to_string(),
+            FutureEventType::State(|_| {
+                async_fn_body! {
+                    Ok(())
+                }
+            }),
+            ScreenCommandCallback::DoNothing,
+        );
+        assert_eq!(popup.popup_type, None);
     }
 }
 
