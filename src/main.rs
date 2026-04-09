@@ -35,8 +35,8 @@ async fn main() -> Result<()> {
 mod new_core {
     use anyhow::Result;
     use cl_core::Config;
-    use cl_new_gui::state::state_actor::StateActor;
-    use cl_new_gui::ui::ui_actor::UiActor;
+    use cl_gui::state::state_actor::StateActor;
+    use cl_gui::ui::ui_actor::UiActor;
     use tokio::try_join;
 
     pub async fn init(config: impl Config + 'static) -> Result<()> {

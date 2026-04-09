@@ -40,7 +40,7 @@ cargo bench
 
 - **cl-core** — domain types and logic (no I/O concerns)
 - **cl-cli** — `clap`-based CLI; defaults to launching the TUI when called with no subcommand
-- **cl-new-gui** — `ratatui`-based TUI
+- **cl-gui** — `ratatui`-based TUI
 
 ### Core domain (cl-core)
 
@@ -62,7 +62,7 @@ Extension traits (`CommandVecExt`, `CommandMapExt`) add sorting, filtering, and 
 | `add` | — | Add a command without the TUI |
 | `misc` | — | Hidden utilities |
 
-### TUI (cl-new-gui)
+### TUI (cl-gui)
 
 Uses an actor model with Tokio channels:
 
