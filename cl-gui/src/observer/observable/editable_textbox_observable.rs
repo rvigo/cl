@@ -29,6 +29,7 @@ impl Observable for EditableTextbox {
                     if self.is_active() {
                         debug!("EditableTextbox({}): handling key input", self.name);
                         self.handle_key_event(key);
+                        self.modified = true;
                     }
                 }
                 EditableTextboxEvent::GetFieldContent(state_tx) => {
@@ -113,5 +114,74 @@ mod tests {
             }
         });
         assert!(!tb.is_active());
+    }
+
+    #[test]
+    fn key_input_marks_active_field_as_modified() {
+        use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+        let mut tb = EditableTextbox {
+            name: FieldName::Alias,
+            active: true,
+            ..Default::default()
+        };
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap();
+        rt.block_on(async {
+            let key = KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE);
+            let event = Event::EditableTextbox(EditableTextboxEvent::KeyInput(key));
+            if let Some(fut) = tb.on_listen(event) {
+                fut.await;
+            }
+        });
+        assert!(tb.modified);
+    }
+
+    #[test]
+    fn key_input_does_not_mark_inactive_field_as_modified() {
+        use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+        let mut tb = EditableTextbox {
+            name: FieldName::Alias,
+            active: false,
+            ..Default::default()
+        };
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap();
+        rt.block_on(async {
+            let key = KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE);
+            let event = Event::EditableTextbox(EditableTextboxEvent::KeyInput(key));
+            if let Some(fut) = tb.on_listen(event) {
+                fut.await;
+            }
+        });
+        assert!(!tb.modified);
+    }
+
+    #[test]
+    fn update_command_does_not_mark_field_as_modified() {
+        use cl_core::Command;
+        let mut tb = EditableTextbox {
+            name: FieldName::Alias,
+            active: true,
+            ..Default::default()
+        };
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap();
+        rt.block_on(async {
+            let cmd = Command {
+                alias: "my-alias".into(),
+                namespace: "ns".into(),
+                command: "echo hi".into(),
+                description: None,
+                tags: None,
+            };
+            let event = Event::EditableTextbox(EditableTextboxEvent::UpdateCommand(cmd));
+            if let Some(fut) = tb.on_listen(event) {
+                fut.await;
+            }
+        });
+        assert!(!tb.modified);
     }
 }

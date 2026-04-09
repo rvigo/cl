@@ -12,6 +12,7 @@ pub struct EditableTextbox {
     pub name: FieldName,
     pub textarea: TextArea<'static>,
     pub active: bool,
+    pub modified: bool,
 }
 
 impl EditableTextbox {
@@ -46,7 +47,11 @@ impl Renderable for EditableTextbox {
                     .fg(theme.text_color.into())
                     .bg(theme.background_color.into()),
             )
-            .title(self.name.to_string());
+            .title(if self.modified {
+                format!("{} *", self.name)
+            } else {
+                self.name.to_string()
+            });
         self.textarea.set_block(block);
 
         if self.active {
