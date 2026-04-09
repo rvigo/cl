@@ -43,7 +43,7 @@ impl KeyMapping for PopupLayer {
 
                 Some(vec![event, PopLastLayer(Some(rx))])
             }
-            _ => None,
+            _ => Some(vec![PopLastLayer(None)]),
         }
     }
 }

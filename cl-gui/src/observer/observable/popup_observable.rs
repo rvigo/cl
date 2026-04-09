@@ -14,6 +14,7 @@ impl Observable for Popup {
                     }
                     PopupType::Help(active_screen) => match active_screen {
                         ActiveScreen::Main => *self = Popup::help_main(),
+                        ActiveScreen::Form => *self = Popup::help_form(),
                     },
                 },
                 PopupEvent::NextChoice => self.next(),
