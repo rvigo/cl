@@ -1,15 +1,13 @@
 use crate::component::EditableTextbox;
 use crate::observer::event::{EditableTextboxEvent, Event};
 use crate::observer::observable::textbox_observable::SomeOrNone;
-use crate::observer::observable::Observable;
+use crate::observer::observable::{Observable, ObservableFuture};
 use crate::state::state_event::FieldName;
 use crate::state::state_event::StateEvent::EditField;
-use async_trait::async_trait;
 use tracing::debug;
 
-#[async_trait(?Send)]
 impl Observable for EditableTextbox {
-    async fn on_listen(&mut self, event: Event) {
+    fn on_listen(&mut self, event: Event) -> Option<ObservableFuture> {
         if let Event::EditableTextbox(e) = event {
             match e {
                 EditableTextboxEvent::UpdateCommand(command) => {
@@ -35,10 +33,13 @@ impl Observable for EditableTextbox {
                 }
                 EditableTextboxEvent::GetFieldContent(state_tx) => {
                     let content = self.textarea.lines().join("\n");
-                    debug!("EditableTextbox({}): sending content '{}'", self.name, content);
-                    if let Err(e) = state_tx.send(EditField(self.name.clone(), content)).await {
-                        tracing::error!("EditableTextbox({}): failed to send field content: {e}", self.name);
-                    }
+                    let name = self.name.clone();
+                    debug!("EditableTextbox({}): sending content '{}'", name, content);
+                    return Some(Box::pin(async move {
+                        if let Err(e) = state_tx.send(EditField(name.clone(), content)).await {
+                            tracing::error!("EditableTextbox({}): failed to send field content: {e}", name);
+                        }
+                    }));
                 }
                 EditableTextboxEvent::SetField(field) => {
                     let matches = self.name == field;
@@ -50,6 +51,7 @@ impl Observable for EditableTextbox {
                 }
             }
         }
+        None
     }
 }
 
@@ -68,10 +70,10 @@ mod tests {
             .build()
             .unwrap();
         rt.block_on(async {
-            tb.on_listen(Event::EditableTextbox(EditableTextboxEvent::SetField(
-                FieldName::Command,
-            )))
-            .await;
+            let event = Event::EditableTextbox(EditableTextboxEvent::SetField(FieldName::Command));
+            if let Some(fut) = tb.on_listen(event) {
+                fut.await;
+            }
         });
         assert!(tb.is_active());
     }
@@ -87,10 +89,10 @@ mod tests {
             .build()
             .unwrap();
         rt.block_on(async {
-            tb.on_listen(Event::EditableTextbox(EditableTextboxEvent::SetField(
-                FieldName::Command,
-            )))
-            .await;
+            let event = Event::EditableTextbox(EditableTextboxEvent::SetField(FieldName::Command));
+            if let Some(fut) = tb.on_listen(event) {
+                fut.await;
+            }
         });
         assert!(!tb.is_active());
     }
@@ -105,8 +107,10 @@ mod tests {
             .build()
             .unwrap();
         rt.block_on(async {
-            tb.on_listen(Event::List(crate::observer::event::ListEvent::Next(0)))
-                .await;
+            let event = Event::List(crate::observer::event::ListEvent::Next(0));
+            if let Some(fut) = tb.on_listen(event) {
+                fut.await;
+            }
         });
         assert!(!tb.is_active());
     }

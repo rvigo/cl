@@ -1,14 +1,11 @@
-use crate::component::{FutureEventType, Popup};
+use crate::component::Popup;
 use crate::observer::event::{Event, PopupEvent, PopupType};
-use crate::observer::observable::Observable;
-use crate::screen::command::ScreenCommandCallback;
+use crate::observer::observable::{Observable, ObservableFuture};
 use crate::screen::ActiveScreen;
-use async_trait::async_trait;
 use tracing::debug;
 
-#[async_trait(?Send)]
 impl Observable for Popup {
-    async fn on_listen(&mut self, event: Event) {
+    fn on_listen(&mut self, event: Event) -> Option<ObservableFuture> {
         if let Event::Popup(popup) = event {
             match popup {
                 PopupEvent::Create(type_) => match type_ {
@@ -23,23 +20,34 @@ impl Observable for Popup {
                 PopupEvent::PreviousChoice => self.previous(),
                 PopupEvent::Run(state_tx, tx) => {
                     debug!("Popup: running button click");
-                    match self.click(state_tx).await {
-                        Ok(callback) => {
-                            debug!("Popup: sending callback to previous layer");
-                            if let Err(e) = tx.send(callback).await {
-                                tracing::error!("Popup: failed to send callback: {e}");
+                    // Extract button data while we hold &mut self; return owned future
+                    if self.buttons.is_empty() {
+                        debug!("No buttons to click");
+                        return None;
+                    }
+                    let selected_idx = self.state.selected();
+                    let callback = self.buttons[selected_idx].callback.clone();
+                    let on_click = self.buttons[selected_idx].on_click.clone();
+
+                    return Some(Box::pin(async move {
+                        match on_click.call(Some(state_tx), None).await {
+                            Ok(()) => {
+                                debug!("Popup: sending callback to previous layer");
+                                if let Err(e) = tx.send(callback).await {
+                                    tracing::error!("Popup: failed to send callback: {e}");
+                                }
+                            }
+                            Err(err) => {
+                                // Previous code did `*self = Popup::dialog(...)` but self was
+                                // already being popped by PopLastLayer, so error was never shown.
+                                // Log it instead for better observability.
+                                tracing::error!("Popup: button click failed: {err}");
                             }
                         }
-                        Err(err) => {
-                            *self = Popup::dialog(
-                                err.to_string(),
-                                FutureEventType::State(|_| async_fn_body!(Ok(()))),
-                                ScreenCommandCallback::DoNothing,
-                            );
-                        }
-                    }
+                    }));
                 }
             }
         }
+        None
     }
 }

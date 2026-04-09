@@ -3,11 +3,8 @@ use crate::component::table::{Cell, CustomWidth, Row, Table};
 use crate::component::Renderable;
 use crate::screen::command::ScreenCommandCallback;
 use crate::screen::theme::Theme;
-use crate::state::state_event::StateEvent;
-use tracing::debug;
 use std::fmt::Debug;
 use std::rc::Rc;
-use tokio::sync::mpsc::Sender;
 use tui::layout::Alignment::Center;
 use tui::layout::{Constraint, Direction, Layout, Rect};
 use tui::style::Style;
@@ -22,6 +19,10 @@ pub struct PopupState {
 impl PopupState {
     pub fn select(&mut self, index: usize) {
         self.selected = index;
+    }
+
+    pub fn selected(&self) -> usize {
+        self.selected
     }
 }
 
@@ -46,17 +47,6 @@ impl Popup {
         self.state.select(previous);
     }
 
-    pub async fn click(&mut self, state_tx: Sender<StateEvent>) -> anyhow::Result<ScreenCommandCallback> {
-        if self.buttons.is_empty() {
-            debug!("No buttons to click");
-            return Ok(ScreenCommandCallback::DoNothing);
-        }
-        let selected_idx = self.state.selected;
-        let callback = self.buttons[selected_idx].callback.clone();
-        let on_click = self.buttons[selected_idx].on_click.clone();
-        on_click.call(Some(state_tx), None).await?;
-        Ok(callback)
-    }
 }
 
 impl Popup {

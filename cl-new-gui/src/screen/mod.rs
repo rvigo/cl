@@ -240,7 +240,10 @@ impl Screen {
         if let Some(subscriptions) = self.subscriptions.get(&id) {
             trace!("notifying {} listeners for {:?}", subscriptions.len(), id);
             for sub in subscriptions {
-                sub.listener.borrow_mut().on_listen(event.clone()).await;
+                let maybe_task = sub.listener.borrow_mut().on_listen(event.clone()); // RefMut dropped here
+                if let Some(task) = maybe_task {
+                    task.await;
+                }
             }
         } else {
             debug!("no listeners registered for TypeId {:?}", id);
