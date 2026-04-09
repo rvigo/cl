@@ -1,5 +1,5 @@
 [workspace]
-members = ["cl-core", "cl-cli", "cl-new-gui"]
+members = ["cl-core", "cl-cli", "cl-gui"]
 
 [workspace.package]
 version = "0.9.3"
@@ -33,7 +33,7 @@ description.workspace = true
 [dependencies]
 cl-core.workspace = true
 cl-cli = { path = "cl-cli" }
-cl-new-gui = { path = "cl-new-gui" }
+cl-gui = { path = "cl-gui" }
 
 anyhow.workspace = true
 tokio.workspace = true

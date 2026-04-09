@@ -233,7 +233,7 @@ dependencies = [
  "anyhow",
  "cl-cli",
  "cl-core",
- "cl-new-gui",
+ "cl-gui",
  "criterion",
  "itertools 0.13.0",
  "rand",
@@ -274,7 +274,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cl-new-gui"
+name = "cl-gui"
 version = "0.9.3"
 dependencies = [
  "anyhow",

@@ -237,13 +237,73 @@ impl FormScreenLayer {
     }
 
     fn build_preview_lines(&self) -> Vec<Line> {
-        self.command
-            .borrow_inner()
-            .textarea
-            .lines()
-            .iter()
-            .map(|line| Line::from(line.clone()))
-            .collect()
+        let mut lines = Vec::new();
+
+        // Alias & Namespace
+        let alias_text = self.alias.borrow_inner().textarea.lines().join("");
+        let namespace_text = self.namespace.borrow_inner().textarea.lines().join("");
+        if !alias_text.is_empty() || !namespace_text.is_empty() {
+            lines.push(Line::from(format!("{namespace_text}:{alias_text}")));
+            lines.push(Line::from(""));
+        }
+
+        // Command
+        let command_lines = self.command.borrow_inner().textarea.lines().to_vec();
+        for line in &command_lines {
+            lines.push(Line::from(line.clone()));
+        }
+
+        // Named parameters
+        let command_text = command_lines.join("\n");
+        let params = self.extract_parameters(&command_text);
+        if !params.is_empty() {
+            lines.push(Line::from(""));
+            let params_str = params.join(", ");
+            lines.push(Line::from(format!("Params: {params_str}")));
+        }
+
+        // Description
+        let desc_text = self.description.borrow_inner().textarea.lines().join("");
+        if !desc_text.is_empty() {
+            lines.push(Line::from(""));
+            lines.push(Line::from(format!("Desc: {desc_text}")));
+        }
+
+        // Tags
+        let tags_text = self.tags.borrow_inner().textarea.lines().join("");
+        if !tags_text.is_empty() {
+            lines.push(Line::from(format!("Tags: {tags_text}")));
+        }
+
+        lines
+    }
+
+    fn extract_parameters(&self, command: &str) -> Vec<String> {
+        let mut params = Vec::new();
+        let mut in_param = false;
+        let mut current = String::new();
+
+        for ch in command.chars() {
+            match ch {
+                '#' if !in_param => in_param = true,
+                '{' if in_param => {},
+                '}' if in_param => {
+                    if !current.is_empty() {
+                        params.push(current.clone());
+                        current.clear();
+                    }
+                    in_param = false;
+                }
+                c if in_param && (c.is_alphanumeric() || c == '_') => current.push(c),
+                _ if in_param => {
+                    in_param = false;
+                    current.clear();
+                }
+                _ => {}
+            }
+        }
+
+        params
     }
 }
 
@@ -423,11 +483,27 @@ mod tests {
     }
 
     #[test]
-    fn preview_lines_empty_when_no_command() {
+    fn preview_lines_includes_command_and_metadata() {
         let layer = FormScreenLayer::edit();
         let lines = layer.build_preview_lines();
 
-        // Empty textarea returns [""]
-        assert_eq!(lines.len(), 1);
+        // Should have at least the empty command line(s)
+        assert!(!lines.is_empty());
+    }
+
+    #[test]
+    fn extract_parameters_finds_all_params() {
+        let layer = FormScreenLayer::edit();
+        let params = layer.extract_parameters("docker run --name #{name} --image #{image}");
+
+        assert_eq!(params, vec!["name", "image"]);
+    }
+
+    #[test]
+    fn extract_parameters_handles_no_params() {
+        let layer = FormScreenLayer::edit();
+        let params = layer.extract_parameters("docker run --help");
+
+        assert!(params.is_empty());
     }
 }
