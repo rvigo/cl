@@ -34,7 +34,8 @@ pub struct FormScreenLayer {
     pub screen_state: StateComponent<ScreenState>,
     pub listeners: BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>>,
     pub app_name: StaticInfo,
-    pub modified_status: StaticInfo,
+    pub field_hint: StaticInfo,
+    pub help: StaticInfo,
 }
 
 const FIELD_ORDER: &[FieldName] = &[
@@ -109,7 +110,8 @@ impl FormScreenLayer {
             FormMode::Edit => StaticInfo::new("cl - edit"),
             FormMode::Insert => StaticInfo::new("cl - insert"),
         };
-        let modified_status = StaticInfo::new("MODIFIED");
+        let field_hint = StaticInfo::new(Self::hint_for_field(&FieldName::Alias));
+        let help = StaticInfo::new("F1 for Help");
 
         Self {
             mode,
@@ -121,7 +123,8 @@ impl FormScreenLayer {
             screen_state: screen_state_component,
             listeners,
             app_name,
-            modified_status,
+            field_hint,
+            help,
         }
     }
 
@@ -169,10 +172,6 @@ impl FormScreenLayer {
             s.current_field.clone()
         })
         .unwrap_or_default()
-    }
-
-    fn get_modified_status(&self) -> bool {
-        self.with_screen_state(|s| s.has_changes).unwrap_or(false)
     }
 
     fn with_screen_state<T>(&self, f: impl FnOnce(&ScreenState) -> T) -> Option<T> {
@@ -278,6 +277,16 @@ impl FormScreenLayer {
         lines
     }
 
+    fn hint_for_field(field: &FieldName) -> &'static str {
+        match field {
+            FieldName::Alias => "Alias: unique name to identify the command",
+            FieldName::Namespace => "Namespace: group to organize related commands",
+            FieldName::Command => "Command: shell command to execute (use #{param} for parameters)",
+            FieldName::Description => "Description: optional summary of what the command does",
+            FieldName::Tags => "Tags: optional labels to categorize the command",
+        }
+    }
+
     fn extract_parameters(&self, command: &str) -> Vec<String> {
         let mut params = Vec::new();
         let mut in_param = false;
@@ -366,14 +375,11 @@ impl Layer for FormScreenLayer {
                 .bg(theme.background_color.into())
                 .fg(theme.text_color.into()),
         );
-        let modified_status_rect = Layout::default()
+        let footer_splits = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([
-                Constraint::Percentage(33),
-                Constraint::Percentage(33),
-                Constraint::Percentage(33),
-            ])
-            .split(footer.inner(drawable_chunks[1]))[1];
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(footer.inner(drawable_chunks[1]));
+        let (field_hint_rect, help_rect) = (footer_splits[0], footer_splits[1]);
 
         let background = Block::default().style(
             Style::default()
@@ -383,12 +389,13 @@ impl Layer for FormScreenLayer {
         frame.render_widget(background, frame.area());
         frame.render_widget(footer, drawable_chunks[1]);
 
-        if self.get_modified_status() {
-            render! {
-                frame,
-                theme,
-                { self.modified_status, modified_status_rect },
-            }
+        self.field_hint.content = Self::hint_for_field(&self.get_current_field()).to_string();
+
+        render! {
+            frame,
+            theme,
+            { self.field_hint, field_hint_rect },
+            { self.help, help_rect },
         }
 
         let left_panel = self.left_panel_widget(theme);
@@ -505,5 +512,26 @@ mod tests {
         let params = layer.extract_parameters("docker run --help");
 
         assert!(params.is_empty());
+    }
+
+    #[test]
+    fn hint_for_field_returns_distinct_hints() {
+        let fields = [
+            FieldName::Alias,
+            FieldName::Namespace,
+            FieldName::Command,
+            FieldName::Description,
+            FieldName::Tags,
+        ];
+        let hints: Vec<_> = fields
+            .iter()
+            .map(FormScreenLayer::hint_for_field)
+            .collect();
+
+        // Each field has a non-empty hint
+        assert!(hints.iter().all(|h| !h.is_empty()));
+        // All hints are distinct
+        let unique: std::collections::HashSet<_> = hints.iter().collect();
+        assert_eq!(unique.len(), fields.len());
     }
 }
