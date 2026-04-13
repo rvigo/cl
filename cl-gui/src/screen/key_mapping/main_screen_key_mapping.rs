@@ -14,20 +14,21 @@ use crate::state::state_event::StateEvent::{
     DeleteCommand, ExecuteCommand, GetCurrentQuery, NextTab, PreviousTab, SelectNextCommand,
     SelectPreviousCommand,
 };
-use async_trait::async_trait;
 use cl_core::CommandVecExt;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use tracing::debug;
 use std::any::TypeId;
+use std::future::Future;
+use std::pin::Pin;
 use tokio::sync::mpsc::Sender;
 
-#[async_trait(?Send)]
 impl KeyMapping for MainScreenLayer {
-    async fn handle_key_event(
-        &self,
+    fn handle_key_event<'a>(
+        &'a self,
         key: KeyEvent,
         state_tx: Sender<StateEvent>,
-    ) -> Option<Vec<ScreenCommand>> {
+    ) -> Pin<Box<dyn Future<Output = Option<Vec<ScreenCommand>>> + 'a>> {
+        Box::pin(async move {
         match key {
             KeyEvent {
                 code: KeyCode::Char('d'),
@@ -185,5 +186,6 @@ impl KeyMapping for MainScreenLayer {
             }
             _ => None,
         }
+        })
     }
 }

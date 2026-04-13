@@ -8,9 +8,10 @@ pub mod command;
 use crate::observer::event::NotifyTarget;
 use crate::screen::key_mapping::command::ScreenCommand;
 use crate::state::state_event::StateEvent;
-use async_trait::async_trait;
 use crossterm::event::KeyEvent;
 use std::any::TypeId;
+use std::future::Future;
+use std::pin::Pin;
 use tokio::sync::mpsc::Sender;
 
 /// Build a `ScreenCommand::Notify` for a component that implements [`NotifyTarget`].
@@ -23,11 +24,10 @@ pub fn create_notify_command<C: NotifyTarget>(payload: C::Payload) -> ScreenComm
     ScreenCommand::Notify((TypeId::of::<C>(), C::wrap(payload)))
 }
 
-#[async_trait(?Send)]
 pub trait KeyMapping {
-    async fn handle_key_event(
-        &self,
+    fn handle_key_event<'a>(
+        &'a self,
         key: KeyEvent,
         state_tx: Sender<StateEvent>,
-    ) -> Option<Vec<ScreenCommand>>;
+    ) -> Pin<Box<dyn Future<Output = Option<Vec<ScreenCommand>>> + 'a>>;
 }
