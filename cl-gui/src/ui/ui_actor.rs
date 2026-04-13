@@ -8,7 +8,6 @@ use anyhow::Result;
 use cl_core::{CommandBuilder, CommandVecExt};
 use crossterm::event::EventStream;
 use tracing::{debug, error};
-use std::time::Duration;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc::Sender;
 use tokio_stream::StreamExt;
@@ -18,8 +17,6 @@ pub struct UiActor {
     signal_handler: SignalHandler,
     signal_receiver: broadcast::Receiver<Signal>,
 }
-
-const RENDERING_TICK_RATE: Duration = Duration::from_millis(250);
 
 impl Default for UiActor {
     fn default() -> Self {
@@ -61,17 +58,14 @@ impl UiActor {
     pub async fn run(&mut self, state_tx: Sender<StateEvent>) -> Result<()> {
         let mut terminal = setup_terminal()?;
         let mut crossterm_events = EventStream::new();
-        let mut ticker = tokio::time::interval(RENDERING_TICK_RATE);
 
         self.initial_load(state_tx.clone()).await;
 
         let result: Result<()> = loop {
             tokio::select! {
-                // ticker
-                _ = ticker.tick() => (),
-                // key event
+                // key / resize event — render immediately after handling
                 event = crossterm_events.next() => {
-                        self.ui.screens.handle_key_event(event, &state_tx, &mut self.signal_handler).await;
+                    self.ui.screens.handle_key_event(event, &state_tx, &mut self.signal_handler).await;
                 },
                 // Quit signal
                 Ok(message) = self.signal_receiver.recv() => {
