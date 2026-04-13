@@ -21,13 +21,13 @@ impl StateActor {
 
     pub async fn run(&mut self) -> Result<()> {
         while let Some(message) = self.receiver.recv().await {
-            self.handle_message(message)?;
+            self.handle_message(message).await?;
         }
 
         Ok(())
     }
 
-    fn handle_message(&mut self, message: StateEvent) -> Result<()> {
+    async fn handle_message(&mut self, message: StateEvent) -> Result<()> {
         match message {
             StateEvent::SelectNextCommand { respond_to } => {
                 let selected_command = self.state.next_item();
@@ -87,7 +87,7 @@ impl StateActor {
                 }
             }
             StateEvent::DeleteCommand { respond_to } => {
-                let res = self.state.delete_command().map_err(|e| e.to_string());
+                let res = self.state.delete_command().await.map_err(|e| e.to_string());
                 if respond_to.send(res).is_err() {
                     debug!("DeleteCommand: response receiver dropped");
                 }
@@ -113,7 +113,7 @@ impl StateActor {
             }
             StateEvent::EditCommand { respond_to } => {
                 debug!("editing command");
-                let result = self.state.edit_command().map_err(|e| e.to_string());
+                let result = self.state.edit_command().await.map_err(|e| e.to_string());
                 if respond_to.send(result.clone()).is_err() {
                     debug!("EditCommand: response receiver dropped");
                 }
@@ -123,7 +123,7 @@ impl StateActor {
             }
             StateEvent::InsertCommand { respond_to } => {
                 debug!("inserting new command");
-                let result = self.state.insert_command().map_err(|e| e.to_string());
+                let result = self.state.insert_command().await.map_err(|e| e.to_string());
                 if respond_to.send(result.clone()).is_err() {
                     debug!("InsertCommand: response receiver dropped");
                 }

@@ -191,13 +191,14 @@ impl State {
         }
     }
 
-    pub fn delete_command(&mut self) -> anyhow::Result<()> {
+    pub async fn delete_command(&mut self) -> anyhow::Result<()> {
         if let Some(selected_command) = &self.selected_command {
             let command = &selected_command.value;
             match self.commands.remove(command) {
                 Ok(map) => {
+                    let map = map.clone();
                     let path = self.config.command_file_path();
-                    tokio::task::block_in_place(|| fs::save_at(map, path))?;
+                    tokio::task::spawn_blocking(move || fs::save_at(&map, path)).await??;
                     self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
                     self.cmd_map = self.commands.as_map().clone();
                     self.selected_command =
@@ -306,15 +307,16 @@ impl State {
         }
     }
 
-    pub fn insert_command(&mut self) -> anyhow::Result<()> {
+    pub async fn insert_command(&mut self) -> anyhow::Result<()> {
         let new_command = self.edit_state.get();
 
         debug!("About to insert command: {:#?}", new_command);
         match self.commands.add(&new_command) {
             Ok(map) => {
                 debug!("Command inserted successfully");
+                let map = map.clone();
                 let path = self.config.command_file_path();
-                tokio::task::block_in_place(|| fs::save_at(map, path))?;
+                tokio::task::spawn_blocking(move || fs::save_at(&map, path)).await??;
                 self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
                 self.cmd_map = self.commands.as_map().clone();
                 let selected_command = SelectedCommand::new(new_command, 0);
@@ -329,7 +331,7 @@ impl State {
         Ok(())
     }
 
-    pub fn edit_command(&mut self) -> anyhow::Result<()> {
+    pub async fn edit_command(&mut self) -> anyhow::Result<()> {
         let edited = self.edit_state.get();
 
         let actual = self
@@ -342,8 +344,9 @@ impl State {
         match self.commands.edit(&edited, &actual) {
             Ok(map) => {
                 debug!("Command edited successfully");
+                let map = map.clone();
                 let path = self.config.command_file_path();
-                tokio::task::block_in_place(|| fs::save_at(map, path))?;
+                tokio::task::spawn_blocking(move || fs::save_at(&map, path)).await??;
                 self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
                 self.cmd_map = self.commands.as_map().clone();
                 let selected_command = SelectedCommand::new(
@@ -524,20 +527,20 @@ mod test {
         Ok(())
     }
 
-    #[test]
-    fn should_update_cmd_map_on_delete() -> Result<()> {
+    #[tokio::test]
+    async fn should_update_cmd_map_on_delete() -> Result<()> {
         let mut state = setup_state()?;
         let original_len = state.cmd_map.to_vec().len();
 
-        state.delete_command()?;
+        state.delete_command().await?;
 
         assert_eq!(state.cmd_map.to_vec().len(), original_len - 1);
 
         Ok(())
     }
 
-    #[test]
-    fn should_update_cmd_map_on_edit() -> Result<()> {
+    #[tokio::test]
+    async fn should_update_cmd_map_on_edit() -> Result<()> {
         let mut state = setup_state()?;
 
         // Get the selected command before editing
@@ -548,7 +551,7 @@ mod test {
         state.edit_state.update_command(Some("new_command".to_string()));
         state.edit_state.update_namespace(Some(original.value.namespace.to_string()));
 
-        state.edit_command()?;
+        state.edit_command().await?;
 
         let cmd_vec = state.cmd_map.to_vec();
         assert!(
