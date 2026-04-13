@@ -204,7 +204,7 @@ impl Screen {
         // on_attach runs after listeners are registered so the layer can
         // update its components directly via borrow_inner_mut().
         if let Some(top) = self.layers.last_mut() {
-            top.on_attach(state_tx).await;
+            top.on_attach(state_tx);
         }
     }
 
@@ -248,7 +248,7 @@ impl Screen {
         };
         self.subscriptions.extend(subscriptions);
         if let Some(top) = self.layers.last_mut() {
-            top.on_attach(state_tx).await;
+            top.on_attach(state_tx);
         }
     }
 

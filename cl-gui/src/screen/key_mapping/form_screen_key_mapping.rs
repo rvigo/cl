@@ -9,33 +9,42 @@ use crate::screen::key_mapping::{create_notify_command, KeyMapping, ScreenComman
 use crate::screen::layer::{FormScreenLayer, MainScreenLayer, PopupLayer};
 use crate::screen::{ActiveScreen, ScreenCommandCallback::UpdateAll};
 use crate::state::state_event::StateEvent;
-use async_trait::async_trait;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use tracing::debug;
+use std::future::Future;
+use std::pin::Pin;
 use tokio::sync::mpsc::Sender;
 
-#[async_trait(?Send)]
 impl KeyMapping for FormScreenLayer {
-    async fn handle_key_event(
-        &self,
+    fn handle_key_event<'a>(
+        &'a self,
         key: KeyEvent,
         _: Sender<StateEvent>,
-    ) -> Option<Vec<ScreenCommand>> {
-        match key {
-            KeyEvent {
-                code: KeyCode::Esc,
-                modifiers: KeyModifiers::NONE,
-                ..
-            }
-            | KeyEvent {
-                code: KeyCode::Char('c'),
-                modifiers: KeyModifiers::CONTROL,
-                ..
-            } => {
-                if let Some(inner) =
-                    self.screen_state.as_observable().downcast_to::<ScreenState>()
-                {
-                    if inner.has_changes {
+    ) -> Pin<Box<dyn Future<Output = Option<Vec<ScreenCommand>>> + 'a>> {
+        // Extract all self-borrowed data up front so the async block owns
+        // only plain values — no borrow of `self` crosses the await point.
+        let has_changes = self
+            .screen_state
+            .as_observable()
+            .downcast_to::<ScreenState>()
+            .map_or(false, |s| s.has_changes);
+        let next_field = self.get_next_field();
+        let prev_field = self.get_previous_field();
+        let mode = self.mode;
+
+        Box::pin(async move {
+            match key {
+                KeyEvent {
+                    code: KeyCode::Esc,
+                    modifiers: KeyModifiers::NONE,
+                    ..
+                }
+                | KeyEvent {
+                    code: KeyCode::Char('c'),
+                    modifiers: KeyModifiers::CONTROL,
+                    ..
+                } => {
+                    if has_changes {
                         debug!(target: "clr_form_screen_key_mapping", "Has unsaved changes, asking for confirmation");
                         Some(vec![
                             AddLayer(Box::new(PopupLayer::default())),
@@ -54,61 +63,67 @@ impl KeyMapping for FormScreenLayer {
                             ScreenCommand::Callback(UpdateAll),
                         ])
                     }
-                } else {
-                    None
+                }
+                KeyEvent {
+                    code: KeyCode::Char('s'),
+                    modifiers: KeyModifiers::CONTROL,
+                    ..
+                } => {
+                    let events = vec![
+                        ScreenCommand::GetFieldContent,
+                        ScreenCommand::Form(FormCallback::Save(mode)),
+                        ScreenCommand::ReplaceCurrentLayer(Box::new(MainScreenLayer::default())),
+                        ScreenCommand::Callback(UpdateAll),
+                    ];
+                    Some(events)
+                }
+                KeyEvent {
+                    code: KeyCode::Tab,
+                    modifiers: KeyModifiers::NONE,
+                    ..
+                } => {
+                    let events = vec![
+                        create_notify_command::<EditableTextbox>(EditableTextboxEvent::SetField(
+                            next_field.clone(),
+                        )),
+                        create_notify_command::<ScreenState>(ScreenStateEvent::SetField(
+                            next_field,
+                        )),
+                    ];
+                    Some(events)
+                }
+                KeyEvent {
+                    code: KeyCode::BackTab,
+                    modifiers: KeyModifiers::SHIFT,
+                    ..
+                } => {
+                    let events = vec![
+                        create_notify_command::<EditableTextbox>(EditableTextboxEvent::SetField(
+                            prev_field.clone(),
+                        )),
+                        create_notify_command::<ScreenState>(ScreenStateEvent::SetField(
+                            prev_field,
+                        )),
+                    ];
+                    Some(events)
+                }
+                KeyEvent {
+                    code: KeyCode::F(1),
+                    ..
+                } => Some(vec![
+                    AddLayer(Box::new(PopupLayer::default())),
+                    create_notify_command::<Popup>(PopupEvent::Create(Help(ActiveScreen::Form))),
+                ]),
+                input => {
+                    debug!(target: "clr_form_screen_key_mapping", "Received key event: {:?}", input);
+                    Some(vec![
+                        create_notify_command::<EditableTextbox>(EditableTextboxEvent::KeyInput(
+                            input,
+                        )),
+                        create_notify_command::<ScreenState>(ScreenStateEvent::KeyInput(input)),
+                    ])
                 }
             }
-            KeyEvent {
-                code: KeyCode::Char('s'),
-                modifiers: KeyModifiers::CONTROL,
-                ..
-            } => {
-                let events = vec![
-                    ScreenCommand::GetFieldContent,
-                    ScreenCommand::Form(FormCallback::Save(self.mode)),
-                    ScreenCommand::ReplaceCurrentLayer(Box::new(MainScreenLayer::default())),
-                    ScreenCommand::Callback(UpdateAll),
-                ];
-                Some(events)
-            }
-            KeyEvent {
-                code: KeyCode::Tab,
-                modifiers: KeyModifiers::NONE,
-                ..
-            } => {
-                let current_field = self.get_next_field();
-                let events = vec![
-                    create_notify_command::<EditableTextbox>(EditableTextboxEvent::SetField(current_field.clone())),
-                    create_notify_command::<ScreenState>(ScreenStateEvent::SetField(current_field)),
-                ];
-                Some(events)
-            }
-            KeyEvent {
-                code: KeyCode::BackTab,
-                modifiers: KeyModifiers::SHIFT,
-                ..
-            } => {
-                let current_field = self.get_previous_field();
-                let events = vec![
-                    create_notify_command::<EditableTextbox>(EditableTextboxEvent::SetField(current_field.clone())),
-                    create_notify_command::<ScreenState>(ScreenStateEvent::SetField(current_field)),
-                ];
-                Some(events)
-            }
-            KeyEvent {
-                code: KeyCode::F(1),
-                ..
-            } => Some(vec![
-                AddLayer(Box::new(PopupLayer::default())),
-                create_notify_command::<Popup>(PopupEvent::Create(Help(ActiveScreen::Form))),
-            ]),
-            input => {
-                debug!(target: "clr_form_screen_key_mapping", "Received key event: {:?}", input);
-                Some(vec![
-                    create_notify_command::<EditableTextbox>(EditableTextboxEvent::KeyInput(input)),
-                    create_notify_command::<ScreenState>(ScreenStateEvent::KeyInput(input)),
-                ])
-            }
-        }
+        })
     }
 }

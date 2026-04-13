@@ -15,7 +15,6 @@ crossterm = { version = "0.28.1", features = ["event-stream"] }
 tui = { package = "ratatui", version = "0.29.0" }
 unicode-width = "0.2.0"
 tokio-stream = { version = "0.1.14" }
-async-trait = "0.1.85"
 copypasta = "0.10.1"
 tui-textarea = "0.7.0"
 nucleo-matcher = "0.3.1"

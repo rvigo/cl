@@ -13,7 +13,6 @@ use crate::observer::observable::Observable;
 use crate::screen::key_mapping::KeyMapping;
 use crate::screen::theme::Theme;
 use crate::state::state_event::StateEvent;
-use async_trait::async_trait;
 use std::any::TypeId;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
@@ -35,7 +34,6 @@ use tui::Frame;
 /// * [`on_detach`](Layer::on_detach) — called by the screen *before* the
 ///   layer is popped and its listeners are removed.  Use this to clean up
 ///   any state the layer holds.
-#[async_trait(?Send)]
 pub trait Layer: KeyMapping {
     fn render(&mut self, frame: &mut Frame, theme: &Theme);
 
@@ -43,12 +41,8 @@ pub trait Layer: KeyMapping {
 
     /// Called after this layer is pushed onto the screen and its listeners
     /// are registered.  The default implementation does nothing.
-    async fn on_attach(&mut self, _state_tx: &Sender<StateEvent>) {}
+    fn on_attach(&mut self, _state_tx: &Sender<StateEvent>) {}
 
     /// Called before this layer is removed from the screen.
-    /// The default implementation does nothing.
-    ///
-    /// Note: intentionally sync (no async) since detach is a fire-and-forget
-    /// cleanup step that does not need to await I/O.
     fn on_detach(&mut self) {}
 }
