@@ -28,9 +28,10 @@ impl Table {
     }
 
     fn build(&self) -> Self {
-        let row_bigger_cell_width = self.content.iter().fold(0u16, |acc, row| {
-            acc.max(row.width())
-        });
+        let row_bigger_cell_width = self
+            .content
+            .iter()
+            .fold(0u16, |acc, row| acc.max(row.width()));
 
         let content = self
             .content
@@ -88,7 +89,11 @@ impl Row {
     }
 
     pub fn width(&self) -> u16 {
-        self.cells.iter().map(|cell| cell.width()).max().unwrap_or(0)
+        self.cells
+            .iter()
+            .map(|cell| cell.width())
+            .max()
+            .unwrap_or(0)
     }
 
     pub fn cells(&self) -> Iter<'_, Cell> {
@@ -145,6 +150,7 @@ pub trait CustomWidth {
 
 impl CustomWidth for str {
     fn custom_width(&self) -> u16 {
-        self.lines().fold(0u16, |acc, line| acc.max(line.width() as u16))
+        self.lines()
+            .fold(0u16, |acc, line| acc.max(line.width() as u16))
     }
 }

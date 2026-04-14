@@ -53,11 +53,14 @@ impl Popup {
         let previous = (current + self.buttons.len() - 1) % self.buttons.len();
         self.state.select(previous);
     }
-
 }
 
 impl Popup {
-    pub fn dialog(message: String, yes_action: FutureEventType, yes_callback: ScreenCommandCallback) -> Self {
+    pub fn dialog(
+        message: String,
+        yes_action: FutureEventType,
+        yes_callback: ScreenCommandCallback,
+    ) -> Self {
         Popup {
             title: "Warning".to_string(),
             content: message,
@@ -190,7 +193,11 @@ fn compute_popup_area(content: &str, area: Rect, popup_type: Option<PopupType>) 
     // 2 for border, 2 for horizontal padding
     let popup_width = (content_width + 4).min(area.width);
     // 2 for border; help has no buttons, dialogs reserve 3 rows for buttons
-    let button_rows: u16 = if popup_type == Some(PopupType::Help) { 0 } else { 3 };
+    let button_rows: u16 = if popup_type == Some(PopupType::Help) {
+        0
+    } else {
+        3
+    };
     let popup_height = (line_count + 2 + button_rows).min(area.height);
 
     let h_pad = area.width.saturating_sub(popup_width) / 2;
@@ -219,10 +226,19 @@ fn main_options() -> Table {
     vec![
         Row::from_iter([Cell::from("Quit"), Cell::from("<Q/Esc/Ctrl-C>")]),
         Row::from_iter([Cell::from("Create new command"), Cell::from("<I/Insert>")]),
-        Row::from_iter([Cell::from("Delete selected command"), Cell::from("<D/Delete>")]),
+        Row::from_iter([
+            Cell::from("Delete selected command"),
+            Cell::from("<D/Delete>"),
+        ]),
         Row::from_iter([Cell::from("Edit selected command"), Cell::from("<E>")]),
-        Row::from_iter([Cell::from("Move to next namespace"), Cell::from("<L/→/Tab>")]),
-        Row::from_iter([Cell::from("Move to previous namespace"), Cell::from("<H/←/Shift-Tab>")]),
+        Row::from_iter([
+            Cell::from("Move to next namespace"),
+            Cell::from("<L/→/Tab>"),
+        ]),
+        Row::from_iter([
+            Cell::from("Move to previous namespace"),
+            Cell::from("<H/←/Shift-Tab>"),
+        ]),
         Row::from_iter([Cell::from("Move up"), Cell::from("<K/↑>")]),
         Row::from_iter([Cell::from("Move down"), Cell::from("<J/↓>")]),
         Row::from_iter([Cell::from("Copy selected command"), Cell::from("<Y>")]),
@@ -305,4 +321,3 @@ mod tests {
         assert_eq!(popup.popup_type, None);
     }
 }
-

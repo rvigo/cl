@@ -2,8 +2,8 @@ use super::Subcommand;
 use anyhow::{Context, Result};
 use cl_core::{fs, initialize_commands, Command, CommandMapExt, CommandVecExt, Commands, Config};
 use clap::{Parser, ValueEnum};
-use tracing::{debug, info, info_span, warn};
 use std::{borrow::Cow, collections::HashSet, path::PathBuf};
+use tracing::{debug, info, info_span, warn};
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 enum Mode {

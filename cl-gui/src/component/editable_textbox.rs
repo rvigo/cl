@@ -1,10 +1,10 @@
 use crate::component::Renderable;
 use crate::screen::theme::Theme;
 use crate::state::state_event::FieldName;
+use tui::layout::Rect;
 use tui::prelude::Style;
 use tui::widgets::{Block, Clear};
 use tui::Frame;
-use tui::layout::Rect;
 use tui_textarea::{CursorMove, TextArea};
 
 #[derive(Default, Debug)]
@@ -55,7 +55,8 @@ impl Renderable for EditableTextbox {
         self.textarea.set_block(block);
 
         if self.active {
-            self.textarea.set_cursor_style(Style::default().bg(theme.cursor_color.into()));
+            self.textarea
+                .set_cursor_style(Style::default().bg(theme.cursor_color.into()));
         } else {
             self.textarea.set_cursor_style(Style::default());
         }

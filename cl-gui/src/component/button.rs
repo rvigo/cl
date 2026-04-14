@@ -50,7 +50,12 @@ pub struct Button {
 }
 
 impl Button {
-    pub fn new(content: impl Into<String>, active: bool, on_click: FutureEventType, callback: ScreenCommandCallback) -> Self {
+    pub fn new(
+        content: impl Into<String>,
+        active: bool,
+        on_click: FutureEventType,
+        callback: ScreenCommandCallback,
+    ) -> Self {
         Self {
             content: content.into(),
             is_active: active,

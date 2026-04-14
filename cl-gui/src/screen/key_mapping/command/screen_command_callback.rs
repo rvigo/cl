@@ -5,9 +5,9 @@ use crate::state::state_event::StateEvent::{
     CommandDetails, CurrentCommand, GetAllListItems, GetAllNamespaces,
 };
 use cl_core::{Command, CommandVecExt};
-use tracing::debug;
 use std::any::TypeId;
 use tokio::sync::mpsc::Sender;
+use tracing::debug;
 
 /// Enables the communication between the upper layer and the lower layer via callback commands
 #[derive(Clone, Debug)]

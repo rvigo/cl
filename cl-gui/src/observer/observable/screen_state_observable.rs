@@ -38,7 +38,9 @@ mod tests {
     #[test]
     fn set_field_updates_current_field() {
         let mut state = ScreenState::new(FieldName::Alias);
-        state.on_event(Event::ScreenState(ScreenStateEvent::SetField(FieldName::Command)));
+        state.on_event(Event::ScreenState(ScreenStateEvent::SetField(
+            FieldName::Command,
+        )));
         assert_eq!(state.current_field, FieldName::Command);
     }
 

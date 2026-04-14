@@ -8,11 +8,11 @@ use cl_core::{
     fs, Command, CommandExec, CommandMap, CommandMapExt, CommandVec, CommandVecExt, Commands,
     Config,
 };
-use tracing::{debug, error};
 use nucleo_matcher::pattern::{Atom, AtomKind, CaseMatching, Normalization};
 use nucleo_matcher::{Config as MatcherConfig, Matcher, Utf32Str};
 use std::cmp::Reverse;
 use std::collections::{HashMap, HashSet};
+use tracing::{debug, error};
 
 mod edit;
 pub mod selected_command;
@@ -201,8 +201,9 @@ impl State {
                     tokio::task::spawn_blocking(move || fs::save_at(&map, path)).await??;
                     self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
                     self.cmd_map = self.commands.as_map().clone();
-                    self.selected_command =
-                        to_sorted_vec(&self.current_items).first().map(|c| SelectedCommand::new(c, 0));
+                    self.selected_command = to_sorted_vec(&self.current_items)
+                        .first()
+                        .map(|c| SelectedCommand::new(c, 0));
                 }
                 Err(e) => {
                     bail!("Error deleting command: {e:?}");
@@ -300,7 +301,8 @@ impl State {
                     .map(|s| s.trim().to_string())
                     .filter(|s| !s.is_empty())
                     .collect::<Vec<_>>();
-                self.edit_state.update_tags(if tags.is_empty() { None } else { Some(tags) });
+                self.edit_state
+                    .update_tags(if tags.is_empty() { None } else { Some(tags) });
             }
             FieldName::Command => self.edit_state.update_command(Some(content)),
             FieldName::Namespace => self.edit_state.update_namespace(Some(content)),
@@ -544,18 +546,26 @@ mod test {
         let mut state = setup_state()?;
 
         // Get the selected command before editing
-        let original = state.get_selected_command().expect("should have selected command");
+        let original = state
+            .get_selected_command()
+            .expect("should have selected command");
 
         // Update edit state with new values
         state.edit_state.update_alias(Some("new_alias".to_string()));
-        state.edit_state.update_command(Some("new_command".to_string()));
-        state.edit_state.update_namespace(Some(original.value.namespace.to_string()));
+        state
+            .edit_state
+            .update_command(Some("new_command".to_string()));
+        state
+            .edit_state
+            .update_namespace(Some(original.value.namespace.to_string()));
 
         state.edit_command().await?;
 
         let cmd_vec = state.cmd_map.to_vec();
         assert!(
-            cmd_vec.iter().any(|c| c.alias == "new_alias" && c.command == "new_command"),
+            cmd_vec
+                .iter()
+                .any(|c| c.alias == "new_alias" && c.command == "new_command"),
             "cmd_map should contain the edited command"
         );
 

@@ -40,7 +40,11 @@ impl Renderable for List {
                 .map(ListItem::new)
                 .collect::<Vec<ListItem>>(),
         )
-        .highlight_style(Style::default().fg(theme.highlight_color.into()).add_modifier(Modifier::BOLD))
+        .highlight_style(
+            Style::default()
+                .fg(theme.highlight_color.into())
+                .add_modifier(Modifier::BOLD),
+        )
         .highlight_symbol("> ")
         .block(Block::bordered().style(block_style));
 
