@@ -1,0 +1,77 @@
+project_name: cl
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    goamd64:
+      - v1
+    main: .github/utils/dummy.go
+    binary: cl
+    hooks:
+      post:
+        - sh .github/utils/post_build.sh
+
+archives:
+  - files:
+      - README.md
+      - completions/**/*
+
+brews:
+  - name: cl
+    description: |
+      cl is a way to group all your aliases, once in a while or multiple usages 
+      with a lot of args commands in an organized and human readable place
+    caveats: |
+      In order to get cl completion (only available for ZSH shell),
+      be sure that $(brew --prefix)/share/zsh/site-functions is present in $FPATH.
+      If not, add the following line to your ~/.zshrc, BEFORE any call to compinit:
+      FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
+    homepage: https://github.com/rvigo/cl
+    repository:
+      owner: rvigo
+      name: homebrew-cl
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    install: |-
+      bin.install "cl"
+      zsh_completion.install "completions/zsh/_cl" => "_cl"
+
+checksum:
+  name_template: "checksums.txt"
+
+release:
+  github:
+    owner: rvigo
+    name: cl
+  prerelease: auto
+  draft: false
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: "Bug fixes"
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: "Build"
+      regexp: '^.*?build(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: Others
+      order: 999
