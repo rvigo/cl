@@ -2,8 +2,8 @@ use crate::component::TextBox;
 use crate::observer::event::{Event, TextBoxEvent};
 use crate::observer::observable::SyncObservable;
 use crate::state::state_event::FieldName;
-use tracing::debug;
 use std::borrow::Cow;
+use tracing::debug;
 
 impl SyncObservable for TextBox {
     fn on_event(&mut self, event: Event) {
@@ -12,9 +12,7 @@ impl SyncObservable for TextBox {
                 TextBoxEvent::UpdateCommand(command) => {
                     let content = match self.name {
                         FieldName::Command => command.command.some_or_none(),
-                        FieldName::Description => {
-                            command.description.map(|desc| desc.to_string())
-                        }
+                        FieldName::Description => command.description.map(|desc| desc.to_string()),
                         FieldName::Tags => command.tags.map(|vec| {
                             vec.iter()
                                 .map(|cow| cow.as_ref())
@@ -56,7 +54,11 @@ pub trait SomeOrNone {
 impl SomeOrNone for Cow<'static, str> {
     fn some_or_none(&self) -> Option<String> {
         let s = self.to_string();
-        if s.is_empty() { None } else { Some(s) }
+        if s.is_empty() {
+            None
+        } else {
+            Some(s)
+        }
     }
 }
 

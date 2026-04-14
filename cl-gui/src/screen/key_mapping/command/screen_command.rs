@@ -1,8 +1,8 @@
-use std::any::TypeId;
-use tokio::sync::mpsc::Receiver;
 use crate::observer::event::Event;
 use crate::screen::key_mapping::command::{FormCallback, ScreenCommandCallback};
 use crate::screen::layer::Layer;
+use std::any::TypeId;
+use tokio::sync::mpsc::Receiver;
 
 /// Commands that can be sent to the current layer
 pub enum ScreenCommand {

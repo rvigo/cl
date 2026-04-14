@@ -4,8 +4,8 @@ use super::Subcommand;
 use anyhow::Result;
 use cl_core::{fs, initialize_commands, CommandBuilder, Config};
 use clap::Parser;
-use tracing::{info, warn};
 use maybe_stdin::MaybeStdin;
+use tracing::{info, warn};
 
 #[derive(Parser, Debug)]
 pub struct Add {

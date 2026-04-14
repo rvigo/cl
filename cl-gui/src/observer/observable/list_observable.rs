@@ -45,7 +45,10 @@ mod tests {
     fn update_all_resets_to_first() {
         let mut list = List::new();
         list.on_event(Event::List(ListEvent::Next(5)));
-        list.on_event(Event::List(ListEvent::UpdateAll(vec!["x".into(), "y".into()])));
+        list.on_event(Event::List(ListEvent::UpdateAll(vec![
+            "x".into(),
+            "y".into(),
+        ])));
         assert_eq!(list.state.selected(), Some(0));
     }
 

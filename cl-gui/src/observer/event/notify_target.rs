@@ -23,8 +23,8 @@ mod tests {
         ClipboardStatus, EditableTextbox, List, Popup, ScreenState, Search, Tabs, TextBox,
     };
     use crate::observer::event::{
-        ClipboardAction, EditableTextboxEvent, ListEvent, PopupEvent, SearchEvent, ScreenStateEvent,
-        TabsEvent, TextBoxEvent,
+        ClipboardAction, EditableTextboxEvent, ListEvent, PopupEvent, ScreenStateEvent,
+        SearchEvent, TabsEvent, TextBoxEvent,
     };
     use std::any::TypeId;
 
@@ -43,7 +43,10 @@ mod tests {
     #[test]
     fn textbox_wraps_to_event_textbox() {
         let event = TextBox::wrap(TextBoxEvent::UpdateContent("x".to_string()));
-        assert!(matches!(event, Event::TextBox(TextBoxEvent::UpdateContent(_))));
+        assert!(matches!(
+            event,
+            Event::TextBox(TextBoxEvent::UpdateContent(_))
+        ));
     }
 
     #[test]
@@ -56,13 +59,19 @@ mod tests {
     fn screen_state_wraps_to_event_screen_state() {
         use crate::state::state_event::FieldName;
         let event = ScreenState::wrap(ScreenStateEvent::SetField(FieldName::Command));
-        assert!(matches!(event, Event::ScreenState(ScreenStateEvent::SetField(_))));
+        assert!(matches!(
+            event,
+            Event::ScreenState(ScreenStateEvent::SetField(_))
+        ));
     }
 
     #[test]
     fn clipboard_status_wraps_to_event_clipboard_status() {
         let event = ClipboardStatus::wrap(ClipboardAction::Copied);
-        assert!(matches!(event, Event::ClipboardStatus(ClipboardAction::Copied)));
+        assert!(matches!(
+            event,
+            Event::ClipboardStatus(ClipboardAction::Copied)
+        ));
     }
 
     #[test]

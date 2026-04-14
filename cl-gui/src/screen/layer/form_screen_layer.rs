@@ -7,11 +7,11 @@ use crate::observer::ObservableComponent;
 use crate::screen::layer::Layer;
 use crate::screen::theme::Theme;
 use crate::state::state_event::FieldName;
-use tracing::debug;
 use std::any::TypeId;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::rc::Rc;
+use tracing::debug;
 use tui::layout::{Constraint, Direction, Layout};
 use tui::prelude::Style;
 use tui::text::Line;
@@ -295,7 +295,7 @@ impl FormScreenLayer {
         for ch in command.chars() {
             match ch {
                 '#' if !in_param => in_param = true,
-                '{' if in_param => {},
+                '{' if in_param => {}
                 '}' if in_param => {
                     if !current.is_empty() {
                         params.push(current.clone());
@@ -523,10 +523,7 @@ mod tests {
             FieldName::Description,
             FieldName::Tags,
         ];
-        let hints: Vec<_> = fields
-            .iter()
-            .map(FormScreenLayer::hint_for_field)
-            .collect();
+        let hints: Vec<_> = fields.iter().map(FormScreenLayer::hint_for_field).collect();
 
         // Each field has a non-empty hint
         assert!(hints.iter().all(|h| !h.is_empty()));

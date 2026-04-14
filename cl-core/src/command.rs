@@ -2,9 +2,9 @@ use crate::CommandError;
 use anyhow::{ensure, Result};
 use itertools::Itertools;
 use regex::Regex;
-use std::sync::LazyLock;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use std::sync::LazyLock;
 
 static PARAM_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"#\{[^}]*}").expect("Invalid regex pattern"));
@@ -262,12 +262,24 @@ mod test {
     fn ord_orders_by_namespace_then_alias() {
         use std::cmp::Ordering;
 
-        let a = CommandBuilder::default().alias("a").namespace("a").command("x").build();
-        let b = CommandBuilder::default().alias("b").namespace("a").command("x").build();
-        let c = CommandBuilder::default().alias("a").namespace("b").command("x").build();
+        let a = CommandBuilder::default()
+            .alias("a")
+            .namespace("a")
+            .command("x")
+            .build();
+        let b = CommandBuilder::default()
+            .alias("b")
+            .namespace("a")
+            .command("x")
+            .build();
+        let c = CommandBuilder::default()
+            .alias("a")
+            .namespace("b")
+            .command("x")
+            .build();
 
-        assert_eq!(a.cmp(&b), Ordering::Less);  // same ns, alias a < b
-        assert_eq!(a.cmp(&c), Ordering::Less);  // ns a < b
+        assert_eq!(a.cmp(&b), Ordering::Less); // same ns, alias a < b
+        assert_eq!(a.cmp(&c), Ordering::Less); // ns a < b
         assert_eq!(c.cmp(&b), Ordering::Greater); // ns b > a
     }
 }

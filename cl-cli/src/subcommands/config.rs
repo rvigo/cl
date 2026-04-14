@@ -3,7 +3,6 @@ use anyhow::{bail, Context, Result};
 use cl_core::{config, Config as CoreConfig, LogLevel as ConfigLogLevel};
 use clap::{Parser, Subcommand as ClapSubcommand, ValueEnum};
 use dirs::home_dir;
-use tracing::{debug, info};
 use std::{
     env,
     fs::{write, OpenOptions},
@@ -11,6 +10,7 @@ use std::{
     path::PathBuf,
     process::Command,
 };
+use tracing::{debug, info};
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
 enum LogLevel {
@@ -144,7 +144,9 @@ fn validate_fzf() -> Result<()> {
         .context("Cannot validate if fzf is installed")?;
 
     if !output.status.success() {
-        bail!("This widget needs fzf to work. Please first install it and then reinstall the widget")
+        bail!(
+            "This widget needs fzf to work. Please first install it and then reinstall the widget"
+        )
     }
 
     Ok(())

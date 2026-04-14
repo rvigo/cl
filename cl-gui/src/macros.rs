@@ -25,7 +25,11 @@ macro_rules! oneshot {
         let _event = $event { respond_to: tx };
         if let Err(e) = $state_tx.send(_event).await {
             tracing::error!("oneshot send failed for {}: {}", stringify!($event), e);
-            Err(anyhow::anyhow!("oneshot send failed for {}: {}", stringify!($event), e))
+            Err(anyhow::anyhow!(
+                "oneshot send failed for {}: {}",
+                stringify!($event),
+                e
+            ))
         } else {
             rx.await.map_err(|e| {
                 tracing::error!("oneshot receive failed for {}: {}", stringify!($event), e);
@@ -44,4 +48,3 @@ macro_rules! async_fn_body {
         })
     };
 }
-

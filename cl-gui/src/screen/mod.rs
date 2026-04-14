@@ -16,12 +16,12 @@ use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::CurrentCommand;
 use crossterm::event::Event as CrosstermEvent;
 use layer::MainScreenLayer;
-use tracing::{debug, trace};
 use std::any::TypeId;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::rc::Rc;
 use tokio::sync::mpsc::{Receiver, Sender};
+use tracing::{debug, trace};
 use tui::Frame;
 
 use crate::observer::observable::Observable;
@@ -56,10 +56,12 @@ impl Screen {
         Self {
             subscriptions,
             layers: vec![Box::new(initial)],
-            clipboard: Clipboard::new().map_err(|e| {
-                tracing::warn!("clipboard unavailable: {e}");
-                e
-            }).ok(),
+            clipboard: Clipboard::new()
+                .map_err(|e| {
+                    tracing::warn!("clipboard unavailable: {e}");
+                    e
+                })
+                .ok(),
             theme: Theme::default(),
         }
     }
@@ -88,8 +90,7 @@ impl Screen {
                                     self.remove_last_layer();
 
                                     if let Some(mut events) = callback_receiver.take() {
-                                        self.handle_callback_receiver(&mut events, state_tx)
-                                            .await;
+                                        self.handle_callback_receiver(&mut events, state_tx).await;
                                     }
                                 }
                                 ScreenCommand::Notify((tid, event)) => {
@@ -102,9 +103,9 @@ impl Screen {
                                 }
                                 ScreenCommand::CopyToClipboard => {
                                     if let Some(clipboard) = &mut self.clipboard {
-                                        if let Ok(Some(cmd)) = oneshot!(state_tx, CurrentCommand)
-                                        {
-                                            if let Err(e) = clipboard.set_content(cmd.value.command) {
+                                        if let Ok(Some(cmd)) = oneshot!(state_tx, CurrentCommand) {
+                                            if let Err(e) = clipboard.set_content(cmd.value.command)
+                                            {
                                                 tracing::error!("failed to copy to clipboard: {e}");
                                             }
                                             self.notify(
@@ -138,19 +139,22 @@ impl Screen {
                                 ScreenCommand::Form(cb) => {
                                     if let Err(error_msg) = cb.handle(state_tx.clone()).await {
                                         // Add error popup layer
-                                        self.add_layer(Box::new(layer::PopupLayer::default()), state_tx).await;
+                                        self.add_layer(
+                                            Box::new(layer::PopupLayer::default()),
+                                            state_tx,
+                                        )
+                                        .await;
                                         // Notify to display the error
-                                        let popup_event = PopupEvent::Create(
-                                            PopupType::Dialog(
-                                                format!("Error: {error_msg}"),
-                                                FutureEventType::State(|_| Box::pin(async { Ok(()) })),
-                                                ScreenCommandCallback::DoNothing
-                                            )
-                                        );
+                                        let popup_event = PopupEvent::Create(PopupType::Dialog(
+                                            format!("Error: {error_msg}"),
+                                            FutureEventType::State(|_| Box::pin(async { Ok(()) })),
+                                            ScreenCommandCallback::DoNothing,
+                                        ));
                                         self.notify(
                                             TypeId::of::<Popup>(),
-                                            Event::Popup(popup_event)
-                                        ).await;
+                                            Event::Popup(popup_event),
+                                        )
+                                        .await;
                                     }
                                 }
                             }
@@ -166,7 +170,7 @@ impl Screen {
         callback_receiver: &mut Receiver<ScreenCommandCallback>,
         state_tx: &Sender<StateEvent>,
     ) {
-        use tokio::time::{Duration, timeout};
+        use tokio::time::{timeout, Duration};
         match timeout(Duration::from_millis(100), callback_receiver.recv()).await {
             Ok(Some(message)) => match message {
                 ScreenCommandCallback::ExitEditScreen => {
@@ -193,7 +197,11 @@ impl Screen {
     ///
     /// Registers the layer's listeners, then calls
     /// [`Layer::on_attach`] so the layer can pre-populate its state.
-    pub async fn add_layer(&mut self, layer: Box<dyn Layer + 'static>, state_tx: &Sender<StateEvent>) {
+    pub async fn add_layer(
+        &mut self,
+        layer: Box<dyn Layer + 'static>,
+        state_tx: &Sender<StateEvent>,
+    ) {
         debug!("adding layer");
         self.layers.push(layer);
         let subscriptions = {

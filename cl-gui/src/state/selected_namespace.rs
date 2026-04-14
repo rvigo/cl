@@ -1,7 +1,7 @@
 #[derive(Default, PartialEq, Debug, Clone, Eq)]
 pub struct SelectedNamespace {
     pub idx: usize,
-    pub name: String
+    pub name: String,
 }
 
 impl SelectedNamespace {

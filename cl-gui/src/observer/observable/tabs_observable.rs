@@ -32,7 +32,10 @@ mod tests {
     fn update_all_resets_selection() {
         let mut tabs = tabs_with_items(vec!["a", "b", "c"]);
         tabs.on_event(Event::Tabs(TabsEvent::Next(2)));
-        tabs.on_event(Event::Tabs(TabsEvent::UpdateAll(vec!["x".into(), "y".into()])));
+        tabs.on_event(Event::Tabs(TabsEvent::UpdateAll(vec![
+            "x".into(),
+            "y".into(),
+        ])));
         // After UpdateAll the selected index is reset to 0 (reset_selected).
         // We verify by sending Next(1) afterwards — if it were already 0 the
         // tab should accept 1 without panic.

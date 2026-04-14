@@ -3,8 +3,8 @@ use crate::state::state_event::StateEvent;
 use crate::state::State;
 use anyhow::Result;
 use cl_core::Config;
-use tracing::{debug, error};
 use tokio::sync::mpsc::Receiver;
+use tracing::{debug, error};
 
 pub struct StateActor {
     state: State,
@@ -63,7 +63,10 @@ impl StateActor {
                     );
                     SelectedCommand::default()
                 });
-                if respond_to.send((selected_namespace, selected_command, commands)).is_err() {
+                if respond_to
+                    .send((selected_namespace, selected_command, commands))
+                    .is_err()
+                {
                     debug!("PreviousTab: response receiver dropped");
                 }
             }
@@ -76,7 +79,10 @@ impl StateActor {
                     );
                     SelectedCommand::default()
                 });
-                if respond_to.send((selected_namespace, selected_command, commands)).is_err() {
+                if respond_to
+                    .send((selected_namespace, selected_command, commands))
+                    .is_err()
+                {
                     debug!("NextTab: response receiver dropped");
                 }
             }
@@ -103,7 +109,10 @@ impl StateActor {
             }
             StateEvent::CommandDetails { respond_to } => {
                 let command = self.state.get_selected_command();
-                if respond_to.send(command.map(|selected| selected.value)).is_err() {
+                if respond_to
+                    .send(command.map(|selected| selected.value))
+                    .is_err()
+                {
                     debug!("CommandDetails: response receiver dropped");
                 }
             }

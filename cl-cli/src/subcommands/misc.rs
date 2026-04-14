@@ -99,7 +99,10 @@ impl Summarize for Command<'_> {
         let command_string = &self.command;
         let max_length_command: String = command_string.chars().take(MAX_COMMAND_LEN).collect();
         let command_string = if max_length_command.contains('\n') {
-            let idx = self.command.find('\n').expect("newline confirmed in preview");
+            let idx = self
+                .command
+                .find('\n')
+                .expect("newline confirmed in preview");
             format!("{}...", &self.command[..idx])
         } else if max_length_command.len() == MAX_COMMAND_LEN {
             format!("{}...", &self.command[..MAX_COMMAND_LEN])
@@ -170,7 +173,10 @@ mod test {
         let result = misc.run(mock_config());
         assert!(result.is_err());
         assert!(
-            result.unwrap_err().to_string().contains("--alias/-a is required"),
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("--alias/-a is required"),
             "Error should tell user to provide --alias/-a"
         );
     }

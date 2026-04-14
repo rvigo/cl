@@ -14,12 +14,10 @@ impl Observable for EditableTextbox {
                     debug!("EditableTextbox({}): loading command fields", self.name);
                     let content = match self.name {
                         FieldName::Command => command.command.some_or_none(),
-                        FieldName::Description => {
-                            command.description.map(|d| d.to_string())
-                        }
-                        FieldName::Tags => command.tags.map(|v| {
-                            v.iter().map(|c| c.as_ref()).collect::<Vec<_>>().join(", ")
-                        }),
+                        FieldName::Description => command.description.map(|d| d.to_string()),
+                        FieldName::Tags => command
+                            .tags
+                            .map(|v| v.iter().map(|c| c.as_ref()).collect::<Vec<_>>().join(", ")),
                         FieldName::Namespace => command.namespace.some_or_none(),
                         FieldName::Alias => command.alias.some_or_none(),
                     };
@@ -38,7 +36,10 @@ impl Observable for EditableTextbox {
                     debug!("EditableTextbox({}): sending content '{}'", name, content);
                     return Some(Box::pin(async move {
                         if let Err(e) = state_tx.send(EditField(name.clone(), content)).await {
-                            tracing::error!("EditableTextbox({}): failed to send field content: {e}", name);
+                            tracing::error!(
+                                "EditableTextbox({}): failed to send field content: {e}",
+                                name
+                            );
                         }
                     }));
                 }
