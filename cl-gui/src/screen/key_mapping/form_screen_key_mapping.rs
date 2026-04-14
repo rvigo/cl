@@ -10,10 +10,10 @@ use crate::screen::layer::{FormScreenLayer, MainScreenLayer, PopupLayer};
 use crate::screen::{ActiveScreen, ScreenCommandCallback::UpdateAll};
 use crate::state::state_event::StateEvent;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use tracing::debug;
 use std::future::Future;
 use std::pin::Pin;
 use tokio::sync::mpsc::Sender;
+use tracing::debug;
 
 impl KeyMapping for FormScreenLayer {
     fn handle_key_event<'a>(
@@ -27,7 +27,7 @@ impl KeyMapping for FormScreenLayer {
             .screen_state
             .as_observable()
             .downcast_to::<ScreenState>()
-            .map_or(false, |s| s.has_changes);
+            .is_some_and(|s| s.has_changes);
         let next_field = self.get_next_field();
         let prev_field = self.get_previous_field();
         let mode = self.mode;
@@ -57,9 +57,9 @@ impl KeyMapping for FormScreenLayer {
                     } else {
                         debug!(target: "clr_form_screen_key_mapping", "Exiting form screen");
                         Some(vec![
-                            ScreenCommand::ReplaceCurrentLayer(Box::new(
-                                MainScreenLayer::default(),
-                            )),
+                            ScreenCommand::ReplaceCurrentLayer(
+                                Box::new(MainScreenLayer::default()),
+                            ),
                             ScreenCommand::Callback(UpdateAll),
                         ])
                     }
