@@ -12,7 +12,7 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v4
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@1.76.0
+        uses: dtolnay/rust-toolchain@1.88.0
         with:
           components: rustfmt
       - name: Check formatting
@@ -25,7 +25,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@1.76.0
+        uses: dtolnay/rust-toolchain@1.88.0
         with:
           components: clippy
       - name: Check the lints
@@ -38,7 +38,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@1.76.0
+        uses: dtolnay/rust-toolchain@1.88.0
       - name: Unit Test
         run: |
           cargo test --workspace
