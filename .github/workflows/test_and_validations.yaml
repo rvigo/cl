@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - "**"
+    paths-ignore:
+      - ".github/**"
+      - "Dockerfile"
+      - "Dockerfile.*"
 jobs:
   format:
     name: fmt
