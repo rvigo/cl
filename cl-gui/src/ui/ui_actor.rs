@@ -1,5 +1,5 @@
 use crate::crossterm::{restore_terminal, setup_terminal};
-use crate::signal_handler::{SignalHandler, Signal};
+use crate::signal_handler::{Signal, SignalHandler};
 use crate::state::selected_command::SelectedCommand;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::{GetAllListItems, GetAllNamespaces};
@@ -7,10 +7,10 @@ use crate::ui::Ui;
 use anyhow::Result;
 use cl_core::{CommandBuilder, CommandVecExt};
 use crossterm::event::EventStream;
-use tracing::{debug, error};
 use tokio::sync::broadcast;
 use tokio::sync::mpsc::Sender;
 use tokio_stream::StreamExt;
+use tracing::{debug, error};
 
 pub struct UiActor {
     ui: Ui,
@@ -43,7 +43,10 @@ impl UiActor {
             .await;
         self.ui
             .select_command(SelectedCommand::new(
-                result.as_ref().unwrap_or(&vec![]).first()
+                result
+                    .as_ref()
+                    .unwrap_or(&vec![])
+                    .first()
                     .unwrap_or_else(|| CommandBuilder::default().build()),
                 0,
             ))
