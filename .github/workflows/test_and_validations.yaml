@@ -6,8 +6,18 @@ on:
       - "**"
     paths-ignore:
       - ".github/**"
+      - ".idea/**"
+      - ".vscode/**"
       - "Dockerfile"
       - "Dockerfile.*"
+      - "completions/**"
+      - "rustreleaser.yaml"
+      - ".goreleaser.yaml"
+      - "output.toml"
+      - "README.md"
+      - "RELEASE.md"
+      - "LICENSE"
+      - "CLAUDE.md"
 jobs:
   format:
     name: fmt
