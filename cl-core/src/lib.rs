@@ -18,7 +18,6 @@ pub use preferences::Preferences;
 pub use resource::errors::CommandError;
 pub use resource::fs;
 
-use itertools::Itertools;
 use std::collections::HashMap;
 
 pub type Namespace = String;
@@ -32,9 +31,9 @@ pub trait CommandVecExt<'cmd> {
 
     fn filter(&self, predicate: impl Fn(&Command) -> bool) -> Vec<&Command<'cmd>>;
 
-    fn get_selected(&self, idx: usize) -> Command<'cmd>;
+    fn get_selected(&self, idx: usize) -> Option<Command<'cmd>>;
 
-    fn first(&self) -> Option<Command<'cmd>>;
+    fn first_command(&self) -> Option<Command<'cmd>>;
 
     fn aliases(&self) -> Vec<String>;
 
@@ -46,7 +45,7 @@ pub trait CommandVecExt<'cmd> {
 impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
     fn sorted(&mut self) -> CommandVec<'cmd> {
         let mut sorted_commands = self.clone();
-        sorted_commands.sort_by_key(|c| c.alias.to_lowercase());
+        sorted_commands.sort();
 
         sorted_commands
     }
@@ -67,16 +66,12 @@ impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
         self.iter().filter(|c| predicate(c)).collect()
     }
 
-    fn get_selected(&self, idx: usize) -> Command<'cmd> {
-        self.get(idx)
-            .map(ToOwned::to_owned)
-            .unwrap_or_else(|| CommandBuilder::default().build())
-            .to_owned()
+    fn get_selected(&self, idx: usize) -> Option<Command<'cmd>> {
+        self.get(idx).cloned()
     }
 
-    #[allow(clippy::get_first)]
-    fn first(&self) -> Option<Command<'cmd>> {
-        self.get(0).cloned()
+    fn first_command(&self) -> Option<Command<'cmd>> {
+        self.first().cloned()
     }
 
     fn aliases(&self) -> Vec<String> {
@@ -88,11 +83,7 @@ impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
     }
 
     fn as_map(&self) -> CommandMap<'cmd> {
-        self.iter()
-            .chunk_by(|c| &c.namespace)
-            .into_iter()
-            .map(|(n, c)| (n.to_string(), c.cloned().collect()))
-            .collect::<CommandMap<'cmd>>()
+        self.to_command_map()
     }
 }
 
@@ -139,16 +130,16 @@ mod tests {
     }
 
     #[test]
-    fn first_returns_none_on_empty_vec() {
+    fn first_command_returns_none_on_empty_vec() {
         let empty: CommandVec<'static> = vec![];
-        assert!(empty.first().is_none());
+        assert!(empty.first_command().is_none());
     }
 
     #[test]
-    fn first_returns_some_on_non_empty_vec() {
+    fn first_command_returns_some_on_non_empty_vec() {
         let cmd = make_cmd("alias", "ns");
         let vec: CommandVec<'static> = vec![cmd.clone()];
-        assert_eq!(vec.first(), Some(cmd));
+        assert_eq!(vec.first_command(), Some(cmd));
     }
 }
 

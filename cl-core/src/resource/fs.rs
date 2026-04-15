@@ -86,35 +86,35 @@ pub use macros::{create_dir_all, read_to_string, write};
 
 #[cfg(test)]
 mod test {
-    // use super::*;
-    // use crate::{command::Command, CommandVecExt};
-    // use anyhow::Result;
-    // use tempdir::TempDir;
+    use super::*;
+    use crate::{command::Command, CommandVecExt};
+    use anyhow::Result;
+    use tempfile::TempDir;
 
-    // #[test]
-    // fn should_save_a_file() -> Result<()> {
-    //     let content = vec![Command::default()];
-    //     let dir = TempDir::new("handler")?;
-    //     let path = dir.path().join("test.toml");
-    //     let file_service = FileService::new(path.to_owned())?;
+    #[test]
+    fn should_save_a_file() -> Result<()> {
+        let content = vec![Command::default()];
+        let dir = TempDir::new()?;
+        let path = dir.path().join("test.toml");
 
-    //     let result = file_service.save(&content.to_command_map());
-    //     assert!(result.is_ok());
-    //     let read_result = std::fs::read_to_string(path.as_path())?;
+        save_at(&content.to_command_map(), &path)?;
+        let read_result = std::fs::read_to_string(path.as_path())?;
 
-    //     assert!(!read_result.is_empty());
+        assert!(!read_result.is_empty());
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
-    // #[test]
-    // fn should_return_an_error() -> Result<()> {
-    //     let dir = TempDir::new("handler")?;
-    //     let path = dir.path().join("nonexistent/test.toml"); // .save() should not create any dir, so it will fail
-    //     let result = FileService::new(path.to_owned());
+    #[test]
+    fn should_return_an_error_on_nonexistent_path() -> Result<()> {
+        let dir = TempDir::new()?;
+        let path = dir.path().join("nonexistent/test.toml");
 
-    //     assert!(result.is_err());
+        let content = vec![Command::default()];
+        let result = save_at(&content.to_command_map(), &path);
 
-    //     Ok(())
-    // }
+        assert!(result.is_err());
+
+        Ok(())
+    }
 }

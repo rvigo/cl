@@ -117,8 +117,9 @@ impl PartialOrd for Command<'_> {
 impl Ord for Command<'_> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.namespace
-            .cmp(&other.namespace)
-            .then_with(|| self.alias.cmp(&other.alias))
+            .to_lowercase()
+            .cmp(&other.namespace.to_lowercase())
+            .then_with(|| self.alias.to_lowercase().cmp(&other.alias.to_lowercase()))
     }
 }
 
