@@ -10,12 +10,15 @@ pub use popup_layer::PopupLayer;
 pub use quick_search_layer::QuickSearchLayer;
 
 use crate::observer::observable::Observable;
-use crate::screen::key_mapping::KeyMapping;
+use crate::screen::key_mapping::command::ScreenCommand;
 use crate::screen::theme::Theme;
 use crate::state::state_event::StateEvent;
+use crossterm::event::KeyEvent;
 use std::any::TypeId;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::future::Future;
+use std::pin::Pin;
 use std::rc::Rc;
 use tokio::sync::mpsc::Sender;
 use tui::Frame;
@@ -34,10 +37,20 @@ use tui::Frame;
 /// * [`on_detach`](Layer::on_detach) — called by the screen *before* the
 ///   layer is popped and its listeners are removed.  Use this to clean up
 ///   any state the layer holds.
-pub trait Layer: KeyMapping {
+pub trait Layer {
     fn render(&mut self, frame: &mut Frame, theme: &Theme);
 
     fn get_listeners(&self) -> &BTreeMap<TypeId, Vec<Rc<RefCell<dyn Observable>>>>;
+
+    /// Handle a key event and return a list of screen commands to execute.
+    ///
+    /// Returns `Pin<Box<dyn Future>>` because `Layer` is used as a trait
+    /// object (`dyn Layer`), which requires object-safe method signatures.
+    fn handle_key_event<'a>(
+        &'a self,
+        key: KeyEvent,
+        state_tx: Sender<StateEvent>,
+    ) -> Pin<Box<dyn Future<Output = Option<Vec<ScreenCommand>>> + 'a>>;
 
     /// Called after this layer is pushed onto the screen and its listeners
     /// are registered.  The default implementation does nothing.

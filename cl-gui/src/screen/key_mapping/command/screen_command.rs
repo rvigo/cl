@@ -1,6 +1,7 @@
 use crate::observer::event::Event;
 use crate::screen::key_mapping::command::{FormCallback, ScreenCommandCallback};
 use crate::screen::layer::Layer;
+use cl_core::Command;
 use std::any::TypeId;
 use tokio::sync::mpsc::Receiver;
 
@@ -22,6 +23,15 @@ pub enum ScreenCommand {
     GetFieldContent,
     /// Save command (edit or insert depending on form mode)
     Form(FormCallback),
+    /// Navigate to the next command in the list (UI-local, no state round-trip)
+    NavigateNext,
+    /// Navigate to the previous command in the list (UI-local, no state round-trip)
+    NavigatePrev,
+    /// Update the UI-local navigation snapshot with fresh data
+    SetSnapshot {
+        items: Vec<Command<'static>>,
+        selected_idx: usize,
+    },
     /// Quit the app
     Quit,
 }

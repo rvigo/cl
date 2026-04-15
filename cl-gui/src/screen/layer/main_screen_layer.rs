@@ -1,15 +1,19 @@
-use crate::clipboard::Clipboard;
 use crate::component::{ClipboardStatus, List, Renderable, StaticInfo, Tabs, TextBox};
 use crate::component::{RenderableComponent, Search};
 use crate::observer::observable::Observable;
+use crate::screen::key_mapping::command::ScreenCommand;
 use crate::screen::layer::Layer;
 use crate::screen::theme::Theme;
 use crate::screen::Listeners;
-use crate::state::state_event::FieldName;
+use crate::state::state_event::{FieldName, StateEvent};
+use crossterm::event::KeyEvent;
 use std::any::TypeId;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::future::Future;
+use std::pin::Pin;
 use std::rc::Rc;
+use tokio::sync::mpsc::Sender;
 use tui::layout::{Constraint, Direction, Layout};
 use tui::prelude::Style;
 use tui::widgets::Block;
@@ -90,7 +94,10 @@ impl Default for MainScreenLayer {
 
         let clipboard = RenderableComponent::new(ClipboardStatus::default());
 
-        listeners.insert(TypeId::of::<Clipboard>(), vec![clipboard.get_observable()]);
+        listeners.insert(
+            TypeId::of::<ClipboardStatus>(),
+            vec![clipboard.get_observable()],
+        );
 
         // statics
         let app_name = StaticInfo::new(format!("cl - {}", env!("CARGO_PKG_VERSION")));
@@ -113,6 +120,14 @@ impl Default for MainScreenLayer {
 }
 
 impl Layer for MainScreenLayer {
+    fn handle_key_event<'a>(
+        &'a self,
+        key: KeyEvent,
+        state_tx: Sender<StateEvent>,
+    ) -> Pin<Box<dyn Future<Output = Option<Vec<ScreenCommand>>> + 'a>> {
+        self.map_key_event(key, state_tx)
+    }
+
     fn render(&mut self, frame: &mut Frame, theme: &Theme) {
         let drawable_area = [Constraint::Fill(2), Constraint::Max(3)];
         let areas = [

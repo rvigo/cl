@@ -1,19 +1,22 @@
+use crate::component::{List, Tabs, TextBox};
 use crate::crossterm::{restore_terminal, setup_terminal};
+use crate::observer::event::{Event, ListEvent, TabsEvent, TextBoxEvent};
+use crate::screen::Screen;
 use crate::signal_handler::{Signal, SignalHandler};
 use crate::state::selected_command::SelectedCommand;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::{GetAllListItems, GetAllNamespaces};
-use crate::ui::Ui;
 use anyhow::Result;
-use cl_core::{CommandBuilder, CommandVecExt};
+use cl_core::CommandVecExt;
 use crossterm::event::EventStream;
+use std::any::TypeId;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc::Sender;
 use tokio_stream::StreamExt;
 use tracing::{debug, error};
 
 pub struct UiActor {
-    ui: Ui,
+    screen: Screen,
     signal_handler: SignalHandler,
     signal_receiver: broadcast::Receiver<Signal>,
 }
@@ -29,7 +32,7 @@ impl UiActor {
         let (sig_handler, receiver) = SignalHandler::create();
 
         Self {
-            ui: Ui::default(),
+            screen: Screen::new(),
             signal_handler: sig_handler,
             signal_receiver: receiver,
         }
@@ -38,23 +41,37 @@ impl UiActor {
     /// Initial load of the UI
     async fn initial_load(&mut self, state_tx: Sender<StateEvent>) {
         let result = oneshot!(state_tx, GetAllListItems).ok();
-        self.ui
-            .update_list_items(result.as_ref().map_or_else(Vec::new, |vec| vec.aliases()))
-            .await;
-        self.ui
-            .select_command(SelectedCommand::new(
-                result
-                    .as_ref()
-                    .unwrap_or(&vec![])
-                    .first()
-                    .unwrap_or_else(|| CommandBuilder::default().build()),
-                0,
-            ))
+
+        self.screen
+            .notify(
+                TypeId::of::<List>(),
+                Event::List(ListEvent::UpdateAll(
+                    result.as_ref().map_or_else(Vec::new, |vec| vec.aliases()),
+                )),
+            )
             .await;
 
+        // Populate navigation snapshot for UI-local j/k navigation
+        if let Some(items) = &result {
+            self.screen.set_snapshot(items.clone(), 0);
+        }
+
+        if let Some(cmd) = result.as_ref().and_then(|vec| vec.first()) {
+            let selected = SelectedCommand::new(cmd.clone(), 0);
+            self.screen
+                .notify(
+                    TypeId::of::<TextBox>(),
+                    Event::TextBox(TextBoxEvent::UpdateCommand(selected.value.clone())),
+                )
+                .await;
+        }
+
         let result = oneshot!(state_tx, GetAllNamespaces).ok();
-        self.ui
-            .update_tabs(result.clone().unwrap_or_default())
+        self.screen
+            .notify(
+                TypeId::of::<Tabs>(),
+                Event::Tabs(TabsEvent::UpdateAll(result.unwrap_or_default())),
+            )
             .await;
     }
 
@@ -68,7 +85,7 @@ impl UiActor {
             tokio::select! {
                 // key / resize event — render immediately after handling
                 event = crossterm_events.next() => {
-                    self.ui.screens.handle_key_event(event, &state_tx, &mut self.signal_handler).await;
+                    self.screen.handle_key_event(event, &state_tx, &mut self.signal_handler).await;
                 },
                 // Quit signal
                 Ok(message) = self.signal_receiver.recv() => {
@@ -77,7 +94,7 @@ impl UiActor {
                 }
             }
 
-            if let Err(err) = terminal.draw(|frame| self.ui.screens.render_layers(frame)) {
+            if let Err(err) = terminal.draw(|frame| self.screen.render_layers(frame)) {
                 error!("an error occurred: {err}")
             }
         };
