@@ -30,7 +30,7 @@ pub struct State {
     // search
     current_query: Option<String>,
     cmd_map: CommandMap<'static>,
-    current_items: HashSet<Command<'static>>,
+    current_items: CommandVec<'static>,
 
     // edit
     edit_state: EditState,
@@ -48,7 +48,7 @@ impl State {
 
         let selected = SelectedCommand::from_vec(&commands_as_list);
 
-        let current_items = HashSet::from_iter(commands_as_list);
+        let current_items = commands_as_list;
 
         // namespaces
         let namespaces: Vec<String> = commands.as_list().namespaces();
@@ -69,24 +69,23 @@ impl State {
     }
 
     pub fn select(&mut self, idx: usize) {
-        self.selected_command = Some(SelectedCommand::new(
-            to_sorted_vec(&self.current_items)[idx].clone(),
-            idx,
-        ))
+        if let Some(cmd) = self.current_items.get(idx) {
+            self.selected_command = Some(SelectedCommand::new(cmd.clone(), idx));
+        }
     }
 
-    pub fn get_selected_command(&self) -> Option<SelectedCommand> {
-        self.selected_command.clone()
+    pub fn get_selected_command(&self) -> Option<&SelectedCommand> {
+        self.selected_command.as_ref()
     }
 
-    pub fn get_all_items(&self) -> CommandVec<'static> {
+    pub fn get_all_items(&self) -> &CommandVec<'static> {
         debug!("got all items");
-        to_sorted_vec(&self.current_items)
+        &self.current_items
     }
 
-    pub fn get_all_namespaces(&self) -> Vec<String> {
+    pub fn get_all_namespaces(&self) -> &[String] {
         debug!("got all namespaces");
-        self.namespaces.clone()
+        &self.namespaces
     }
 
     fn set_namespaces(&mut self, items: CommandVec<'static>) {
@@ -107,10 +106,8 @@ impl State {
             error!("cannot navigate: current items list is empty");
             return self.selected_command.clone();
         }
-        if let Some(selected_command) = &self.selected_command {
-            let current = selected_command.current_idx;
-            let next = (current + 1) % self.current_items.len();
-
+        if let Some(current_idx) = self.selected_command.as_ref().map(|s| s.current_idx) {
+            let next = (current_idx + 1) % self.current_items.len();
             self.select(next);
         } else {
             error!("cannot navigate: no command is currently selected");
@@ -124,10 +121,8 @@ impl State {
             error!("cannot navigate: current items list is empty");
             return self.selected_command.clone();
         }
-        if let Some(selected_command) = &self.selected_command {
-            let current = selected_command.current_idx;
-            let previous = (current + self.current_items.len() - 1) % self.current_items.len();
-
+        if let Some(current_idx) = self.selected_command.as_ref().map(|s| s.current_idx) {
+            let previous = (current_idx + self.current_items.len() - 1) % self.current_items.len();
             self.select(previous);
         } else {
             error!("cannot navigate: no command is currently selected");
@@ -137,48 +132,31 @@ impl State {
     }
 
     pub fn next_tab(&mut self) -> (SelectedNamespace, CommandVec<'static>) {
-        let current_idx = self.selected_namespace.idx;
-        let namespaces = &self.namespaces;
-        if namespaces.is_empty() {
-            error!("no namespaces found");
-            return (self.selected_namespace.to_owned(), vec![]);
-        }
-        let next = (current_idx + 1) % namespaces.len();
-        let next_namespace = &self.namespaces[next];
-
-        self.selected_namespace = SelectedNamespace::new(next, next_namespace.to_string());
-
-        let filtered_commands = &self.get_commands_by_namespace(next_namespace);
-
-        self.current_items = filtered_commands.iter().cloned().collect();
-        self.selected_command = SelectedCommand::from_vec(filtered_commands);
-
-        (
-            self.selected_namespace.to_owned(),
-            filtered_commands.to_vec(),
-        )
+        self.move_tab(1)
     }
 
     pub fn previous_tab(&mut self) -> (SelectedNamespace, CommandVec<'static>) {
-        let current = self.selected_namespace.idx;
-        let items = &self.namespaces;
-        if items.is_empty() {
+        self.move_tab(-1)
+    }
+
+    fn move_tab(&mut self, delta: isize) -> (SelectedNamespace, CommandVec<'static>) {
+        if self.namespaces.is_empty() {
             error!("no namespaces found");
             return (self.selected_namespace.to_owned(), vec![]);
         }
-        let previous = (current + items.len() - 1) % items.len();
-        let previous_namespace = &self.namespaces[previous];
+        let len = self.namespaces.len();
+        let current = self.selected_namespace.idx as isize;
+        let target = ((current + delta).rem_euclid(len as isize)) as usize;
+        let target_namespace = &self.namespaces[target];
 
-        self.selected_namespace = SelectedNamespace::new(previous, previous_namespace.to_string());
+        self.selected_namespace = SelectedNamespace::new(target, target_namespace.to_string());
 
-        let filtered_commands = &self.get_commands_by_namespace(previous_namespace);
-        self.current_items = filtered_commands.iter().cloned().collect();
-        self.selected_command = SelectedCommand::from_vec(filtered_commands);
+        let filtered_commands = self.get_commands_by_namespace(target_namespace);
 
-        (
-            self.selected_namespace.to_owned(),
-            filtered_commands.to_vec(),
-        )
+        self.current_items = filtered_commands.clone();
+        self.selected_command = SelectedCommand::from_vec(&filtered_commands);
+
+        (self.selected_namespace.to_owned(), filtered_commands)
     }
 
     pub fn execute(&self) {
@@ -199,11 +177,12 @@ impl State {
                     let map = map.clone();
                     let path = self.config.command_file_path();
                     tokio::task::spawn_blocking(move || fs::save_at(&map, path)).await??;
-                    self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
+                    self.current_items = self.commands.as_list().sorted();
                     self.cmd_map = self.commands.as_map().clone();
-                    self.selected_command = to_sorted_vec(&self.current_items)
+                    self.selected_command = self
+                        .current_items
                         .first()
-                        .map(|c| SelectedCommand::new(c, 0));
+                        .map(|c| SelectedCommand::new(c.clone(), 0));
                 }
                 Err(e) => {
                     bail!("Error deleting command: {e:?}");
@@ -222,18 +201,18 @@ impl State {
     pub fn filter(&mut self, query: &str) {
         if query.is_empty() {
             self.current_query = None;
-            self.current_items = HashSet::from_iter(self.cmd_map.to_vec());
-            self.selected_command = SelectedCommand::from_vec(&self.cmd_map.to_vec());
-            let all_commands = self.cmd_map.to_vec();
-            self.set_namespaces(all_commands);
+            let all_commands = self.cmd_map.to_vec().sorted();
+            self.selected_command = SelectedCommand::from_vec(&all_commands);
+            self.set_namespaces(all_commands.clone());
+            self.current_items = all_commands;
             return;
         }
 
         self.current_query = Some(query.to_string());
-        let current_items = self.fuzzy_find(query.to_string()).to_vec();
-        self.current_items = HashSet::from_iter(current_items.clone());
+        let current_items = self.fuzzy_find(query.to_string()).to_vec().sorted();
         self.selected_command = SelectedCommand::from_vec(&current_items);
-        self.set_namespaces(current_items);
+        self.set_namespaces(current_items.clone());
+        self.current_items = current_items;
     }
 
     fn ff_vec(&self, query: &str, command_vec: &CommandVec<'static>) -> Vec<Command<'static>> {
@@ -319,7 +298,7 @@ impl State {
                 let map = map.clone();
                 let path = self.config.command_file_path();
                 tokio::task::spawn_blocking(move || fs::save_at(&map, path)).await??;
-                self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
+                self.current_items = self.commands.as_list().sorted();
                 self.cmd_map = self.commands.as_map().clone();
                 let selected_command = SelectedCommand::new(new_command, 0);
                 self.selected_command = Some(selected_command);
@@ -349,7 +328,7 @@ impl State {
                 let map = map.clone();
                 let path = self.config.command_file_path();
                 tokio::task::spawn_blocking(move || fs::save_at(&map, path)).await??;
-                self.current_items = HashSet::from_iter(self.commands.as_list().sorted());
+                self.current_items = self.commands.as_list().sorted();
                 self.cmd_map = self.commands.as_map().clone();
                 let selected_command = SelectedCommand::new(
                     edited,
@@ -384,10 +363,6 @@ fn append_default_namespace(namespaces: Vec<String>) -> Vec<String> {
     } else {
         namespaces
     }
-}
-
-fn to_sorted_vec(set: &HashSet<Command<'static>>) -> CommandVec<'static> {
-    set.iter().cloned().collect::<CommandVec>().sorted()
 }
 
 #[cfg(test)]
@@ -492,7 +467,8 @@ mod test {
 
         assert_eq!(state.current_items.len(), 1);
         assert_eq!(
-            to_sorted_vec(&state.current_items)
+            state
+                .current_items
                 .first()
                 .expect("should have a command")
                 .alias
@@ -503,7 +479,8 @@ mod test {
         state.filter("ran");
         assert_eq!(state.current_items.len(), 1);
         assert_eq!(
-            to_sorted_vec(&state.current_items)
+            state
+                .current_items
                 .first()
                 .expect("should have a command")
                 .alias
@@ -545,19 +522,20 @@ mod test {
     async fn should_update_cmd_map_on_edit() -> Result<()> {
         let mut state = setup_state()?;
 
-        // Get the selected command before editing
-        let original = state
+        // Get the selected command's namespace before editing
+        let original_namespace = state
             .get_selected_command()
-            .expect("should have selected command");
+            .expect("should have selected command")
+            .value
+            .namespace
+            .to_string();
 
         // Update edit state with new values
         state.edit_state.update_alias(Some("new_alias".to_string()));
         state
             .edit_state
             .update_command(Some("new_command".to_string()));
-        state
-            .edit_state
-            .update_namespace(Some(original.value.namespace.to_string()));
+        state.edit_state.update_namespace(Some(original_namespace));
 
         state.edit_command().await?;
 
@@ -763,7 +741,7 @@ mod test {
     fn next_item_with_empty_items_preserves_selection() -> Result<()> {
         let mut state = setup_state()?;
         let original = state.selected_command.clone();
-        state.current_items = HashSet::new();
+        state.current_items = Vec::new();
 
         let result = state.next_item();
 
@@ -775,7 +753,7 @@ mod test {
     fn previous_item_with_empty_items_preserves_selection() -> Result<()> {
         let mut state = setup_state()?;
         let original = state.selected_command.clone();
-        state.current_items = HashSet::new();
+        state.current_items = Vec::new();
 
         let result = state.previous_item();
 
