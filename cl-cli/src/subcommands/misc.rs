@@ -39,10 +39,10 @@ impl Subcommand for Misc {
             let duplicated: HashSet<String> = command_vec
                 .iter()
                 .filter_map(|c| {
-                    if seen.contains(&c.alias.clone()) {
+                    if seen.contains(c.alias.as_ref()) {
                         Some(c.alias.to_string())
                     } else {
-                        seen.insert(c.alias.clone());
+                        seen.insert(c.alias.to_string());
                         None
                     }
                 })
@@ -96,16 +96,13 @@ const MAX_COMMAND_LEN: usize = 50;
 
 impl Summarize for Command<'_> {
     fn summarize(&self) -> String {
-        let command_string = &self.command;
-        let max_length_command: String = command_string.chars().take(MAX_COMMAND_LEN).collect();
-        let command_string = if max_length_command.contains('\n') {
-            let idx = self
-                .command
-                .find('\n')
-                .expect("newline confirmed in preview");
-            format!("{}...", &self.command[..idx])
-        } else if max_length_command.len() == MAX_COMMAND_LEN {
-            format!("{}...", &self.command[..MAX_COMMAND_LEN])
+        let max_length_command: String = self.command.chars().take(MAX_COMMAND_LEN).collect();
+        let command_string = if let Some(idx) = max_length_command.find('\n') {
+            format!("{}...", &max_length_command[..idx])
+        } else if max_length_command.chars().count() == MAX_COMMAND_LEN
+            && self.command.chars().count() > MAX_COMMAND_LEN
+        {
+            format!("{max_length_command}...")
         } else {
             self.command.to_string()
         };

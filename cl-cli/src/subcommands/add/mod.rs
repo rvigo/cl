@@ -7,6 +7,10 @@ use clap::Parser;
 use maybe_stdin::MaybeStdin;
 use tracing::{info, warn};
 
+fn generate_alias(command: &str) -> String {
+    command.chars().take(5).collect()
+}
+
 #[derive(Parser, Debug)]
 pub struct Add {
     #[clap(
@@ -25,7 +29,7 @@ impl Subcommand for Add {
             return Ok(());
         }
 
-        let alias: String = command_string.chars().take(5).collect();
+        let alias = generate_alias(&command_string);
 
         const DEFAULT_NAMESPACE: &str = "from_stdin";
 
@@ -48,10 +52,7 @@ impl Subcommand for Add {
 
 #[cfg(test)]
 mod test {
-    /// Mirrors the alias-generation logic in `run()` so it can be tested in isolation.
-    fn generate_alias(command: &str) -> String {
-        command.chars().take(5).collect()
-    }
+    use super::generate_alias;
 
     #[test]
     fn should_take_first_5_chars_for_alias() {

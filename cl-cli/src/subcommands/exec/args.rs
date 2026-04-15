@@ -1,7 +1,11 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{bail, Result};
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
+use std::sync::LazyLock;
+
+static NAMED_PARAM_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"#\{[^\}]+\}").expect("Invalid regex pattern"));
 
 const ARG_PREFIX: &str = "--";
 
@@ -99,8 +103,7 @@ impl CommandArgs {
     }
 
     fn filter_named_parameters(command: &str) -> Result<HashSet<String>> {
-        let re = Regex::new(r"#\{[^\}]+\}").map_err(|e| anyhow!(e))?;
-        let matches = re
+        let matches = NAMED_PARAM_REGEX
             .find_iter(command)
             .map(|m| m.as_str().to_string())
             .collect::<HashSet<_>>();
