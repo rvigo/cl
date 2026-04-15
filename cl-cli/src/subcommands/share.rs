@@ -113,9 +113,7 @@ impl Share {
             .as_list()
             .into_iter()
             .filter(|cmd| {
-                self.namespace
-                    .as_ref()
-                    .is_none_or(|ns| ns.contains(&cmd.namespace.to_string()))
+                namespace_filter.is_empty() || namespace_filter.contains(&cmd.namespace.to_string())
             })
             .collect();
 
