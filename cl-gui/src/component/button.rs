@@ -29,13 +29,17 @@ impl FutureEventType {
         &self,
         state_sender: Option<Sender<StateEvent>>,
         screen_command_sender: Option<Sender<Vec<ScreenCommand>>>,
-    ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>> {
+    ) -> anyhow::Result<Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>>> {
         match self {
             FutureEventType::Event(_sx, event_fn) => {
-                event_fn(screen_command_sender.expect("no screen command sender"))
+                let sender = screen_command_sender
+                    .ok_or_else(|| anyhow::anyhow!("no screen command sender"))?;
+                Ok(event_fn(sender))
             }
             FutureEventType::State(event_fn) => {
-                event_fn(state_sender.expect("no state command sender"))
+                let sender =
+                    state_sender.ok_or_else(|| anyhow::anyhow!("no state command sender"))?;
+                Ok(event_fn(sender))
             }
         }
     }
@@ -81,7 +85,7 @@ impl Renderable for Button {
         } else {
             Style::default().fg(theme.text_color.into())
         };
-        let paragraph = Paragraph::new(self.content.to_owned())
+        let paragraph = Paragraph::new(self.content.as_str())
             .alignment(Center)
             .style(style.bg(theme.background_color.into()));
 

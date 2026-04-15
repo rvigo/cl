@@ -22,15 +22,13 @@ impl TextBox {
 
 impl Renderable for TextBox {
     fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
-        fn match_content(content: Option<String>, fallback: Option<String>) -> String {
-            if let Some(c) = content {
-                if !c.is_empty() {
-                    return c;
-                }
+        fn match_content<'a>(content: Option<&'a str>, fallback: Option<&'a str>) -> &'a str {
+            match content {
+                Some(c) if !c.is_empty() => c,
+                _ => fallback.unwrap_or_default(),
             }
-            fallback.unwrap_or_default()
         }
-        let content = match_content(self.content.clone(), self.placeholder.clone());
+        let content = match_content(self.content.as_deref(), self.placeholder.as_deref());
 
         let style = Style::default()
             .fg(theme.text_color.into())

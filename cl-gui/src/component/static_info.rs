@@ -21,7 +21,7 @@ impl StaticInfo {
 
 impl Renderable for StaticInfo {
     fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
-        let paragraph = Paragraph::new(self.content.clone())
+        let paragraph = Paragraph::new(self.content.as_str())
             .block(
                 Block::bordered().style(
                     Style::default()
