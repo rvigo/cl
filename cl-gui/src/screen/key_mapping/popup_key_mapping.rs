@@ -1,7 +1,7 @@
 use crate::component::Popup;
 use crate::observer::event::PopupEvent;
 use crate::screen::key_mapping::ScreenCommand::PopLastLayer;
-use crate::screen::key_mapping::{create_notify_command, KeyMapping, ScreenCommand};
+use crate::screen::key_mapping::{create_notify_command, ScreenCommand};
 use crate::screen::layer::PopupLayer;
 use crate::state::state_event::StateEvent;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -9,8 +9,8 @@ use std::future::Future;
 use std::pin::Pin;
 use tokio::sync::mpsc::Sender;
 
-impl KeyMapping for PopupLayer {
-    fn handle_key_event<'a>(
+impl PopupLayer {
+    pub(crate) fn map_key_event<'a>(
         &'a self,
         key: KeyEvent,
         state_tx: Sender<StateEvent>,

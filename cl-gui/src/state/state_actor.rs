@@ -29,40 +29,32 @@ impl StateActor {
 
     async fn handle_message(&mut self, message: StateEvent) -> Result<()> {
         match message {
-            StateEvent::SelectNextCommand { respond_to } => {
-                let selected_command = self.state.next_item();
-                if respond_to.send(selected_command).is_err() {
-                    debug!("SelectNextCommand: response receiver dropped");
-                }
-            }
-            StateEvent::SelectPreviousCommand { respond_to } => {
-                let selected_command = self.state.previous_item();
-                if respond_to.send(selected_command).is_err() {
-                    debug!("SelectPreviousCommand: response receiver dropped");
-                }
-            }
             StateEvent::ExecuteCommand => self.state.execute(),
             StateEvent::GetAllListItems { respond_to } => {
-                let all_items = self.state.get_all_items();
+                let all_items = self.state.get_all_items().clone();
                 if respond_to.send(all_items).is_err() {
                     debug!("GetAllListItems: response receiver dropped");
                 }
             }
             StateEvent::CurrentCommand { respond_to } => {
-                let selected_command = self.state.get_selected_command();
+                let selected_command = self.state.get_selected_command().cloned();
                 if respond_to.send(selected_command).is_err() {
                     debug!("CurrentCommand: response receiver dropped");
                 }
             }
             StateEvent::PreviousTab { respond_to } => {
                 let (selected_namespace, commands) = self.state.previous_tab();
-                let selected_command = self.state.get_selected_command().unwrap_or_else(|| {
-                    error!(
-                        "PreviousTab: no selected command for namespace '{}'",
-                        selected_namespace.name
-                    );
-                    SelectedCommand::default()
-                });
+                let selected_command =
+                    self.state
+                        .get_selected_command()
+                        .cloned()
+                        .unwrap_or_else(|| {
+                            error!(
+                                "PreviousTab: no selected command for namespace '{}'",
+                                selected_namespace.name
+                            );
+                            SelectedCommand::default()
+                        });
                 if respond_to
                     .send((selected_namespace, selected_command, commands))
                     .is_err()
@@ -72,13 +64,17 @@ impl StateActor {
             }
             StateEvent::NextTab { respond_to } => {
                 let (selected_namespace, commands) = self.state.next_tab();
-                let selected_command = self.state.get_selected_command().unwrap_or_else(|| {
-                    error!(
-                        "NextTab: no selected command for namespace '{}'",
-                        selected_namespace.name
-                    );
-                    SelectedCommand::default()
-                });
+                let selected_command =
+                    self.state
+                        .get_selected_command()
+                        .cloned()
+                        .unwrap_or_else(|| {
+                            error!(
+                                "NextTab: no selected command for namespace '{}'",
+                                selected_namespace.name
+                            );
+                            SelectedCommand::default()
+                        });
                 if respond_to
                     .send((selected_namespace, selected_command, commands))
                     .is_err()
@@ -87,7 +83,7 @@ impl StateActor {
                 }
             }
             StateEvent::GetAllNamespaces { respond_to } => {
-                let namespaces = self.state.get_all_namespaces();
+                let namespaces = self.state.get_all_namespaces().to_vec();
                 if respond_to.send(namespaces).is_err() {
                     debug!("GetAllNamespaces: response receiver dropped");
                 }
@@ -108,11 +104,8 @@ impl StateActor {
                 }
             }
             StateEvent::CommandDetails { respond_to } => {
-                let command = self.state.get_selected_command();
-                if respond_to
-                    .send(command.map(|selected| selected.value))
-                    .is_err()
-                {
+                let command = self.state.get_selected_command().map(|s| s.value.clone());
+                if respond_to.send(command).is_err() {
                     debug!("CommandDetails: response receiver dropped");
                 }
             }
@@ -139,6 +132,10 @@ impl StateActor {
                 if let Err(ref e) = result {
                     error!("Failed to insert command: {}", e);
                 }
+            }
+            StateEvent::SyncSelection(idx) => {
+                debug!("syncing selection to index {}", idx);
+                self.state.select(idx);
             }
         }
 

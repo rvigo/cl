@@ -1,11 +1,17 @@
 use crate::component::{Component, RenderableComponent, Search};
 use crate::observer::observable::Observable;
+use crate::screen::key_mapping::command::ScreenCommand;
 use crate::screen::layer::Layer;
 use crate::screen::theme::Theme;
+use crate::state::state_event::StateEvent;
+use crossterm::event::KeyEvent;
 use std::any::TypeId;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+use std::future::Future;
+use std::pin::Pin;
 use std::rc::Rc;
+use tokio::sync::mpsc::Sender;
 use tui::layout::{Constraint, Layout, Rect};
 use tui::Frame;
 
@@ -27,6 +33,14 @@ impl Default for QuickSearchLayer {
 }
 
 impl Layer for QuickSearchLayer {
+    fn handle_key_event<'a>(
+        &'a self,
+        key: KeyEvent,
+        state_tx: Sender<StateEvent>,
+    ) -> Pin<Box<dyn Future<Output = Option<Vec<ScreenCommand>>> + 'a>> {
+        self.map_key_event(key, state_tx)
+    }
+
     fn render(&mut self, frame: &mut Frame, theme: &Theme) {
         let area = centered_rect(50, 30, frame.area());
         self.search.render(frame, area, theme)

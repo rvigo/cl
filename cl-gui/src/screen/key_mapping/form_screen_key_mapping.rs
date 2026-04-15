@@ -4,10 +4,11 @@ use crate::observer::event::PopupType::{Dialog, Help};
 use crate::observer::event::{EditableTextboxEvent, PopupEvent, ScreenStateEvent};
 use crate::screen::command::ScreenCommand::AddLayer;
 use crate::screen::command::ScreenCommandCallback;
+use crate::screen::command::ScreenCommandCallback::UpdateAll;
 use crate::screen::key_mapping::command::FormCallback;
-use crate::screen::key_mapping::{create_notify_command, KeyMapping, ScreenCommand};
+use crate::screen::key_mapping::{create_notify_command, ScreenCommand};
 use crate::screen::layer::{FormScreenLayer, MainScreenLayer, PopupLayer};
-use crate::screen::{ActiveScreen, ScreenCommandCallback::UpdateAll};
+use crate::screen::ActiveScreen;
 use crate::state::state_event::StateEvent;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::future::Future;
@@ -15,8 +16,8 @@ use std::pin::Pin;
 use tokio::sync::mpsc::Sender;
 use tracing::debug;
 
-impl KeyMapping for FormScreenLayer {
-    fn handle_key_event<'a>(
+impl FormScreenLayer {
+    pub(crate) fn map_key_event<'a>(
         &'a self,
         key: KeyEvent,
         _: Sender<StateEvent>,

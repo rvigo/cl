@@ -6,14 +6,6 @@ use tokio::sync::oneshot;
 
 #[derive(Debug)]
 pub enum StateEvent {
-    /// Select the next command in the list
-    SelectNextCommand {
-        respond_to: oneshot::Sender<Option<SelectedCommand>>,
-    },
-    /// Select the previous command in the list
-    SelectPreviousCommand {
-        respond_to: oneshot::Sender<Option<SelectedCommand>>,
-    },
     /// Execute the selected command
     ExecuteCommand,
     /// Get all list items based on the current namespace
@@ -58,6 +50,8 @@ pub enum StateEvent {
     InsertCommand {
         respond_to: oneshot::Sender<Result<(), String>>,
     },
+    /// Sync the selected index from UI-local navigation (fire-and-forget)
+    SyncSelection(usize),
 }
 
 #[derive(Debug, PartialEq, Eq, Default, Clone)]

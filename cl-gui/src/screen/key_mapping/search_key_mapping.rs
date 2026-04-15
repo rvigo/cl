@@ -1,7 +1,7 @@
 use crate::component::Search;
 use crate::observer::event::SearchEvent;
 use crate::screen::key_mapping::command::ScreenCommandCallback::UpdateAll;
-use crate::screen::key_mapping::{create_notify_command, KeyMapping, ScreenCommand};
+use crate::screen::key_mapping::{create_notify_command, ScreenCommand};
 use crate::screen::layer::QuickSearchLayer;
 use crate::state::state_event::StateEvent;
 use crate::state::state_event::StateEvent::GetCurrentQuery;
@@ -10,8 +10,8 @@ use std::future::Future;
 use std::pin::Pin;
 use tokio::sync::mpsc::Sender;
 
-impl KeyMapping for QuickSearchLayer {
-    fn handle_key_event<'a>(
+impl QuickSearchLayer {
+    pub(crate) fn map_key_event<'a>(
         &'a self,
         key: KeyEvent,
         state_tx: Sender<StateEvent>,
