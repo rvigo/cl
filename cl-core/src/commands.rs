@@ -73,11 +73,10 @@ impl<'cmd> Commands<'cmd> {
         debug!(target: "cl_core::commands", alias = %command.alias, namespace = %namespace, "removing command");
 
         if let Some(commands) = self.commands.get_mut(namespace) {
-            if commands.len() <= 1 {
+            commands.retain(|c| !c.eq(command));
+            if commands.is_empty() {
                 trace!(target: "cl_core::commands", namespace = %namespace, "removing empty namespace after remove");
                 self.commands.remove(namespace);
-            } else {
-                commands.retain(|c| !c.eq(command));
             }
             debug!(target: "cl_core::commands", alias = %command.alias, namespace = %namespace, "command removed");
         } else {
@@ -147,13 +146,12 @@ impl<'cmd> Commands<'cmd> {
         let old_namespace = old.namespace.to_string();
         let actual_namespace = actual.namespace.to_string();
 
+        // Identity edit (alias+namespace unchanged) is always allowed
         if old_namespace == actual_namespace && old.alias == actual.alias {
-            bail!(CommandError::CommandAlreadyExists {
-                alias: actual.alias.to_string(),
-                namespace: actual_namespace,
-            });
+            return Ok(());
         }
 
+        // Check if the new (alias, namespace) collides with a different existing command
         if let Some(commands) = self.get_namespace_content(&actual_namespace) {
             if commands.iter().any(|command| command.alias == actual.alias) {
                 bail!(CommandError::CommandAlreadyExists {
@@ -216,8 +214,6 @@ impl CommandExec for Command<'_> {
         });
 
         std::process::Command::new(shell)
-            .env_clear()
-            .envs(env::vars())
             .arg("-c")
             .arg(self.command.borrow() as &str)
             .spawn()?
@@ -233,8 +229,9 @@ impl CommandExec for Command<'_> {
 
     fn truncate_command(&self) -> String {
         const MAX_LINE_LENGTH: usize = 120;
-        if self.command.len() > MAX_LINE_LENGTH {
-            format!("{}{}", &self.command.clone()[..MAX_LINE_LENGTH], "...")
+        let truncated: String = self.command.chars().take(MAX_LINE_LENGTH).collect();
+        if truncated.len() < self.command.len() {
+            format!("{truncated}...")
         } else {
             self.command.to_string()
         }
@@ -467,12 +464,26 @@ mod test {
     }
 
     #[test]
-    fn should_validate_if_a_command_already_exists() {
+    fn should_allow_identity_edit_with_same_alias_and_namespace() {
         let command1 = create_command!("alias", "command", "namespace1", None, None);
         let command2 = create_command!("alias", "command", "namespace1", None, None);
 
         let commands = commands!(command1.to_owned(), command2.to_owned());
         let res = commands.command_already_exists(&command1, &command2);
+
+        // Identity edit (same alias+namespace) should be allowed
+        assert!(res.is_ok())
+    }
+
+    #[test]
+    fn should_reject_edit_when_target_alias_collides_with_different_command() {
+        let command1 = create_command!("alias1", "command", "namespace1", None, None);
+        let command2 = create_command!("alias2", "command", "namespace1", None, None);
+
+        let commands = commands!(command1.to_owned(), command2.to_owned());
+        // Editing command2 to have alias1's identity should fail
+        let edited = create_command!("alias1", "new command", "namespace1", None, None);
+        let res = commands.command_already_exists(&edited, &command2);
 
         assert!(res.is_err())
     }
@@ -553,6 +564,20 @@ mod test {
             CommandError::EmptyCommand.to_string(),
             result.unwrap_err().to_string()
         );
+    }
+
+    #[test]
+    fn should_allow_editing_command_body_without_changing_alias_or_namespace() {
+        let original = create_command!("alias", "old command", "namespace", None, None);
+        let mut commands = commands!(original.to_owned());
+
+        let edited = create_command!("alias", "new command", "namespace", None, None);
+        let result = commands.edit(&edited, &original);
+
+        assert!(result.is_ok());
+        let map = result.panic_if_error();
+        let entry = map.get("namespace").unwrap();
+        assert!(entry.iter().any(|c| c.command == "new command"));
     }
 
     #[test]
