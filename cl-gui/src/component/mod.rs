@@ -129,6 +129,10 @@ where
         Self(Component::new(component))
     }
 
+    pub fn pre_render(&mut self) {
+        self.borrow_inner_mut().pre_render();
+    }
+
     pub fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
         self.borrow_inner_mut().render(frame, area, theme);
     }

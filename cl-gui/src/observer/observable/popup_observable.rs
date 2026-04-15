@@ -31,18 +31,20 @@ impl Observable for Popup {
                     let on_click = self.buttons[selected_idx].on_click.clone();
 
                     return Some(Box::pin(async move {
-                        match on_click.call(Some(state_tx), None).await {
-                            Ok(()) => {
-                                debug!("Popup: sending callback to previous layer");
-                                if let Err(e) = tx.send(callback).await {
-                                    tracing::error!("Popup: failed to send callback: {e}");
+                        match on_click.call(Some(state_tx), None) {
+                            Ok(future) => match future.await {
+                                Ok(()) => {
+                                    debug!("Popup: sending callback to previous layer");
+                                    if let Err(e) = tx.send(callback).await {
+                                        tracing::error!("Popup: failed to send callback: {e}");
+                                    }
                                 }
-                            }
+                                Err(err) => {
+                                    tracing::error!("Popup: button click failed: {err}");
+                                }
+                            },
                             Err(err) => {
-                                // Previous code did `*self = Popup::dialog(...)` but self was
-                                // already being popped by PopLastLayer, so error was never shown.
-                                // Log it instead for better observability.
-                                tracing::error!("Popup: button click failed: {err}");
+                                tracing::error!("Popup: missing sender for button click: {err}");
                             }
                         }
                     }));

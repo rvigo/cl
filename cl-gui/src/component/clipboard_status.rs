@@ -1,6 +1,6 @@
 use crate::component::Renderable;
 use crate::screen::theme::Theme;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use tui::layout::Alignment::Center;
 use tui::layout::Rect;
 use tui::style::Style;
@@ -59,7 +59,9 @@ impl Renderable for ClipboardStatus {
 
             frame.render_widget(paragraph, area);
         }
+    }
 
+    fn pre_render(&mut self) {
         self.check_if_need_to_stop();
     }
 }
@@ -79,7 +81,7 @@ impl ClipboardState {
 
     fn check(&mut self) {
         if let Some(instant) = self.start_instant {
-            if instant.elapsed().as_secs() >= Duration::new(self.duration, 0).as_secs() {
+            if instant.elapsed().as_secs() >= self.duration {
                 self.start_instant = None;
                 self.running = false;
             }

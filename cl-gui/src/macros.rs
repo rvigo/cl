@@ -6,6 +6,7 @@
 macro_rules! render {
     ($frame:ident, $theme:expr, $({ $what:expr , $_where:expr}),* $(,)?) => {
         $(
+            $what.pre_render();
             $what.render($frame, $_where, $theme);
         )+
     };

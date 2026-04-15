@@ -36,8 +36,7 @@ impl Renderable for List {
         let tui_list = TuiList::new(
             self.items
                 .iter()
-                .cloned()
-                .map(ListItem::new)
+                .map(|s| ListItem::new(s.as_str()))
                 .collect::<Vec<ListItem>>(),
         )
         .highlight_style(

@@ -23,8 +23,8 @@ mod tests {
         ClipboardStatus, EditableTextbox, List, Popup, ScreenState, Search, Tabs, TextBox,
     };
     use crate::observer::event::{
-        ClipboardAction, EditableTextboxEvent, ListEvent, PopupEvent, ScreenStateEvent,
-        SearchEvent, TabsEvent, TextBoxEvent,
+        ClipboardAction, EditableTextboxEvent, ListEvent, ScreenStateEvent, SearchEvent, TabsEvent,
+        TextBoxEvent,
     };
     use std::any::TypeId;
 
