@@ -79,22 +79,36 @@ impl Subcommand for Config {
                 .context("Failed to install zsh widget");
         }
 
+        let mut any_flag = false;
+
         if let Some(quiet) = self.quiet_mode {
+            any_flag = true;
             config
                 .change_and_save(|c| c.preferences_mut().set_quiet_mode(quiet))
-                .if_ok(|| info!(target: "cl::config", quiet_mode = quiet, "quiet mode updated"))
-        } else if let Some(log_level) = self.log_level {
+                .if_ok(|| info!(target: "cl::config", quiet_mode = quiet, "quiet mode updated"))?;
+        }
+
+        if let Some(log_level) = self.log_level {
+            any_flag = true;
             config
                 .change_and_save(|c| c.preferences_mut().set_log_level(log_level.into()))
-                .if_ok(|| info!(target: "cl::config", log_level = ?log_level, "log level updated"))
-        } else if let Some(highlight) = self.highlight_matches {
+                .if_ok(
+                    || info!(target: "cl::config", log_level = ?log_level, "log level updated"),
+                )?;
+        }
+
+        if let Some(highlight) = self.highlight_matches {
+            any_flag = true;
             config
                 .change_and_save(|c| c.preferences_mut().set_highlight(highlight))
-                .if_ok(|| info!(target: "cl::config", highlight_matches = highlight, "highlight matches updated"))
-        } else {
-            println!("{}", config.printable());
-            Ok(())
+                .if_ok(|| info!(target: "cl::config", highlight_matches = highlight, "highlight matches updated"))?;
         }
+
+        if !any_flag {
+            println!("{}", printable(&config));
+        }
+
+        Ok(())
     }
 }
 
@@ -152,32 +166,21 @@ fn validate_fzf() -> Result<()> {
     Ok(())
 }
 
-trait PrintableAppConfig {
-    /// Represents a kind of pretty printable version of the AppConfig struct
-    fn printable(&self) -> String;
-}
-
-impl<T> PrintableAppConfig for T
-where
-    T: CoreConfig,
-{
-    fn printable(&self) -> String {
-        let mut result = String::new();
-        result.push_str(&format!("command-file: {:?}\n", self.command_file_path()));
-        let preferences = self.preferences();
-        result.push_str("preferences:\n");
-        result.push_str(&format!("  quiet-mode: {}\n", preferences.quiet_mode()));
-        result.push_str(&format!(
-            "  log-level: {}\n",
-            String::from(&preferences.log_level())
-        ));
-        result.push_str(&format!(
-            "  highlight-matches: {}\n",
-            preferences.highlight()
-        ));
-
-        result
-    }
+fn printable(config: &impl CoreConfig) -> String {
+    let mut result = String::new();
+    result.push_str(&format!("command-file: {:?}\n", config.command_file_path()));
+    let preferences = config.preferences();
+    result.push_str("preferences:\n");
+    result.push_str(&format!("  quiet-mode: {}\n", preferences.quiet_mode()));
+    result.push_str(&format!(
+        "  log-level: {}\n",
+        String::from(&preferences.log_level())
+    ));
+    result.push_str(&format!(
+        "  highlight-matches: {}\n",
+        preferences.highlight()
+    ));
+    result
 }
 
 trait IfOk<T> {
@@ -225,10 +228,89 @@ where
 
 #[cfg(test)]
 mod test {
+    use super::*;
+    use cl_core::{LogLevel as CoreLogLevel, Preferences};
+    use std::path::PathBuf;
+
     #[test]
     fn should_find_the_widget_file() {
         let widget = include_str!("../resources/zsh/cl-exec-widget");
 
         assert!(!widget.is_empty())
+    }
+
+    #[test]
+    fn if_ok_runs_closure_on_ok() {
+        let mut ran = false;
+        let result: anyhow::Result<i32> = Ok(42);
+        let out = result.if_ok(|| ran = true);
+        assert!(out.is_ok());
+        assert_eq!(out.unwrap(), 42);
+        assert!(ran);
+    }
+
+    #[test]
+    fn if_ok_does_not_run_closure_on_err() {
+        let mut ran = false;
+        let result: anyhow::Result<i32> = Err(anyhow::anyhow!("oops"));
+        let out = result.if_ok(|| ran = true);
+        assert!(out.is_err());
+        assert!(!ran);
+    }
+
+    struct MockConfig {
+        preferences: Preferences,
+        command_file: PathBuf,
+    }
+
+    impl CoreConfig for MockConfig {
+        fn load() -> anyhow::Result<Self>
+        where
+            Self: Sized,
+        {
+            unimplemented!()
+        }
+        fn save(&self) -> anyhow::Result<()> {
+            Ok(())
+        }
+        fn preferences(&self) -> &Preferences {
+            &self.preferences
+        }
+        fn preferences_mut(&mut self) -> &mut Preferences {
+            &mut self.preferences
+        }
+        fn command_file_path(&self) -> PathBuf {
+            self.command_file.clone()
+        }
+        fn log_dir_path(&self) -> anyhow::Result<PathBuf> {
+            Ok(PathBuf::from("/tmp"))
+        }
+    }
+
+    #[test]
+    fn printable_contains_expected_keys() {
+        let config = MockConfig {
+            preferences: Preferences::default(),
+            command_file: PathBuf::from("/tmp/commands.toml"),
+        };
+        let output = printable(&config);
+        assert!(output.contains("command-file:"));
+        assert!(output.contains("quiet-mode:"));
+        assert!(output.contains("log-level:"));
+        assert!(output.contains("highlight-matches:"));
+    }
+
+    #[test]
+    fn printable_reflects_non_default_preferences() {
+        let mut prefs = Preferences::default();
+        prefs.set_quiet_mode(true);
+        prefs.set_log_level(CoreLogLevel::Debug);
+        let config = MockConfig {
+            preferences: prefs,
+            command_file: PathBuf::from("/tmp/commands.toml"),
+        };
+        let output = printable(&config);
+        assert!(output.contains("quiet-mode: true"));
+        assert!(output.contains("log-level: debug"));
     }
 }
