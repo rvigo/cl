@@ -17,3 +17,6 @@ itertools.workspace = true
 clap = { version = "4.5.17", features = ["derive"] }
 owo-colors = "3.5.0"
 strfmt = "0.2.4"
+
+[dev-dependencies]
+tempfile.workspace = true

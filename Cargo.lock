@@ -241,6 +241,7 @@ dependencies = [
  "owo-colors",
  "regex",
  "strfmt",
+ "tempfile",
  "thiserror",
  "tracing",
 ]
