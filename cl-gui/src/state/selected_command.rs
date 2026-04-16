@@ -11,7 +11,7 @@ impl SelectedCommand {
         Self { value, current_idx }
     }
 
-    pub fn from_vec(vec: &[Command<'static>]) -> Option<Self> {
+    pub fn first_from_vec(vec: &[Command<'static>]) -> Option<Self> {
         vec.first().map(|cmd| Self {
             value: cmd.to_owned(),
             current_idx: 0,

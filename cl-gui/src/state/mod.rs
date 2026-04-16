@@ -11,7 +11,7 @@ use cl_core::{
 use nucleo_matcher::pattern::{Atom, AtomKind, CaseMatching, Normalization};
 use nucleo_matcher::{Config as MatcherConfig, Matcher, Utf32Str};
 use std::cmp::Reverse;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use tracing::{debug, error};
 
 mod edit;
@@ -46,7 +46,7 @@ impl State {
         let commands_as_list = commands.as_list().sorted();
         let cmd_map = commands.as_map().clone();
 
-        let selected = SelectedCommand::from_vec(&commands_as_list);
+        let selected = SelectedCommand::first_from_vec(&commands_as_list);
 
         let current_items = commands_as_list;
 
@@ -88,7 +88,7 @@ impl State {
         &self.namespaces
     }
 
-    fn set_namespaces(&mut self, items: CommandVec<'static>) {
+    fn set_namespaces(&mut self, items: &CommandVec<'static>) {
         self.namespaces = append_default_namespace(items.namespaces());
     }
 
@@ -154,7 +154,7 @@ impl State {
         let filtered_commands = self.get_commands_by_namespace(target_namespace);
 
         self.current_items = filtered_commands.clone();
-        self.selected_command = SelectedCommand::from_vec(&filtered_commands);
+        self.selected_command = SelectedCommand::first_from_vec(&filtered_commands);
 
         (self.selected_namespace.to_owned(), filtered_commands)
     }
@@ -202,16 +202,16 @@ impl State {
         if query.is_empty() {
             self.current_query = None;
             let all_commands = self.cmd_map.to_vec().sorted();
-            self.selected_command = SelectedCommand::from_vec(&all_commands);
-            self.set_namespaces(all_commands.clone());
+            self.selected_command = SelectedCommand::first_from_vec(&all_commands);
+            self.set_namespaces(&all_commands);
             self.current_items = all_commands;
             return;
         }
 
         self.current_query = Some(query.to_string());
-        let current_items = self.fuzzy_find(query.to_string()).to_vec().sorted();
-        self.selected_command = SelectedCommand::from_vec(&current_items);
-        self.set_namespaces(current_items.clone());
+        let current_items = self.fuzzy_find(query).to_vec().sorted();
+        self.selected_command = SelectedCommand::first_from_vec(&current_items);
+        self.set_namespaces(&current_items);
         self.current_items = current_items;
     }
 
@@ -226,29 +226,30 @@ impl State {
         );
 
         let mut buf = Vec::new();
-        let mut scored = command_vec
+        let mut scored: Vec<(usize, u16)> = command_vec
             .iter()
-            .cloned()
-            .filter_map(|item| {
+            .enumerate()
+            .filter_map(|(idx, item)| {
                 let score =
                     atom.score(Utf32Str::new(&item.lookup_string(), &mut buf), &mut matcher);
-                if let Some(score) = score {
-                    debug!("item: {}, score: {score}", item.alias);
-                    Some((item, score))
-                } else {
-                    None
-                }
+                score.map(|s| {
+                    debug!("item: {}, score: {s}", item.alias);
+                    (idx, s)
+                })
             })
-            .collect::<Vec<_>>();
+            .collect();
 
-        scored.sort_by_key(|(_, score)| Reverse(*score));
-        scored.into_iter().map(|(c, _)| c.to_owned()).collect()
+        scored.sort_by_key(|&(_, score)| Reverse(score));
+        scored
+            .into_iter()
+            .map(|(idx, _)| command_vec[idx].clone())
+            .collect()
     }
 
-    fn fuzzy_find(&self, query: String) -> CommandMap<'static> {
+    fn fuzzy_find(&self, query: &str) -> CommandMap<'static> {
         self.cmd_map
             .iter()
-            .map(|(namespace, vec)| (namespace.clone(), self.ff_vec(&query, vec)))
+            .map(|(namespace, vec)| (namespace.clone(), self.ff_vec(query, vec)))
             .collect::<HashMap<_, _>>()
     }
 
@@ -257,7 +258,7 @@ impl State {
         let result = if namespace == DEFAULT_NAMESPACE {
             self.cmd_map.to_vec()
         } else {
-            self.cmd_map.get(namespace).unwrap_or(&vec![]).to_vec()
+            self.cmd_map.get(namespace).cloned().unwrap_or_default()
         };
 
         {
@@ -350,19 +351,14 @@ impl State {
     }
 }
 
-fn append_default_namespace(namespaces: Vec<String>) -> Vec<String> {
-    if !namespaces.is_empty() {
-        let mut namespaces_set: HashSet<String> = namespaces.into_iter().collect();
-
-        namespaces_set.insert(DEFAULT_NAMESPACE.to_string());
-
-        let mut namespaces = namespaces_set.into_iter().collect::<Vec<String>>();
-        namespaces.sort_by_key(|a| a.to_lowercase());
-
-        namespaces
-    } else {
-        namespaces
+fn append_default_namespace(mut namespaces: Vec<String>) -> Vec<String> {
+    if namespaces.is_empty() {
+        return namespaces;
     }
+    namespaces.push(DEFAULT_NAMESPACE.to_string());
+    namespaces.sort_by_key(|a| a.to_lowercase());
+    namespaces.dedup();
+    namespaces
 }
 
 #[cfg(test)]
