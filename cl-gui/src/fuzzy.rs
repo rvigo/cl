@@ -29,14 +29,15 @@ impl Fuzzy for Command<'_> {
         let mut buf = String::with_capacity(
             self.alias.len() + self.command.len() + self.namespace.len() + 16, // separators + extras
         );
-        let _ = write!(buf, "{} {} {}", self.alias, self.command, self.namespace);
+        write!(buf, "{} {} {}", self.alias, self.command, self.namespace)
+            .expect("String write is infallible");
         let tags = self.tags_as_string();
         if !tags.is_empty() {
-            let _ = write!(buf, " {tags}");
+            write!(buf, " {tags}").expect("String write is infallible");
         }
         let desc = self.description();
         if !desc.is_empty() {
-            let _ = write!(buf, " {desc}");
+            write!(buf, " {desc}").expect("String write is infallible");
         }
         buf
     }

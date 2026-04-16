@@ -83,15 +83,33 @@ impl UiActor {
 
         let result: Result<()> = loop {
             tokio::select! {
+                // Signal branch is checked first so a quit is never starved
+                // by rapid key input.  `biased` preserves the declaration
+                // order instead of rotating randomly.
+                biased;
+
+                // Quit signal — handle RecvError::Lagged as a quit too:
+                // if we lag behind on signals the channel dropped a message,
+                // which means a quit was missed; treat that as an exit.
+                signal_result = self.signal_receiver.recv() => {
+                    match signal_result {
+                        Ok(message) => {
+                            debug!("Received signal: {:?}", message);
+                        }
+                        Err(tokio::sync::broadcast::error::RecvError::Lagged(n)) => {
+                            debug!("Signal channel lagged by {n} messages; treating as quit");
+                        }
+                        Err(tokio::sync::broadcast::error::RecvError::Closed) => {
+                            debug!("Signal channel closed");
+                        }
+                    }
+                    break Ok(())
+                }
+
                 // key / resize event — render immediately after handling
                 event = crossterm_events.next() => {
                     self.screen.handle_key_event(event, &state_tx, &mut self.signal_handler).await;
                 },
-                // Quit signal
-                Ok(message) = self.signal_receiver.recv() => {
-                    debug!("Received signal: {:?}", message);
-                    break Ok(())
-                }
             }
 
             if let Err(err) = terminal.draw(|frame| self.screen.render_layers(frame)) {

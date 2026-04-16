@@ -54,7 +54,7 @@ pub enum StateEvent {
     SyncSelection(usize),
 }
 
-#[derive(Debug, PartialEq, Eq, Default, Clone)]
+#[derive(Debug, PartialEq, Eq, Default, Clone, Copy)]
 pub enum FieldName {
     /// Edit the command description
     Description,
