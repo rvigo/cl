@@ -24,7 +24,7 @@ impl Subcommand for Misc {
         let command_vec = commands.as_list();
         let sorted_commands = command_vec
             .iter()
-            .sorted_by_key(|c| c.alias.clone())
+            .sorted_by(|a, b| a.alias.cmp(&b.alias))
             .collect::<Vec<&Command>>();
 
         if self.description {
@@ -35,21 +35,21 @@ impl Subcommand for Misc {
             let command = commands.find(alias, namespace.as_deref())?;
             println!("{}", command.to_color_string());
         } else if self.fzf {
-            let mut seen = HashSet::with_capacity(command_vec.len());
-            let duplicated: HashSet<String> = command_vec
+            let mut seen: HashSet<&str> = HashSet::with_capacity(command_vec.len());
+            let duplicated: HashSet<&str> = command_vec
                 .iter()
                 .filter_map(|c| {
                     if seen.contains(c.alias.as_ref()) {
-                        Some(c.alias.to_string())
+                        Some(c.alias.as_ref())
                     } else {
-                        seen.insert(c.alias.to_string());
+                        seen.insert(c.alias.as_ref());
                         None
                     }
                 })
                 .collect();
 
             sorted_commands.iter().for_each(|c| {
-                if duplicated.contains(&c.alias.to_string()) {
+                if duplicated.contains(c.alias.as_ref()) {
                     println!(
                         "{} ({})",
                         c.alias,
@@ -129,9 +129,11 @@ mod test {
     struct MockConfig {
         commands_file: PathBuf,
         preferences: Preferences,
+        _tempdir: tempfile::TempDir,
     }
 
     impl cl_core::Config for MockConfig {
+        // Only command_file_path is called by Misc; other methods are unused in tests
         fn load() -> anyhow::Result<Self>
         where
             Self: Sized,
@@ -151,16 +153,18 @@ mod test {
             self.commands_file.clone()
         }
         fn log_dir_path(&self) -> anyhow::Result<PathBuf> {
-            unimplemented!()
+            unimplemented!("log_dir_path is not used by Misc subcommand tests")
         }
     }
 
     fn mock_config() -> MockConfig {
-        let path = std::env::temp_dir().join("cl_test_misc_commands.toml");
-        std::fs::write(&path, "").unwrap();
+        let dir = tempfile::TempDir::new().expect("failed to create temp dir");
+        let commands_file = dir.path().join("cl_test_misc_commands.toml");
+        std::fs::write(&commands_file, "").expect("failed to write temp file");
         MockConfig {
-            commands_file: path,
+            commands_file,
             preferences: Preferences::default(),
+            _tempdir: dir,
         }
     }
 

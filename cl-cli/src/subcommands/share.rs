@@ -2,7 +2,7 @@ use super::Subcommand;
 use anyhow::{Context, Result};
 use cl_core::{fs, initialize_commands, Command, CommandMapExt, CommandVecExt, Commands, Config};
 use clap::{Parser, ValueEnum};
-use std::{borrow::Cow, collections::HashSet, path::PathBuf};
+use std::{collections::HashSet, path::PathBuf};
 use tracing::{debug, info, info_span, warn};
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
@@ -71,14 +71,14 @@ impl Share {
                     "duplicated aliases found; they will be skipped:\n{}",
                     duplicates
                         .iter()
-                        .map(|cmd| format!("  - alias: {}, namespace: {}", cmd.alias, cmd.namespace))
+                        .map(|(alias, namespace)| format!("  - alias: {alias}, namespace: {namespace}"))
                         .collect::<Vec<_>>()
                         .join("\n")
                 );
             }
             duplicates
-                .iter()
-                .map(|cmd| (cmd.alias.to_string(), cmd.namespace.to_string()))
+                .into_iter()
+                .map(|(a, ns)| (a.to_string(), ns.to_string()))
                 .collect()
         };
 
@@ -125,27 +125,27 @@ impl Share {
     }
 
     fn create_namespace_filter(&self) -> HashSet<String> {
-        self.namespace.clone().map_or(HashSet::new(), |namespaces| {
-            namespaces.into_iter().collect()
-        })
+        self.namespace
+            .as_ref()
+            .map_or(HashSet::new(), |namespaces| {
+                namespaces.iter().cloned().collect()
+            })
     }
 
     fn find_duplicates<'a>(
-        &'a self,
+        &self,
         stored_commands: &'a [Command],
         new_commands: &'a [Command],
-    ) -> Vec<Cow<'a, Command<'a>>> {
-        let existing_keys: HashSet<_> = stored_commands
+    ) -> Vec<(&'a str, &'a str)> {
+        let existing_keys: HashSet<(&str, &str)> = stored_commands
             .iter()
-            .map(|cmd| (Cow::Borrowed(&cmd.alias), Cow::Borrowed(&cmd.namespace)))
+            .map(|cmd| (cmd.alias.as_ref(), cmd.namespace.as_ref()))
             .collect();
 
         new_commands
             .iter()
-            .filter(|cmd| {
-                existing_keys.contains(&(Cow::Borrowed(&cmd.alias), Cow::Borrowed(&cmd.namespace)))
-            })
-            .map(Cow::Borrowed)
+            .filter(|cmd| existing_keys.contains(&(cmd.alias.as_ref(), cmd.namespace.as_ref())))
+            .map(|cmd| (cmd.alias.as_ref(), cmd.namespace.as_ref()))
             .collect()
     }
 }
@@ -153,6 +153,7 @@ impl Share {
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::borrow::Cow;
 
     fn cmd<'a>(alias: &'a str, namespace: &'a str) -> Command<'a> {
         Command {
@@ -179,7 +180,7 @@ mod test {
         let incoming = vec![cmd("foo", "bar"), cmd("baz", "bar")];
         let duplicates = s.find_duplicates(&stored, &incoming);
         assert_eq!(duplicates.len(), 1);
-        assert_eq!(duplicates[0].alias.as_ref(), "foo");
+        assert_eq!(duplicates[0].0, "foo");
     }
 
     #[test]
