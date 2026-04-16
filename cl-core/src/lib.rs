@@ -56,8 +56,8 @@ impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
         for command in self {
             command_map
                 .entry(command.namespace.to_string())
-                .and_modify(|commands| commands.push(command.clone()))
-                .or_insert_with(|| vec![command.clone()]);
+                .or_default()
+                .push(command.clone());
         }
         command_map
     }

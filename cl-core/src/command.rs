@@ -93,9 +93,12 @@ impl Default for Command<'_> {
     }
 }
 
+// Manual Ord/PartialOrd/PartialEq/Hash: case-insensitive ordering and identity
+// so that Eq ↔ Ord::Equal and Hash(a) == Hash(b) whenever a == b (required invariants).
 impl PartialEq for Command<'_> {
     fn eq(&self, other: &Self) -> bool {
-        self.alias.eq(&other.alias) && self.namespace.eq(&other.namespace)
+        self.alias.eq_ignore_ascii_case(&other.alias)
+            && self.namespace.eq_ignore_ascii_case(&other.namespace)
     }
 }
 
@@ -103,8 +106,8 @@ impl Eq for Command<'_> {}
 
 impl std::hash::Hash for Command<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.alias.hash(state);
-        self.namespace.hash(state);
+        self.alias.to_lowercase().hash(state);
+        self.namespace.to_lowercase().hash(state);
     }
 }
 
@@ -257,6 +260,36 @@ mod test {
 
         assert_eq!(a, b);
         assert_eq!(a.cmp(&b), Ordering::Equal);
+    }
+
+    #[test]
+    fn eq_and_ord_agree_for_differing_case() {
+        use std::cmp::Ordering;
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        fn hash_of(cmd: &Command) -> u64 {
+            let mut h = DefaultHasher::new();
+            cmd.hash(&mut h);
+            h.finish()
+        }
+
+        let lower = CommandBuilder::default()
+            .alias("alias")
+            .namespace("ns")
+            .command("echo foo")
+            .build();
+        let upper = CommandBuilder::default()
+            .alias("ALIAS")
+            .namespace("NS")
+            .command("echo bar")
+            .build();
+
+        // PartialEq and Ord must agree (Ord contract)
+        assert_eq!(lower, upper);
+        assert_eq!(lower.cmp(&upper), Ordering::Equal);
+        // Hash contract: equal values must hash equal
+        assert_eq!(hash_of(&lower), hash_of(&upper));
     }
 
     #[test]

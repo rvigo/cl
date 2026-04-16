@@ -25,8 +25,8 @@ impl<'cmd> Commands<'cmd> {
         trace!(target: "cl_core::commands", alias = %command.alias, namespace = %command.namespace, "adding command");
         self.commands
             .entry(command.namespace.to_string())
-            .and_modify(|commands| commands.push(command.to_owned()))
-            .or_insert_with(|| vec![command.to_owned()]);
+            .or_default()
+            .push(command.to_owned());
 
         debug!(target: "cl_core::commands", alias = %command.alias, namespace = %command.namespace, "command added");
         Ok(&self.commands)
@@ -53,9 +53,9 @@ impl<'cmd> Commands<'cmd> {
         }
 
         self.commands
-            .entry(new_command_namespace.clone())
-            .and_modify(|commands| commands.push(new_command.to_owned()))
-            .or_insert_with(|| vec![new_command.to_owned()]);
+            .entry(new_command_namespace)
+            .or_default()
+            .push(new_command.to_owned());
 
         if let Some(commands) = self.commands.get(old_command_namespace) {
             if commands.is_empty() {
@@ -64,7 +64,7 @@ impl<'cmd> Commands<'cmd> {
             }
         }
 
-        debug!(target: "cl_core::commands", alias = %new_command.alias, namespace = %new_command_namespace, "command edited");
+        debug!(target: "cl_core::commands", alias = %new_command.alias, namespace = %new_command.namespace, "command edited");
         Ok(&self.commands)
     }
 
@@ -88,28 +88,35 @@ impl<'cmd> Commands<'cmd> {
 
     pub fn find(&self, alias: &str, namespace: Option<&str>) -> Result<Command<'cmd>> {
         debug!(target: "cl_core::commands", alias = %alias, namespace = ?namespace, "finding command");
-        let binding = self.commands.to_vec();
-        let commands = match namespace {
-            Some(ns) => self
+
+        if let Some(ns) = namespace {
+            return match self
                 .commands
                 .get(ns)
-                .and_then(|cmds| cmds.iter().find(|command| command.alias == alias)),
-
-            None => {
-                let filter = binding.filter(|cmd| cmd.alias == alias);
-                trace!(target: "cl_core::commands", alias = %alias, candidates = %filter.len(), "scanned all namespaces");
-
-                if filter.len() > 1 {
-                    bail!(CommandError::CommandPresentInManyNamespaces {
-                        alias: alias.to_owned()
-                    })
+                .and_then(|cmds| cmds.iter().find(|command| command.alias == alias))
+            {
+                Some(c) => {
+                    debug!(target: "cl_core::commands", alias = %alias, namespace = %c.namespace, "command found");
+                    Ok(c.to_owned())
                 }
+                None => bail!(CommandError::AliasNotFound {
+                    alias: alias.to_owned()
+                }),
+            };
+        }
 
-                filter.into_iter().next()
-            }
-        };
+        // namespace == None: scan all namespaces (allocation deferred to this branch only)
+        let all = self.commands.to_vec();
+        let filter = all.filter(|cmd| cmd.alias == alias);
+        trace!(target: "cl_core::commands", alias = %alias, candidates = %filter.len(), "scanned all namespaces");
 
-        match commands.map(|c| c.to_owned()) {
+        if filter.len() > 1 {
+            bail!(CommandError::CommandPresentInManyNamespaces {
+                alias: alias.to_owned()
+            })
+        }
+
+        match filter.into_iter().next().map(|c| c.to_owned()) {
             Some(c) => {
                 debug!(target: "cl_core::commands", alias = %alias, namespace = %c.namespace, "command found");
                 Ok(c)
@@ -505,6 +512,13 @@ mod test {
                 error.to_string()
             )
         }
+    }
+
+    #[test]
+    fn should_error_when_alias_found_in_different_namespace() {
+        let cmd = create_command!("alias", "command", "ns1", None, None);
+        let commands = commands!(cmd.to_owned());
+        assert!(commands.find("alias", Some("ns2")).is_err());
     }
 
     #[test]

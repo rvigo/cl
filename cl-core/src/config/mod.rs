@@ -9,7 +9,7 @@ use std::path::PathBuf;
 pub const CONFIG_ROOT_DIR: &str = ".config/cl";
 pub const DEFAULT_CONFIG_FILE: &str = "config.toml";
 
-#[derive(Clone, Serialize, Deserialize, Default)]
+#[derive(Copy, Clone, PartialEq, Debug, Serialize, Deserialize, Default)]
 pub enum LogLevel {
     Debug,
     Info,

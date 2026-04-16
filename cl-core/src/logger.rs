@@ -74,7 +74,7 @@ impl Logger {
 
     /// Sets a logger with a single layer
     fn init_app_logger(&self) -> Result<()> {
-        let level_filter: LevelFilter = self.log_level.to_owned().into();
+        let level_filter: LevelFilter = self.log_level.into();
         tracing_subscriber::registry()
             .with(self.file_layer(level_filter))
             .init();
@@ -84,7 +84,7 @@ impl Logger {
 
     /// Sets a logger with two layers (stdout and a file)
     fn init_subcommand_logger(&self) -> Result<()> {
-        let level_filter: LevelFilter = self.log_level.to_owned().into();
+        let level_filter: LevelFilter = self.log_level.into();
         tracing_subscriber::registry()
             .with(self.stdout_layer(level_filter))
             .with(self.file_layer(level_filter))
