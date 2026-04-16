@@ -45,6 +45,7 @@ impl PopupLayer {
 
                     Some(vec![event, PopLastLayer(Some(rx))])
                 }
+                // Any other key closes the popup without triggering a callback.
                 _ => Some(vec![PopLastLayer(None)]),
             }
         })

@@ -29,9 +29,11 @@ impl ScreenCommandCallback {
     pub async fn handle(self, state_tx: &Sender<StateEvent>) -> Option<Vec<ScreenCommand>> {
         match self {
             ScreenCommandCallback::UpdateAll => {
-                let items = oneshot!(state_tx, GetAllListItems).ok();
-                let tabs = oneshot!(state_tx, GetAllNamespaces).ok();
-                let cmd = oneshot!(state_tx, CurrentCommand).ok();
+                let (items, tabs, cmd) = tokio::join!(
+                    async { oneshot!(state_tx, GetAllListItems).ok() },
+                    async { oneshot!(state_tx, GetAllNamespaces).ok() },
+                    async { oneshot!(state_tx, CurrentCommand).ok() },
+                );
 
                 if let (Some(items), Some(tabs), Some(cmd)) = (items, tabs, cmd) {
                     let selected_idx = cmd.as_ref().map_or(0, |c| c.current_idx);
@@ -81,7 +83,11 @@ impl ScreenCommandCallback {
                     None
                 }
             }
-            _ => None,
+            // These are handled upstream (by the caller or command dispatcher),
+            // not here — returning None signals "no sub-commands to dispatch".
+            ScreenCommandCallback::SaveChanges(_) => None,
+            ScreenCommandCallback::DoNothing => None,
+            ScreenCommandCallback::ExitEditScreen => None,
         }
     }
 }

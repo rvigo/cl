@@ -134,47 +134,35 @@ impl FormScreenLayer {
     }
 
     pub fn get_next_field(&self) -> FieldName {
-        let current_field = self.get_current_field();
-
-        let pos = match FIELD_ORDER.iter().position(|f| f == &current_field) {
-            Some(pos) => pos,
-            None => {
-                tracing::error!(
-                    "current field {:?} not found in FIELD_ORDER, defaulting to first",
-                    current_field
-                );
-                0
-            }
-        };
-        let next_idx = (pos + 1) % FIELD_ORDER.len();
-
-        debug!("current: {} - next: {}", pos, next_idx);
-        FIELD_ORDER[next_idx].clone()
+        self.navigate_field(1)
     }
 
     pub fn get_previous_field(&self) -> FieldName {
-        let current_field = self.get_current_field();
+        self.navigate_field(-1)
+    }
 
-        let pos = match FIELD_ORDER.iter().position(|f| f == &current_field) {
+    fn navigate_field(&self, delta: isize) -> FieldName {
+        let current = self.get_current_field();
+        let len = FIELD_ORDER.len();
+        let pos = match FIELD_ORDER.iter().position(|f| f == &current) {
             Some(pos) => pos,
             None => {
                 tracing::error!(
                     "current field {:?} not found in FIELD_ORDER, defaulting to first",
-                    current_field
+                    current
                 );
                 0
             }
         };
-        let previous_idx = (pos + FIELD_ORDER.len() - 1) % FIELD_ORDER.len();
-
-        debug!("current: {} - previous: {}", pos, previous_idx);
-        FIELD_ORDER[previous_idx].clone()
+        let idx = ((pos as isize + delta).rem_euclid(len as isize)) as usize;
+        debug!("current: {} - target: {}", pos, idx);
+        FIELD_ORDER[idx]
     }
 
     fn get_current_field(&self) -> FieldName {
         self.with_screen_state(|s| {
             debug!("getting current field: {:?}", s.current_field);
-            s.current_field.clone()
+            s.current_field
         })
         .unwrap_or_default()
     }
@@ -191,12 +179,12 @@ impl FormScreenLayer {
     }
 
     fn field_is_filled(&self, component: &RenderableComponent<EditableTextbox>) -> bool {
-        !component
+        component
             .borrow_inner()
             .textarea
             .lines()
             .iter()
-            .all(|l| l.is_empty())
+            .any(|l| !l.is_empty())
     }
 
     fn left_panel_widget<'a>(&'a self, theme: &Theme) -> Paragraph<'a> {

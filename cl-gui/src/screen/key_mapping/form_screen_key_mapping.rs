@@ -85,7 +85,7 @@ impl FormScreenLayer {
                 } => {
                     let events = vec![
                         create_notify_command::<EditableTextbox>(EditableTextboxEvent::SetField(
-                            next_field.clone(),
+                            next_field,
                         )),
                         create_notify_command::<ScreenState>(ScreenStateEvent::SetField(
                             next_field,
@@ -100,7 +100,7 @@ impl FormScreenLayer {
                 } => {
                     let events = vec![
                         create_notify_command::<EditableTextbox>(EditableTextboxEvent::SetField(
-                            prev_field.clone(),
+                            prev_field,
                         )),
                         create_notify_command::<ScreenState>(ScreenStateEvent::SetField(
                             prev_field,

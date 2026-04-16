@@ -29,11 +29,16 @@ impl FormCallback {
                 Ok(())
             }
             Ok(Err(e)) => {
-                error!("FormCallback: command save failed: {}", e);
-                Err(e)
+                let operation = match &self {
+                    FormCallback::Save(FormMode::Edit) => "edit",
+                    FormCallback::Save(FormMode::Insert) => "insert",
+                };
+                let msg = format!("Failed to {operation} command: {e}");
+                error!("FormCallback: {}", msg);
+                Err(msg)
             }
             Err(_) => {
-                let err_msg = "FormCallback: response channel closed".to_string();
+                let err_msg = "FormCallback: response channel closed unexpectedly".to_string();
                 error!("{}", err_msg);
                 Err(err_msg)
             }

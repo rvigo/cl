@@ -34,7 +34,7 @@ impl MainScreenLayer {
                 } => Some(vec![
                     AddLayer(Box::new(PopupLayer::default())),
                     create_notify_command::<Popup>(PopupEvent::Create(Dialog(
-                        "Are you sure u want to delete this command?".to_string(),
+                        "Are you sure you want to delete this command?".to_string(),
                         FutureEventType::State(|state| {
                             async_fn_body! {
                                 let result = oneshot!(state, DeleteCommand)?;
@@ -64,14 +64,13 @@ impl MainScreenLayer {
                     ..
                 } => match oneshot!(state_tx, NextTab) {
                     Ok((selected_namespace, selected_command, new_items)) => {
+                        let aliases = new_items.aliases();
                         let events = vec![
                             ScreenCommand::SetSnapshot {
-                                items: new_items.clone(),
+                                items: new_items,
                                 selected_idx: 0,
                             },
-                            create_notify_command::<List>(ListEvent::UpdateAll(
-                                new_items.aliases(),
-                            )),
+                            create_notify_command::<List>(ListEvent::UpdateAll(aliases)),
                             create_notify_command::<Tabs>(TabsEvent::Next(selected_namespace.idx)),
                             create_notify_command::<TextBox>(TextBoxEvent::UpdateCommand(
                                 selected_command.value.clone(),
@@ -88,14 +87,13 @@ impl MainScreenLayer {
                     ..
                 } => match oneshot!(state_tx, PreviousTab) {
                     Ok((selected_namespace, selected_command, new_items)) => {
+                        let aliases = new_items.aliases();
                         let events = vec![
                             ScreenCommand::SetSnapshot {
-                                items: new_items.clone(),
+                                items: new_items,
                                 selected_idx: 0,
                             },
-                            create_notify_command::<List>(ListEvent::UpdateAll(
-                                new_items.aliases(),
-                            )),
+                            create_notify_command::<List>(ListEvent::UpdateAll(aliases)),
                             create_notify_command::<Tabs>(TabsEvent::Previous(
                                 selected_namespace.idx,
                             )),
