@@ -9,6 +9,8 @@ use unicode_width::UnicodeWidthStr;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Tabs {
     items: Vec<String>,
+    /// Pre-computed truncated display names; rebuilt whenever `items` changes.
+    truncated_names: Vec<String>,
     selected: usize,
     view_offset: usize,
 }
@@ -17,6 +19,7 @@ impl Tabs {
     pub fn new() -> Tabs {
         Self {
             items: Vec::new(),
+            truncated_names: Vec::new(),
             selected: 0,
             view_offset: 0,
         }
@@ -27,6 +30,7 @@ impl Tabs {
     }
 
     pub fn update_items(&mut self, items: Vec<String>) {
+        self.truncated_names = Self::compute_truncated_names(&items);
         self.items = items;
         self.view_offset = 0;
     }
@@ -34,6 +38,25 @@ impl Tabs {
     pub fn reset_selected(&mut self) {
         self.selected = 0;
         self.view_offset = 0;
+    }
+
+    fn compute_truncated_names(items: &[String]) -> Vec<String> {
+        const MAX_NAME_LEN: usize = 15;
+        items
+            .iter()
+            .map(|n| {
+                if n.width() > MAX_NAME_LEN {
+                    let cut = n
+                        .char_indices()
+                        .nth(MAX_NAME_LEN - 3)
+                        .map(|(i, _)| i)
+                        .unwrap_or(n.len());
+                    format!("{}...", &n[..cut])
+                } else {
+                    n.clone()
+                }
+            })
+            .collect()
     }
 
     /// Returns `(visible_items, adjusted_selected_index)`.
@@ -50,24 +73,7 @@ impl Tabs {
         // Account for block borders (left + right).
         let available = area_width.saturating_sub(2) as usize;
 
-        const MAX_NAME_LEN: usize = 15;
-
-        let names: Vec<String> = self
-            .items
-            .iter()
-            .map(|n| {
-                if n.width() > MAX_NAME_LEN {
-                    let cut = n
-                        .char_indices()
-                        .nth(MAX_NAME_LEN - 3)
-                        .map(|(i, _)| i)
-                        .unwrap_or(n.len());
-                    format!("{}...", &n[..cut])
-                } else {
-                    n.clone()
-                }
-            })
-            .collect();
+        let names = &self.truncated_names;
 
         // Each tab: 1 space padding left + name + 1 space padding right + 1 divider.
         let tab_widths: Vec<usize> = names.iter().map(|n| n.width() + 3).collect();
@@ -78,7 +84,7 @@ impl Tabs {
         let total: usize = tab_widths.iter().sum();
         if total <= available {
             self.view_offset = 0;
-            return (names, sel);
+            return (names.to_vec(), sel);
         }
 
         // Clamp view_offset in case items list shrank.

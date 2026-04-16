@@ -1,6 +1,6 @@
 use crate::component::Renderable;
 use crate::screen::theme::Theme;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use tui::layout::Alignment::Center;
 use tui::layout::Rect;
 use tui::style::Style;
@@ -11,6 +11,8 @@ use tui::Frame;
 pub struct ClipboardStatus {
     state: ClipboardState,
 }
+
+const CLIPBOARD_DISPLAY_DURATION_SECS: u64 = 3;
 
 impl ClipboardStatus {
     pub fn new() -> Self {
@@ -81,7 +83,7 @@ impl ClipboardState {
 
     fn check(&mut self) {
         if let Some(instant) = self.start_instant {
-            if instant.elapsed().as_secs() >= self.duration {
+            if instant.elapsed() >= Duration::from_secs(self.duration) {
                 self.start_instant = None;
                 self.running = false;
             }
@@ -93,7 +95,7 @@ impl Default for ClipboardState {
     fn default() -> Self {
         Self {
             start_instant: Default::default(),
-            duration: 3,
+            duration: CLIPBOARD_DISPLAY_DURATION_SECS,
             running: false,
         }
     }

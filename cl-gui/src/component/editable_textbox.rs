@@ -17,8 +17,12 @@ pub struct EditableTextbox {
 
 impl EditableTextbox {
     pub fn update_content(&mut self, content: Option<impl Into<String>>) {
-        self.textarea
-            .insert_str(content.map(|content| content.into()).unwrap_or_default());
+        self.textarea.select_all();
+        self.textarea.cut();
+        if let Some(c) = content {
+            self.textarea.insert_str(c.into());
+        }
+        self.modified = false;
     }
 
     pub fn is_active(&self) -> bool {
@@ -63,6 +67,37 @@ impl Renderable for EditableTextbox {
 
         frame.render_widget(Clear, area);
         frame.render_widget(&self.textarea, area)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn update_content_replaces_previous_value() {
+        let mut tb = EditableTextbox::default();
+        tb.update_content(Some("first"));
+        tb.update_content(Some("second"));
+        let lines = tb.textarea.lines().join("\n");
+        assert_eq!(lines, "second");
+    }
+
+    #[test]
+    fn update_content_resets_modified_flag() {
+        let mut tb = EditableTextbox::default();
+        tb.modified = true;
+        tb.update_content(Some("value"));
+        assert!(!tb.modified);
+    }
+
+    #[test]
+    fn update_content_with_none_clears_textarea() {
+        let mut tb = EditableTextbox::default();
+        tb.update_content(Some("something"));
+        tb.update_content(None::<String>);
+        let lines = tb.textarea.lines().join("\n");
+        assert!(lines.is_empty());
     }
 }
 

@@ -33,19 +33,14 @@ impl Renderable for List {
         let block_style = Style::default()
             .fg(theme.text_color.into())
             .bg(theme.background_color.into());
-        let tui_list = TuiList::new(
-            self.items
-                .iter()
-                .map(|s| ListItem::new(s.as_str()))
-                .collect::<Vec<ListItem>>(),
-        )
-        .highlight_style(
-            Style::default()
-                .fg(theme.highlight_color.into())
-                .add_modifier(Modifier::BOLD),
-        )
-        .highlight_symbol("> ")
-        .block(Block::bordered().style(block_style));
+        let tui_list = TuiList::new(self.items.iter().map(|s| ListItem::new(s.as_str())))
+            .highlight_style(
+                Style::default()
+                    .fg(theme.highlight_color.into())
+                    .add_modifier(Modifier::BOLD),
+            )
+            .highlight_symbol("> ")
+            .block(Block::bordered().style(block_style));
 
         frame.render_stateful_widget(tui_list, area, &mut self.state);
     }
