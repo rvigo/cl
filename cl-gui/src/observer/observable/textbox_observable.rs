@@ -11,7 +11,7 @@ impl SyncObservable for TextBox {
             Event::TextBox(e) => match e {
                 TextBoxEvent::UpdateCommand(command) => {
                     let content = match self.name {
-                        FieldName::Command => command.command.some_or_none(),
+                        FieldName::Command => cow_some_or_none(command.command),
                         FieldName::Description => command.description.map(|desc| desc.to_string()),
                         FieldName::Tags => command.tags.map(|vec| {
                             vec.iter()
@@ -19,8 +19,8 @@ impl SyncObservable for TextBox {
                                 .collect::<Vec<_>>()
                                 .join(", ")
                         }),
-                        FieldName::Namespace => command.namespace.some_or_none(),
-                        FieldName::Alias => command.alias.some_or_none(),
+                        FieldName::Namespace => cow_some_or_none(command.namespace),
+                        FieldName::Alias => cow_some_or_none(command.alias),
                     };
                     self.update_content(content);
                 }
@@ -41,25 +41,13 @@ impl SyncObservable for TextBox {
 }
 
 // ---------------------------------------------------------------------------
-// Helper trait: converts Cow<str> to Option<String> (None when empty).
+// Helper: converts Cow<str> to Option<String> (None when empty).
 // Used by TextBox and EditableTextbox observables.
 // ---------------------------------------------------------------------------
 
-pub trait SomeOrNone {
-    fn some_or_none(&self) -> Option<String>
-    where
-        Self: Sized;
-}
-
-impl SomeOrNone for Cow<'static, str> {
-    fn some_or_none(&self) -> Option<String> {
-        let s = self.to_string();
-        if s.is_empty() {
-            None
-        } else {
-            Some(s)
-        }
-    }
+pub fn cow_some_or_none(c: Cow<str>) -> Option<String> {
+    let s = c.into_owned();
+    (!s.is_empty()).then_some(s)
 }
 
 #[cfg(test)]
@@ -82,15 +70,15 @@ mod tests {
     }
 
     #[test]
-    fn some_or_none_returns_none_for_empty() {
+    fn cow_some_or_none_returns_none_for_empty() {
         let cow: Cow<'static, str> = Cow::Borrowed("");
-        assert!(cow.some_or_none().is_none());
+        assert!(cow_some_or_none(cow).is_none());
     }
 
     #[test]
-    fn some_or_none_returns_some_for_non_empty() {
+    fn cow_some_or_none_returns_some_for_non_empty() {
         let cow: Cow<'static, str> = Cow::Borrowed("hello");
-        assert_eq!(cow.some_or_none(), Some("hello".to_owned()));
+        assert_eq!(cow_some_or_none(cow), Some("hello".to_owned()));
     }
 
     #[test]

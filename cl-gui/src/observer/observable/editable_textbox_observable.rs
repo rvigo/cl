@@ -1,6 +1,6 @@
 use crate::component::EditableTextbox;
 use crate::observer::event::{EditableTextboxEvent, Event};
-use crate::observer::observable::textbox_observable::SomeOrNone;
+use crate::observer::observable::textbox_observable::cow_some_or_none;
 use crate::observer::observable::{Observable, ObservableFuture};
 use crate::state::state_event::FieldName;
 use crate::state::state_event::StateEvent::EditField;
@@ -13,13 +13,13 @@ impl Observable for EditableTextbox {
                 EditableTextboxEvent::UpdateCommand(command) => {
                     debug!("EditableTextbox({}): loading command fields", self.name);
                     let content = match self.name {
-                        FieldName::Command => command.command.some_or_none(),
+                        FieldName::Command => cow_some_or_none(command.command),
                         FieldName::Description => command.description.map(|d| d.to_string()),
                         FieldName::Tags => command
                             .tags
                             .map(|v| v.iter().map(|c| c.as_ref()).collect::<Vec<_>>().join(", ")),
-                        FieldName::Namespace => command.namespace.some_or_none(),
-                        FieldName::Alias => command.alias.some_or_none(),
+                        FieldName::Namespace => cow_some_or_none(command.namespace),
+                        FieldName::Alias => cow_some_or_none(command.alias),
                     };
                     self.update_content(content);
                 }
@@ -32,10 +32,10 @@ impl Observable for EditableTextbox {
                 }
                 EditableTextboxEvent::GetFieldContent(state_tx) => {
                     let content = self.textarea.lines().join("\n");
-                    let name = self.name.clone();
+                    let name = self.name;
                     debug!("EditableTextbox({}): sending content '{}'", name, content);
                     return Some(Box::pin(async move {
-                        if let Err(e) = state_tx.send(EditField(name.clone(), content)).await {
+                        if let Err(e) = state_tx.send(EditField(name, content)).await {
                             tracing::error!(
                                 "EditableTextbox({}): failed to send field content: {e}",
                                 name
@@ -62,127 +62,97 @@ mod tests {
     use super::*;
     use crate::state::state_event::FieldName;
 
-    #[test]
-    fn set_field_activates_matching_textbox() {
+    #[tokio::test]
+    async fn set_field_activates_matching_textbox() {
         let mut tb = EditableTextbox {
             name: FieldName::Command,
             ..Default::default()
         };
-        let rt = tokio::runtime::Builder::new_current_thread()
-            .build()
-            .unwrap();
-        rt.block_on(async {
-            let event = Event::EditableTextbox(EditableTextboxEvent::SetField(FieldName::Command));
-            if let Some(fut) = tb.on_listen(event) {
-                fut.await;
-            }
-        });
+        let event = Event::EditableTextbox(EditableTextboxEvent::SetField(FieldName::Command));
+        if let Some(fut) = tb.on_listen(event) {
+            fut.await;
+        }
         assert!(tb.is_active());
     }
 
-    #[test]
-    fn set_field_deactivates_non_matching_textbox() {
+    #[tokio::test]
+    async fn set_field_deactivates_non_matching_textbox() {
         let mut tb = EditableTextbox {
             name: FieldName::Alias,
             active: true,
             ..Default::default()
         };
-        let rt = tokio::runtime::Builder::new_current_thread()
-            .build()
-            .unwrap();
-        rt.block_on(async {
-            let event = Event::EditableTextbox(EditableTextboxEvent::SetField(FieldName::Command));
-            if let Some(fut) = tb.on_listen(event) {
-                fut.await;
-            }
-        });
+        let event = Event::EditableTextbox(EditableTextboxEvent::SetField(FieldName::Command));
+        if let Some(fut) = tb.on_listen(event) {
+            fut.await;
+        }
         assert!(!tb.is_active());
     }
 
-    #[test]
-    fn wrong_event_variant_is_ignored() {
+    #[tokio::test]
+    async fn wrong_event_variant_is_ignored() {
         let mut tb = EditableTextbox {
             name: FieldName::Alias,
             ..Default::default()
         };
-        let rt = tokio::runtime::Builder::new_current_thread()
-            .build()
-            .unwrap();
-        rt.block_on(async {
-            let event = Event::List(crate::observer::event::ListEvent::Next(0));
-            if let Some(fut) = tb.on_listen(event) {
-                fut.await;
-            }
-        });
+        let event = Event::List(crate::observer::event::ListEvent::Next(0));
+        if let Some(fut) = tb.on_listen(event) {
+            fut.await;
+        }
         assert!(!tb.is_active());
     }
 
-    #[test]
-    fn key_input_marks_active_field_as_modified() {
+    #[tokio::test]
+    async fn key_input_marks_active_field_as_modified() {
         use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
         let mut tb = EditableTextbox {
             name: FieldName::Alias,
             active: true,
             ..Default::default()
         };
-        let rt = tokio::runtime::Builder::new_current_thread()
-            .build()
-            .unwrap();
-        rt.block_on(async {
-            let key = KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE);
-            let event = Event::EditableTextbox(EditableTextboxEvent::KeyInput(key));
-            if let Some(fut) = tb.on_listen(event) {
-                fut.await;
-            }
-        });
+        let key = KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE);
+        let event = Event::EditableTextbox(EditableTextboxEvent::KeyInput(key));
+        if let Some(fut) = tb.on_listen(event) {
+            fut.await;
+        }
         assert!(tb.modified);
     }
 
-    #[test]
-    fn key_input_does_not_mark_inactive_field_as_modified() {
+    #[tokio::test]
+    async fn key_input_does_not_mark_inactive_field_as_modified() {
         use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
         let mut tb = EditableTextbox {
             name: FieldName::Alias,
             active: false,
             ..Default::default()
         };
-        let rt = tokio::runtime::Builder::new_current_thread()
-            .build()
-            .unwrap();
-        rt.block_on(async {
-            let key = KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE);
-            let event = Event::EditableTextbox(EditableTextboxEvent::KeyInput(key));
-            if let Some(fut) = tb.on_listen(event) {
-                fut.await;
-            }
-        });
+        let key = KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE);
+        let event = Event::EditableTextbox(EditableTextboxEvent::KeyInput(key));
+        if let Some(fut) = tb.on_listen(event) {
+            fut.await;
+        }
         assert!(!tb.modified);
     }
 
-    #[test]
-    fn update_command_does_not_mark_field_as_modified() {
+    #[tokio::test]
+    async fn update_command_does_not_mark_field_as_modified() {
         use cl_core::Command;
         let mut tb = EditableTextbox {
             name: FieldName::Alias,
             active: true,
             ..Default::default()
         };
-        let rt = tokio::runtime::Builder::new_current_thread()
-            .build()
-            .unwrap();
-        rt.block_on(async {
-            let cmd = Command {
-                alias: "my-alias".into(),
-                namespace: "ns".into(),
-                command: "echo hi".into(),
-                description: None,
-                tags: None,
-            };
-            let event = Event::EditableTextbox(EditableTextboxEvent::UpdateCommand(cmd));
-            if let Some(fut) = tb.on_listen(event) {
-                fut.await;
-            }
-        });
+        let cmd = Command {
+            alias: "my-alias".into(),
+            namespace: "ns".into(),
+            command: "echo hi".into(),
+            description: None,
+            tags: None,
+        };
+        let event = Event::EditableTextbox(EditableTextboxEvent::UpdateCommand(cmd));
+        if let Some(fut) = tb.on_listen(event) {
+            fut.await;
+        }
         assert!(!tb.modified);
     }
 }
