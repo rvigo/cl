@@ -27,7 +27,7 @@ impl PopupState {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum PopupType {
+pub enum PopupKind {
     Help,
     Dialog,
 }
@@ -38,17 +38,23 @@ pub struct Popup {
     pub content: String,
     pub buttons: Vec<Button>,
     pub state: PopupState,
-    pub popup_type: Option<PopupType>,
+    pub popup_type: Option<PopupKind>,
 }
 
 impl Popup {
     pub fn next(&mut self) {
+        if self.buttons.is_empty() {
+            return;
+        }
         let current = self.state.selected;
         let next = (current + 1) % self.buttons.len();
         self.state.select(next);
     }
 
     pub fn previous(&mut self) {
+        if self.buttons.is_empty() {
+            return;
+        }
         let current = self.state.selected;
         let previous = (current + self.buttons.len() - 1) % self.buttons.len();
         self.state.select(previous);
@@ -86,7 +92,7 @@ impl Popup {
             title: "Help".to_string(),
             content: main_options().to_string(),
             buttons: vec![],
-            popup_type: Some(PopupType::Help),
+            popup_type: Some(PopupKind::Help),
             ..Default::default()
         }
     }
@@ -96,7 +102,7 @@ impl Popup {
             title: "Help".to_string(),
             content: form_options().to_string(),
             buttons: vec![],
-            popup_type: Some(PopupType::Help),
+            popup_type: Some(PopupKind::Help),
             ..Default::default()
         }
     }
@@ -134,20 +140,24 @@ impl Renderable for Popup {
             frame.render_widget(paragraph, content_area);
 
             let button_rects = button_area(self.buttons.len(), buttons_area);
-            button_rects.iter().enumerate().for_each(|(i, area)| {
-                let current_button = &mut self.buttons[i];
-                current_button.is_active = i == self.state.selected;
-                current_button.render(frame, *area, theme);
-            });
+            button_rects
+                .iter()
+                .zip(self.buttons.iter_mut())
+                .enumerate()
+                .for_each(|(i, (area, button))| {
+                    button.is_active = i == self.state.selected;
+                    button.render(frame, *area, theme);
+                });
         }
     }
 }
 
 fn center_content(content: &str, available_width: usize) -> String {
+    use unicode_width::UnicodeWidthStr;
     content
         .lines()
         .map(|line| {
-            let line_width = line.len();
+            let line_width = UnicodeWidthStr::width(line);
             if line_width >= available_width {
                 line.to_string()
             } else {
@@ -185,7 +195,7 @@ fn split_content_and_buttons(rect: Rect) -> [Rect; 2] {
     [parts[0], parts[1]]
 }
 
-fn compute_popup_area(content: &str, area: Rect, popup_type: Option<PopupType>) -> Rect {
+fn compute_popup_area(content: &str, area: Rect, popup_type: Option<PopupKind>) -> Rect {
     // Content dimensions
     let line_count = content.lines().count() as u16;
     let content_width = content.custom_width();
@@ -193,7 +203,7 @@ fn compute_popup_area(content: &str, area: Rect, popup_type: Option<PopupType>) 
     // 2 for border, 2 for horizontal padding
     let popup_width = (content_width + 4).min(area.width);
     // 2 for border; help has no buttons, dialogs reserve 3 rows for buttons
-    let button_rows: u16 = if popup_type == Some(PopupType::Help) {
+    let button_rows: u16 = if popup_type == Some(PopupKind::Help) {
         0
     } else {
         3
@@ -301,10 +311,10 @@ mod tests {
     #[test]
     fn test_popup_help_type() {
         let popup = Popup::help_main();
-        assert_eq!(popup.popup_type, Some(PopupType::Help));
+        assert_eq!(popup.popup_type, Some(PopupKind::Help));
 
         let popup = Popup::help_form();
-        assert_eq!(popup.popup_type, Some(PopupType::Help));
+        assert_eq!(popup.popup_type, Some(PopupKind::Help));
     }
 
     #[test]
@@ -319,5 +329,15 @@ mod tests {
             ScreenCommandCallback::DoNothing,
         );
         assert_eq!(popup.popup_type, None);
+    }
+
+    #[test]
+    fn next_and_previous_are_noop_on_empty_buttons() {
+        let mut popup = Popup::help_main();
+        assert!(popup.buttons.is_empty());
+        let before = popup.state.selected;
+        popup.next();
+        popup.previous();
+        assert_eq!(popup.state.selected, before);
     }
 }

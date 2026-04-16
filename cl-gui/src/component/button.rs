@@ -21,7 +21,7 @@ pub type EventFutureFn =
 #[derive(Clone, Debug)]
 pub enum FutureEventType {
     State(StateEventFutureFn),
-    Event(Sender<Vec<ScreenCommand>>, EventFutureFn),
+    Event(EventFutureFn),
 }
 
 impl FutureEventType {
@@ -31,7 +31,7 @@ impl FutureEventType {
         screen_command_sender: Option<Sender<Vec<ScreenCommand>>>,
     ) -> anyhow::Result<Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>>> {
         match self {
-            FutureEventType::Event(_sx, event_fn) => {
+            FutureEventType::Event(event_fn) => {
                 let sender = screen_command_sender
                     .ok_or_else(|| anyhow::anyhow!("no screen command sender"))?;
                 Ok(event_fn(sender))
@@ -73,7 +73,7 @@ impl fmt::Debug for Button {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Button")
             .field("content", &self.content)
-            .field("is_selected", &self.is_active)
+            .field("is_active", &self.is_active)
             .finish()
     }
 }

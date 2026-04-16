@@ -29,7 +29,7 @@ use crate::observer::ObservableComponent;
 use crate::screen::theme::Theme;
 use std::cell::{Ref, RefCell, RefMut};
 use std::fmt::Debug;
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 use std::rc::Rc;
 use tui::layout::Rect;
 use tui::Frame;
@@ -51,27 +51,7 @@ where
     T: Observable,
 {
     fn clone(&self) -> Self {
-        Self(Rc::clone(self))
-    }
-}
-
-impl<T> Deref for Component<T>
-where
-    T: Observable,
-{
-    type Target = Rc<RefCell<T>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T> DerefMut for Component<T>
-where
-    T: Observable,
-{
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+        Self(Rc::clone(&self.0))
     }
 }
 
@@ -218,7 +198,7 @@ mod tests {
         // borrow_inner() is always safe when T is the correct type.
         let state = ScreenState::new(FieldName::Namespace);
         let comp = StateComponent::new(state);
-        let field = comp.borrow_inner().current_field.clone();
+        let field = comp.borrow_inner().current_field;
         assert_eq!(field, FieldName::Namespace);
     }
 }
