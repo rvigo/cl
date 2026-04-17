@@ -1,5 +1,5 @@
 use super::Subcommand;
-use anyhow::Result;
+use anyhow::{bail, Result};
 use cl_core::{initialize_commands, Command, Config};
 use clap::Parser;
 use itertools::Itertools;
@@ -24,31 +24,32 @@ impl Subcommand for Misc {
         let command_vec = commands.as_list();
         let sorted_commands = command_vec
             .iter()
-            .sorted_by_key(|c| c.alias.clone())
+            .sorted_by(|a, b| a.alias.cmp(&b.alias))
             .collect::<Vec<&Command>>();
 
         if self.description {
-            if let Some(alias) = &self.alias {
-                let namespace = &self.namespace;
-                let command = commands.find(alias, namespace.as_deref())?;
-                println!("{}", command.to_color_string());
-            }
+            let Some(alias) = &self.alias else {
+                bail!("--alias/-a is required when using --description/-d");
+            };
+            let namespace = &self.namespace;
+            let command = commands.find(alias, namespace.as_deref())?;
+            println!("{}", command.to_color_string());
         } else if self.fzf {
-            let mut seen = HashSet::with_capacity(command_vec.len());
-            let duplicated: Vec<String> = command_vec
+            let mut seen: HashSet<&str> = HashSet::with_capacity(command_vec.len());
+            let duplicated: HashSet<&str> = command_vec
                 .iter()
                 .filter_map(|c| {
-                    if seen.contains(&c.alias.clone()) {
-                        Some(c.alias.to_string())
+                    if seen.contains(c.alias.as_ref()) {
+                        Some(c.alias.as_ref())
                     } else {
-                        seen.insert(c.alias.clone());
+                        seen.insert(c.alias.as_ref());
                         None
                     }
                 })
                 .collect();
 
             sorted_commands.iter().for_each(|c| {
-                if duplicated.contains(&c.alias.to_string()) {
+                if duplicated.contains(c.alias.as_ref()) {
                     println!(
                         "{} ({})",
                         c.alias,
@@ -61,7 +62,7 @@ impl Subcommand for Misc {
         } else {
             sorted_commands
                 .iter()
-                .for_each(|c| println!("{}", c.sumarize()));
+                .for_each(|c| println!("{}", c.summarize()));
         }
 
         Ok(())
@@ -86,23 +87,22 @@ impl ToColorString for Command<'_> {
     }
 }
 
-trait Sumarize {
-    /// Returns a sumarized string of `self`
-    fn sumarize(&self) -> String;
+trait Summarize {
+    /// Returns a summarized string of `self`
+    fn summarize(&self) -> String;
 }
 
-// TODO wtf?
-impl Sumarize for Command<'_> {
-    fn sumarize(&self) -> String {
-        let command_string = &self.command;
-        let max_lenght_command: String = command_string.chars().take(50).collect();
-        let command_string = if max_lenght_command.contains('\n') {
-            let idx = self.command.find('\n').unwrap_or(51);
-            let short_command = format!("{}{}", &self.command[..(idx)], "...");
-            short_command
-        } else if max_lenght_command.len() == 50 {
-            let short_command = format!("{}{}", &self.command[..50], "...");
-            short_command
+const MAX_COMMAND_LEN: usize = 50;
+
+impl Summarize for Command<'_> {
+    fn summarize(&self) -> String {
+        let max_length_command: String = self.command.chars().take(MAX_COMMAND_LEN).collect();
+        let command_string = if let Some(idx) = max_length_command.find('\n') {
+            format!("{}...", &max_length_command[..idx])
+        } else if max_length_command.chars().count() == MAX_COMMAND_LEN
+            && self.command.chars().count() > MAX_COMMAND_LEN
+        {
+            format!("{max_length_command}...")
         } else {
             self.command.to_string()
         };
@@ -121,7 +121,66 @@ impl Sumarize for Command<'_> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use cl_core::Preferences;
+    use clap::Parser;
     use std::borrow::Cow;
+    use std::path::PathBuf;
+
+    struct MockConfig {
+        commands_file: PathBuf,
+        preferences: Preferences,
+        _tempdir: tempfile::TempDir,
+    }
+
+    impl cl_core::Config for MockConfig {
+        // Only command_file_path is called by Misc; other methods are unused in tests
+        fn load() -> anyhow::Result<Self>
+        where
+            Self: Sized,
+        {
+            unimplemented!()
+        }
+        fn save(&self) -> anyhow::Result<()> {
+            Ok(())
+        }
+        fn preferences(&self) -> &Preferences {
+            &self.preferences
+        }
+        fn preferences_mut(&mut self) -> &mut Preferences {
+            &mut self.preferences
+        }
+        fn command_file_path(&self) -> PathBuf {
+            self.commands_file.clone()
+        }
+        fn log_dir_path(&self) -> anyhow::Result<PathBuf> {
+            unimplemented!("log_dir_path is not used by Misc subcommand tests")
+        }
+    }
+
+    fn mock_config() -> MockConfig {
+        let dir = tempfile::TempDir::new().expect("failed to create temp dir");
+        let commands_file = dir.path().join("cl_test_misc_commands.toml");
+        std::fs::write(&commands_file, "").expect("failed to write temp file");
+        MockConfig {
+            commands_file,
+            preferences: Preferences::default(),
+            _tempdir: dir,
+        }
+    }
+
+    #[test]
+    fn should_return_error_when_description_flag_used_without_alias() {
+        let misc = Misc::parse_from(["cl", "-d"]);
+        let result = misc.run(mock_config());
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("--alias/-a is required"),
+            "Error should tell user to provide --alias/-a"
+        );
+    }
 
     #[test]
     fn should_format_a_command_with_description_to_string() {
@@ -133,7 +192,7 @@ mod test {
             tags: None,
         };
         let expected_output = "namespace.alias: description --> command".to_owned();
-        assert_eq!(command.sumarize(), expected_output);
+        assert_eq!(command.summarize(), expected_output);
     }
 
     #[test]
@@ -146,6 +205,39 @@ mod test {
             tags: None,
         };
         let expected_output = "namespace.alias --> command".to_owned();
-        assert_eq!(command.sumarize(), expected_output);
+        assert_eq!(command.summarize(), expected_output);
+    }
+
+    #[test]
+    fn should_truncate_command_longer_than_50_chars() {
+        let long_cmd = "a".repeat(60);
+        let command = Command {
+            namespace: Cow::Borrowed("ns"),
+            command: Cow::Owned(long_cmd),
+            description: None,
+            alias: Cow::Borrowed("al"),
+            tags: None,
+        };
+        let result = command.summarize();
+        assert!(
+            result.ends_with("..."),
+            "Long command should be truncated with '...'"
+        );
+        // 50 chars of content + "..." = 53 chars after the arrow
+        let cmd_part = result.split(" --> ").nth(1).unwrap();
+        assert_eq!(cmd_part.len(), 53);
+    }
+
+    #[test]
+    fn should_truncate_multiline_command_at_first_newline() {
+        let command = Command {
+            namespace: Cow::Borrowed("ns"),
+            command: Cow::Borrowed("first line\nsecond line"),
+            description: None,
+            alias: Cow::Borrowed("al"),
+            tags: None,
+        };
+        let result = command.summarize();
+        assert!(result.ends_with("first line..."));
     }
 }

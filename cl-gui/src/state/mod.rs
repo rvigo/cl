@@ -1,17 +1,759 @@
-mod clipboard_state;
-mod field_state;
-mod list_state;
-mod namespaces_state;
+use crate::fuzzy::Fuzzy;
+use crate::state::edit::EditState;
+use crate::state::selected_command::SelectedCommand;
+use crate::state::selected_namespace::SelectedNamespace;
+use crate::state::state_event::FieldName;
+use anyhow::bail;
+use cl_core::{
+    fs, Command, CommandExec, CommandMap, CommandMapExt, CommandVec, CommandVecExt, Commands,
+    Config,
+};
+use nucleo_matcher::pattern::{Atom, AtomKind, CaseMatching, Normalization};
+use nucleo_matcher::{Config as MatcherConfig, Matcher, Utf32Str};
+use std::cmp::Reverse;
+use std::collections::HashMap;
+use tracing::{debug, error};
 
-pub use clipboard_state::ClipboardState;
-pub use field_state::FieldState;
-pub use list_state::ListState;
-pub use namespaces_state::NamespacesState;
+mod edit;
+pub mod selected_command;
+pub mod selected_namespace;
+pub mod state_actor;
+pub mod state_event;
 
-pub trait State {
-    type Output;
+pub struct State {
+    commands: Commands<'static>,
+    selected_command: Option<SelectedCommand>,
+    selected_namespace: SelectedNamespace,
+    namespaces: Vec<String>,
+    config: Box<dyn Config>,
 
-    fn select(&mut self, selected: Self::Output);
+    // search
+    current_query: Option<String>,
+    cmd_map: CommandMap<'static>,
+    current_items: CommandVec<'static>,
 
-    fn selected(&self) -> Self::Output;
+    // edit
+    edit_state: EditState,
+}
+
+const DEFAULT_NAMESPACE: &str = "All";
+
+impl State {
+    pub fn new(cfg: impl Config + 'static) -> anyhow::Result<State> {
+        // cmd load
+        let command_map = fs::load_from(cfg.command_file_path())?;
+        let commands = Commands::init(command_map);
+        let commands_as_list = commands.as_list().sorted();
+        let cmd_map = commands.as_map().clone();
+
+        let selected = SelectedCommand::first_from_vec(&commands_as_list);
+
+        let current_items = commands_as_list;
+
+        // namespaces
+        let namespaces: Vec<String> = commands.as_list().namespaces();
+        let mut namespaces = append_default_namespace(namespaces);
+        namespaces.sort_by_key(|a| a.to_lowercase());
+
+        Ok(Self {
+            commands,
+            selected_namespace: SelectedNamespace::new(0, DEFAULT_NAMESPACE.to_string()),
+            selected_command: selected,
+            namespaces,
+            config: Box::new(cfg),
+            current_query: None,
+            current_items,
+            cmd_map,
+            edit_state: EditState::default(),
+        })
+    }
+
+    pub fn select(&mut self, idx: usize) {
+        if let Some(cmd) = self.current_items.get(idx) {
+            self.selected_command = Some(SelectedCommand::new(cmd.clone(), idx));
+        }
+    }
+
+    pub fn get_selected_command(&self) -> Option<&SelectedCommand> {
+        self.selected_command.as_ref()
+    }
+
+    pub fn get_all_items(&self) -> &CommandVec<'static> {
+        debug!("got all items");
+        &self.current_items
+    }
+
+    pub fn get_all_namespaces(&self) -> &[String] {
+        debug!("got all namespaces");
+        &self.namespaces
+    }
+
+    fn set_namespaces(&mut self, items: &CommandVec<'static>) {
+        self.namespaces = append_default_namespace(items.namespaces());
+    }
+
+    pub fn get_current_query(&self) -> String {
+        self.current_query.clone().unwrap_or_default()
+    }
+
+    /// Commands based on the current namespace
+    pub fn current_commands(&self) -> CommandVec<'static> {
+        self.get_commands_by_namespace(&self.selected_namespace.name)
+    }
+
+    pub fn next_item(&mut self) -> Option<SelectedCommand> {
+        if self.current_items.is_empty() {
+            error!("cannot navigate: current items list is empty");
+            return self.selected_command.clone();
+        }
+        if let Some(current_idx) = self.selected_command.as_ref().map(|s| s.current_idx) {
+            let next = (current_idx + 1) % self.current_items.len();
+            self.select(next);
+        } else {
+            error!("cannot navigate: no command is currently selected");
+        }
+
+        self.selected_command.clone()
+    }
+
+    pub fn previous_item(&mut self) -> Option<SelectedCommand> {
+        if self.current_items.is_empty() {
+            error!("cannot navigate: current items list is empty");
+            return self.selected_command.clone();
+        }
+        if let Some(current_idx) = self.selected_command.as_ref().map(|s| s.current_idx) {
+            let previous = (current_idx + self.current_items.len() - 1) % self.current_items.len();
+            self.select(previous);
+        } else {
+            error!("cannot navigate: no command is currently selected");
+        }
+
+        self.selected_command.clone()
+    }
+
+    pub fn next_tab(&mut self) -> (SelectedNamespace, CommandVec<'static>) {
+        self.move_tab(1)
+    }
+
+    pub fn previous_tab(&mut self) -> (SelectedNamespace, CommandVec<'static>) {
+        self.move_tab(-1)
+    }
+
+    fn move_tab(&mut self, delta: isize) -> (SelectedNamespace, CommandVec<'static>) {
+        if self.namespaces.is_empty() {
+            error!("no namespaces found");
+            return (self.selected_namespace.to_owned(), vec![]);
+        }
+        let len = self.namespaces.len();
+        let current = self.selected_namespace.idx as isize;
+        let target = ((current + delta).rem_euclid(len as isize)) as usize;
+        let target_namespace = &self.namespaces[target];
+
+        self.selected_namespace = SelectedNamespace::new(target, target_namespace.to_string());
+
+        let filtered_commands = self.get_commands_by_namespace(target_namespace);
+
+        self.current_items = filtered_commands.clone();
+        self.selected_command = SelectedCommand::first_from_vec(&filtered_commands);
+
+        (self.selected_namespace.to_owned(), filtered_commands)
+    }
+
+    pub fn execute(&self) {
+        if let Some(selected_command) = &self.selected_command {
+            let command = selected_command.value.to_owned();
+            debug!("executing command: {:?}", command);
+            if let Err(e) = command.exec(false, self.config.preferences().quiet_mode()) {
+                error!("failed to execute command '{}': {}", command.alias, e);
+            }
+        }
+    }
+
+    pub async fn delete_command(&mut self) -> anyhow::Result<()> {
+        if let Some(selected_command) = &self.selected_command {
+            let command = &selected_command.value;
+            match self.commands.remove(command) {
+                Ok(map) => {
+                    let map = map.clone();
+                    let path = self.config.command_file_path();
+                    tokio::task::spawn_blocking(move || fs::save_at(&map, path)).await??;
+                    self.current_items = self.commands.as_list().sorted();
+                    self.cmd_map = self.commands.as_map().clone();
+                    self.selected_command = self
+                        .current_items
+                        .first()
+                        .map(|c| SelectedCommand::new(c.clone(), 0));
+                }
+                Err(e) => {
+                    bail!("Error deleting command: {e:?}");
+                }
+            }
+        }
+        debug!("command deleted");
+        Ok(())
+    }
+
+    /// Filters the commands based on a query and a namespace
+    ///
+    /// ## Arguments
+    /// * `query` - A String slice representing the user's query
+    ///
+    pub fn filter(&mut self, query: &str) {
+        if query.is_empty() {
+            self.current_query = None;
+            let all_commands = self.cmd_map.to_vec().sorted();
+            self.selected_command = SelectedCommand::first_from_vec(&all_commands);
+            self.set_namespaces(&all_commands);
+            self.current_items = all_commands;
+            return;
+        }
+
+        self.current_query = Some(query.to_string());
+        let current_items = self.fuzzy_find(query).to_vec().sorted();
+        self.selected_command = SelectedCommand::first_from_vec(&current_items);
+        self.set_namespaces(&current_items);
+        self.current_items = current_items;
+    }
+
+    fn ff_vec(&self, query: &str, command_vec: &CommandVec<'static>) -> Vec<Command<'static>> {
+        let mut matcher = Matcher::new(MatcherConfig::DEFAULT);
+        let atom = Atom::new(
+            query,
+            CaseMatching::Ignore,
+            Normalization::Smart,
+            AtomKind::Fuzzy,
+            false,
+        );
+
+        let mut buf = Vec::new();
+        let mut scored: Vec<(usize, u16)> = command_vec
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, item)| {
+                let score =
+                    atom.score(Utf32Str::new(&item.lookup_string(), &mut buf), &mut matcher);
+                score.map(|s| {
+                    debug!("item: {}, score: {s}", item.alias);
+                    (idx, s)
+                })
+            })
+            .collect();
+
+        scored.sort_by_key(|&(_, score)| Reverse(score));
+        scored
+            .into_iter()
+            .map(|(idx, _)| command_vec[idx].clone())
+            .collect()
+    }
+
+    fn fuzzy_find(&self, query: &str) -> CommandMap<'static> {
+        self.cmd_map
+            .iter()
+            .map(|(namespace, vec)| (namespace.clone(), self.ff_vec(query, vec)))
+            .collect::<HashMap<_, _>>()
+    }
+
+    fn get_commands_by_namespace(&self, namespace: &str) -> CommandVec<'static> {
+        debug!("filtering commands by namespace: {}", namespace);
+        let result = if namespace == DEFAULT_NAMESPACE {
+            self.cmd_map.to_vec()
+        } else {
+            self.cmd_map.get(namespace).cloned().unwrap_or_default()
+        };
+
+        {
+            if let Some(query) = &self.current_query {
+                self.ff_vec(query, &result)
+            } else {
+                result
+            }
+        }
+        .sorted()
+    }
+
+    pub fn set_editable_command(&mut self, field_name: FieldName, content: String) {
+        match field_name {
+            FieldName::Description => self.edit_state.update_description(Some(content)),
+            FieldName::Alias => self.edit_state.update_alias(Some(content)),
+            FieldName::Tags => {
+                let tags = content
+                    .split(',')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect::<Vec<_>>();
+                self.edit_state
+                    .update_tags(if tags.is_empty() { None } else { Some(tags) });
+            }
+            FieldName::Command => self.edit_state.update_command(Some(content)),
+            FieldName::Namespace => self.edit_state.update_namespace(Some(content)),
+        }
+    }
+
+    pub async fn insert_command(&mut self) -> anyhow::Result<()> {
+        let new_command = self.edit_state.get();
+
+        debug!("About to insert command: {:#?}", new_command);
+        match self.commands.add(&new_command) {
+            Ok(map) => {
+                debug!("Command inserted successfully");
+                let map = map.clone();
+                let path = self.config.command_file_path();
+                tokio::task::spawn_blocking(move || fs::save_at(&map, path)).await??;
+                self.current_items = self.commands.as_list().sorted();
+                self.cmd_map = self.commands.as_map().clone();
+                let selected_command = SelectedCommand::new(new_command, 0);
+                self.selected_command = Some(selected_command);
+                self.edit_state.clear();
+            }
+            Err(err) => {
+                error!("Error inserting command: {}", err);
+            }
+        }
+
+        Ok(())
+    }
+
+    pub async fn edit_command(&mut self) -> anyhow::Result<()> {
+        let edited = self.edit_state.get();
+
+        let actual = self
+            .selected_command
+            .as_ref()
+            .map(|selected| selected.value.clone())
+            .unwrap_or_default();
+
+        debug!("About to change command: {:#?} to {:#?}", actual, edited);
+        match self.commands.edit(&edited, &actual) {
+            Ok(map) => {
+                debug!("Command edited successfully");
+                let map = map.clone();
+                let path = self.config.command_file_path();
+                tokio::task::spawn_blocking(move || fs::save_at(&map, path)).await??;
+                self.current_items = self.commands.as_list().sorted();
+                self.cmd_map = self.commands.as_map().clone();
+                let selected_command = SelectedCommand::new(
+                    edited,
+                    self.selected_command
+                        .clone()
+                        .unwrap_or_default()
+                        .current_idx,
+                );
+
+                self.selected_command = Some(selected_command);
+                self.edit_state.clear();
+            }
+            Err(err) => {
+                error!("Error editing command: {}", err);
+            }
+        }
+
+        Ok(())
+    }
+}
+
+fn append_default_namespace(mut namespaces: Vec<String>) -> Vec<String> {
+    if namespaces.is_empty() {
+        return namespaces;
+    }
+    namespaces.push(DEFAULT_NAMESPACE.to_string());
+    namespaces.sort_by_key(|a| a.to_lowercase());
+    namespaces.dedup();
+    namespaces
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use anyhow::Result;
+    use cl_core::{CommandBuilder, Preferences};
+    use std::fs::File;
+    use std::path::PathBuf;
+    use tempfile::TempDir;
+
+    struct TestConfig {
+        cfp: PathBuf,
+        _tempdir: TempDir,
+    }
+
+    impl TestConfig {
+        pub fn new() -> Result<Self> {
+            let tempdir = TempDir::new()?;
+            let cfp = tempdir.path().join("commands.toml");
+
+            let _cf = File::create(cfp.clone())?;
+
+            Ok(Self {
+                cfp,
+                _tempdir: tempdir,
+            })
+        }
+    }
+
+    impl Config for TestConfig {
+        fn load() -> Result<Self>
+        where
+            Self: Sized,
+        {
+            todo!()
+        }
+
+        fn save(&self) -> Result<()> {
+            todo!()
+        }
+
+        fn preferences(&self) -> &Preferences {
+            todo!()
+        }
+
+        fn preferences_mut(&mut self) -> &mut Preferences {
+            todo!()
+        }
+
+        fn command_file_path(&self) -> PathBuf {
+            self.cfp.clone()
+        }
+
+        fn log_dir_path(&self) -> anyhow::Result<PathBuf> {
+            todo!()
+        }
+    }
+
+    fn setup_state() -> Result<State> {
+        let mut commands = HashMap::new();
+        let command1 = CommandBuilder::default()
+            .command("azul")
+            .namespace("azul")
+            .alias("azul")
+            .build();
+        let command2 = CommandBuilder::default()
+            .command("laranja")
+            .namespace("laranja")
+            .alias("laranja")
+            .build();
+        commands.insert(command1.namespace.to_string(), vec![command1]);
+        commands.insert(command2.namespace.to_string(), vec![command2]);
+
+        let cfg = TestConfig::new()?;
+        fs::save_at(&commands, cfg.command_file_path())?;
+
+        State::new(cfg)
+    }
+
+    #[test]
+    fn should_get_commands_by_namespace() -> Result<()> {
+        let state = setup_state()?;
+
+        let result = state.get_commands_by_namespace("azul");
+
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.first().expect("should have a command").alias, "azul");
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_filter_commands() -> Result<()> {
+        let mut state = setup_state()?;
+
+        state.filter("a");
+
+        assert_eq!(state.current_items.len(), 2);
+
+        state.filter("az");
+
+        assert_eq!(state.current_items.len(), 1);
+        assert_eq!(
+            state
+                .current_items
+                .first()
+                .expect("should have a command")
+                .alias
+                .to_string(),
+            "azul".to_string()
+        );
+
+        state.filter("ran");
+        assert_eq!(state.current_items.len(), 1);
+        assert_eq!(
+            state
+                .current_items
+                .first()
+                .expect("should have a command")
+                .alias
+                .to_string(),
+            "laranja".to_string()
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_restore_items_on_clear_filter() -> Result<()> {
+        let mut state = setup_state()?;
+
+        state.filter("az");
+        assert_eq!(state.current_items.len(), 1);
+
+        state.filter("");
+
+        assert_eq!(state.current_items.len(), 2);
+        assert_eq!(state.current_query, None);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn should_update_cmd_map_on_delete() -> Result<()> {
+        let mut state = setup_state()?;
+        let original_len = state.cmd_map.to_vec().len();
+
+        state.delete_command().await?;
+
+        assert_eq!(state.cmd_map.to_vec().len(), original_len - 1);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn should_update_cmd_map_on_edit() -> Result<()> {
+        let mut state = setup_state()?;
+
+        // Get the selected command's namespace before editing
+        let original_namespace = state
+            .get_selected_command()
+            .expect("should have selected command")
+            .value
+            .namespace
+            .to_string();
+
+        // Update edit state with new values
+        state.edit_state.update_alias(Some("new_alias".to_string()));
+        state
+            .edit_state
+            .update_command(Some("new_command".to_string()));
+        state.edit_state.update_namespace(Some(original_namespace));
+
+        state.edit_command().await?;
+
+        let cmd_vec = state.cmd_map.to_vec();
+        assert!(
+            cmd_vec
+                .iter()
+                .any(|c| c.alias == "new_alias" && c.command == "new_command"),
+            "cmd_map should contain the edited command"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_append_the_default_namespace() -> Result<()> {
+        let namespaces = vec!["a".to_string(), "a".to_string(), "b".to_string()];
+
+        let result = append_default_namespace(namespaces);
+
+        assert_eq!(result.len(), 3);
+        assert_eq!(result.iter().filter(|&s| s == "a").count(), 1);
+        assert!(result.contains(&"All".to_string()));
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_get_all_items() -> Result<()> {
+        let state = setup_state()?;
+
+        let items = state.get_all_items();
+
+        assert_eq!(items.len(), 2);
+        assert_eq!(items[0].alias, "azul");
+        assert_eq!(items[1].alias, "laranja");
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_get_selected_command() -> Result<()> {
+        let state = setup_state()?;
+
+        let command = state.get_selected_command();
+
+        assert!(command.is_some());
+        let command = command.unwrap();
+
+        assert_eq!(command.value.alias, "azul");
+        assert_eq!(command.current_idx, 0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_get_next_item() -> Result<()> {
+        let mut state = setup_state()?;
+
+        let command = state.next_item();
+
+        assert!(command.is_some());
+        let command = command.unwrap();
+
+        assert_eq!(command.value.alias, "laranja");
+        assert_eq!(command.current_idx, 1);
+
+        let command = state.next_item();
+
+        assert!(command.is_some());
+        let command = command.unwrap();
+
+        assert_eq!(command.value.alias, "azul");
+        assert_eq!(command.current_idx, 0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_get_previous_item() -> Result<()> {
+        let mut state = setup_state()?;
+
+        let command = state.previous_item();
+
+        assert!(command.is_some());
+        let command = command.unwrap();
+
+        assert_eq!(command.value.alias, "laranja");
+        assert_eq!(command.current_idx, 1);
+
+        let command = state.previous_item();
+
+        assert!(command.is_some());
+        let command = command.unwrap();
+
+        assert_eq!(command.value.alias, "azul");
+        assert_eq!(command.current_idx, 0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_get_next_namespace() -> Result<()> {
+        let mut state = setup_state()?;
+
+        let (selected_namespace, commands) = state.next_tab();
+
+        assert_eq!(selected_namespace.idx, 1);
+        assert_eq!(selected_namespace.name, "azul");
+        assert_eq!(commands.len(), 1);
+        assert_eq!(commands[0].alias, "azul");
+
+        let (selected_namespace, commands) = state.next_tab();
+
+        assert_eq!(selected_namespace.idx, 2);
+        assert_eq!(selected_namespace.name, "laranja");
+        assert_eq!(commands.len(), 1);
+        assert_eq!(commands[0].alias, "laranja");
+
+        let (selected_namespace, commands) = state.next_tab();
+
+        assert_eq!(selected_namespace.idx, 0);
+        assert_eq!(selected_namespace.name, "All");
+        assert_eq!(commands.len(), 2);
+        assert_eq!(commands[0].alias, "azul");
+        assert_eq!(commands[1].alias, "laranja");
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_get_previous_namespace() -> Result<()> {
+        let mut state = setup_state()?;
+
+        let (selected_namespace, commands) = state.previous_tab();
+
+        assert_eq!(selected_namespace.idx, 2);
+        assert_eq!(selected_namespace.name, "laranja");
+        assert_eq!(commands.len(), 1);
+        assert_eq!(commands[0].alias, "laranja");
+
+        let (selected_namespace, commands) = state.previous_tab();
+
+        assert_eq!(selected_namespace.idx, 1);
+        assert_eq!(selected_namespace.name, "azul");
+        assert_eq!(commands.len(), 1);
+        assert_eq!(commands[0].alias, "azul");
+
+        let (selected_namespace, commands) = state.previous_tab();
+
+        assert_eq!(selected_namespace.idx, 0);
+        assert_eq!(selected_namespace.name, "All");
+        assert_eq!(commands.len(), 2);
+        assert_eq!(commands[0].alias, "azul");
+        assert_eq!(commands[1].alias, "laranja");
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_not_append_default_namespace_to_empty_list() {
+        let namespaces: Vec<String> = vec![];
+
+        let result = append_default_namespace(namespaces);
+
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn should_append_default_namespace_to_single_item() {
+        let namespaces = vec!["only".to_string()];
+
+        let result = append_default_namespace(namespaces);
+
+        assert_eq!(result.len(), 2);
+        assert!(result.contains(&"All".to_string()));
+        assert!(result.contains(&"only".to_string()));
+    }
+
+    #[test]
+    fn next_item_with_no_selected_command_returns_none() -> Result<()> {
+        let mut state = setup_state()?;
+        state.selected_command = None;
+
+        let result = state.next_item();
+
+        assert!(result.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn previous_item_with_no_selected_command_returns_none() -> Result<()> {
+        let mut state = setup_state()?;
+        state.selected_command = None;
+
+        let result = state.previous_item();
+
+        assert!(result.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn next_item_with_empty_items_preserves_selection() -> Result<()> {
+        let mut state = setup_state()?;
+        let original = state.selected_command.clone();
+        state.current_items = Vec::new();
+
+        let result = state.next_item();
+
+        assert_eq!(result, original);
+        Ok(())
+    }
+
+    #[test]
+    fn previous_item_with_empty_items_preserves_selection() -> Result<()> {
+        let mut state = setup_state()?;
+        let original = state.selected_command.clone();
+        state.current_items = Vec::new();
+
+        let result = state.previous_item();
+
+        assert_eq!(result, original);
+        Ok(())
+    }
 }

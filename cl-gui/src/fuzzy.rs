@@ -1,6 +1,6 @@
 use cl_core::Command;
 
-/// A trait to give a type an optmized string representation to fuzzy searches
+/// A trait to give a type an optimized string representation to fuzzy searches
 ///
 /// *Does not* override any `to_string` or similar implementation
 pub trait Fuzzy {
@@ -25,15 +25,20 @@ pub trait Fuzzy {
 
 impl Fuzzy for Command<'_> {
     fn lookup_string(&self) -> String {
-        format!(
-            "{} {} {} {} {}",
-            self.alias,
-            self.command,
-            self.namespace,
-            self.tags_as_string(),
-            self.description()
-        )
-        .trim()
-        .to_owned()
+        use std::fmt::Write;
+        let mut buf = String::with_capacity(
+            self.alias.len() + self.command.len() + self.namespace.len() + 16, // separators + extras
+        );
+        write!(buf, "{} {} {}", self.alias, self.command, self.namespace)
+            .expect("String write is infallible");
+        let tags = self.tags_as_string();
+        if !tags.is_empty() {
+            write!(buf, " {tags}").expect("String write is infallible");
+        }
+        let desc = self.description();
+        if !desc.is_empty() {
+            write!(buf, " {desc}").expect("String write is infallible");
+        }
+        buf
     }
 }

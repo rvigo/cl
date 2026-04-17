@@ -73,17 +73,11 @@ mod test {
     fn should_set_log_level() {
         let mut preferences = Preferences::default();
 
-        assert_eq!(
-            String::from(&preferences.log_level()),
-            String::from(&LogLevel::Error)
-        );
+        assert_eq!(preferences.log_level(), LogLevel::Error);
 
         preferences.set_log_level(LogLevel::Debug);
 
-        assert_eq!(
-            String::from(&preferences.log_level()),
-            String::from(&LogLevel::Debug)
-        );
+        assert_eq!(preferences.log_level(), LogLevel::Debug);
     }
 
     #[test]

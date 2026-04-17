@@ -1,4 +1,4 @@
-use crate::{config::LogLevel, resource::errors::panic_handler};
+use crate::config::LogLevel;
 use anyhow::Result;
 use std::path::PathBuf;
 use tracing::{metadata::LevelFilter, Subscriber};
@@ -69,13 +69,12 @@ impl Logger {
             LoggerType::Subcommand => self.init_subcommand_logger()?,
         }
 
-        panic_handler::setup_panic_hook();
         Ok(())
     }
 
     /// Sets a logger with a single layer
     fn init_app_logger(&self) -> Result<()> {
-        let level_filter: LevelFilter = self.log_level.to_owned().into();
+        let level_filter: LevelFilter = self.log_level.into();
         tracing_subscriber::registry()
             .with(self.file_layer(level_filter))
             .init();
@@ -85,7 +84,7 @@ impl Logger {
 
     /// Sets a logger with two layers (stdout and a file)
     fn init_subcommand_logger(&self) -> Result<()> {
-        let level_filter: LevelFilter = self.log_level.to_owned().into();
+        let level_filter: LevelFilter = self.log_level.into();
         tracing_subscriber::registry()
             .with(self.stdout_layer(level_filter))
             .with(self.file_layer(level_filter))
@@ -108,11 +107,12 @@ impl Logger {
     where
         S: Subscriber + for<'span> LookupSpan<'span>,
     {
+        let show_target = level_filter <= LevelFilter::DEBUG;
         fmt::layer()
             .without_time()
             .event_format(Format::default().with_source_location(false).without_time())
             .fmt_fields(PrettyFields::new())
-            .with_target(false)
+            .with_target(show_target)
             .with_filter(
                 // ensures at least INFO messages when logging to console
                 if level_filter == LevelFilter::ERROR {

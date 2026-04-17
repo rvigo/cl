@@ -1,0 +1,54 @@
+use crate::component::Renderable;
+use crate::screen::theme::Theme;
+use tui::layout::Rect;
+use tui::prelude::{Modifier, Style};
+use tui::widgets::{Block, List as TuiList, ListItem, ListState};
+use tui::Frame;
+
+#[derive(Default, Clone, Debug, Eq, PartialEq)]
+pub struct List {
+    items: Vec<String>,
+    pub state: ListState,
+}
+
+impl List {
+    pub fn new() -> Self {
+        Self {
+            state: ListState::default().with_selected(Some(0)),
+            ..Default::default()
+        }
+    }
+
+    pub fn select(&mut self, index: usize) {
+        self.state.select(Some(index));
+    }
+
+    pub fn update_items(&mut self, items: Vec<String>) {
+        self.items = items
+    }
+}
+
+impl Renderable for List {
+    fn render(&mut self, frame: &mut Frame, area: Rect, theme: &Theme) {
+        let block_style = Style::default()
+            .fg(theme.text_color.into())
+            .bg(theme.background_color.into());
+        let tui_list = TuiList::new(self.items.iter().map(|s| ListItem::new(s.as_str())))
+            .highlight_style(
+                Style::default()
+                    .fg(theme.highlight_color.into())
+                    .add_modifier(Modifier::BOLD),
+            )
+            .highlight_symbol("> ")
+            .block(Block::bordered().style(block_style));
+
+        frame.render_stateful_widget(tui_list, area, &mut self.state);
+    }
+}
+
+impl crate::observer::event::NotifyTarget for List {
+    type Payload = crate::observer::event::ListEvent;
+    fn wrap(payload: Self::Payload) -> crate::observer::event::Event {
+        crate::observer::event::Event::List(payload)
+    }
+}

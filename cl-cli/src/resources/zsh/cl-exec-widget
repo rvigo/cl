@@ -16,8 +16,8 @@ cl-exec-widget() {
         --exit-0 \
         --height 40% \
         --header='Enter: set prompt with the selected command' \
-        --bind='enter:abort+execute:echo cl exec {1} $(if [[ ! -z {2} ]] then  echo --namespace {2} | sed "s/[()]//g"; fi)'\
-        --preview='[[ ! -z {2} ]] && echo "$(cl misc -d -a {1} -n $(echo {2} | sed "s/[()]//g";))" || echo "$(cl misc -d -a {1})"' \
+        --bind='enter:abort+execute:echo cl exec {1q} $(if [[ ! -z {2q} ]] then  echo --namespace {2q} | sed "s/[()]//g"; fi)'\
+        --preview='[[ ! -z {2q} ]] && echo "$(cl misc -d -a {1q} -n $(echo {2q} | sed "s/[()]//g";))" || echo "$(cl misc -d -a {1q})"' \
         --preview-window=right:60%:wrap 
     ) 
 
