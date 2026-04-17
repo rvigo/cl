@@ -50,92 +50,37 @@ jobs:
         env:
           RUST_BACKTRACE: 1
 
-  build:
-    name: Build
-    needs: [format, clippy, test]
-    runs-on: ${{ matrix.os }}-latest
-    strategy:
-      matrix:
-        target:
-          [
-            x86_64-apple-darwin,
-            aarch64-unknown-linux-gnu,
-            x86_64-unknown-linux-gnu,
-            aarch64-apple-darwin,
-          ]
-
-        include:
-          - target: x86_64-apple-darwin
-            os: macos
-          - target: x86_64-unknown-linux-gnu
-            os: ubuntu
-          - target: aarch64-unknown-linux-gnu
-            os: ubuntu
-          - target: aarch64-apple-darwin
-            os: macos
-    steps:
-      - name: Install toolchain for ${{ matrix.target }}
-        uses: dtolnay/rust-toolchain@1.88.0
-        with:
-          targets: ${{ matrix.target }}
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Build
-        run: |
-            if [ ${{ matrix.os }} == 'macos' ]; then
-              cargo build --release --bins --target ${{ matrix.target }} 
-            else
-              cargo install cross
-              cross build --release --bins --target ${{ matrix.target }}
-            fi
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: cl-${{ matrix.target }}
-          path: target/${{ matrix.target }}/release/
-
   release:
     name: Release
-    needs: build
+    needs: [format, clippy, test]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout releaser
-        uses: actions/checkout@v4
-        with:
-          repository: rvigo/rustreleaser
-      - name: Build releaser
-        run: |
-            cargo build --release 
-            sudo cp -R ./target/release/rustreleaser /usr/local/bin/. 
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Download darwin_arm64
-        uses: actions/download-artifact@v4
-        with:
-          name: cl-aarch64-apple-darwin
-          path: target/aarch64-apple-darwin/release/
-      - name: Download darwin_amd64_v1
-        uses: actions/download-artifact@v4
-        with:
-          name: cl-x86_64-apple-darwin
-          path: target/x86_64-apple-darwin/release/
-      - name: Download linux_amd64_v1
-        uses: actions/download-artifact@v4
-        with:
-          name: cl-x86_64-unknown-linux-gnu
-          path: target/x86_64-unknown-linux-gnu/release/
-      - name: Download linux_arm64
-        uses: actions/download-artifact@v4
-        with:
-          name: cl-aarch64-unknown-linux-gnu
-          path: target/aarch64-unknown-linux-gnu/release/
-      - name: Release
+
+      - name: Generate checksums
         run: |
-            rustreleaser
+          TAG=${GITHUB_REF_NAME}
+          curl -fsSL "https://github.com/rvigo/cl/archive/refs/tags/${TAG}.tar.gz" \
+            -o "cl-${TAG}.tar.gz"
+          sha256sum "cl-${TAG}.tar.gz" > checksums.txt
+
+      - name: Create release
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-   
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            checksums.txt \
+            --generate-notes
+
+      - name: Trigger homebrew-cl formula update
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          SHA256=$(awk '{print $1}' checksums.txt)
+          gh api repos/rvigo/homebrew-cl/dispatches \
+            --method POST \
+            --field event_type=new-release \
+            --field "client_payload[tag]=${GITHUB_REF_NAME}" \
+            --field "client_payload[sha256]=${SHA256}"
