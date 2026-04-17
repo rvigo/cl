@@ -11,7 +11,7 @@ on:
       - "Dockerfile"
       - "Dockerfile.*"
       - "completions/**"
-- "output.toml"
+      - "output.toml"
       - "README.md"
       - "RELEASE.md"
       - "LICENSE"
