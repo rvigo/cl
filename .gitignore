@@ -49,3 +49,9 @@ Cargo.lock
 /.vscode
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,rust
+
+# IDE
+.idea/
+
+# AI assistant
+CLAUDE.md

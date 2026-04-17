@@ -25,17 +25,27 @@ pub type CommandVec<'cmd> = Vec<Command<'cmd>>;
 pub type CommandMap<'cmd> = HashMap<Namespace, CommandVec<'cmd>>;
 
 pub trait CommandVecExt<'cmd> {
-    fn sort_and_return(&mut self) -> CommandVec<'cmd>;
+    fn sorted(&mut self) -> CommandVec<'cmd>;
 
     fn to_command_map(&self) -> CommandMap<'cmd>;
 
     fn filter(&self, predicate: impl Fn(&Command) -> bool) -> Vec<&Command<'cmd>>;
+
+    fn get_selected(&self, idx: usize) -> Option<Command<'cmd>>;
+
+    fn first_command(&self) -> Option<Command<'cmd>>;
+
+    fn aliases(&self) -> Vec<String>;
+
+    fn namespaces(&self) -> Vec<String>;
+
+    fn as_map(&self) -> CommandMap<'cmd>;
 }
 
 impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
-    fn sort_and_return(&mut self) -> CommandVec<'cmd> {
+    fn sorted(&mut self) -> CommandVec<'cmd> {
         let mut sorted_commands = self.clone();
-        sorted_commands.sort_by_key(|c| c.alias.to_lowercase());
+        sorted_commands.sort();
 
         sorted_commands
     }
@@ -46,14 +56,34 @@ impl<'cmd> CommandVecExt<'cmd> for CommandVec<'cmd> {
         for command in self {
             command_map
                 .entry(command.namespace.to_string())
-                .and_modify(|commands| commands.push(command.clone()))
-                .or_insert_with(|| vec![command.clone()]);
+                .or_default()
+                .push(command.clone());
         }
         command_map
     }
 
     fn filter(&self, predicate: impl Fn(&Command) -> bool) -> Vec<&Command<'cmd>> {
         self.iter().filter(|c| predicate(c)).collect()
+    }
+
+    fn get_selected(&self, idx: usize) -> Option<Command<'cmd>> {
+        self.get(idx).cloned()
+    }
+
+    fn first_command(&self) -> Option<Command<'cmd>> {
+        self.first().cloned()
+    }
+
+    fn aliases(&self) -> Vec<String> {
+        self.iter().map(|cmd| cmd.alias.to_string()).collect()
+    }
+
+    fn namespaces(&self) -> Vec<String> {
+        self.iter().map(|cmd| cmd.namespace.to_string()).collect()
+    }
+
+    fn as_map(&self) -> CommandMap<'cmd> {
+        self.to_command_map()
     }
 }
 
@@ -85,6 +115,33 @@ macro_rules! hashmap {
             map
         }};
     }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::CommandBuilder;
+
+    fn make_cmd(alias: &'static str, namespace: &'static str) -> Command<'static> {
+        CommandBuilder::default()
+            .alias(alias)
+            .namespace(namespace)
+            .command("echo test")
+            .build()
+    }
+
+    #[test]
+    fn first_command_returns_none_on_empty_vec() {
+        let empty: CommandVec<'static> = vec![];
+        assert!(empty.first_command().is_none());
+    }
+
+    #[test]
+    fn first_command_returns_some_on_non_empty_vec() {
+        let cmd = make_cmd("alias", "ns");
+        let vec: CommandVec<'static> = vec![cmd.clone()];
+        assert_eq!(vec.first_command(), Some(cmd));
+    }
+}
 
 #[macro_export]
 macro_rules! initialize_commands {

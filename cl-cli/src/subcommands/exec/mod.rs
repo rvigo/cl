@@ -8,7 +8,7 @@ use anyhow::{Context, Result};
 use cl_core::{initialize_commands, CommandExec, Config};
 use clap::Parser;
 use command::Command;
-use log::debug;
+use tracing::{debug, debug_span};
 
 #[derive(Parser)]
 pub struct Exec {
@@ -57,6 +57,15 @@ impl Subcommand for Exec {
         let dry_run = self.dry_run;
         let quiet_mode = self.quiet || config.preferences().quiet_mode();
 
+        let _span = debug_span!(
+            "exec",
+            alias = %alias,
+            namespace = ?namespace,
+            dry_run,
+            quiet_mode,
+        )
+        .entered();
+
         let mut command_item = commands
             .find(alias, namespace.as_deref())
             .context("Failed to find the command with the given alias and namespace")?;
@@ -65,7 +74,7 @@ impl Subcommand for Exec {
             .context("Cannot prepare the command to be executed")?
             .inner;
 
-        debug!("Command to be executed: {}", new_command);
+        debug!(target: "cl::exec", command = %new_command, "command to be executed");
 
         command_item.command = Cow::Owned(new_command);
         command_item
